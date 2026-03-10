@@ -722,6 +722,368 @@
     }
 
     /* ================================================================
+       ROLE DETAIL PANEL STYLES
+       A slide-out panel from the right that shows full role details
+       and allows editing all fields, managing stage history, etc.
+       ================================================================ */
+
+    /* Overlay behind the detail panel */
+    .detail-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 180;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration-normal) var(--ease-default);
+    }
+
+    .detail-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* The panel itself — slides from right */
+    .detail-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 520px;
+      max-width: 95vw;
+      height: 100vh;
+      background: var(--bg-elevated);
+      box-shadow: var(--shadow-lg);
+      z-index: 185;
+      transform: translateX(100%);
+      transition: transform var(--duration-enter) var(--ease-default);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .detail-panel.open {
+      transform: translateX(0);
+    }
+
+    /* Panel header with role title and close button */
+    .detail-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: var(--space-5) var(--space-5) var(--space-4);
+      border-bottom: 1px solid var(--bg-subtle);
+      flex-shrink: 0;
+    }
+
+    .detail-header-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .detail-company {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: var(--space-1);
+    }
+
+    .detail-title {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .detail-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: var(--space-1);
+      margin-left: var(--space-3);
+      flex-shrink: 0;
+    }
+
+    .detail-close:hover {
+      color: var(--text-primary);
+    }
+
+    /* Scrollable body */
+    .detail-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-5);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-5);
+    }
+
+    /* Section within the detail panel */
+    .detail-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .detail-section-title {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding-bottom: var(--space-2);
+      border-bottom: 1px solid var(--bg-subtle);
+    }
+
+    /* Key-value rows in the detail panel */
+    .detail-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .detail-label {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      width: 100px;
+      flex-shrink: 0;
+    }
+
+    .detail-value {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* Editable inline inputs in the detail panel */
+    .detail-input {
+      width: 100%;
+      padding: var(--space-1) var(--space-2);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-sm);
+      transition: border-color var(--duration-fast) var(--ease-default);
+    }
+
+    .detail-input:hover {
+      border-color: var(--bg-subtle);
+    }
+
+    .detail-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-subtle);
+    }
+
+    .detail-select {
+      padding: var(--space-1) var(--space-2);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-sm);
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 6px center;
+      padding-right: 24px;
+      cursor: pointer;
+    }
+
+    .detail-select:hover {
+      border-color: var(--bg-subtle);
+    }
+
+    .detail-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Stage history timeline */
+    .stage-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+
+    .stage-timeline-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-2) 0;
+      position: relative;
+      padding-left: var(--space-5);
+    }
+
+    /* Vertical connector line */
+    .stage-timeline-item:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 50%;
+      bottom: -50%;
+      width: 2px;
+      background: var(--bg-subtle);
+    }
+
+    /* Timeline dot */
+    .stage-timeline-item::after {
+      content: '';
+      position: absolute;
+      left: 3px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--bg-subtle);
+      border: 2px solid var(--bg-elevated);
+    }
+
+    .stage-timeline-item.current::after {
+      background: var(--accent);
+    }
+
+    .stage-timeline-stage {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--text-primary);
+      text-transform: capitalize;
+      min-width: 100px;
+    }
+
+    .stage-timeline-date {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      font-family: var(--font-mono);
+    }
+
+    .stage-timeline-date input[type="date"] {
+      background: var(--bg-base);
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      color: var(--text-tertiary);
+      font-size: var(--text-xs);
+      font-family: var(--font-mono);
+      padding: 1px 4px;
+      cursor: pointer;
+    }
+
+    .stage-timeline-date input[type="date"]:hover {
+      border-color: var(--bg-subtle);
+    }
+
+    .stage-timeline-date input[type="date"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Stage quick-move buttons */
+    .stage-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-1);
+    }
+
+    .stage-btn {
+      padding: var(--space-1) var(--space-2);
+      font-size: var(--text-xs);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      background: var(--bg-base);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      text-transform: capitalize;
+    }
+
+    .stage-btn:hover {
+      background: var(--accent-subtle);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .stage-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+
+    /* JD text area in detail panel */
+    .detail-jd-textarea {
+      width: 100%;
+      min-height: 180px;
+      padding: var(--space-3);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      font-family: var(--font-sans);
+      line-height: 1.5;
+      resize: vertical;
+    }
+
+    .detail-jd-textarea:hover {
+      border-color: var(--bg-subtle);
+    }
+
+    .detail-jd-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Footer with action buttons */
+    .detail-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-4) var(--space-5);
+      border-top: 1px solid var(--bg-subtle);
+      flex-shrink: 0;
+    }
+
+    .detail-footer-left {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .detail-footer-right {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .detail-meta {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+    }
+
+    /* URL link styling in detail panel */
+    .detail-url-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: var(--text-xs);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+      max-width: 300px;
+    }
+
+    .detail-url-link:hover {
+      text-decoration: underline;
+    }
+
+    /* ================================================================
        COMMAND PALETTE STYLES
        The search overlay that appears when user presses Cmd/Ctrl+K.
        ================================================================ */
@@ -950,6 +1312,22 @@
         <button class="modal-close" id="modal-close" aria-label="Close dialog">&times;</button>
       </div>
       <div class="modal-body">
+        <!-- Import from URL section -->
+        <div class="form-group" id="import-section">
+          <label class="form-label">Import from Job Posting</label>
+          <div style="display: flex; gap: var(--space-2);">
+            <input type="url" id="form-url" class="form-input" placeholder="Paste job posting URL (Workday, Greenhouse, Lever, LinkedIn...)" aria-label="Paste a job posting URL to auto-extract details" style="flex: 1;">
+            <button id="import-btn" class="btn btn-primary" style="white-space: nowrap; padding: var(--space-2) var(--space-4);" aria-label="Import job details from the URL">Import</button>
+          </div>
+          <div id="import-status" style="display: none; font-size: var(--text-xs); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); margin-top: var(--space-1);"></div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: var(--space-3); color: var(--text-tertiary); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.05em;">
+          <div style="flex: 1; height: 1px; background: var(--bg-subtle);"></div>
+          <span>or fill in manually</span>
+          <div style="flex: 1; height: 1px; background: var(--bg-subtle);"></div>
+        </div>
+
         <div class="form-group">
           <label class="form-label">Company Name</label>
           <input type="text" id="form-company" class="form-input" placeholder="e.g., Stripe" aria-label="Enter company name - suggestions will appear">
@@ -959,11 +1337,6 @@
         <div class="form-group">
           <label class="form-label">Role Title</label>
           <input type="text" id="form-title" class="form-input" placeholder="e.g., Senior Product Manager" aria-label="Enter the job title">
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Job Description URL</label>
-          <input type="url" id="form-url" class="form-input" placeholder="https://..." aria-label="Enter the URL to the job posting">
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
@@ -1002,7 +1375,7 @@
 
         <div class="form-group">
           <label class="form-label">Job Description</label>
-          <textarea id="form-jd" class="form-textarea" placeholder="Paste the job description here..." aria-label="Paste the full job description text"></textarea>
+          <textarea id="form-jd" class="form-textarea" placeholder="Paste the job description here, or use Import above to auto-extract..." aria-label="Paste the full job description text"></textarea>
         </div>
       </div>
       <div class="modal-footer">
@@ -1022,6 +1395,30 @@
 
   <!-- Section: Toast Notifications -->
   <div class="toast-container" id="toast-container"></div>
+
+  <!-- Section: Role Detail Slide-Out Panel -->
+  <div class="detail-overlay" id="detail-overlay"></div>
+  <div class="detail-panel" id="detail-panel">
+    <div class="detail-header">
+      <div class="detail-header-info">
+        <div class="detail-company" id="detail-company"></div>
+        <div class="detail-title" id="detail-title"></div>
+      </div>
+      <button class="detail-close" id="detail-close" aria-label="Close detail panel">&times;</button>
+    </div>
+    <div class="detail-body" id="detail-body">
+      <!-- Populated dynamically by openRoleDetail() -->
+    </div>
+    <div class="detail-footer">
+      <div class="detail-footer-left">
+        <button class="btn btn-ghost" id="detail-delete" style="color: var(--status-rejected);">Delete</button>
+      </div>
+      <div class="detail-footer-right">
+        <button class="btn btn-ghost" id="detail-cancel">Cancel</button>
+        <button class="btn btn-primary" id="detail-save">Save Changes</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     /* ================================================================
@@ -1469,8 +1866,12 @@
           });
         }
         // Apply all the updates to the job object
+        const hasExplicitLastActivity = 'lastActivity' in updates;
         Object.assign(role, updates);
-        role.lastActivity = Date.now();
+        // Only auto-update lastActivity if caller didn't set it explicitly
+        if (!hasExplicitLastActivity) {
+          role.lastActivity = Date.now();
+        }
         saveRoles(roles);
       }
       return role;
@@ -1601,10 +2002,9 @@
 
       /* Attach event listeners to job cards */
       document.querySelectorAll('.role-card').forEach(card => {
-        // Click to select/deselect a card
+        // Click to open detail panel for this role
         card.addEventListener('click', (e) => {
-          selectedCardId = selectedCardId === card.dataset.roleId ? null : card.dataset.roleId;
-          renderKanban();
+          openRoleDetail(card.dataset.roleId);
         });
 
         // Drag start: mark this card as being dragged
@@ -1855,6 +2255,281 @@
       }
     });
 
+    /* ================================================================
+       URL IMPORT: Fetch and parse job postings from external URLs
+       ================================================================ */
+
+    const importBtn = document.getElementById('import-btn');
+    const importStatus = document.getElementById('import-status');
+
+    /**
+     * Shows a status message below the URL input
+     * INPUT: message string, type ('loading' | 'success' | 'error' | 'info')
+     * OUTPUT: displays styled status message
+     */
+    function showImportStatus(message, type) {
+      importStatus.style.display = 'block';
+      importStatus.textContent = message;
+      importStatus.style.background = {
+        loading: 'var(--bg-subtle)',
+        success: 'rgba(34, 197, 94, 0.15)',
+        error:   'rgba(239, 68, 68, 0.15)',
+        info:    'rgba(99, 102, 241, 0.15)'
+      }[type] || 'var(--bg-subtle)';
+      importStatus.style.color = {
+        loading: 'var(--text-secondary)',
+        success: 'var(--success)',
+        error:   'var(--danger)',
+        info:    'var(--primary)'
+      }[type] || 'var(--text-secondary)';
+    }
+
+    /**
+     * Parses raw page text from a job posting and extracts structured fields.
+     * Uses heuristics to identify title, company, location, salary, and JD body.
+     * INPUT: rawText (string from fetched page), pageUrl (for domain hints)
+     * RETURNS: { company, title, location, salary, jdText, positioning }
+     */
+    function parseJobPosting(rawText, pageUrl) {
+      const result = {
+        company: '',
+        title: '',
+        location: '',
+        salary: '',
+        jdText: '',
+        positioning: 'ic'
+      };
+
+      // --- Company name extraction ---
+      // Try to extract from URL domain (e.g., "liveramp.wd5.myworkdayjobs.com" → "LiveRamp")
+      try {
+        const hostname = new URL(pageUrl).hostname;
+        // Workday pattern: {company}.wd{n}.myworkdayjobs.com
+        const wdMatch = hostname.match(/^([^.]+)\.wd\d+\.myworkdayjobs\.com/);
+        if (wdMatch) {
+          result.company = wdMatch[1].charAt(0).toUpperCase() + wdMatch[1].slice(1);
+        }
+        // Greenhouse pattern: boards.greenhouse.io/{company}
+        const ghPath = new URL(pageUrl).pathname;
+        if (hostname === 'boards.greenhouse.io') {
+          result.company = ghPath.split('/')[1] || '';
+        }
+        // Lever pattern: jobs.lever.co/{company}
+        if (hostname === 'jobs.lever.co') {
+          result.company = ghPath.split('/')[1] || '';
+        }
+        // Ashby pattern: jobs.ashbyhq.com/{company}
+        if (hostname === 'jobs.ashbyhq.com') {
+          result.company = ghPath.split('/')[1] || '';
+        }
+      } catch (e) { /* ignore URL parse errors */ }
+
+      // --- Title extraction ---
+      // Look for common patterns: title is usually the first prominent heading
+      // Workday: "Sr. Director Product Management: Addressability"
+      // The title often appears near the top, before "Apply" or location info
+      const lines = rawText.split(/\n/).map(l => l.trim()).filter(l => l.length > 0);
+
+      // Strategy: find the first line that looks like a job title
+      // (contains PM/Director/Manager/Engineer etc., 3-15 words, near the top)
+      const titlePatterns = /\b(product\s*manager|director|vp|vice\s*president|head\s+of|engineer|designer|analyst|scientist|lead|principal|staff|senior|sr\.|manager|coordinator)\b/i;
+      for (let i = 0; i < Math.min(lines.length, 30); i++) {
+        const line = lines[i];
+        if (titlePatterns.test(line) && line.length > 10 && line.length < 120 && !line.includes('cookie') && !line.includes('privacy')) {
+          // Skip lines that are clearly navigation or boilerplate
+          if (line.includes('Search for Jobs') || line.includes('Sign In') || line.includes('Skip to')) continue;
+          result.title = line.replace(/\s*page is loaded\s*/i, '').trim();
+          break;
+        }
+      }
+
+      // --- Location extraction ---
+      // Look for common location patterns
+      const locationMatch = rawText.match(/(?:location[s]?)\s*[:]*\s*((?:(?:San Francisco|New York|Seattle|Austin|Remote|Los Angeles|Chicago|Boston|Denver|Portland|Miami|Atlanta|Dallas|Washington|London|Toronto|Berlin|Singapore|Hybrid)[,\s]*)+)/i);
+      if (locationMatch) {
+        result.location = locationMatch[1].trim().replace(/\s+/g, ' ');
+      }
+
+      // --- Salary extraction ---
+      const salaryMatch = rawText.match(/\$[\d,]+(?:\.\d+)?\s*(?:to|-|–)\s*\$[\d,]+(?:\.\d+)?/);
+      if (salaryMatch) {
+        result.salary = salaryMatch[0];
+      }
+
+      // --- Positioning inference ---
+      const titleLower = result.title.toLowerCase();
+      if (titleLower.includes('director') || titleLower.includes('vp') || titleLower.includes('head of') || titleLower.includes('vice president')) {
+        result.positioning = 'management';
+      }
+
+      // --- JD body extraction ---
+      // Take everything from the first substantial paragraph to the benefits/legal section
+      // Strip out navigation, headers, and footer boilerplate
+      const boilerplateEnd = /\b(benefits|equal opportunity|privacy policy|cookie|©|all rights reserved|#LI-|about us|follow us|read more)\b/i;
+      const navBoilerplate = /\b(skip to main|sign in|search for jobs|introduce yourself|page is loaded)\b/i;
+
+      let jdLines = [];
+      let foundStart = false;
+
+      for (const line of lines) {
+        // Skip navigation boilerplate at the top
+        if (!foundStart && navBoilerplate.test(line)) continue;
+        if (!foundStart && line === result.title) continue;
+        if (!foundStart && line === 'Apply') continue;
+
+        // Start capturing when we hit a meaty paragraph (>60 chars)
+        if (!foundStart && line.length > 60) {
+          foundStart = true;
+        }
+
+        if (foundStart) {
+          // Stop at benefits/legal/footer
+          if (boilerplateEnd.test(line)) break;
+          jdLines.push(line);
+        }
+      }
+
+      result.jdText = jdLines.join('\n\n');
+
+      return result;
+    }
+
+    /**
+     * Fetches a job posting URL via CORS proxy, parses the content,
+     * and auto-fills the form fields.
+     * Uses allorigins.win as CORS proxy (works for most job sites).
+     * Falls back to corsproxy.io if allorigins fails.
+     * INPUT: triggered by clicking Import button
+     * OUTPUT: form fields populated with extracted data
+     */
+    async function importFromUrl() {
+      const url = document.getElementById('form-url').value.trim();
+      if (!url) {
+        showImportStatus('Please paste a job posting URL first', 'error');
+        return;
+      }
+
+      // Basic URL validation
+      try { new URL(url); } catch (e) {
+        showImportStatus('That doesn\'t look like a valid URL', 'error');
+        return;
+      }
+
+      showImportStatus('Fetching job posting...', 'loading');
+      importBtn.disabled = true;
+      importBtn.textContent = 'Importing...';
+
+      // Try multiple CORS proxies in order
+      const proxies = [
+        (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+        (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+        (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`
+      ];
+
+      let html = null;
+      for (const proxyFn of proxies) {
+        try {
+          const proxyUrl = proxyFn(url);
+          const response = await fetch(proxyUrl, {
+            signal: AbortSignal.timeout(10000)  // 10s timeout per proxy
+          });
+          if (response.ok) {
+            html = await response.text();
+            if (html && html.length > 500) break; // Got real content
+          }
+        } catch (e) {
+          // Try next proxy
+          continue;
+        }
+      }
+
+      importBtn.disabled = false;
+      importBtn.textContent = 'Import';
+
+      if (!html || html.length < 500) {
+        showImportStatus(
+          'Could not fetch the page (CORS blocked). Tip: open the job posting, press Ctrl+A then Ctrl+C, and paste into the Job Description field below.',
+          'info'
+        );
+        return;
+      }
+
+      // Convert HTML to plain text
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+
+      // Remove script, style, and hidden elements
+      doc.querySelectorAll('script, style, noscript, [hidden], [aria-hidden="true"]').forEach(el => el.remove());
+      const plainText = doc.body.innerText || doc.body.textContent || '';
+
+      if (plainText.length < 100) {
+        showImportStatus(
+          'Page fetched but couldn\'t extract text. The page may require JavaScript. Try pasting the page text manually below.',
+          'info'
+        );
+        return;
+      }
+
+      // Parse the extracted text
+      const parsed = parseJobPosting(plainText, url);
+
+      // Auto-fill form fields (only fill if we found a value and field is empty)
+      if (parsed.company) {
+        const companyField = document.getElementById('form-company');
+        if (!companyField.value) companyField.value = parsed.company;
+      }
+      if (parsed.title) {
+        const titleField = document.getElementById('form-title');
+        if (!titleField.value) titleField.value = parsed.title;
+      }
+      if (parsed.positioning) {
+        document.getElementById('form-positioning').value = parsed.positioning;
+      }
+      if (parsed.jdText) {
+        document.getElementById('form-jd').value = parsed.jdText;
+      }
+
+      // Store the salary in the JD if found (append to top)
+      if (parsed.salary) {
+        const jdField = document.getElementById('form-jd');
+        jdField.value = `Compensation: ${parsed.salary}\n\n${jdField.value}`;
+      }
+
+      // Store location in the JD if found (append to top)
+      if (parsed.location) {
+        const jdField = document.getElementById('form-jd');
+        jdField.value = `Location: ${parsed.location}\n${jdField.value}`;
+      }
+
+      const filledFields = [
+        parsed.company && 'company',
+        parsed.title && 'title',
+        parsed.location && 'location',
+        parsed.salary && 'salary',
+        parsed.jdText && 'JD'
+      ].filter(Boolean);
+
+      showImportStatus(
+        `Extracted ${filledFields.length} fields: ${filledFields.join(', ')}. Review and edit as needed.`,
+        'success'
+      );
+    }
+
+    /**
+     * Import button click handler
+     */
+    importBtn.addEventListener('click', importFromUrl);
+
+    /**
+     * Also trigger import when user presses Enter in the URL field
+     */
+    document.getElementById('form-url').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        importFromUrl();
+      }
+    });
+
     /**
      * Handles form submission when user clicks "Add Role"
      * INPUT: triggered by clicking the Add Role button
@@ -1894,6 +2569,7 @@
       document.getElementById('form-tier').value = 'active';
       document.getElementById('form-stage').value = 'discovered';
       document.getElementById('form-jd').value = '';
+      importStatus.style.display = 'none';
 
       addRoleModal.classList.remove('open');
       showToast(`Added "${title}" at ${company}`, 'success');
@@ -2148,6 +2824,341 @@
         }
       }, 4000);
     }
+
+    /* ================================================================
+       ROLE DETAIL PANEL: View and Edit Full Role Information
+       Slide-out panel that appears when user clicks a role card.
+       Supports inline editing of all fields, stage management with
+       history timeline, date editing, and role deletion.
+       ================================================================ */
+
+    const detailOverlay = document.getElementById('detail-overlay');
+    const detailPanel = document.getElementById('detail-panel');
+    const detailCloseBtn = document.getElementById('detail-close');
+    const detailCancelBtn = document.getElementById('detail-cancel');
+    const detailSaveBtn = document.getElementById('detail-save');
+    const detailDeleteBtn = document.getElementById('detail-delete');
+    let activeDetailRoleId = null;
+
+    /**
+     * Opens the detail panel for a given role
+     * INPUT: roleId = the role's unique ID string
+     * SIDE EFFECTS: populates panel with role data, slides panel open
+     */
+    function openRoleDetail(roleId) {
+      const roles = getRoles();
+      const role = roles.find(r => r.id === roleId);
+      if (!role) return;
+
+      activeDetailRoleId = roleId;
+      selectedCardId = roleId;
+      renderKanban();
+
+      // Populate header
+      document.getElementById('detail-company').textContent = role.company || '';
+      document.getElementById('detail-title').textContent = role.title || '';
+
+      // Build the body content
+      const body = document.getElementById('detail-body');
+      const dateAdded = role.dateAdded ? new Date(role.dateAdded).toISOString().split('T')[0] : '';
+      const lastActivity = role.lastActivity ? new Date(role.lastActivity).toISOString().split('T')[0] : '';
+
+      body.innerHTML = `
+        <!-- Core fields section -->
+        <div class="detail-section">
+          <div class="detail-section-title">Role Details</div>
+
+          <div class="detail-row">
+            <span class="detail-label">Company</span>
+            <div class="detail-value">
+              <input type="text" class="detail-input" id="detail-ed-company" value="${escapeHtml(role.company || '')}">
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Title</span>
+            <div class="detail-value">
+              <input type="text" class="detail-input" id="detail-ed-title" value="${escapeHtml(role.title || '')}">
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Positioning</span>
+            <div class="detail-value">
+              <select class="detail-select" id="detail-ed-positioning">
+                <option value="ic" ${role.positioning === 'ic' ? 'selected' : ''}>Individual Contributor</option>
+                <option value="management" ${role.positioning === 'management' ? 'selected' : ''}>Management</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Tier</span>
+            <div class="detail-value">
+              <select class="detail-select" id="detail-ed-tier">
+                <option value="hot" ${role.tier === 'hot' ? 'selected' : ''}>Hot</option>
+                <option value="active" ${role.tier === 'active' ? 'selected' : ''}>Active</option>
+                <option value="watching" ${role.tier === 'watching' ? 'selected' : ''}>Watching</option>
+                <option value="dormant" ${role.tier === 'dormant' ? 'selected' : ''}>Dormant</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">URL</span>
+            <div class="detail-value">
+              ${role.url ? `<a href="${escapeHtml(role.url)}" target="_blank" class="detail-url-link">${escapeHtml(role.url)}</a>` : '<span style="color: var(--text-tertiary); font-size: var(--text-xs);">No URL</span>'}
+              <input type="url" class="detail-input" id="detail-ed-url" value="${escapeHtml(role.url || '')}" placeholder="https://..." style="margin-top: var(--space-1);">
+            </div>
+          </div>
+        </div>
+
+        <!-- Dates section -->
+        <div class="detail-section">
+          <div class="detail-section-title">Dates</div>
+          <div class="detail-row">
+            <span class="detail-label">Added</span>
+            <div class="detail-value">
+              <input type="date" class="detail-input" id="detail-ed-dateAdded" value="${dateAdded}">
+            </div>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Last Activity</span>
+            <div class="detail-value">
+              <input type="date" class="detail-input" id="detail-ed-lastActivity" value="${lastActivity}">
+            </div>
+          </div>
+        </div>
+
+        <!-- Stage management section -->
+        <div class="detail-section">
+          <div class="detail-section-title">Stage</div>
+
+          <div class="stage-buttons" id="detail-stage-buttons">
+            ${STAGES.map(s => `
+              <button class="stage-btn ${s === role.stage ? 'active' : ''}" data-stage="${s}"
+                      style="${s === role.stage ? '' : `border-left: 3px solid ${STAGE_COLORS[s] || '#64748b'}`}">
+                ${s}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Stage history timeline -->
+        <div class="detail-section">
+          <div class="detail-section-title">Stage History</div>
+          <div class="stage-timeline" id="detail-stage-timeline">
+            ${buildStageTimeline(role)}
+          </div>
+        </div>
+
+        <!-- Job description section -->
+        <div class="detail-section">
+          <div class="detail-section-title">Job Description</div>
+          <textarea class="detail-jd-textarea" id="detail-ed-jd" placeholder="Paste or edit job description...">${escapeHtml(role.jdText || '')}</textarea>
+        </div>
+
+        <!-- Metadata -->
+        <div class="detail-meta">
+          ID: ${role.id}
+        </div>
+      `;
+
+      // Wire up stage buttons
+      document.querySelectorAll('#detail-stage-buttons .stage-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          // Update visual state
+          document.querySelectorAll('#detail-stage-buttons .stage-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+
+      // Wire up stage history date edits
+      document.querySelectorAll('.stage-history-date').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const idx = parseInt(e.target.dataset.historyIndex);
+          const roles = getRoles();
+          const r = roles.find(r => r.id === activeDetailRoleId);
+          if (r && r.stageHistory && r.stageHistory[idx]) {
+            r.stageHistory[idx].date = new Date(e.target.value).getTime();
+            saveRoles(roles);
+            showToast('Date updated', 'success');
+          }
+        });
+      });
+
+      // Open the panel
+      detailOverlay.classList.add('open');
+      detailPanel.classList.add('open');
+    }
+
+    /**
+     * Builds the stage history timeline HTML
+     * INPUT: role object with stageHistory array
+     * RETURNS: HTML string for the timeline
+     */
+    function buildStageTimeline(role) {
+      const history = role.stageHistory || [];
+      if (history.length === 0 && role.stage) {
+        // No history recorded yet — show at least the current stage with dateAdded
+        return `
+          <div class="stage-timeline-item current">
+            <span class="stage-timeline-stage">${role.stage}</span>
+            <span class="stage-timeline-date">
+              <input type="date" class="stage-history-date" data-history-index="-1"
+                     value="${role.dateAdded ? new Date(role.dateAdded).toISOString().split('T')[0] : ''}"
+                     title="Date entered this stage">
+              (current)
+            </span>
+          </div>
+        `;
+      }
+
+      let html = '';
+
+      // Show each historical stage with editable date
+      history.forEach((entry, idx) => {
+        const date = entry.date ? new Date(entry.date).toISOString().split('T')[0] : '';
+        html += `
+          <div class="stage-timeline-item">
+            <span class="stage-timeline-stage">${entry.stage}</span>
+            <span class="stage-timeline-date">
+              <input type="date" class="stage-history-date" data-history-index="${idx}"
+                     value="${date}" title="Edit date for this stage">
+            </span>
+          </div>
+        `;
+      });
+
+      // Current stage at the bottom
+      const currentDate = role.lastActivity ? new Date(role.lastActivity).toISOString().split('T')[0] : '';
+      html += `
+        <div class="stage-timeline-item current">
+          <span class="stage-timeline-stage">${role.stage}</span>
+          <span class="stage-timeline-date">
+            <input type="date" class="stage-history-date" data-history-index="-1"
+                   value="${currentDate}" title="Date entered current stage">
+            (current)
+          </span>
+        </div>
+      `;
+
+      return html;
+    }
+
+    /**
+     * Utility: escape HTML entities to prevent XSS
+     * INPUT: raw string
+     * RETURNS: escaped string safe for insertion into HTML
+     */
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    /**
+     * Closes the detail panel without saving
+     */
+    function closeRoleDetail() {
+      activeDetailRoleId = null;
+      selectedCardId = null;
+      detailOverlay.classList.remove('open');
+      detailPanel.classList.remove('open');
+      renderKanban();
+    }
+
+    /**
+     * Saves all edits from the detail panel back to localStorage
+     * Reads every field from the panel, compares with stored data,
+     * and applies changes via updateRole()
+     */
+    function saveRoleDetail() {
+      if (!activeDetailRoleId) return;
+
+      const roles = getRoles();
+      const role = roles.find(r => r.id === activeDetailRoleId);
+      if (!role) return;
+
+      // Gather edited values from the panel
+      const newCompany = document.getElementById('detail-ed-company').value.trim();
+      const newTitle = document.getElementById('detail-ed-title').value.trim();
+      const newPositioning = document.getElementById('detail-ed-positioning').value;
+      const newTier = document.getElementById('detail-ed-tier').value;
+      const newUrl = document.getElementById('detail-ed-url').value.trim();
+      const newJd = document.getElementById('detail-ed-jd').value;
+      const newDateAdded = document.getElementById('detail-ed-dateAdded').value;
+      const newLastActivity = document.getElementById('detail-ed-lastActivity').value;
+
+      // Figure out which stage button is active
+      const activeStageBtn = document.querySelector('#detail-stage-buttons .stage-btn.active');
+      const newStage = activeStageBtn ? activeStageBtn.dataset.stage : role.stage;
+
+      // Validate required fields
+      if (!newCompany || !newTitle) {
+        showToast('Company and title are required', 'error');
+        return;
+      }
+
+      // Build updates object — updateRole() handles stage history automatically
+      const updates = {
+        company: newCompany,
+        title: newTitle,
+        positioning: newPositioning,
+        tier: newTier,
+        url: newUrl,
+        jdText: newJd,
+        stage: newStage
+      };
+
+      // Handle date overrides
+      if (newDateAdded) {
+        updates.dateAdded = new Date(newDateAdded).getTime();
+      }
+      if (newLastActivity) {
+        updates.lastActivity = new Date(newLastActivity).getTime();
+      }
+
+      updateRole(activeDetailRoleId, updates);
+      showToast(`Updated "${newTitle}" at ${newCompany}`, 'success');
+      closeRoleDetail();
+      render();
+    }
+
+    /**
+     * Deletes the role after confirmation
+     */
+    function deleteRoleFromDetail() {
+      if (!activeDetailRoleId) return;
+      const roles = getRoles();
+      const role = roles.find(r => r.id === activeDetailRoleId);
+      if (!role) return;
+
+      if (!confirm(`Delete "${role.title}" at ${role.company}? This cannot be undone.`)) {
+        return;
+      }
+
+      deleteRole(activeDetailRoleId);
+      showToast(`Deleted "${role.title}"`, 'success');
+      closeRoleDetail();
+      render();
+    }
+
+    // Wire up detail panel buttons
+    detailCloseBtn.addEventListener('click', closeRoleDetail);
+    detailCancelBtn.addEventListener('click', closeRoleDetail);
+    detailSaveBtn.addEventListener('click', saveRoleDetail);
+    detailDeleteBtn.addEventListener('click', deleteRoleFromDetail);
+
+    // Close panel when clicking overlay
+    detailOverlay.addEventListener('click', closeRoleDetail);
+
+    // Escape key closes the detail panel
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && detailPanel.classList.contains('open')) {
+        closeRoleDetail();
+      }
+    });
 
     /* ================================================================
        APP INITIALIZATION: Start Everything Up

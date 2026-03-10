@@ -1774,19 +1774,107 @@
       document.getElementById('briefTitle').textContent = `${nc.name} — ${nr.title}`;
       document.getElementById('briefSubtitle').textContent = `${nr.targetLevel || nr.positioning} ${nr.positioning === 'management' ? 'Management' : 'IC'} Role`;
 
-      // Clear sections and show empty state
-      document.getElementById('sectionsArea').innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state-icon">📋</div>
-          <div class="empty-state-text">
-            <p>Ready to generate your research brief.</p>
-            <p style="font-size: var(--text-sm); margin-top: var(--space-2);">
-              Click "Generate Brief" to create a comprehensive 10-section interview prep document.
-            </p>
-          </div>
-        </div>
-      `;
+      // Check if any cached sections exist for this role
+      const companySlug = getCompanySlug(nc.name);
+      const hasCachedSections = getCachedSection(companySlug, nr.id, 1) !== null;
 
+      if (hasCachedSections) {
+        // Restore previously generated brief from cache
+        document.getElementById('sectionsArea').innerHTML = '';
+        restoreCachedBrief(companySlug, nr, nc);
+      } else {
+        // Show empty state — no previously generated brief found
+        document.getElementById('sectionsArea').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <div class="empty-state-text">
+              <p>Ready to generate your research brief.</p>
+              <p style="font-size: var(--text-sm); margin-top: var(--space-2);">
+                Click "Generate Brief" to create a comprehensive 10-section interview prep document.
+              </p>
+            </div>
+          </div>
+        `;
+      }
+
+      lucide.createIcons();
+    }
+
+    /**
+     * Restores a previously generated brief from localStorage cache.
+     * Iterates over all 10 section definitions, checks cache for each,
+     * and renders any found sections with their cached content.
+     * INPUT: companySlug (string), role (normalized), company (normalized)
+     * OUTPUT: populates the sections area with cached content
+     */
+    function restoreCachedBrief(companySlug, role, company) {
+      const sectionsArea = document.getElementById('sectionsArea');
+      sectionsArea.innerHTML = '';
+
+      SECTION_DEFINITIONS.forEach((sectionDef, index) => {
+        const sectionNum = sectionDef.num;
+        const cached = getCachedSection(companySlug, role.id, sectionNum);
+
+        if (!cached) return; // Skip sections that weren't cached
+
+        const section = document.createElement('div');
+        section.className = 'section';
+        section.id = `section-${sectionNum}`;
+        section.setAttribute('data-section-num', sectionNum);
+
+        // Section header
+        const header = document.createElement('div');
+        header.className = 'section-header';
+
+        const titleGroup = document.createElement('div');
+        titleGroup.className = 'section-title-group';
+
+        const badge = document.createElement('div');
+        badge.className = 'section-badge';
+        badge.textContent = sectionNum;
+        titleGroup.appendChild(badge);
+
+        const titleEl = document.createElement('h3');
+        titleEl.className = 'section-title';
+        titleEl.textContent = sectionDef.title;
+        titleGroup.appendChild(titleEl);
+
+        header.appendChild(titleGroup);
+
+        // Status group with Cached badge and refresh button
+        const statusGroup = document.createElement('div');
+        statusGroup.style.display = 'flex';
+        statusGroup.style.gap = 'var(--space-3)';
+        statusGroup.style.alignItems = 'center';
+
+        const statusEl = document.createElement('div');
+        statusEl.className = 'section-status';
+        statusEl.innerHTML = '<span class="badge">Cached</span> <span style="font-size: 11px; color: var(--text-tertiary);">' +
+          new Date(cached.timestamp).toLocaleDateString() + '</span>';
+        statusGroup.appendChild(statusEl);
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'section-actions';
+        const refreshBtn = document.createElement('button');
+        refreshBtn.textContent = 'Refresh';
+        refreshBtn.onclick = () => refreshSection(sectionNum);
+        actionsDiv.appendChild(refreshBtn);
+        statusGroup.appendChild(actionsDiv);
+
+        header.appendChild(statusGroup);
+        section.appendChild(header);
+
+        // Content area — populated from cache
+        const content = document.createElement('div');
+        content.className = 'section-content';
+        content.innerHTML = cached.content;
+        section.appendChild(content);
+
+        sectionsArea.appendChild(section);
+      });
+
+      // Update progress bar and table of contents
+      updateProgress();
       lucide.createIcons();
     }
 
