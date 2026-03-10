@@ -1346,6 +1346,9 @@
      * OUTPUT: populates browser memory with initial demo data
      */
     function initializeData() {
+      // In Personal mode, never seed demo data — the data-switcher handles it
+      if (localStorage.getItem('pf_data_mode') === 'personal') return;
+
       // Check if companies have been saved before
       if (!localStorage.getItem('pf_companies')) {
         // First run: prepare demo companies with logo URLs

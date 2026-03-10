@@ -1424,6 +1424,9 @@
          * Includes mix of linked, unlinked, phone screens, technical interviews, offer discussions.
          */
         function loadOrCreateDemoData() {
+            // In Personal mode, never seed demo data — the data-switcher handles it
+            if (localStorage.getItem('pf_data_mode') === 'personal') return;
+
             // Check if demo data already exists
             let calendarEvents = getStorageData('pf_calendar_events');
             if (!calendarEvents || calendarEvents.length === 0) {

@@ -853,6 +853,9 @@
      * Creates sample connections and messages for demonstration
      */
     function initializeDemoData() {
+      // In Personal mode, never seed demo data — the data-switcher handles it
+      if (localStorage.getItem('pf_data_mode') === 'personal') return;
+
       // Initialize companies from Pipeline module
       if (!localStorage.getItem('pf_companies')) {
         const demoCompanies = [

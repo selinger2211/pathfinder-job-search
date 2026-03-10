@@ -4,6 +4,16 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v1.3.3 — 2026-03-10
+
+### What Changed
+- **Personal mode fully fixed across all modules** — added `pf_data_mode` guard to 7 modules (Pipeline, Dashboard, Outreach, Calendar, Comp-Intel, Debrief, Research-Brief) so none of them seed demo data when in Personal mode. Root cause: Dashboard checked `roles.length > 0` (empty = re-seed), Calendar checked `roles.length === 0` (empty = re-seed), and navigating between modules would progressively overwrite personal data with demo companies
+- **Debrief role selector grouped by company** — roles now display in `<optgroup>` sections sorted by company name, making it easy to find a specific role. Added `getCompanyNameForRole()` helper to handle both Pipeline schema (`role.company` string) and Debrief demo schema (`role.companyId` lookup)
+- **Debrief company card fix** — sidebar company card now gracefully handles both data schemas with fallback for logo, domain, and name
+- **PRD updated** — bumped to v1.3.3
+
+---
+
 ## v1.3.2 — 2026-03-10
 
 ### What Changed

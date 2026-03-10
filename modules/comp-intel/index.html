@@ -995,6 +995,9 @@
     }
 
     function initializeData() {
+      // In Personal mode, skip demo fallbacks — use only real data
+      const isPersonal = localStorage.getItem('pf_data_mode') === 'personal';
+
       // Try to load from pipeline module
       const rolesJSON = localStorage.getItem('pf_roles');
       const companiesJSON = localStorage.getItem('pf_companies');
@@ -1008,16 +1011,21 @@
         // Merge auto-generated companies with any existing ones
         if (companiesJSON) {
           pipelineData.companies = { ...autoCompanies, ...JSON.parse(companiesJSON) };
-        } else {
+        } else if (!isPersonal) {
           pipelineData.companies = { ...createDemoCompanies(), ...autoCompanies };
+        } else {
+          pipelineData.companies = autoCompanies;
         }
-      } else {
+      } else if (!isPersonal) {
         pipelineData.roles = createDemoRoles();
         if (companiesJSON) {
           pipelineData.companies = JSON.parse(companiesJSON);
         } else {
           pipelineData.companies = createDemoCompanies();
         }
+      } else {
+        pipelineData.roles = [];
+        pipelineData.companies = companiesJSON ? JSON.parse(companiesJSON) : {};
       }
 
       if (prefsJSON) {

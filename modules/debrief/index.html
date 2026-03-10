@@ -1041,70 +1041,37 @@
      * Load demo data from localStorage or create defaults
      */
     function loadOrCreateDemoData() {
-      // Companies
-      appState.companies = JSON.parse(localStorage.getItem('pf_companies')) || [
-        {
-          id: 'acme',
-          name: 'Acme Corp',
-          domain: 'acme.com',
-          logo: 'A',
-          description: 'Leading SaaS platform'
-        },
-        {
-          id: 'techstart',
-          name: 'TechStart Inc',
-          domain: 'techstart.io',
-          logo: 'T',
-          description: 'AI/ML startup'
-        },
-        {
-          id: 'cloudly',
-          name: 'Cloudly',
-          domain: 'cloudly.dev',
-          logo: 'C',
-          description: 'Infrastructure company'
-        }
+      // In Personal mode, only use real data — no demo fallbacks
+      const isPersonal = localStorage.getItem('pf_data_mode') === 'personal';
+      const demoCompanies = [
+        { id: 'acme', name: 'Acme Corp', domain: 'acme.com', logo: 'A', description: 'Leading SaaS platform' },
+        { id: 'techstart', name: 'TechStart Inc', domain: 'techstart.io', logo: 'T', description: 'AI/ML startup' },
+        { id: 'cloudly', name: 'Cloudly', domain: 'cloudly.dev', logo: 'C', description: 'Infrastructure company' }
       ];
+
+      // Companies
+      appState.companies = JSON.parse(localStorage.getItem('pf_companies')) || (isPersonal ? [] : demoCompanies);
 
       // Roles
-      appState.roles = JSON.parse(localStorage.getItem('pf_roles')) || [
-        {
-          id: 'acme-senior-eng',
-          companyId: 'acme',
-          title: 'Senior Software Engineer',
-          stage: 'Round 2',
-          level: 'Senior',
-          description: 'Full-stack engineering role'
-        },
-        {
-          id: 'techstart-ml',
-          companyId: 'techstart',
-          title: 'ML Engineer',
-          stage: 'Round 1',
-          level: 'Mid',
-          description: 'Machine learning focus'
-        },
-        {
-          id: 'cloudly-arch',
-          companyId: 'cloudly',
-          title: 'Solutions Architect',
-          stage: 'Round 3',
-          level: 'Senior',
-          description: 'Customer-facing architecture'
-        }
+      const demoRoles = [
+        { id: 'acme-senior-eng', companyId: 'acme', title: 'Senior Software Engineer', stage: 'Round 2', level: 'Senior', description: 'Full-stack engineering role' },
+        { id: 'techstart-ml', companyId: 'techstart', title: 'ML Engineer', stage: 'Round 1', level: 'Mid', description: 'Machine learning focus' },
+        { id: 'cloudly-arch', companyId: 'cloudly', title: 'Solutions Architect', stage: 'Round 3', level: 'Senior', description: 'Customer-facing architecture' }
       ];
+      appState.roles = JSON.parse(localStorage.getItem('pf_roles')) || (isPersonal ? [] : demoRoles);
 
       // Story Bank
-      appState.storyBank = JSON.parse(localStorage.getItem('pf_story_bank')) || [
+      const demoStories = [
         { id: 'story-1', title: 'Led migration project', category: 'leadership' },
         { id: 'story-2', title: 'Fixed critical production bug', category: 'problem-solving' },
         { id: 'story-3', title: 'Mentored junior engineer', category: 'leadership' },
         { id: 'story-4', title: 'Optimized database query', category: 'technical' },
         { id: 'story-5', title: 'Improved team process', category: 'collaboration' }
       ];
+      appState.storyBank = JSON.parse(localStorage.getItem('pf_story_bank')) || (isPersonal ? [] : demoStories);
 
       // Demo debriefs
-      if (!localStorage.getItem('pf_debriefs')) {
+      if (!localStorage.getItem('pf_debriefs') && !isPersonal) {
         const demoDebriefs = [
           {
             id: 'debrief-1',
@@ -1216,7 +1183,15 @@
      * Get company by ID
      */
     function getCompany(id) {
-      return appState.companies.find(c => c.id === id);
+      // Support both companyId (demo data) and company name (Pipeline data)
+      return appState.companies.find(c => c.id === id || c.name === id);
+    }
+
+    /** Helper: get the company name for a role, handling both data schemas */
+    function getCompanyNameForRole(role) {
+      if (role.company) return role.company; // Pipeline schema uses name string
+      const co = getCompany(role.companyId);
+      return co ? co.name : 'Unknown';
     }
 
     /**
@@ -1249,11 +1224,26 @@
     function renderRoleSelector() {
       const select = document.getElementById('roleSelect');
       select.innerHTML = '<option value="">Select a role...</option>';
+
+      // Group roles by company for easier browsing
+      const grouped = {};
       appState.roles.forEach(role => {
-        const option = document.createElement('option');
-        option.value = role.id;
-        option.textContent = `${role.title} (${getCompany(role.companyId)?.name})`;
-        select.appendChild(option);
+        const companyName = getCompanyNameForRole(role);
+        if (!grouped[companyName]) grouped[companyName] = [];
+        grouped[companyName].push(role);
+      });
+
+      // Sort companies alphabetically, then render optgroups
+      Object.keys(grouped).sort().forEach(companyName => {
+        const group = document.createElement('optgroup');
+        group.label = companyName;
+        grouped[companyName].forEach(role => {
+          const option = document.createElement('option');
+          option.value = role.id;
+          option.textContent = role.title;
+          group.appendChild(option);
+        });
+        select.appendChild(group);
       });
     }
 
@@ -1268,17 +1258,20 @@
       }
 
       const role = getRole(appState.currentRole);
-      const company = getCompany(role.companyId);
+      const company = getCompany(role.companyId) || getCompany(role.company);
+      const companyName = company ? company.name : getCompanyNameForRole(role);
+      const companyDomain = company ? company.domain : '';
+      const companyLogo = company?.logo || companyName.charAt(0);
 
       container.innerHTML = `
         <div class="sidebar-card">
           <div class="sidebar-label">Company</div>
           <div class="company-card">
             <div class="company-header">
-              <div class="company-logo">${company.logo}</div>
+              <div class="company-logo">${companyLogo}</div>
               <div class="company-info">
-                <div class="company-name">${company.name}</div>
-                <div class="company-domain">${company.domain}</div>
+                <div class="company-name">${companyName}</div>
+                ${companyDomain ? `<div class="company-domain">${companyDomain}</div>` : ''}
               </div>
             </div>
           </div>
