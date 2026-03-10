@@ -1161,6 +1161,65 @@
     // The content is parameterized so it's not just lorem ipsum
 
     /**
+     * Extracts the real company domain from an ATS URL or company name.
+     * ATS platforms (Workday, Greenhouse, Lever, Ashby) embed company
+     * names in their URLs — we parse those to get the real domain.
+     * INPUT: companyName (string), url (string, optional) — the job posting URL
+     * RETURNS: clean domain string like "yahoo.com" or "liveramp.com"
+     */
+    function getCompanyDomain(companyName, url) {
+      if (url) {
+        try {
+          const hostname = new URL(url).hostname.toLowerCase();
+          // Workday: ouryahoo.wd5.myworkdayjobs.com → yahoo
+          if (hostname.includes('myworkdayjobs.com')) {
+            const sub = hostname.split('.')[0];             // e.g. "ouryahoo"
+            const cleaned = sub.replace(/^(our|jobs|careers|work)/, '');
+            return cleaned + '.com';
+          }
+          // Greenhouse: boards.greenhouse.io/companyname → companyname.com
+          if (hostname.includes('greenhouse.io') && url.includes('/')) {
+            const parts = new URL(url).pathname.split('/').filter(Boolean);
+            if (parts.length > 0) return parts[0] + '.com';
+          }
+          // Lever: jobs.lever.co/companyname → companyname.com
+          if (hostname.includes('lever.co') && url.includes('/')) {
+            const parts = new URL(url).pathname.split('/').filter(Boolean);
+            if (parts.length > 0) return parts[0] + '.com';
+          }
+          // Ashby: jobs.ashbyhq.com/companyname → companyname.com
+          if (hostname.includes('ashbyhq.com') && url.includes('/')) {
+            const parts = new URL(url).pathname.split('/').filter(Boolean);
+            if (parts.length > 0) return parts[0] + '.com';
+          }
+          // LinkedIn job postings — fall through to company name
+          if (hostname.includes('linkedin.com')) {
+            // Can't extract company domain from LinkedIn URLs reliably
+          }
+          // If it's a direct company career site, use the hostname
+          if (!hostname.includes('greenhouse') && !hostname.includes('lever') &&
+              !hostname.includes('ashby') && !hostname.includes('linkedin') &&
+              !hostname.includes('workday')) {
+            return hostname.replace(/^(www|jobs|careers|boards)\./, '');
+          }
+        } catch (e) { /* URL parse failed, fall through */ }
+      }
+      // Fallback: derive domain from company name (lowercase, remove spaces)
+      return companyName.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com';
+    }
+
+    /**
+     * Returns a Clearbit logo URL for the given company.
+     * Uses ATS-aware domain extraction for accurate logos.
+     */
+    function getCompanyLogoUrl(companyName, url) {
+      const domain = getCompanyDomain(companyName, url);
+      // Google Favicons is the most reliable free logo API
+      // sz=128 requests high-res (actual max varies by site, typically 48–128px)
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+    }
+
+    /**
      * Fill in safe defaults for any missing company fields.
      * Personal-mode companies from migration only have basic fields
      * (name, domain, tier, missionStatement, logoUrl, contactCount).
@@ -1756,9 +1815,13 @@
       document.getElementById('companyDomain').textContent = nc.domain;
       document.getElementById('companyStage').textContent = nc.fundingStage;
       document.getElementById('companyHeadcount').textContent = nc.headcount;
-      document.getElementById('companyLogo').src = `https://logo.clearbit.com/${company.domain}`;
+      // Use ATS-aware domain extraction for accurate company logos
+      document.getElementById('companyLogo').src = getCompanyLogoUrl(role.company, role.url);
       document.getElementById('companyLogo').onerror = function() {
         this.style.display = 'none';
+      };
+      document.getElementById('companyLogo').onload = function() {
+        this.style.display = 'block';
       };
 
       // Populate role details

@@ -4,6 +4,19 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v1.3.9 — 2026-03-10
+
+### What Changed
+- **Company logos on Pipeline cards** — Every role card now shows the company's favicon next to the company name. Uses Google Favicons API (`google.com/s2/favicons?domain=...&sz=128`) instead of Clearbit (which was failing). Added `getCompanyDomain()` helper that parses ATS URLs (Workday `ouryahoo.wd5.myworkdayjobs.com` → `yahoo.com`, Greenhouse, Lever, Ashby, LinkedIn) to extract real company domains
+- **Company logo in Pipeline detail panel header** — Detail slide-out now shows the company logo next to company name and role title
+- **Company logo in Research Brief sidebar** — Same ATS-aware domain extraction added to Research Brief. Sidebar company card now displays accurate logos
+- **Connections section in Pipeline detail panel** — Full connection list with avatar initials, name, title, relationship badge, and LinkedIn profile links (blue "in" icon). Connections stored in `pf_connections` localStorage and counted per-company. "Add Connection" form with name, title, LinkedIn URL, relationship type, and notes
+- **Inbound outreach tracking** — New collapsible "Add Contact / Inbound Outreach" section in Add Role modal. Captures contact name, title, email, LinkedIn URL, source (LinkedIn InMail/Email/Referral/Recruiter/Networking/Other), relationship (New/1st/2nd/Recruiter/Referral), and outreach context. Role title is now optional — leaving it blank creates an "Exploratory" role with an "Inbound" badge. Auto-creates a `pf_connections` record when contact info is provided. Auto-sets stage to "outreach" for exploratory roles with a contact
+- **Outreach context in detail panel** — Exploratory roles and roles with `knownContext` show an "Outreach Context" section displaying all logged context entries (date, author, content) with a "Log Context" form for adding follow-up notes, call summaries, etc. New `addContextToRole()` function appends to the role's `knownContext[]` array
+- **PRD updated** — bumped to v1.3.9
+
+---
+
 ## v1.3.8 — 2026-03-10
 
 ### What Changed

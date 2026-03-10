@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v1.3.8
+**Status:** v1.3.9
 
 ---
 
@@ -2498,6 +2498,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v1.3.9 | 2026-03-10 | Pipeline: company logos (Google Favicons, ATS-aware domain extraction), connections section with LinkedIn links, inbound outreach tracking (optional title, contact capture, outreach context logging). Research Brief: company logos in sidebar |
 | v1.3.8 | 2026-03-10 | Research Brief v2 overhaul (13 sections, MCP generation, standalone PRD), Opaque Recruiter Outreach (unknown company/role/both with reveal flow), Research Brief degraded mode for partial-info roles |
 | v1.3.7 | 2026-03-10 | Citations & Source Tracking PRD redesign — MCP-server-centric architecture (citations as artifact type, 3 new MCP tools), Source Ledger centralized roll-up view, inline citations in context (Research Brief, Pipeline detail, Outreach) |
 | v1.3.6 | 2026-03-10 | Pipeline: role detail/edit slide-out panel (full CRUD, stage history timeline, date editing, delete), URL import for Add New Role (CORS proxy chain), Research Brief persistence (auto-restore cached briefs on page load) |
