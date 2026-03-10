@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v1.1
+**Status:** v1.3.1
 
 ---
 
@@ -2232,5 +2232,13 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
-| v1.1 | 2026-03-09 | Pipeline Tracker built, design system CSS created, README + CHANGELOG added, code documentation pass |
-| v1.0 | 2026-03-09 | Initial PRD completed — all 11 agents specified, data schemas, design system spec, repo scaffolded |
+| v1.3.1 | 2026-03-10 | Data migration from Contact-Outreach.xlsx, Demo/Personal toggle, full 10-module nav, narrower Kanban columns |
+| v1.3.0 | 2026-03-09 | Calendar Integration Agent + Artifacts MCP Server built — all 11 modules complete |
+| v1.2.5 | 2026-03-09 | Mock Interview, Debrief, and Comp Intelligence agents built |
+| v1.2.4 | 2026-03-09 | Outreach Message Generator built — 8 message types, 3 tones, sequence tracker |
+| v1.2.3 | 2026-03-09 | Job Feed Listener built — preference profile, scoring engine, feed review cards |
+| v1.2.2 | 2026-03-09 | Dashboard & Launcher built — greeting + streak, nudge engine, pipeline stats, quick actions, module nav |
+| v1.2.1 | 2026-03-09 | Research Brief Agent built — 10-section streaming brief, per-section caching, floating TOC, export/print |
+| v1.2.0 | 2026-03-09 | Resume Tailor built — two-phase workflow (JD analysis + resume builder), bullet bank, version log, live preview |
+| v1.1.0 | 2026-03-09 | Pipeline Tracker built, design system CSS created, README + CHANGELOG added, code documentation pass |
+| v1.0.0 | 2026-03-09 | Initial PRD completed — all 11 agents specified, data schemas, design system spec, repo scaffolded |
