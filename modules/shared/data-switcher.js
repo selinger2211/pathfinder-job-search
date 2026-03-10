@@ -82,6 +82,11 @@
       localStorage.setItem('pf_connections', JSON.stringify(connections));
       localStorage.setItem('pf_companies', JSON.stringify(companies));
 
+      // Set empty pf_roles so modules don't re-seed demo data.
+      // The user adds real roles via the Pipeline "New Role" button,
+      // and their personal companies will appear in the dropdown.
+      localStorage.setItem('pf_roles', JSON.stringify([]));
+
       return { connections: connections.length, companies: companies.length };
     } catch (err) {
       console.error('[DataSwitcher]', err.message);
