@@ -1,0 +1,14 @@
+# Personal documents (resumes, contacts, takeaways)
+docs/*.xlsx
+docs/*.docx
+docs/*.pdf
+!docs/resume_customization_agent_spec.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~

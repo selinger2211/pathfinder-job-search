@@ -1,0 +1,2144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pathfinder — Pipeline</title>
+  <meta name="description" content="Job search pipeline tracker and kanban board">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>P</text></svg>">
+
+  <link rel="stylesheet" href="../shared/pathfinder.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* ================================================================
+       PIPELINE-SPECIFIC STYLES
+       These styles apply only to the Pipeline page and customize the
+       appearance of the kanban board, cards, tables, and modal dialogs.
+       ================================================================ */
+
+    /* Page header: contains the page title at the top */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-6);
+      margin-bottom: var(--space-4);
+    }
+
+    /* Page title styling for the "Pipeline" heading */
+    .page-title {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    /* Toolbar: the row with search, filters, and action buttons */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-6);
+      margin-bottom: var(--space-6);
+      flex-wrap: wrap;
+    }
+
+    /* Search box container with search icon */
+    .toolbar-search {
+      flex: 1;
+      min-width: 240px;
+      max-width: 320px;
+      position: relative;
+    }
+
+    /* Search input styling */
+    .toolbar-search input {
+      width: 100%;
+      padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+    }
+
+    /* Focus state for search input: highlights when user clicks in it */
+    .toolbar-search input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+
+    /* Search icon positioned inside the search box */
+    .toolbar-search svg {
+      position: absolute;
+      right: var(--space-3);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--text-tertiary);
+      pointer-events: none;
+    }
+
+    /* Container for buttons and filters on the right side of toolbar */
+    .toolbar-controls {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    /* Generic toolbar button styling: used for view toggle, add role, etc. */
+    .toolbar-button {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-elevated);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    /* Hover state: buttons become darker and more prominent */
+    .toolbar-button:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    /* Active state: button appears highlighted/pressed */
+    .toolbar-button.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Filter tags display area */
+    .toolbar-filter {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    /* Individual filter chip/tag (e.g., "Hot" tier badge) */
+    .filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-1) var(--space-2);
+      background: var(--accent-subtle);
+      color: var(--accent);
+      border-radius: var(--radius-pill);
+      font-size: var(--text-xs);
+      font-weight: 500;
+    }
+
+    /* X button to remove a filter chip */
+    .filter-chip-remove {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+    }
+
+    /* ================================================================
+       KANBAN BOARD STYLES
+       The kanban board displays jobs organized by stage (discovered,
+       researching, applied, interviewing, etc.) in vertical columns.
+       ================================================================ */
+
+    /* Main kanban board container: allows horizontal scrolling */
+    .kanban {
+      display: flex;
+      gap: var(--space-4);
+      padding: 0 var(--space-6);
+      overflow-x: auto;
+      overflow-y: hidden;
+      min-height: calc(100vh - var(--nav-height) - 200px);
+      padding-bottom: var(--space-8);
+    }
+
+    /* Individual kanban column (e.g., "Researching" column) */
+    .kanban-column {
+      flex: 0 0 280px;
+      min-width: 280px;
+      display: flex;
+      flex-direction: column;
+      height: fit-content;
+      max-height: calc(100vh - var(--nav-height) - 200px);
+    }
+
+    /* Header of a kanban column: shows the stage name and count */
+    .kanban-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-3) var(--space-2);
+      margin-bottom: var(--space-3);
+    }
+
+    /* Stage name (e.g., "Researching", "Interviewing") */
+    .kanban-header h3 {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      flex: 1;
+    }
+
+    /* Colored bar next to stage name showing which stage it is */
+    .kanban-header-indicator {
+      width: 3px;
+      height: 20px;
+      border-radius: 2px;
+      margin-right: var(--space-1);
+    }
+
+    /* Small badge showing how many jobs are in this column */
+    .kanban-count {
+      font-size: var(--text-xs);
+      font-family: var(--font-mono);
+      color: var(--text-tertiary);
+      background: var(--bg-elevated);
+      padding: 1px 6px;
+      border-radius: var(--radius-pill);
+    }
+
+    /* Container for the job cards inside a column */
+    .kanban-cards {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      flex: 1;
+      min-height: 100px;
+    }
+
+    /* Hide cards when column is collapsed */
+    .kanban-column.collapsed .kanban-cards {
+      display: none;
+    }
+
+    /* Button to expand/collapse the "Closed" column */
+    .kanban-column-toggle {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      width: 20px;
+      height: 20px;
+      color: var(--text-tertiary);
+    }
+
+    .kanban-column-toggle:hover {
+      color: var(--text-secondary);
+    }
+
+    /* ================================================================
+       JOB CARD STYLES (displayed in kanban columns)
+       Each job is shown as a draggable card with company, title, and badges.
+       ================================================================ */
+
+    /* Individual job card */
+    .role-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      border-left: 3px solid transparent;
+      padding: var(--space-3);
+      cursor: grab;
+      transition: all var(--duration-fast) var(--ease-default);
+      box-shadow: var(--shadow-sm);
+      user-select: none;
+    }
+
+    /* Cursor changes to "grabbing" when dragging a card */
+    .role-card:active {
+      cursor: grabbing;
+    }
+
+    /* Hover effect: card lifts up and shows more shadow */
+    .role-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    /* Selected card shows an accent-colored border */
+    .role-card.selected {
+      border-left-color: var(--accent);
+      box-shadow: var(--shadow-glow);
+    }
+
+    /* Semi-transparent while being dragged across columns */
+    .role-card.dragging {
+      opacity: 0.5;
+    }
+
+    /* Company section at top of card */
+    .role-card-company {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-bottom: var(--space-2);
+    }
+
+    /* Company logo in the card */
+    .role-card-logo {
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    /* Company name text in card */
+    .role-card-company-name {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    /* Job title text on the card */
+    .role-card-title {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+      line-height: 1.4;
+    }
+
+    /* Container for badges (e.g., "Hot", "IC") */
+    .role-card-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-1);
+      margin-bottom: var(--space-2);
+    }
+
+    /* Bottom section of card with days in stage and connection count */
+    .role-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      padding-top: var(--space-2);
+      border-top: 1px solid var(--bg-subtle);
+    }
+
+    /* Number of days a job has been in its current stage */
+    .role-card-days {
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* Connection count section (number of contacts at that company) */
+    .role-card-connections {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    /* ================================================================
+       TABLE VIEW STYLES
+       Alternative view showing jobs in a sortable table format.
+       ================================================================ */
+
+    /* Wrapper around the table */
+    .table-wrapper {
+      padding: 0 var(--space-6);
+      margin-bottom: var(--space-8);
+      overflow-x: auto;
+    }
+
+    /* Main table element */
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--text-sm);
+    }
+
+    /* Table header (the column names row) stays visible when scrolling */
+    .table thead {
+      position: sticky;
+      top: var(--nav-height);
+      background: var(--bg-base);
+      z-index: 10;
+    }
+
+    /* Column headers are clickable to sort */
+    .table th {
+      padding: var(--space-3);
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: var(--text-xs);
+      border-bottom: 1px solid var(--bg-subtle);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* Header hover effect */
+    .table th:hover {
+      background: var(--bg-surface);
+    }
+
+    /* Indicator showing column can be sorted */
+    .table th.sortable::after {
+      content: ' ↕';
+      opacity: 0.4;
+      font-size: 0.8em;
+    }
+
+    /* Up arrow shows column is sorted ascending */
+    .table th.sorted-asc::after {
+      content: ' ↑';
+      opacity: 1;
+    }
+
+    /* Down arrow shows column is sorted descending */
+    .table th.sorted-desc::after {
+      content: ' ↓';
+      opacity: 1;
+    }
+
+    /* Table data cells */
+    .table td {
+      padding: var(--space-3);
+      border-bottom: 1px solid var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    /* Row highlight on hover */
+    .table tbody tr:hover td {
+      background: var(--bg-surface);
+    }
+
+    /* Company column content with logo */
+    .table-company {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    /* Company logo in table */
+    .table-company-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    /* Company info container in table */
+    .table-company-info {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    /* Company name in table */
+    .table-company-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Role title in company info */
+    .table-role-title {
+      color: var(--text-secondary);
+    }
+
+    /* Badges container in table */
+    .table-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-1);
+    }
+
+    /* ================================================================
+       MODAL DIALOG STYLES
+       The "Add New Role" popup form appears when user clicks "New Role".
+       ================================================================ */
+
+    /* Semi-transparent overlay behind the modal (darkens the page) */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration-normal) var(--ease-default);
+    }
+
+    /* Modal overlay becomes visible when opened */
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* The white box that appears in the center of the screen */
+    .modal {
+      background: var(--bg-elevated);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 90%;
+      max-width: 560px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: var(--space-6);
+      transform: translateY(8px);
+      transition: transform var(--duration-enter) var(--ease-default);
+    }
+
+    /* Smooth animation as modal opens */
+    .modal-overlay.open .modal {
+      transform: translateY(0);
+    }
+
+    /* Modal header: title and close button */
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-5);
+    }
+
+    /* Modal title text */
+    .modal-title {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* Close button (X) styling */
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: var(--space-1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    /* Container for form fields inside the modal */
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    /* Footer with Cancel and Add buttons */
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--space-3);
+      margin-top: var(--space-6);
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--bg-subtle);
+    }
+
+    /* ================================================================
+       FORM ELEMENTS
+       Styling for inputs, selects, and textareas in the modal.
+       ================================================================ */
+
+    /* Container for each form field (label + input) */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    /* Form field labels (e.g., "Company Name") */
+    .form-label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Text inputs, dropdowns, and textareas */
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-sm);
+      transition: border-color var(--duration-fast) var(--ease-default);
+    }
+
+    /* Focus state: highlights the active input field */
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+
+    /* Textarea can be resized by user, starts at 100px tall */
+    .form-textarea {
+      resize: vertical;
+      min-height: 100px;
+      font-family: var(--font-sans);
+    }
+
+    /* Dropdown select styling with custom arrow icon */
+    .form-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      padding-right: 28px;
+    }
+
+    /* ================================================================
+       COMPANY LOOKUP DROPDOWN
+       Shows suggested companies as user types in the Company Name field.
+       ================================================================ */
+
+    /* Container for dropdown list of company suggestions */
+    .company-lookup {
+      padding: var(--space-2);
+      background: var(--bg-base);
+      border-radius: var(--radius-sm);
+      margin-top: var(--space-1);
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+    }
+
+    /* Individual item in the company lookup list */
+    .company-lookup-item {
+      padding: var(--space-1);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: background var(--duration-fast) var(--ease-default);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    /* Hover effect for company suggestions */
+    .company-lookup-item:hover {
+      background: var(--bg-elevated);
+    }
+
+    /* Company logo in the lookup dropdown */
+    .company-lookup-logo {
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    /* ================================================================
+       TOAST NOTIFICATIONS
+       Small popup messages that appear in the bottom-right corner.
+       ================================================================ */
+
+    /* Container holding all toast notifications */
+    .toast-container {
+      position: fixed;
+      bottom: var(--space-6);
+      right: var(--space-6);
+      z-index: 300;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    /* Individual toast notification message */
+    .toast {
+      background: var(--bg-elevated);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      padding: var(--space-3) var(--space-4);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      font-size: var(--text-sm);
+      min-width: 280px;
+      max-width: 400px;
+      border-left: 3px solid var(--info);
+      animation: toast-in var(--duration-enter) var(--ease-default);
+    }
+
+    /* Success notification: green border */
+    .toast-success {
+      border-left-color: var(--success);
+    }
+
+    /* Error notification: red border */
+    .toast-error {
+      border-left-color: var(--danger);
+    }
+
+    /* Toast animation: slides in from bottom and fades in */
+    @keyframes toast-in {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ================================================================
+       COMMAND PALETTE STYLES
+       The search overlay that appears when user presses Cmd/Ctrl+K.
+       ================================================================ */
+
+    /* Semi-transparent overlay behind command palette */
+    .cmd-palette {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 20vh;
+      z-index: 250;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 150ms var(--ease-default);
+    }
+
+    /* Command palette becomes visible when opened */
+    .cmd-palette.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* The search box and results container */
+    .cmd-palette-box {
+      background: var(--bg-elevated);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 90%;
+      max-width: 480px;
+      overflow: hidden;
+    }
+
+    /* Search input in command palette */
+    .cmd-palette-input {
+      width: 100%;
+      padding: var(--space-4);
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--bg-subtle);
+      color: var(--text-primary);
+      font-size: var(--text-base);
+    }
+
+    .cmd-palette-input:focus {
+      outline: none;
+    }
+
+    /* Results list container */
+    .cmd-palette-results {
+      max-height: 320px;
+      overflow-y: auto;
+      padding: var(--space-2);
+    }
+
+    /* Individual result item in command palette */
+    .cmd-palette-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    /* Hover and selected state for command palette items */
+    .cmd-palette-item:hover,
+    .cmd-palette-item.selected {
+      background: var(--accent-subtle);
+      color: var(--text-primary);
+    }
+
+    /* Type label showing if result is a "role" or "company" */
+    .cmd-palette-item-type {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      margin-left: auto;
+    }
+
+    /* ================================================================
+       EMPTY STATE
+       Message shown when a column has no jobs.
+       ================================================================ */
+
+    /* Empty column state */
+    .empty-column {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: var(--space-6);
+      color: var(--text-tertiary);
+      font-size: var(--text-xs);
+      min-height: 200px;
+    }
+
+    /* ================================================================
+       VIEW TOGGLE: Show/Hide Based on Active View
+       ================================================================ */
+
+    /* Hide table when kanban view is active */
+    .kanban-view .table-wrapper {
+      display: none;
+    }
+
+    /* Hide kanban when table view is active */
+    .table-view .kanban {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Section: Navigation -->
+  <nav class="nav">
+    <div class="nav-brand">Path<span>finder</span></div>
+    <ul class="nav-links">
+      <li><a href="#dashboard">Dashboard</a></li>
+      <li><a href="#pipeline" class="active">Pipeline</a></li>
+      <li><a href="#research">Research</a></li>
+      <li><a href="#resume">Resume</a></li>
+      <li><a href="#mock-interview">Mock Interview</a></li>
+    </ul>
+    <div class="nav-right">
+      <button id="theme-toggle" class="btn btn-icon btn-ghost" title="Toggle theme" aria-label="Toggle between dark and light theme">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+      <span class="nav-kbd">⌘K</span>
+    </div>
+  </nav>
+
+  <!-- Section: Page Header and Main Content -->
+  <div class="page">
+    <div class="page-header">
+      <h1 class="page-title">Pipeline</h1>
+    </div>
+
+    <!-- Section: Toolbar (search, filters, view toggle) -->
+    <div class="toolbar">
+      <div class="toolbar-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input type="text" id="search-input" placeholder="Search roles..." aria-label="Search for roles by company name or job title">
+      </div>
+
+      <div class="toolbar-filter" id="filters">
+      </div>
+
+      <div class="toolbar-controls">
+        <select id="tier-filter" class="toolbar-button" aria-label="Filter jobs by tier: Hot, Active, Watching, or Dormant">
+          <option value="">All Tiers</option>
+          <option value="hot">Hot</option>
+          <option value="active">Active</option>
+          <option value="watching">Watching</option>
+          <option value="dormant">Dormant</option>
+        </select>
+
+        <button id="view-toggle" class="toolbar-button" title="Toggle between kanban and table view" aria-label="Switch between kanban board and table view">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 6h12M8 12h12M8 18h12M3 6h.01M3 12h.01M3 18h.01"/>
+          </svg>
+          <span>Kanban</span>
+        </button>
+
+        <button id="add-role-btn" class="toolbar-button" style="background: var(--accent); color: white;" aria-label="Open dialog to add a new job role">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>New Role</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Section: Kanban Board View -->
+    <div class="kanban kanban-view" id="kanban">
+    </div>
+
+    <!-- Section: Table View -->
+    <div class="table-view" style="display: none;">
+      <div class="table-wrapper">
+        <table class="table" id="roles-table">
+          <thead>
+            <tr>
+              <th class="sortable" data-sort="company">Company</th>
+              <th class="sortable" data-sort="title">Role Title</th>
+              <th class="sortable" data-sort="positioning">Type</th>
+              <th class="sortable" data-sort="stage">Stage</th>
+              <th class="sortable" data-sort="tier">Tier</th>
+              <th class="sortable" data-sort="days">Days</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Add Role Modal Dialog -->
+  <div class="modal-overlay" id="add-role-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Add New Role</h2>
+        <button class="modal-close" id="modal-close" aria-label="Close dialog">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Company Name</label>
+          <input type="text" id="form-company" class="form-input" placeholder="e.g., Stripe" aria-label="Enter company name - suggestions will appear">
+          <div class="company-lookup" id="company-lookup" style="display: none;"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Role Title</label>
+          <input type="text" id="form-title" class="form-input" placeholder="e.g., Senior Product Manager" aria-label="Enter the job title">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Job Description URL</label>
+          <input type="url" id="form-url" class="form-input" placeholder="https://..." aria-label="Enter the URL to the job posting">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+          <div class="form-group">
+            <label class="form-label">Positioning</label>
+            <select id="form-positioning" class="form-select" aria-label="Is this an individual contributor or management role">
+              <option value="ic">Individual Contributor</option>
+              <option value="management">Management</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Tier</label>
+            <select id="form-tier" class="form-select" aria-label="How interested are you in this role: Hot, Active, Watching, or Dormant">
+              <option value="hot">Hot</option>
+              <option value="active">Active</option>
+              <option value="watching">Watching</option>
+              <option value="dormant">Dormant</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Current Stage</label>
+          <select id="form-stage" class="form-select" aria-label="What stage is this job search in: Discovered, Researching, Outreach, Applied, Screen, Interviewing, Offer, or Closed">
+            <option value="discovered">Discovered</option>
+            <option value="researching">Researching</option>
+            <option value="outreach">Outreach</option>
+            <option value="applied">Applied</option>
+            <option value="screen">Screen</option>
+            <option value="interviewing">Interviewing</option>
+            <option value="offer">Offer</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Job Description</label>
+          <textarea id="form-jd" class="form-textarea" placeholder="Paste the job description here..." aria-label="Paste the full job description text"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="modal-cancel" class="btn btn-secondary" aria-label="Cancel and close this dialog without saving">Cancel</button>
+        <button id="modal-submit" class="btn btn-primary" aria-label="Save this new role to your pipeline">Add Role</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Command Palette (search with keyboard shortcut) -->
+  <div class="cmd-palette" id="cmd-palette">
+    <div class="cmd-palette-box">
+      <input type="text" class="cmd-palette-input" id="cmd-input" placeholder="Search companies and roles..." aria-label="Search for companies and roles - press Escape to close">
+      <div class="cmd-palette-results" id="cmd-results"></div>
+    </div>
+  </div>
+
+  <!-- Section: Toast Notifications -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    /* ================================================================
+       PATHFINDER PIPELINE TRACKER
+       This is a single-page application that helps you track job opportunities.
+
+       HOW IT WORKS (in plain English):
+       1. All your job data is saved in your browser's memory (localStorage)
+         - This means your data stays on your computer and isn't sent anywhere
+       2. When you add a job, it's stored locally with all its details
+       3. Jobs are organized into columns based on their stage
+         (e.g., "Researching", "Applied", "Interviewing")
+       4. You can drag jobs between columns to move them along your pipeline
+       5. The system remembers your view preference (kanban vs table) and theme
+
+       KEY COMPONENTS:
+       - Data Layer: Functions that save/load jobs from browser memory
+       - UI Rendering: Creates the kanban board and table views
+       - Event Handlers: Responds to clicks, drags, and keyboard shortcuts
+       - Modal: The popup form for adding new jobs
+       - Command Palette: Quick search accessible with Cmd/Ctrl+K
+       ================================================================ */
+
+    /* Job stages in the order they appear on the kanban board */
+    const STAGES = ['discovered', 'researching', 'outreach', 'applied', 'screen', 'interviewing', 'offer', 'closed'];
+
+    /* Tier categories for prioritizing opportunities */
+    const TIERS = ['hot', 'active', 'watching', 'dormant'];
+
+    /* Job positioning types */
+    const POSITIONINGS = ['ic', 'management'];
+
+    /* Color coding for each stage (used to color the vertical bars and badges) */
+    const STAGE_COLORS = {
+      discovered: '#64748b',
+      researching: '#38bdf8',
+      outreach: '#3b82f6',
+      applied: '#6366f1',
+      screen: '#8b5cf6',
+      interviewing: '#f59e0b',
+      offer: '#10b981',
+      closed: '#52525b'
+    };
+
+    /* Color coding for priority tiers */
+    const TIER_COLORS = {
+      hot: '#ef4444',
+      active: '#6366f1',
+      watching: '#71717a',
+      dormant: '#3f3f46'
+    };
+
+    /* Application state variables that track what the user is doing */
+    let currentViewMode = localStorage.getItem('pf_view_mode') || 'kanban';
+    let currentTheme = localStorage.getItem('pf_theme') || 'dark';
+    let selectedCardId = null;
+    let sortColumn = null;
+    let sortAsc = true;
+    let draggedCard = null;
+
+    /* ================================================================
+       SAMPLE DATA (Demo Companies and Jobs)
+       This data is used to populate the app when first loaded.
+       In a real system, this would be replaced with real company/job data
+       from a database or API. Currently it's just sample data for testing.
+       ================================================================ */
+
+    const DEMO_COMPANIES = [
+      { name: 'Stripe', domain: 'stripe.com', tier: 'hot', missionStatement: 'Financial infrastructure for the internet', headcount: '1000-5000', fundingStage: 'Private', remotePolicy: 'Flexible' },
+      { name: 'Anthropic', domain: 'anthropic.com', tier: 'hot', missionStatement: 'AI safety', headcount: '100-500', fundingStage: 'Series C', remotePolicy: 'Flexible' },
+      { name: 'Figma', domain: 'figma.com', tier: 'active', missionStatement: 'Design platform for teams', headcount: '500-1000', fundingStage: 'Series E', remotePolicy: 'Flexible' },
+      { name: 'Datadog', domain: 'datadoghq.com', tier: 'active', missionStatement: 'Cloud monitoring', headcount: '1000-5000', fundingStage: 'Public', remotePolicy: 'Flexible' },
+      { name: 'Notion', domain: 'notion.so', tier: 'hot', missionStatement: 'All-in-one workspace', headcount: '500-1000', fundingStage: 'Series C', remotePolicy: 'Flexible' },
+      { name: 'Plaid', domain: 'plaid.com', tier: 'active', missionStatement: 'Financial connectivity', headcount: '500-1000', fundingStage: 'Series E', remotePolicy: 'Flexible' },
+      { name: 'Scale AI', domain: 'scale.com', tier: 'watching', missionStatement: 'Data labeling for AI', headcount: '100-500', fundingStage: 'Series D', remotePolicy: 'Flexible' },
+      { name: 'Vercel', domain: 'vercel.com', tier: 'active', missionStatement: 'Frontend cloud', headcount: '100-500', fundingStage: 'Series D', remotePolicy: 'Flexible' },
+      { name: 'Ramp', domain: 'ramp.com', tier: 'hot', missionStatement: 'Corporate cards and spend', headcount: '100-500', fundingStage: 'Series D', remotePolicy: 'Flexible' },
+      { name: 'MongoDB', domain: 'mongodb.com', tier: 'active', missionStatement: 'Database platform', headcount: '1000-5000', fundingStage: 'Public', remotePolicy: 'Flexible' },
+      { name: 'Snowflake', domain: 'snowflake.com', tier: 'watching', missionStatement: 'Cloud data warehouse', headcount: '1000-5000', fundingStage: 'Public', remotePolicy: 'Flexible' },
+      { name: 'Databricks', domain: 'databricks.com', tier: 'active', missionStatement: 'Lakehouse platform', headcount: '500-1000', fundingStage: 'Series G', remotePolicy: 'Flexible' },
+      { name: 'OpenAI', domain: 'openai.com', tier: 'hot', missionStatement: 'Artificial general intelligence', headcount: '100-500', fundingStage: 'Private', remotePolicy: 'In-office' }
+    ];
+
+    /* Sample job opportunities for demonstration */
+    const DEMO_ROLES = [
+      {
+        id: 'stripe-pm-1',
+        company: 'Stripe',
+        title: 'Staff Product Manager, AI Platform',
+        url: 'https://stripe.com/jobs',
+        jdText: 'Leading AI product initiatives...',
+        positioning: 'ic',
+        targetLevel: 'Staff',
+        source: 'manual',
+        stage: 'researching',
+        stageHistory: [],
+        salary: '250k-300k',
+        dateAdded: Date.now() - 15 * 24 * 60 * 60 * 1000,
+        lastActivity: Date.now() - 2 * 24 * 60 * 60 * 1000,
+        connections: 2,
+        tier: 'hot'
+      },
+      {
+        id: 'anthropic-pm-1',
+        company: 'Anthropic',
+        title: 'Product Manager, Claude Platform',
+        url: 'https://anthropic.com/careers',
+        jdText: 'Build Claude platform features...',
+        positioning: 'ic',
+        targetLevel: 'Senior',
+        source: 'manual',
+        stage: 'interviewing',
+        stageHistory: [],
+        salary: '180k-220k',
+        dateAdded: Date.now() - 10 * 24 * 60 * 60 * 1000,
+        lastActivity: Date.now() - 1 * 24 * 60 * 60 * 1000,
+        connections: 3,
+        tier: 'hot'
+      },
+      {
+        id: 'figma-pm-1',
+        company: 'Figma',
+        title: 'Senior PM, AI Features',
+        url: 'https://figma.com/careers',
+        jdText: 'Drive AI product strategy...',
+        positioning: 'ic',
+        targetLevel: 'Senior',
+        source: 'manual',
+        stage: 'applied',
+        stageHistory: [],
+        salary: '200k-240k',
+        dateAdded: Date.now() - 7 * 24 * 60 * 60 * 1000,
+        lastActivity: Date.now() - 5 * 24 * 60 * 60 * 1000,
+        connections: 1,
+        tier: 'active'
+      },
+      {
+        id: 'datadog-pm-1',
+        company: 'Datadog',
+        title: 'Principal PM, ML Pipeline',
+        url: 'https://datadog.com/careers',
+        jdText: 'Lead ML monitoring capabilities...',
+        positioning: 'ic',
+        targetLevel: 'Principal',
+        source: 'manual',
+        stage: 'discovered',
+        stageHistory: [],
+        salary: '280k-320k',
+        dateAdded: Date.now() - 3 * 24 * 60 * 60 * 1000,
+        lastActivity: Date.now(),
+        connections: 0,
+        tier: 'active'
+      },
+      {
+        id: 'notion-pm-1',
+        company: 'Notion',
+        title: 'Staff PM, AI',
+        url: 'https://notion.so/careers',
+        jdText: 'Build Notion AI products...',
+        positioning: 'ic',
+        targetLevel: 'Staff',
+        source: 'manual',
+        stage: 'screen',
+        stageHistory: [],
+        salary: '220k-260k',
+        dateAdded: Date.now() - 12 * 24 * 60 * 60 * 1000,
+        lastActivity: Date.now() - 3 * 24 * 60 * 60 * 1000,
+        connections: 1,
+        tier: 'hot'
+      },
+      {
+        id: 'plaid-director-1',
+        company: 'Plaid',
+        title: 'Director of Product, Identity',
+        url: 'https://plaid.com/careers',
+        jdText: 'Lead identity product strategy...',
+        positioning: 'management',
+        targetLevel: 'Director',
+        source: 'manual',
+        stage: 'outreach',
+        stageHistory: [],
+        salary: '240k-290k',
+        dateAdded: Date.now() - 8 * 24 * 60 * 60 * 1000,
+        lastActivity: Date.now() - 1 * 24 * 60 * 60 * 1000,
+        connections: 2,
+        tier: 'active'
+      },
+      {
+        id: 'scale-pm-1',
+        company: 'Scale AI',
+        title: 'Senior PM, Data Engine',
+        url: 'https://scale.com/careers',
+        jdText: 'Scale the data labeling platform...',
+        positioning: 'ic',
+        targetLevel: 'Senior',
+        source: 'manual',
+        stage: 'discovered',
+        stageHistory: [],
+        salary: '160k-200k',
+        dateAdded: Date.now() - 2 * 24 * 60 * 60 * 1000,
+        lastActivity: Date.now(),
+        connections: 0,
+        tier: 'watching'
+      },
+      {
+        id: 'vercel-pm-1',
+        company: 'Vercel',
+        title: 'Staff PM, Developer Platform',
+        url: 'https://vercel.com/careers',
+        jdText: 'Build Vercel platform for developers...',
+        positioning: 'ic',
+        targetLevel: 'Staff',
+        source: 'manual',
+        stage: 'applied',
+        stageHistory: [],
+        salary: '240k-290k',
+        dateAdded: Date.now() - 6 * 24 * 60 * 60 * 1000,
+        lastActivity: Date.now() - 4 * 24 * 60 * 60 * 1000,
+        connections: 2,
+        tier: 'active'
+      },
+      {
+        id: 'ramp-director-1',
+        company: 'Ramp',
+        title: 'Director of Product, Payments',
+        url: 'https://ramp.com/careers',
+        jdText: 'Lead payments product roadmap...',
+        positioning: 'management',
+        targetLevel: 'Director',
+        source: 'manual',
+        stage: 'offer',
+        stageHistory: [],
+        salary: '260k-310k',
+        dateAdded: Date.now() - 4 * 24 * 60 * 60 * 1000,
+        lastActivity: Date.now(),
+        connections: 1,
+        tier: 'hot'
+      },
+      {
+        id: 'mongodb-pm-1',
+        company: 'MongoDB',
+        title: 'Principal PM, Atlas',
+        url: 'https://mongodb.com/careers',
+        jdText: 'Drive Atlas product vision...',
+        positioning: 'ic',
+        targetLevel: 'Principal',
+        source: 'manual',
+        stage: 'interviewing',
+        stageHistory: [],
+        salary: '300k-350k',
+        dateAdded: Date.now() - 9 * 24 * 60 * 60 * 1000,
+        lastActivity: Date.now() - 2 * 24 * 60 * 60 * 1000,
+        connections: 2,
+        tier: 'active'
+      },
+      {
+        id: 'snowflake-director-1',
+        company: 'Snowflake',
+        title: 'Sr. Director, AI/ML Products',
+        url: 'https://snowflake.com/careers',
+        jdText: 'Lead AI/ML product strategy...',
+        positioning: 'management',
+        targetLevel: 'Sr. Director',
+        source: 'manual',
+        stage: 'screen',
+        stageHistory: [],
+        salary: '320k-380k',
+        dateAdded: Date.now() - 11 * 24 * 60 * 60 * 1000,
+        lastActivity: Date.now() - 6 * 24 * 60 * 60 * 1000,
+        connections: 0,
+        tier: 'watching'
+      },
+      {
+        id: 'databricks-pm-1',
+        company: 'Databricks',
+        title: 'Staff PM, MLflow',
+        url: 'https://databricks.com/careers',
+        jdText: 'Build MLflow open source and product...',
+        positioning: 'ic',
+        targetLevel: 'Staff',
+        source: 'manual',
+        stage: 'researching',
+        stageHistory: [],
+        salary: '250k-300k',
+        dateAdded: Date.now() - 13 * 24 * 60 * 60 * 1000,
+        lastActivity: Date.now() - 7 * 24 * 60 * 60 * 1000,
+        connections: 1,
+        tier: 'active'
+      },
+      {
+        id: 'openai-lead-1',
+        company: 'OpenAI',
+        title: 'Product Lead, API Platform',
+        url: 'https://openai.com/careers',
+        jdText: 'Lead OpenAI API product vision...',
+        positioning: 'ic',
+        targetLevel: 'Senior',
+        source: 'manual',
+        stage: 'closed',
+        stageHistory: [],
+        salary: '200k-250k',
+        dateAdded: Date.now() - 14 * 24 * 60 * 60 * 1000,
+        lastActivity: Date.now() - 10 * 24 * 60 * 60 * 1000,
+        connections: 0,
+        tier: 'hot'
+      }
+    ];
+
+    /* ================================================================
+       DATA LAYER: Saving and Loading Jobs from Browser Memory
+
+       These functions manage all interactions with localStorage, which is
+       the browser's built-in memory storage. Think of it like a small
+       database that lives on your computer. The data persists even after
+       you close the browser.
+       ================================================================ */
+
+    /**
+     * Sets up initial data by loading demo companies and jobs if this is
+     * the first time the app is running. Future app loads will use real data.
+     * INPUT: none
+     * OUTPUT: populates browser memory with initial demo data
+     */
+    function initializeData() {
+      // Check if companies have been saved before
+      if (!localStorage.getItem('pf_companies')) {
+        // First run: prepare demo companies with logo URLs
+        const companies = DEMO_COMPANIES.map(c => ({
+          ...c,
+          url: `https://${c.domain}`,
+          logoUrl: `https://logo.clearbit.com/${c.domain}`,
+          enrichmentStatus: 'complete',
+          dateAdded: Date.now()
+        }));
+        // Save to browser memory
+        localStorage.setItem('pf_companies', JSON.stringify(companies));
+      }
+
+      // Check if jobs have been saved before
+      if (!localStorage.getItem('pf_roles')) {
+        // First run: save demo jobs
+        localStorage.setItem('pf_roles', JSON.stringify(DEMO_ROLES));
+      }
+    }
+
+    /**
+     * Retrieves all companies from browser memory
+     * INPUT: none
+     * RETURNS: array of company objects
+     */
+    function getCompanies() {
+      const data = localStorage.getItem('pf_companies');
+      return data ? JSON.parse(data) : [];
+    }
+
+    /**
+     * Retrieves all jobs from browser memory
+     * INPUT: none
+     * RETURNS: array of job/role objects
+     */
+    function getRoles() {
+      const data = localStorage.getItem('pf_roles');
+      return data ? JSON.parse(data) : [];
+    }
+
+    /**
+     * Saves an updated list of companies to browser memory
+     * INPUT: companies = array of company objects
+     * OUTPUT: data is persisted in browser memory
+     */
+    function saveCompanies(companies) {
+      localStorage.setItem('pf_companies', JSON.stringify(companies));
+    }
+
+    /**
+     * Saves an updated list of jobs to browser memory
+     * INPUT: roles = array of job/role objects
+     * OUTPUT: data is persisted in browser memory
+     */
+    function saveRoles(roles) {
+      localStorage.setItem('pf_roles', JSON.stringify(roles));
+    }
+
+    /**
+     * Adds a new job to the pipeline
+     * INPUT: role = a job object with company, title, etc.
+     * RETURNS: the newly created role object with ID and timestamp
+     * SIDE EFFECTS: Creates company if it doesn't exist, saves to browser memory
+     */
+    function addRole(role) {
+      // Ensure the company exists in our company list
+      const companies = getCompanies();
+      const company = companies.find(c => c.name === role.company);
+
+      if (!company) {
+        // Company is new: create a record for it
+        const newCompany = {
+          name: role.company,
+          url: role.url || `https://${role.company.toLowerCase().replace(/\s+/g, '')}.com`,
+          domain: new URL(role.url || `https://${role.company.toLowerCase().replace(/\s+/g, '')}.com`).hostname,
+          logoUrl: `https://logo.clearbit.com/${new URL(role.url || `https://${role.company.toLowerCase().replace(/\s+/g, '')}.com`).hostname}`,
+          tier: role.tier || 'active',
+          enrichmentStatus: 'pending',
+          missionStatement: '',
+          headcount: '',
+          fundingStage: '',
+          remotePolicy: 'Flexible',
+          dateAdded: Date.now()
+        };
+        companies.push(newCompany);
+        saveCompanies(companies);
+      }
+
+      // Add the job with a unique ID and timestamps
+      const roles = getRoles();
+      role.id = `role-${Date.now()}`;
+      role.dateAdded = Date.now();
+      role.lastActivity = Date.now();
+      role.stageHistory = [];
+      role.connections = 0;
+      roles.push(role);
+      saveRoles(roles);
+      return role;
+    }
+
+    /**
+     * Updates an existing job with new information
+     * INPUT: roleId = ID of job to update, updates = object with changed fields
+     * RETURNS: the updated role object
+     * SIDE EFFECTS: Saves changes to browser memory, tracks stage changes in history
+     */
+    function updateRole(roleId, updates) {
+      const roles = getRoles();
+      const role = roles.find(r => r.id === roleId);
+      if (role) {
+        // If the stage is changing, record it in history
+        if (updates.stage && updates.stage !== role.stage) {
+          role.stageHistory = role.stageHistory || [];
+          role.stageHistory.push({
+            stage: role.stage,
+            date: role.lastActivity
+          });
+        }
+        // Apply all the updates to the job object
+        Object.assign(role, updates);
+        role.lastActivity = Date.now();
+        saveRoles(roles);
+      }
+      return role;
+    }
+
+    /**
+     * Removes a job from the pipeline
+     * INPUT: roleId = ID of job to delete
+     * OUTPUT: job is removed from browser memory
+     */
+    function deleteRole(roleId) {
+      let roles = getRoles();
+      roles = roles.filter(r => r.id !== roleId);
+      saveRoles(roles);
+    }
+
+    /* ================================================================
+       UI RENDERING FUNCTIONS
+       These create the HTML for jobs, kanban columns, and tables
+       ================================================================ */
+
+    /**
+     * Returns the color code for a given job stage
+     * INPUT: stage = stage name (e.g., "researching", "interviewing")
+     * RETURNS: hex color code as a string
+     */
+    function getColorForStage(stage) {
+      return STAGE_COLORS[stage] || '#64748b';
+    }
+
+    /**
+     * Returns the color code for a given tier (priority level)
+     * INPUT: tier = tier name (e.g., "hot", "active")
+     * RETURNS: hex color code as a string
+     */
+    function getColorForTier(tier) {
+      return TIER_COLORS[tier] || '#71717a';
+    }
+
+    /**
+     * Calculates how many days a job has been in its current stage
+     * INPUT: role = job object
+     * RETURNS: number of days (rounded down)
+     */
+    function getDaysInStage(role) {
+      const stageEntryTime = role.lastActivity || role.dateAdded;
+      const days = Math.floor((Date.now() - stageEntryTime) / (1000 * 60 * 60 * 24));
+      return days;
+    }
+
+    /**
+     * Creates HTML for a single job card displayed in kanban column
+     * INPUT: role = job object
+     * RETURNS: HTML string representing the card
+     */
+    function renderRoleCard(role) {
+      const company = getCompanies().find(c => c.name === role.company);
+      const daysInStage = getDaysInStage(role);
+      const isSelected = selectedCardId === role.id;
+
+      return `
+        <div class="role-card ${isSelected ? 'selected' : ''}" data-role-id="${role.id}" draggable="true">
+          <div class="role-card-company">
+            <img src="${company?.logoUrl || ''}" alt="${role.company}" class="role-card-logo" onerror="this.style.display='none'">
+            <span class="role-card-company-name">${role.company}</span>
+          </div>
+          <div class="role-card-title">${role.title}</div>
+          <div class="role-card-badges">
+            <span class="badge badge-filled" style="background: ${getColorForTier(role.tier)}; color: white; font-size: var(--text-xs);">${role.tier}</span>
+            <span class="badge badge-outlined" style="border-color: ${role.positioning === 'ic' ? 'var(--info)' : 'var(--stage-screen)'}; color: ${role.positioning === 'ic' ? 'var(--info)' : 'var(--stage-screen)'};">${role.positioning === 'ic' ? 'IC' : 'Mgmt'}</span>
+          </div>
+          <div class="role-card-footer">
+            <span class="role-card-days">${daysInStage}d</span>
+            <div class="role-card-connections">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <span>${role.connections}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * Renders the kanban board view with all columns and cards
+     * INPUT: none
+     * OUTPUT: updates the DOM with kanban HTML and attaches event handlers
+     */
+    function renderKanban() {
+      const kanban = document.getElementById('kanban');
+      const roles = getRoles();
+      const companies = getCompanies();
+
+      // Apply any active filters (search, tier)
+      let filteredRoles = filterRoles(roles);
+
+      let html = '';
+      // Create a column for each stage
+      STAGES.forEach(stage => {
+        const stageRoles = filteredRoles.filter(r => r.stage === stage);
+        const stageColor = getColorForStage(stage);
+        const isClosedStage = stage === 'closed';
+
+        html += `
+          <div class="kanban-column ${isClosedStage ? 'collapsed' : ''}" data-stage="${stage}">
+            <div class="kanban-header">
+              <div style="width: 3px; height: 20px; border-radius: 2px; background: ${stageColor};"></div>
+              <h3>${stage.replace('_', ' ')}</h3>
+              <span class="kanban-count">${stageRoles.length}</span>
+              ${isClosedStage ? `<button class="kanban-column-toggle" title="Toggle column" aria-label="Expand or collapse the Closed column">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>` : ''}
+            </div>
+            <div class="kanban-cards" data-stage="${stage}">
+              ${stageRoles.length === 0 ? '<div class="empty-column">No roles</div>' : stageRoles.map(renderRoleCard).join('')}
+            </div>
+          </div>
+        `;
+      });
+
+      kanban.innerHTML = html;
+
+      /* Attach event listeners to job cards */
+      document.querySelectorAll('.role-card').forEach(card => {
+        // Click to select/deselect a card
+        card.addEventListener('click', (e) => {
+          selectedCardId = selectedCardId === card.dataset.roleId ? null : card.dataset.roleId;
+          renderKanban();
+        });
+
+        // Drag start: mark this card as being dragged
+        card.addEventListener('dragstart', (e) => {
+          draggedCard = card.dataset.roleId;
+          card.classList.add('dragging');
+        });
+
+        // Drag end: stop dragging
+        card.addEventListener('dragend', () => {
+          draggedCard = null;
+          card.classList.remove('dragging');
+        });
+      });
+
+      /* Attach drop zone handlers to kanban columns */
+      document.querySelectorAll('.kanban-cards').forEach(container => {
+        // Drag over: highlight the drop zone
+        container.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          container.style.backgroundColor = 'rgba(99, 102, 241, 0.05)';
+        });
+
+        // Drag leave: unhighlight the drop zone
+        container.addEventListener('dragleave', () => {
+          container.style.backgroundColor = '';
+        });
+
+        // Drop: move the card to the new stage
+        container.addEventListener('drop', (e) => {
+          e.preventDefault();
+          container.style.backgroundColor = '';
+          if (draggedCard) {
+            const newStage = container.dataset.stage;
+            updateRole(draggedCard, { stage: newStage });
+            showToast(`Moved to ${newStage}`, 'success');
+            renderKanban();
+          }
+        });
+      });
+
+      /* Attach toggle listeners to collapse/expand the "Closed" column */
+      document.querySelectorAll('.kanban-column-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const column = btn.closest('.kanban-column');
+          column.classList.toggle('collapsed');
+        });
+      });
+    }
+
+    /**
+     * Renders the table view with sortable columns
+     * INPUT: none
+     * OUTPUT: updates the DOM with table HTML and attaches sort handlers
+     */
+    function renderTable() {
+      const tbody = document.getElementById('table-body');
+      const roles = getRoles();
+      const companies = getCompanies();
+
+      let filteredRoles = filterRoles(roles);
+
+      /* Apply sorting if a column is selected */
+      if (sortColumn) {
+        filteredRoles.sort((a, b) => {
+          let aVal = a[sortColumn];
+          let bVal = b[sortColumn];
+
+          if (sortColumn === 'company') {
+            aVal = a.company;
+            bVal = b.company;
+          } else if (sortColumn === 'title') {
+            aVal = a.title;
+            bVal = b.title;
+          } else if (sortColumn === 'days') {
+            aVal = getDaysInStage(a);
+            bVal = getDaysInStage(b);
+          }
+
+          // Sort strings alphabetically, numbers numerically
+          if (typeof aVal === 'string') {
+            aVal = aVal.toLowerCase();
+            bVal = bVal.toLowerCase();
+            return sortAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+          } else {
+            return sortAsc ? aVal - bVal : bVal - aVal;
+          }
+        });
+      }
+
+      // Build table rows from filtered and sorted jobs
+      tbody.innerHTML = filteredRoles.map(role => {
+        const company = companies.find(c => c.name === role.company);
+        return `
+          <tr>
+            <td>
+              <div class="table-company">
+                <img src="${company?.logoUrl || ''}" alt="${role.company}" class="table-company-logo" onerror="this.style.display='none'">
+                <div class="table-company-info">
+                  <div class="table-company-name">${role.company}</div>
+                </div>
+              </div>
+            </td>
+            <td class="table-role-title">${role.title}</td>
+            <td>${role.positioning === 'ic' ? 'IC' : 'Mgmt'}</td>
+            <td><span class="badge badge-filled" style="background: ${getColorForStage(role.stage)}; color: ${role.stage === 'researching' || role.stage === 'interviewing' ? '#000' : '#fff'};">${role.stage}</span></td>
+            <td><span class="badge badge-filled" style="background: ${getColorForTier(role.tier)}; color: white;">${role.tier}</span></td>
+            <td>${getDaysInStage(role)}d</td>
+          </tr>
+        `;
+      }).join('');
+
+      /* Attach click handlers to sortable column headers */
+      document.querySelectorAll('.table th.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+          const col = th.dataset.sort;
+          // Toggle sort order if clicking same column, else start new sort
+          if (sortColumn === col) {
+            sortAsc = !sortAsc;
+          } else {
+            sortColumn = col;
+            sortAsc = true;
+          }
+
+          // Update UI to show which column is sorted
+          document.querySelectorAll('.table th.sortable').forEach(h => {
+            h.classList.remove('sorted-asc', 'sorted-desc');
+          });
+          if (sortColumn === col) {
+            th.classList.add(sortAsc ? 'sorted-asc' : 'sorted-desc');
+          }
+
+          renderTable();
+        });
+      });
+    }
+
+    /**
+     * Filters the job list based on search term and tier filter
+     * INPUT: roles = array of all jobs
+     * RETURNS: filtered array of jobs matching search and tier criteria
+     */
+    function filterRoles(roles) {
+      const searchTerm = document.getElementById('search-input').value.toLowerCase();
+      const tierFilter = document.getElementById('tier-filter').value;
+
+      return roles.filter(role => {
+        // Check if job matches search term (in title or company)
+        const matchesSearch = role.title.toLowerCase().includes(searchTerm) || role.company.toLowerCase().includes(searchTerm);
+        // Check if job matches tier filter (if one is selected)
+        const matchesTier = !tierFilter || role.tier === tierFilter;
+        return matchesSearch && matchesTier;
+      });
+    }
+
+    /**
+     * Main render function: displays either kanban or table view
+     * INPUT: none
+     * OUTPUT: updates DOM to show selected view and re-renders all content
+     */
+    function render() {
+      if (currentViewMode === 'kanban') {
+        document.querySelector('.kanban-view').style.display = '';
+        document.querySelector('.table-view').style.display = 'none';
+        renderKanban();
+      } else {
+        document.querySelector('.kanban-view').style.display = 'none';
+        document.querySelector('.table-view').style.display = '';
+        renderTable();
+      }
+    }
+
+    /* ================================================================
+       MODAL DIALOG HANDLERS
+       Controls the "Add New Role" popup form
+       ================================================================ */
+
+    const addRoleModal = document.getElementById('add-role-modal');
+    const addRoleBtn = document.getElementById('add-role-btn');
+    const modalClose = document.getElementById('modal-close');
+    const modalCancel = document.getElementById('modal-cancel');
+    const modalSubmit = document.getElementById('modal-submit');
+    const formCompany = document.getElementById('form-company');
+
+    /**
+     * Opens the "Add New Role" modal when user clicks the button
+     */
+    addRoleBtn.addEventListener('click', () => {
+      addRoleModal.classList.add('open');
+    });
+
+    /**
+     * Closes the modal when user clicks the X button
+     */
+    modalClose.addEventListener('click', () => {
+      addRoleModal.classList.remove('open');
+    });
+
+    /**
+     * Closes the modal when user clicks Cancel
+     */
+    modalCancel.addEventListener('click', () => {
+      addRoleModal.classList.remove('open');
+    });
+
+    /**
+     * Closes the modal when user clicks the dark overlay background
+     */
+    addRoleModal.addEventListener('click', (e) => {
+      if (e.target === addRoleModal) {
+        addRoleModal.classList.remove('open');
+      }
+    });
+
+    /**
+     * Updates company suggestions as user types in the company field
+     * INPUT: triggered by typing in the company name input
+     * SIDE EFFECTS: shows/hides company suggestions dropdown with logos
+     */
+    formCompany.addEventListener('input', () => {
+      const searchTerm = formCompany.value.toLowerCase();
+      const companies = getCompanies();
+      const matching = companies.filter(c => c.name.toLowerCase().includes(searchTerm) && searchTerm);
+
+      const lookup = document.getElementById('company-lookup');
+      if (matching.length > 0) {
+        lookup.style.display = 'block';
+        lookup.innerHTML = matching.map(c => `
+          <div class="company-lookup-item" data-company="${c.name}">
+            <img src="${c.logoUrl}" alt="${c.name}" class="company-lookup-logo" onerror="this.style.display='none'">
+            <strong>${c.name}</strong>
+          </div>
+        `).join('');
+
+        // Allow clicking on a suggestion to auto-fill the field
+        lookup.querySelectorAll('.company-lookup-item').forEach(item => {
+          item.addEventListener('click', () => {
+            formCompany.value = item.dataset.company;
+            lookup.style.display = 'none';
+          });
+        });
+      } else {
+        lookup.style.display = 'none';
+      }
+    });
+
+    /**
+     * Handles form submission when user clicks "Add Role"
+     * INPUT: triggered by clicking the Add Role button
+     * SIDE EFFECTS: validates form, adds new job, resets form, shows success message
+     */
+    modalSubmit.addEventListener('click', () => {
+      const company = formCompany.value.trim();
+      const title = document.getElementById('form-title').value.trim();
+      const url = document.getElementById('form-url').value.trim();
+      const positioning = document.getElementById('form-positioning').value;
+      const tier = document.getElementById('form-tier').value;
+      const stage = document.getElementById('form-stage').value;
+      const jdText = document.getElementById('form-jd').value.trim();
+
+      // Validate required fields
+      if (!company || !title) {
+        showToast('Please fill in company and role title', 'error');
+        return;
+      }
+
+      // Create and save the new job
+      addRole({
+        company,
+        title,
+        url,
+        jdText,
+        positioning,
+        tier,
+        stage
+      });
+
+      // Reset form fields for next entry
+      formCompany.value = '';
+      document.getElementById('form-title').value = '';
+      document.getElementById('form-url').value = '';
+      document.getElementById('form-positioning').value = 'ic';
+      document.getElementById('form-tier').value = 'active';
+      document.getElementById('form-stage').value = 'discovered';
+      document.getElementById('form-jd').value = '';
+
+      addRoleModal.classList.remove('open');
+      showToast(`Added "${title}" at ${company}`, 'success');
+      render();
+    });
+
+    /* ================================================================
+       VIEW TOGGLE: Switch Between Kanban and Table Views
+       ================================================================ */
+
+    const viewToggle = document.getElementById('view-toggle');
+
+    /**
+     * Toggles between kanban and table view when user clicks the button
+     */
+    viewToggle.addEventListener('click', () => {
+      currentViewMode = currentViewMode === 'kanban' ? 'table' : 'kanban';
+      localStorage.setItem('pf_view_mode', currentViewMode);
+      viewToggle.textContent = currentViewMode === 'kanban' ? 'Kanban' : 'Table';
+      render();
+    });
+
+    // Set initial button text based on saved preference
+    if (currentViewMode === 'table') {
+      viewToggle.textContent = 'Table';
+    }
+
+    /* ================================================================
+       SEARCH & FILTER HANDLERS
+       ================================================================ */
+
+    const searchInput = document.getElementById('search-input');
+    const tierFilter = document.getElementById('tier-filter');
+
+    /**
+     * Re-renders jobs when user types in search field
+     */
+    searchInput.addEventListener('input', () => {
+      render();
+    });
+
+    /**
+     * Re-renders jobs when user selects a tier filter
+     */
+    tierFilter.addEventListener('change', () => {
+      render();
+    });
+
+    /* ================================================================
+       KEYBOARD SHORTCUTS
+       These allow power users to navigate without clicking buttons
+       ================================================================ */
+
+    document.addEventListener('keydown', (e) => {
+      // Cmd/Ctrl + K: Open command palette (quick search)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        const cmdPalette = document.getElementById('cmd-palette');
+        cmdPalette.classList.toggle('open');
+        if (cmdPalette.classList.contains('open')) {
+          document.getElementById('cmd-input').focus();
+        }
+      }
+
+      // N: Open the "Add New Role" dialog
+      if (e.key === 'n' && !e.ctrlKey && !e.metaKey) {
+        const target = e.target;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+          addRoleBtn.click();
+        }
+      }
+
+      // Forward slash: Focus the search input
+      if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+        const target = e.target;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          searchInput.focus();
+        }
+      }
+
+      // Number keys 1-8: Jump to corresponding stage column
+      const stageNum = parseInt(e.key);
+      if (stageNum >= 1 && stageNum <= 8) {
+        const stage = STAGES[stageNum - 1];
+        const column = document.querySelector(`[data-stage="${stage}"]`);
+        if (column) {
+          column.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+      }
+    });
+
+    /* ================================================================
+       COMMAND PALETTE: Quick Search with Keyboard (Cmd/Ctrl+K)
+       ================================================================ */
+
+    const cmdPalette = document.getElementById('cmd-palette');
+    const cmdInput = document.getElementById('cmd-input');
+    const cmdResults = document.getElementById('cmd-results');
+    let cmdSelectedIndex = 0;
+
+    /**
+     * Updates search results as user types in command palette
+     */
+    cmdInput.addEventListener('input', () => {
+      const query = cmdInput.value.toLowerCase();
+      const roles = getRoles();
+      const companies = getCompanies();
+
+      let results = [];
+      if (query) {
+        // Search for matching jobs
+        results = roles.filter(r =>
+          r.title.toLowerCase().includes(query) || r.company.toLowerCase().includes(query)
+        ).map(r => ({
+          type: 'role',
+          title: r.title,
+          subtitle: r.company,
+          id: r.id
+        }));
+
+        // Add company results if we have room
+        if (results.length < 5) {
+          const companyResults = companies.filter(c =>
+            c.name.toLowerCase().includes(query)
+          ).map(c => ({
+            type: 'company',
+            title: c.name,
+            subtitle: c.missionStatement || '',
+            name: c.name
+          }));
+          results = [...results, ...companyResults];
+        }
+      }
+
+      // Display results with first item selected by default
+      cmdResults.innerHTML = results.map((r, idx) => `
+        <div class="cmd-palette-item ${idx === 0 ? 'selected' : ''}" data-index="${idx}">
+          <div>
+            <div>${r.title}</div>
+            <div style="font-size: var(--text-xs); color: var(--text-tertiary);">${r.subtitle}</div>
+          </div>
+          <span class="cmd-palette-item-type">${r.type}</span>
+        </div>
+      `).join('');
+
+      cmdSelectedIndex = 0;
+      updateCmdSelection();
+    });
+
+    /**
+     * Updates which result is highlighted in the command palette
+     */
+    function updateCmdSelection() {
+      document.querySelectorAll('.cmd-palette-item').forEach((item, idx) => {
+        item.classList.toggle('selected', idx === cmdSelectedIndex);
+      });
+    }
+
+    /**
+     * Handles keyboard navigation in command palette (up/down arrows, enter, escape)
+     */
+    cmdInput.addEventListener('keydown', (e) => {
+      const items = document.querySelectorAll('.cmd-palette-item');
+      if (e.key === 'ArrowDown') {
+        // Move selection down
+        e.preventDefault();
+        cmdSelectedIndex = (cmdSelectedIndex + 1) % items.length;
+        updateCmdSelection();
+      } else if (e.key === 'ArrowUp') {
+        // Move selection up
+        e.preventDefault();
+        cmdSelectedIndex = (cmdSelectedIndex - 1 + items.length) % items.length;
+        updateCmdSelection();
+      } else if (e.key === 'Enter') {
+        // Select the highlighted result
+        e.preventDefault();
+        const selected = items[cmdSelectedIndex];
+        if (selected) {
+          cmdPalette.classList.remove('open');
+          cmdInput.value = '';
+        }
+      } else if (e.key === 'Escape') {
+        // Close command palette
+        e.preventDefault();
+        cmdPalette.classList.remove('open');
+      }
+    });
+
+    /**
+     * Closes command palette when clicking the dark overlay
+     */
+    cmdPalette.addEventListener('click', (e) => {
+      if (e.target === cmdPalette) {
+        cmdPalette.classList.remove('open');
+      }
+    });
+
+    /* ================================================================
+       THEME TOGGLE: Dark Mode / Light Mode
+       ================================================================ */
+
+    const themeToggle = document.getElementById('theme-toggle');
+    const html = document.documentElement;
+
+    // Apply saved theme preference on page load
+    if (currentTheme === 'light') {
+      html.setAttribute('data-theme', 'light');
+    }
+
+    /**
+     * Toggles between dark and light theme when user clicks the theme button
+     */
+    themeToggle.addEventListener('click', () => {
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('pf_theme', currentTheme);
+      if (currentTheme === 'light') {
+        html.setAttribute('data-theme', 'light');
+      } else {
+        html.removeAttribute('data-theme');
+      }
+    });
+
+    /* ================================================================
+       TOAST NOTIFICATIONS: Small Success/Error Messages
+       ================================================================ */
+
+    /**
+     * Shows a temporary notification message in the bottom right corner
+     * INPUT: message = text to display, type = 'info' | 'success' | 'error'
+     * SIDE EFFECTS: creates and displays a toast, auto-removes after 4 seconds
+     */
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `
+        <div>${message}</div>
+        <button style="background: none; border: none; color: inherit; cursor: pointer; padding: 0;" aria-label="Close notification">×</button>
+      `;
+
+      container.appendChild(toast);
+
+      // Allow manual dismissal by clicking the X
+      const closeBtn = toast.querySelector('button');
+      closeBtn.addEventListener('click', () => {
+        toast.remove();
+      });
+
+      // Auto-remove after 4 seconds
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.remove();
+        }
+      }, 4000);
+    }
+
+    /* ================================================================
+       APP INITIALIZATION: Start Everything Up
+       ================================================================ */
+
+    initializeData();
+    render();
+
+    // Render icons from Lucide icon library
+    lucide.createIcons();
+  </script>
+</body>
+</html>
