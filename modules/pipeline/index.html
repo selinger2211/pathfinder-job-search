@@ -885,7 +885,7 @@
           <circle cx="11" cy="11" r="8"></circle>
           <path d="m21 21-4.35-4.35"></path>
         </svg>
-        <input type="text" id="search-input" placeholder="Search roles..." aria-label="Search for roles by company name or job title">
+        <input type="text" id="search-input" placeholder="Search companies & roles..." aria-label="Search for roles by company name or job title">
       </div>
 
       <div class="toolbar-filter" id="filters">
@@ -1015,7 +1015,7 @@
   <!-- Section: Command Palette (search with keyboard shortcut) -->
   <div class="cmd-palette" id="cmd-palette">
     <div class="cmd-palette-box">
-      <input type="text" class="cmd-palette-input" id="cmd-input" placeholder="Search companies and roles..." aria-label="Search for companies and roles - press Escape to close">
+      <input type="text" class="cmd-palette-input" id="cmd-input" placeholder="Search companies & roles..." aria-label="Search for companies and roles - press Escape to close">
       <div class="cmd-palette-results" id="cmd-results"></div>
     </div>
   </div>
@@ -1749,8 +1749,12 @@
       const tierFilter = document.getElementById('tier-filter').value;
 
       return roles.filter(role => {
-        // Check if job matches search term (in title or company)
-        const matchesSearch = role.title.toLowerCase().includes(searchTerm) || role.company.toLowerCase().includes(searchTerm);
+        // Check if job matches search term (searches company name, title, stage, and positioning)
+        const matchesSearch = !searchTerm ||
+          role.title.toLowerCase().includes(searchTerm) ||
+          role.company.toLowerCase().includes(searchTerm) ||
+          (role.stage || '').toLowerCase().includes(searchTerm) ||
+          (role.positioning || '').toLowerCase().includes(searchTerm);
         // Check if job matches tier filter (if one is selected)
         const matchesTier = !tierFilter || role.tier === tierFilter;
         return matchesSearch && matchesTier;
@@ -2008,18 +2012,16 @@
           id: r.id
         }));
 
-        // Add company results if we have room
-        if (results.length < 5) {
-          const companyResults = companies.filter(c =>
-            c.name.toLowerCase().includes(query)
-          ).map(c => ({
-            type: 'company',
-            title: c.name,
-            subtitle: c.missionStatement || '',
-            name: c.name
-          }));
-          results = [...results, ...companyResults];
-        }
+        // Always include matching companies in results
+        const companyResults = companies.filter(c =>
+          c.name.toLowerCase().includes(query)
+        ).map(c => ({
+          type: 'company',
+          title: c.name,
+          subtitle: c.missionStatement || c.domain || '',
+          name: c.name
+        }));
+        results = [...results, ...companyResults].slice(0, 10);
       }
 
       // Display results with first item selected by default
