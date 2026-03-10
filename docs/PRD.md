@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v1.3.6
+**Status:** v1.3.7
 
 ---
 
@@ -1845,6 +1845,159 @@ The guide is dismissable and can be re-accessed from Help. Each step highlights 
 
 All non-obvious UI elements have tooltips that appear on hover (300ms delay) with a short explanation. Tooltips are especially important for: tier badges (what does "Hot" mean?), stage badges (what triggers the next stage?), score bars (what does a 75 match score mean?), and keyboard shortcut hints on buttons (small `kbd` element showing the shortcut).
 
+## 7.12 Citations & Source Tracking
+
+> **Design Principle: "Trust but Verify"** — Every piece of data in Pathfinder has a traceable origin. Assertions are useful, but assertions *with sources* are actionable. A research brief claiming "company has 15,000+ employees" is less valuable than "company has 15,000+ employees (per LinkedIn, last updated March 2026)."
+
+> Citations follow two rules: **stored centrally** in the Artifacts MCP server (single source of truth, queryable, durable) and **displayed in context** wherever the cited data appears (Research Briefs, Pipeline detail panel, Outreach messages). The MCP server is the ledger; the UI modules are the readers.
+
+### Source Types
+
+Pathfinder recognizes six categories of sources, each with different trust levels and linking behavior:
+
+| Source Type | Example | Linkable? | Trust Level |
+|-------------|---------|-----------|-------------|
+| **Manual Entry** | JD pasted into Pipeline, notes written by user | Timestamp only | Highest — user entered it |
+| **Email** | Role sourced from recruiter email | Gmail thread deep link | High — first-party communication |
+| **Calendar Event** | Interview scheduled on Google Calendar | GCal event deep link | High — confirmed scheduling |
+| **Job Board / URL Import** | Role discovered via career page or feed | Link to posting URL | High while posting is live |
+| **Company Enrichment** | Auto-populated company profile (logo, headcount, funding) | Link to source site + fetch date | Medium — may be stale |
+| **AI-Generated** | Research Brief sections, resume tailoring, outreach messages | Link to input data + generation timestamp | Medium — regenerable, needs verification |
+
+### Citation Data Model (MCP-Stored)
+
+Citations are a new artifact type (`citation`) stored in the Artifacts MCP server. Each citation is a small JSON record that links a **claim** to its **source**. They live alongside research briefs, JD snapshots, and other artifacts — not in localStorage.
+
+**Citation record schema:**
+
+```json
+{
+  "citationId": "cit_stripe_1710072000",
+  "claim": "Stripe has 8,000+ employees across 20+ countries",
+  "sourceType": "enrichment_web",
+  "sourceRef": {
+    "url": "https://linkedin.com/company/stripe",
+    "title": "Stripe LinkedIn Company Page",
+    "fetchedAt": "2026-03-10T09:15:00Z"
+  },
+  "trust": "medium",
+  "subjectType": "company",
+  "subjectId": "Stripe",
+  "roleId": null,
+  "module": "research-brief",
+  "sectionNum": 1,
+  "createdAt": "2026-03-10T09:15:00Z",
+  "stale": false
+}
+```
+
+**Key fields:**
+
+- **`claim`** — The specific assertion being cited (one sentence, human-readable)
+- **`sourceType`** — One of: `manual_entry`, `email`, `calendar`, `job_board`, `enrichment_web`, `ai_generated`
+- **`sourceRef`** — Type-specific reference object (see below)
+- **`trust`** — `high`, `medium`, or `low` — derived from source type + freshness
+- **`subjectType`** — What the citation is about: `company`, `role`, `connection`, or `stage_transition`
+- **`subjectId`** — The company name, role ID, or connection ID being cited
+- **`roleId`** — Optional role linkage (for role-specific citations)
+- **`module`** — Which module created this citation (research-brief, pipeline, calendar, etc.)
+- **`sectionNum`** — For Research Brief citations, which section (1–10)
+- **`stale`** — Marked `true` when the source URL is dead or data is >30 days old
+
+**Source ref formats by type:**
+
+- **Email:** `{ threadId, messageId, from, subject, receivedDate, gmailUrl }` — `gmailUrl` is `https://mail.google.com/mail/#inbox/<threadId>`, renders as "View in Gmail" link
+- **Calendar:** `{ eventId, calendarId, title, startTime, organizer, gcalUrl }` — `gcalUrl` is `https://calendar.google.com/calendar/event?eid=<base64(eventId)>`, renders as "View in Calendar" link
+- **Job board:** `{ url, siteName, fetchedAt, jdSnapshotId }` — clickable link + reference to the JD snapshot artifact if posting goes down
+- **Enrichment:** `{ url, siteName, query, fetchedAt }` — source site + query date
+- **AI-generated:** `{ agentModule, sectionNum, inputSummary, regenerable }` — which agent, what inputs were used, whether it can be regenerated
+- **Manual entry:** `{ enteredBy, enteredVia, note }` — always "user", which module, optional note
+
+### New MCP Tools for Citations
+
+The Artifacts MCP server gets three new tools (see Section 9.2 for full specs):
+
+**`pf_save_citation`** — Write one or more citation records. Called by modules when they create or update data (e.g., Research Brief generates a section → saves citations for each sourced claim). Deduplicates by `claim + subjectId + sourceRef.url`.
+
+**`pf_get_citations`** — Query citations with filters: `subjectId` (company or role), `module`, `sourceType`, `roleId`, `stale`. Returns citation records sorted by `createdAt` descending. This is what the UI modules call to display inline citations.
+
+**`pf_check_freshness`** — Batch-check whether cited URLs are still live. Updates `stale` flag and `trust` level. Called on a schedule or when a user opens a role detail view.
+
+### Where Citations Appear (In Context)
+
+Citations surface wherever their data is used — never hidden behind a separate page:
+
+**Research Briefs** — Each section shows inline citation markers `[1]` `[2]` next to sourced claims. A collapsible "Sources" footer per section lists each citation with its trust badge, source link, and fetch date. When a claim traces back to the user's own email or calendar, it gets a special callout: "ⓘ From your recruiter email (Mar 4): mentioned scaling the AI team."
+
+**Pipeline Role Detail** — The detail panel's stage history timeline includes source attribution on each transition:
+
+```
+Mar 5, 10:30 AM — Title set to "Staff PM, AI Platform"
+  ✓ Manual entry by you
+
+Mar 7, 2:00 PM — Moved to Screen stage
+  ✓ Calendar event: "Stripe screen call – hiring manager"
+    → View in Calendar
+
+Mar 8, 9:00 AM — JD imported from career page
+  ✓ https://stripe.com/jobs/12345 (fetched Mar 8)
+    ⚠ Posting no longer live — JD snapshot preserved
+```
+
+Clicking any source link opens the original (Gmail thread, Calendar event, job posting URL).
+
+**Pipeline Cards** — A small trust indicator dot on the card (green = all high-trust, yellow = some stale/medium, no dot = no citations yet). Hover shows summary.
+
+**Outreach Messages** — When personalization references a specific fact, the source is shown as a tooltip: "Based on: Q3 earnings call transcript (Oct 2025)"
+
+### The Source Ledger (Centralized Roll-Up)
+
+All citations roll up into a single **Source Ledger** — a read-only view accessible from the Dashboard nav. This is where you go to answer "where did all this data come from?"
+
+**Layout:** Table view with columns: Claim, Source, Trust, Company/Role, Module, Date, Status (live/stale). Sortable and filterable by any column.
+
+**Filters sidebar:**
+- By company (dropdown from `pf_companies`)
+- By source type (checkboxes: Email, Calendar, Job Board, Enrichment, AI, Manual)
+- By trust level (High / Medium / Low)
+- By freshness (Live / Stale / Unknown)
+- By module (which Pathfinder module created the citation)
+- Date range picker
+
+**Summary stats at top:**
+- Total citations, broken down by source type (pie chart)
+- Stale citation count with "Refresh All" button
+- Trust distribution bar
+
+**Row actions:**
+- Click a citation → expands to show full source ref details
+- "View Source" → opens the Gmail thread, Calendar event, or URL in a new tab
+- "Refresh" → re-checks whether URL is still live, updates stale flag
+- "Delete" → soft-deletes the citation from the MCP server
+
+The Source Ledger is read-only in the sense that you don't *create* citations here — they're created by the modules as you use Pathfinder. But you can audit, refresh, and clean up from this centralized view.
+
+### Source Confidence Signals
+
+| Source | Signal | Meaning |
+|--------|--------|---------|
+| Manual entry / Email / Calendar | ✓ green | First-party, high trust |
+| Job posting (live) | ✓ green | Verified available |
+| Job posting (removed) | ⚠ yellow | Posting taken down — JD snapshot preserved |
+| AI-generated content | ⓘ blue | Regenerable, should be verified |
+| Web enrichment (> 7 days old) | ⓘ blue | May be stale, refresh available |
+| Any source (> 30 days, no refresh) | ⚠ yellow | Staleness warning |
+
+### Implementation Phases
+
+**Phase 1 (MVP):** Add `citation` artifact type to MCP server. Implement `pf_save_citation` and `pf_get_citations` tools. Pipeline tracks source on role creation (manual entry vs URL import) and saves citation to MCP. Role detail panel renders stage history with source attribution. Research Brief sections show "Source: AI-generated from [company profile + JD text]" footer.
+
+**Phase 2:** Build Source Ledger module (read-only table view with filters). Email/Calendar source refs populate with deep links (Gmail thread URLs, GCal event URLs). Research Brief sections generate per-claim inline citations. `pf_check_freshness` tool implemented with stale flagging.
+
+**Phase 3:** Full inline citation markers `[n]` across all content-generating modules (Research Brief, Outreach, Resume Tailor). Outreach personalization source tooltips. Dashboard widget showing citation health (% stale, % high-trust). Automatic staleness checks on role detail open.
+
+---
+
 ## 8. Data Model
 
 ### 8.1 localStorage Schema
@@ -1966,6 +2119,16 @@ Each tool follows MCP's tool definition format with JSON Schema input validation
 **`tag_artifact`** — modifies tags on an existing artifact. Used by agents to add context after creation (e.g., the Research Brief agent tags a brief with the interview date once scheduled).
 
 **`delete_artifact`** — soft delete. Moves the file to an `_archive/` subdirectory and marks it as deleted in `index.json`. Recoverable.
+
+#### Citation Tools
+
+These three tools support the Citations & Source Tracking system (Section 7.12). Citations are stored as a dedicated artifact type (`citation`) with their own optimized query and maintenance tools.
+
+**`pf_save_citation`** — Write one or more citation records. Accepts an array of citation objects (see 7.12 schema). Each citation is saved as a JSON file under `citations/` with ID format `cit_{subjectSlug}_{timestamp}`. Deduplicates by matching `claim + subjectId + sourceRef.url` — if a duplicate exists, the existing record is updated with a new `refreshedAt` timestamp instead of creating a new entry. Returns array of `{ citationId, created | updated }`.
+
+**`pf_get_citations`** — Query citations with filters. Accepts optional `subjectId` (company name or role ID), `roleId`, `module` (which Pathfinder module), `sourceType` (manual_entry | email | calendar | job_board | enrichment_web | ai_generated), `stale` (boolean), and `limit` (default 50). Returns citation records sorted by `createdAt` descending. Designed for fast reads — the UI modules call this on every page load to render inline citations.
+
+**`pf_check_freshness`** — Batch staleness check. Accepts optional `subjectId` to scope the check, or runs against all citations if omitted. For each citation with a URL in `sourceRef`, performs a HEAD request to check liveness. Updates `stale` flag to `true` if the URL returns 404/410/timeout, and adjusts `trust` to `low`. Returns `{ checked, staleCount, updatedIds[] }`.
 
 ### 9.3 Browser Integration
 
@@ -2232,6 +2395,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v1.3.7 | 2026-03-10 | Citations & Source Tracking PRD redesign — MCP-server-centric architecture (citations as artifact type, 3 new MCP tools), Source Ledger centralized roll-up view, inline citations in context (Research Brief, Pipeline detail, Outreach) |
 | v1.3.6 | 2026-03-10 | Pipeline: role detail/edit slide-out panel (full CRUD, stage history timeline, date editing, delete), URL import for Add New Role (CORS proxy chain), Research Brief persistence (auto-restore cached briefs on page load) |
 | v1.3.5 | 2026-03-10 | Research Brief & Resume Tailor Personal mode fixes (data normalization, targetLevel inference), Dashboard theme toggle fix, Job Feed sample-data banner |
 | v1.3.4 | 2026-03-10 | Fix Research Brief role selector (script parse error), Dashboard nav aligned to shared .nav component |
