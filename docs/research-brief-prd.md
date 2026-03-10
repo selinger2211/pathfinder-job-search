@@ -61,16 +61,71 @@ Every section receives a **base context** containing:
 - **JD text** — the full job description from `role.jdText`
 - **Role metadata** — title, level, positioning (IC/management), stage, URL, dateAdded
 - **Company profile** — name, domain, fundingStage, headcount, missionStatement, companyType, remotePolicy, techStack
+- **Role hints** (when JD is absent) — partial intel from `role.roleHints`: function, level, scope, teamSize, productArea, techStack, reportingLine, and any freeform notes from recruiter conversations
+- **Known context log** — timestamped entries from `role.knownContext[]`, each capturing a piece of intel with its source (recruiter call, email, LinkedIn message)
 
 Sections that need additional data specify it below. If a required input is missing, the section generates with a visible callout: "⚠ This section would be stronger with [missing data]. Add it in Pipeline → Role Detail."
+
+**When there's no JD:** Many sections normally anchored to JD text can still generate partial, useful content from role hints and known context. The brief treats these hints as a "reconstructed JD" — less precise than the real thing, but enough to start preparation. Every hint-derived claim is clearly labeled: "Based on recruiter intel, not confirmed JD."
 
 ---
 
 ## 3. Section Specifications
 
+### Section 0: Known Context (Appears Only When JD Is Absent)
+
+**Purpose:** When you don't have a JD yet, this section is the anchor instead. It aggregates everything you *do* know about the role from recruiter conversations, emails, and your own research into a structured format that the other sections can use.
+
+**Inputs:** `role.roleHints` + `role.knownContext[]` + `role.recruiterSource`
+
+**When this section appears:** Only when `role.jdText` is empty or `role.confidential.role === true`. When a full JD exists, this section is hidden — the JD itself serves as the anchor.
+
+**Output structure:**
+- **Source of This Role** — Who told you about it, when, through what channel. "Sarah Chen (Greylock) reached out via LinkedIn on March 5. Initial message: 'I'm working with a portfolio company on a product leadership search.'"
+- **What We Know** — Structured summary of all `roleHints` fields that have values:
+
+```
+Function:       Product Management
+Level:          Staff / Senior Staff
+Scope:          "New product area, 0-to-1"
+Product Area:   Payments platform
+Team Size:      "Building a new team, ~5-8 to start"
+Reporting Line: "Reports to VP Product"
+Tech Stack:     "Python, React, heavy ML/data"
+Location:       "SF preferred, open to remote"
+```
+
+- **Recruiter Intel Log** — Chronological entries from `role.knownContext[]`, each with a date, source (call, email, message), and what was learned. This is the running log of everything the recruiter has disclosed:
+
+```
+Mar 5 — LinkedIn message from Sarah Chen
+  "Product leadership role at a portfolio company, Series D, AI space"
+
+Mar 7 — Phone call with Sarah Chen (30 min)
+  "It's Stripe. Payments platform team. They're building a new
+   sub-team focused on AI-powered fraud detection. Staff PM level.
+   Reports to VP Product. Team is 0-to-1, they want someone who
+   can define the roadmap. Interview process is 5 rounds."
+
+Mar 9 — Email from Sarah Chen
+  "JD is being finalized, should have it next week. In the meantime
+   they'd like to do an intro call with the hiring manager."
+```
+
+- **Reconstructed Role Profile** — Based on all the above, a synthesized paragraph: "This appears to be a Staff PM role on Stripe's payments platform, focused on building a new AI-powered fraud detection product from scratch. The team is being formed (~5-8 people) and you'd report to the VP of Product. The role signals high ownership, ambiguity tolerance, and AI/ML product experience." This paragraph is what the downstream sections use as a JD substitute.
+- **What's Still Unknown** — Explicit list of gaps: "Full JD, explicit requirements, compensation range, interview panel names." Each gap shows which brief sections it would unlock.
+
+**Prompt guidance:** This section is primarily data assembly, not generation. The model structures the user's known context entries and role hints into a clean format. The "Reconstructed Role Profile" paragraph is the only generative part — it synthesizes the hints into a coherent role description. This paragraph should be conservative: only assert what the data supports, flag anything uncertain.
+
+**Citations:** Every intel entry sourced to `role.knownContext[]` with date and channel. Source type: `manual_entry`. The reconstructed profile is `ai_generated` with input summary.
+
+---
+
 ### Section 1: Role Decode
 
 **Purpose:** Parse the JD and surface what this role actually needs — the stuff between the lines that a recruiter won't say.
+
+**When JD is absent:** This section generates from the Known Context section's "Reconstructed Role Profile" instead of a real JD. Output is clearly labeled: "⚠ Based on recruiter intel — will be updated when JD is available." The analysis is less precise but still covers: inferred requirements from role hints, level signals from the recruiter's language, and red flags or watch items. The explicit/implied requirements split may be less clear, but the model should still attempt it based on what's known.
 
 **Inputs:** Base context (JD is critical)
 
@@ -344,65 +399,76 @@ The company name is not disclosed. The user may have hints (industry, funding st
 
 #### Role-Unknown Mode (`confidential.role = true`)
 
-The company is known but the specific role/JD hasn't been shared. The user may have hints (function, level, product area) stored in `role.roleHints`.
+The company is known but the specific role/JD hasn't been shared. The user may have hints from recruiter conversations stored in `role.roleHints` and `role.knownContext[]`.
+
+**Key behavior:** Section 0 (Known Context) activates as the JD substitute. It aggregates all hints and recruiter intel into a "Reconstructed Role Profile" that downstream sections use where they'd normally use JD text. Every hint-derived claim is labeled: "⚠ Based on recruiter intel, not confirmed JD."
 
 | # | Section | Status | Behavior |
 |---|---------|--------|----------|
-| 1 | Role Decode | ❌ Blocked | "No JD available. This section unlocks when you receive the job description." If `roleHints` exist, shows: "What you know so far: Product leadership, senior/staff level." |
+| 0 | Known Context | ✅ **Activates** | Aggregates roleHints + knownContext log into structured format. Generates "Reconstructed Role Profile" paragraph. Shows what's still unknown. This is the anchor when JD is absent. |
+| 1 | Role Decode | ⚠ Partial | Generates from Reconstructed Role Profile instead of JD. Less precise but still covers: inferred requirements from hints, level signals from recruiter language, watch items. Clearly labeled as recruiter-intel-based. |
 | 2 | Company Now | ✅ Available | Full company research — doesn't need role specifics. |
 | 3 | Funding & Corporate | ✅ Available | Full funding and structure research. |
-| 4 | Competitive Landscape | ⚠ Partial | Can research company-level competition. Product-area scoping is less precise without JD. |
-| 5 | Team & Org Intelligence | ⚠ Partial | Can research general org structure. Team-specific info blocked without JD. Interviewer research works if names provided. |
-| 6 | Network & Connections | ✅ Available | Full cross-reference against company name. |
-| 7 | Fit Analysis | ❌ Blocked | "No JD to map against. This section unlocks when you receive the job description." If `roleHints` exist, shows high-level fit against hints. |
-| 8 | Comp Intelligence | ⚠ Partial | Can estimate from company + level hints. Less precise without title/JD. |
-| 9 | Strategic Challenges | ⚠ Partial | Company-level challenges available. Role-specific first-90-days plan blocked. |
+| 4 | Competitive Landscape | ⚠ Partial | Can research company-level competition. If `roleHints.productArea` exists, scopes to that area. Otherwise company-wide. |
+| 5 | Team & Org Intelligence | ⚠ Partial | General org research available. If `roleHints.reportingLine` or `roleHints.teamSize` exist, uses them. Interviewer research works if names provided. |
+| 6 | Network & Connections | ✅ Available | Full cross-reference against company name. If `roleHints.productArea` exists, prioritizes connections in that area. |
+| 7 | Fit Analysis | ⚠ Partial | Maps your bullets against the Reconstructed Role Profile's inferred requirements. Green/yellow/red still works but coverage is less complete. Prominently flagged: "This analysis is based on recruiter intel. It will be more precise with the full JD." |
+| 8 | Comp Intelligence | ⚠ Partial | Uses company name + `roleHints.level` + `roleHints.function`. More precise than company-unknown mode but less than full-JD mode. |
+| 9 | Strategic Challenges | ⚠ Partial | Company-level challenges fully available. First 90 days generated from Reconstructed Role Profile — less specific but still useful. |
 | 10 | Culture & Values | ✅ Available | Full culture research — doesn't need role specifics. |
-| 11 | Questions to Ask | ⚠ Partial | Company-specific questions available. Role-specific questions blocked. |
-| 12 | TMAY Script | ❌ Blocked | "No JD to position against. This section unlocks when you receive the job description." |
-| 13 | Likely Interview Qs | ❌ Blocked | "No JD to derive questions from." If `roleHints` exist, generates generic questions for that function/level. |
+| 11 | Questions to Ask | ⚠ Partial | Company-specific questions available. Role-specific questions generated from hints — focuses on confirming/clarifying the unknowns. Includes: "Questions to ask the recruiter to fill in gaps." |
+| 12 | TMAY Script | ⚠ Partial | Generates from your resume positioned toward `roleHints.function` + `roleHints.level` + `roleHints.productArea`. Less tailored than with a real JD but still role-directional. Labeled: "Draft — refine when JD is available." |
+| 13 | Likely Interview Qs | ⚠ Partial | Generates from `roleHints.function` + `roleHints.level` + company context. Behavioral questions based on function norms, technical questions based on product area hints. Matched STAR stories still work. |
 
-**Summary:** 4 sections fully available, 5 partial, 4 blocked. The user can research the company while waiting for role details.
+**Summary:** 5 sections fully available, 8 partial, 0 blocked. With hints and known context, *nothing is completely blocked* — every section generates something useful. The quality improves as more intel arrives.
 
 #### Both-Unknown Mode (`confidential.company = true, confidential.role = true`)
 
-Minimal information — maybe just a recruiter's vague description.
+Minimal information — maybe just a recruiter's vague description. But even here, Known Context activates.
 
 | # | Section | Status | Behavior |
 |---|---------|--------|----------|
-| 1 | Role Decode | ❌ Blocked | |
-| 2 | Company Now | ❌ Blocked | |
-| 3 | Funding & Corporate | ❌ Blocked | Shows `knownAttributes` if any. |
-| 4 | Competitive Landscape | ❌ Blocked | |
-| 5 | Team & Org | ❌ Blocked | Interviewer research works if names provided. |
-| 6 | Network & Connections | ❌ Blocked | |
-| 7 | Fit Analysis | ❌ Blocked | |
-| 8 | Comp Intelligence | ⚠ Partial | Very rough estimate from level + industry hints only. |
+| 0 | Known Context | ✅ **Activates** | Shows whatever is known — even if it's just "recruiter from Greylock, AI space, Series D." |
+| 1 | Role Decode | ⚠ Partial (if hints) / ❌ Blocked (if none) | If `roleHints` has function + level, generates a minimal analysis. Otherwise blocked. |
+| 2 | Company Now | ❌ Blocked | "Company not yet disclosed." |
+| 3 | Funding & Corporate | ❌ Blocked | Shows `knownAttributes` if any: "What you know: Series D, 200-500 employees." |
+| 4 | Competitive Landscape | ❌ Blocked | If `knownAttributes.industry` exists, can generate a broad landscape for that industry. Otherwise blocked. |
+| 5 | Team & Org | ❌ Blocked | Interviewer research works if names provided. Everything else blocked. |
+| 6 | Network & Connections | ❌ Blocked | Can't cross-reference without company name. |
+| 7 | Fit Analysis | ⚠ Partial (if hints) / ❌ Blocked (if none) | If `roleHints` exist, generates rough mapping. Otherwise blocked. |
+| 8 | Comp Intelligence | ⚠ Partial | Very rough estimate from level + industry hints. |
 | 9 | Strategic Challenges | ❌ Blocked | |
 | 10 | Culture & Values | ❌ Blocked | |
-| 11 | Questions to Ask | ⚠ Partial | Generic discovery questions: "What's the team size? Who does this role report to? What does success look like in 6 months?" |
-| 12 | TMAY Script | ❌ Blocked | |
-| 13 | Likely Interview Qs | ❌ Blocked | |
+| 11 | Questions to Ask | ⚠ Partial | Discovery questions to ask the recruiter: "What's the company? What team? What level? What does the interview process look like?" |
+| 12 | TMAY Script | ⚠ Partial (if hints) / ❌ Blocked (if none) | If function + level hints exist, generates a generic version for that function. |
+| 13 | Likely Interview Qs | ⚠ Partial (if hints) / ❌ Blocked (if none) | If function + level hints exist, generates standard questions for that role type. |
 
-**Summary:** 0 sections fully available, 2 partial, 11 blocked. The brief shows a clear "unlock roadmap": which info reveals which sections.
+**Summary:** With hints: 1 full + 6 partial + 6 blocked. Without hints: 1 full + 3 partial + 9 blocked. The brief focuses on helping you figure out what to ask to learn more.
 
 #### Unlock Roadmap UI
 
-When any sections are blocked, the brief shows an **Unlock Roadmap** banner at the top:
+When any sections are blocked or partial, the brief shows an **Unlock Roadmap** banner at the top:
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│  📋 Brief Status: 5/13 sections available                      │
+│  📋 Brief Status: 5 full / 8 partial / 0 blocked              │
 │                                                                │
-│  To unlock more:                                               │
-│  → Reveal company name  →  unlocks 4 sections (Company Now,   │
-│    Funding, Culture, Network)                                  │
-│  → Add interviewer names →  unlocks Interviewer Profiles       │
-│  → Add resume bullets    →  strengthens Fit Analysis, TMAY     │
+│  To improve partial sections:                                  │
+│  → Add the full JD         →  upgrades 8 sections from        │
+│    partial to full (Role Decode, Fit Analysis, TMAY, etc.)     │
+│  → Reveal company name     →  unlocks Company Now, Funding,   │
+│    Culture, Network                                            │
+│  → Add more recruiter intel →  strengthens Known Context,      │
+│    which feeds all partial sections                            │
+│  → Add interviewer names   →  unlocks Interviewer Profiles     │
+│  → Add resume bullets      →  strengthens Fit Analysis, TMAY  │
 │                                                                │
-│  [Reveal Company]  [Reveal Role]  [Add in Pipeline →]          │
+│  [Reveal Company]  [Reveal Role]  [Log Recruiter Intel]        │
+│  [Add in Pipeline →]                                           │
 └────────────────────────────────────────────────────────────────┘
 ```
+
+The **"Log Recruiter Intel"** button opens an inline form to add a new `knownContext` entry — date, channel (call/email/LinkedIn/text), and freeform notes. Each entry is timestamped and immediately feeds into Section 0, which re-synthesizes the Reconstructed Role Profile and cascades to downstream sections.
 
 The "Reveal Company" and "Reveal Role" buttons link back to the Pipeline detail panel's reveal actions (see main PRD Section 7.1.7). When a reveal happens, affected sections auto-invalidate and show "New data available — click Refresh to regenerate."
 
@@ -509,7 +575,8 @@ interview or a decision.
 
 | Section | Depends On | Can Parallel? |
 |---------|-----------|---------------|
-| 1. Role Decode | None | ✅ First batch |
+| 0. Known Context | None (only runs when JD absent) | ⏳ Pre-batch (if needed) |
+| 1. Role Decode | Section 0 (if no JD) or None (if JD exists) | ✅ First batch |
 | 2. Company Now | None | ✅ First batch |
 | 3. Funding & Corporate Structure | None | ✅ First batch |
 | 4. Competitive Landscape | None | ✅ First batch |
@@ -524,6 +591,7 @@ interview or a decision.
 | 13. Likely Interview Questions | Section 1 + 7 (fit analysis) | ⏳ Second batch |
 
 **Batch execution:**
+- **Pre-batch** (if JD absent): Section 0 — assembles Known Context and Reconstructed Role Profile
 - **Batch 1:** Sections 1, 2, 3, 4, 5, 6, 8, 10 — all independent, run in parallel
 - **Batch 2:** Sections 7, 9, 12, 13 — depend on Batch 1 outputs
 - **Batch 3:** Section 11 — depends on all other sections

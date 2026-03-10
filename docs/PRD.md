@@ -775,7 +775,8 @@ The `Role` record gains a `confidential` object and the `Company` record gains a
 | Field | Type | Description |
 |-------|------|-------------|
 | `confidential` | object | `{ company: boolean, role: boolean }` — which parts are undisclosed. Default: `{ company: false, role: false }` |
-| `roleHints` | object | Partial intel when role is opaque: `{ function, level, scope, teamSize, productArea, techStack }` — whatever the recruiter disclosed |
+| `roleHints` | object | Partial intel when role is opaque: `{ function, level, scope, teamSize, productArea, techStack, reportingLine, location }` — whatever the recruiter disclosed |
+| `knownContext` | array | Chronological log of intel from recruiter conversations: `[{ date, source, channel, note }]` — each entry captures what was learned and when. Source is the person's name, channel is `email` / `call` / `linkedin` / `text`. Feeds into Research Brief Section 0 (Known Context) as a JD substitute |
 | `recruiterSource` | object | `{ name, firm, email, firstContact, channel }` — who brought this to you and when |
 
 **Company-level fields (new):**
