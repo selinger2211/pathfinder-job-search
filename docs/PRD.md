@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v1.3.7
+**Status:** v1.3.8
 
 ---
 
@@ -756,48 +756,150 @@ The Pipeline Tracker renders as a **kanban board** with columns for each active 
 
 **Per-role detail view** includes: full JD text, fit assessment, stage history timeline, linked connections with outreach status, linked artifacts (research brief, tailored resume, homework submissions, offer letters), and notes.
 
+#### 7.1.7 Opaque Recruiter Outreach (Unknown Company, Unknown Role, or Both)
+
+Recruiters frequently withhold details early in the process. Three common patterns:
+
+1. **Unknown company, described role** — "I'm hiring a Staff PM for a Series D AI company" (you know the role, not who)
+2. **Known company, unknown role** — "We have something at Stripe that might be a fit" (you know who, not what)
+3. **Both unknown** — "I'm working on a confidential search" (you know neither)
+
+Pathfinder must support all three from first contact through full reveal, without blocking Pipeline tracking.
+
+**Data Model Changes:**
+
+The `Role` record gains a `confidential` object and the `Company` record gains a `knownAttributes` field:
+
+**Role-level fields (new):**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `confidential` | object | `{ company: boolean, role: boolean }` — which parts are undisclosed. Default: `{ company: false, role: false }` |
+| `roleHints` | object | Partial intel when role is opaque: `{ function, level, scope, teamSize, productArea, techStack }` — whatever the recruiter disclosed |
+| `recruiterSource` | object | `{ name, firm, email, firstContact, channel }` — who brought this to you and when |
+
+**Company-level fields (new):**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `knownAttributes` | object | Partial intel when company is opaque: `{ industry, stage, headcount, location, fundingHints, productHints, publicPrivate }` |
+
+**Placeholder naming conventions:**
+
+- Unknown company: `"Unknown — [Recruiter Name/Firm]"` (e.g., `"Unknown — Sarah Chen / Greylock"`)
+- Unknown role at known company: Company stays as-is, role title = `"TBD — [function hint]"` (e.g., `"TBD — Product Leadership"`)
+- Both unknown: Placeholder company name + placeholder role title
+
+**Pipeline UI Behavior:**
+
+- **Kanban cards** for opaque roles show a `?` icon overlay (on company logo if company unknown, on role title if role unknown, or both). Muted/dashed border distinguishes them visually.
+- **Role Detail panel** shows an **"Intel Gathered"** section (always visible for opaque roles) with two groups:
+  - **Company Intel** — log partial attributes as you learn them: industry, size, funding stage, product hints, location, public/private
+  - **Role Intel** — log partial attributes: function, level, scope, team size, product area, tech mentions
+  Each attribute is timestamped and cited to the source (usually the recruiter email/call).
+- **"Reveal Company" action** — When the company is identified: enter the real name → Pathfinder creates or links to an existing Company record → merges `knownAttributes` into the company profile → flips `confidential.company` to `false` → triggers Research Brief for newly-available sections → logs citation.
+- **"Reveal Role" action** — When the role is specified: enter the real title + JD → merges `roleHints` into role record → flips `confidential.role` to `false` → triggers Brief sections that depend on JD → logs citation.
+- **Connections** — The recruiter is auto-created as a connection with `relationship: 'recruiter'` and linked to the role on creation.
+
+**Lifecycle Examples:**
+
+```
+CASE 1: Unknown company, described role
+─────────────────────────────────────────
+Recruiter email: "Staff PM role at a Series D AI company, 200-500 people"
+    │
+    ▼
+Create: company = "Unknown — Sarah Chen / Greylock"
+        confidential = { company: true, role: false }
+        knownAttributes = { industry: "AI", stage: "Series D", headcount: "200-500" }
+        role.title = "Staff Product Manager"
+        role.jdText = (partial JD if provided)
+    │
+    ▼
+Brief generates in company-degraded mode:
+  ✅ Role Decode, Fit Analysis, TMAY, Interview Questions (JD-dependent sections work)
+  ⚠ Company Now, Funding, Competitive, Culture (blocked — need company name)
+  ⚠ Network & Connections (can't cross-reference without company)
+    │
+    ▼
+Reveal: "It's Anthropic" → full brief unlocks
+
+CASE 2: Known company, unknown role
+─────────────────────────────────────
+Recruiter: "We have something at Stripe that might interest you"
+    │
+    ▼
+Create: company = "Stripe" (existing or new Company record)
+        confidential = { company: false, role: true }
+        role.title = "TBD — Product Leadership"
+        role.roleHints = { function: "product", level: "senior/staff" }
+    │
+    ▼
+Brief generates in role-degraded mode:
+  ✅ Company Now, Funding, Competitive, Culture, Network (company sections work)
+  ⚠ Role Decode, Fit Analysis, TMAY, Interview Questions (blocked — need JD)
+  ⚠ Strategic Challenges (partial — company context available, role specifics not)
+    │
+    ▼
+Reveal: JD received → full brief unlocks
+
+CASE 3: Both unknown
+─────────────────────
+Recruiter: "Confidential search, will share more after intro call"
+    │
+    ▼
+Create: company = "Unknown — Recruiter Name"
+        confidential = { company: true, role: true }
+        role.title = "TBD"
+    │
+    ▼
+Brief in full-degraded mode: most sections blocked, only generic prep available
+    │
+    ▼
+Reveal company first (partial unlock) → reveal role (full unlock)
+```
+
+**Research Brief Impact:**
+
+Opaque roles trigger **degraded mode** in the Research Brief — sections that require missing data show a clear message explaining what's blocked and what info would unblock them. See the standalone Research Brief PRD (`docs/research-brief-prd.md`) Section 3.1 for the full degraded-mode specification, including which sections work in each degraded state.
+
 ### 7.2 Research Brief Agent
 
-The Research Brief agent generates a comprehensive interview prep document for a specific company + role combination. It reads everything it needs from the Pipeline (company profile, role record, JD text, positioning) and produces a multi-section brief that streams into the browser and auto-saves via the Artifacts MCP server.
+> **Full specification:** [`docs/research-brief-prd.md`](research-brief-prd.md) — standalone PRD (v2.0.0)
 
-#### 7.2.1 Brief Sections
+The Research Brief is Pathfinder's preparation engine. Before every interview, networking call, or application decision, it generates a comprehensive, role-tailored briefing document with 13 sections — every one anchored to the JD text and the user's actual experience.
 
-The brief is structured as 10 sections, each independently refreshable. The section order is designed to mirror how you'd actually prep — company context first, then role-specific analysis, then interview tactics.
+**v2 overhaul (v1.3.8):** The Research Brief was rebuilt from the ground up. v1 was a UI shell with hardcoded template strings. v2 generates every section via MCP tool calls (`pf_generate_brief_section`), fed with real data (JD text, company profile, resume bullets, story bank, connections), and sourced with citations per Section 7.12.
+
+#### 7.2.1 Brief Sections (v2)
+
+13 sections, organized as: understand the role → understand the company → understand the people → understand your fit → prepare to perform.
 
 | # | Section | Purpose | Key Inputs |
 |---|---------|---------|------------|
-| 1 | Company Overview | What they do, business model, recent news, market position | Company profile fields, `recentNews`, `domain` |
-| 2 | Product Deep Dive | Core products, user segments, monetization, technical architecture | `keyProducts`, `techStack`, JD text |
-| 3 | Market & Competitive Landscape | TAM, competitors, positioning, moat | `competitors`, `domain` |
-| 4 | Role Analysis | What the role really is, team placement, success criteria | JD text, `targetLevel`, `positioning` |
-| 5 | Why You Fit | Map your experience to their needs — honest, not embellished | JD text, `positioning`, resume base doc |
-| 6 | Strategic Challenges | What keeps their PM leadership up at night? | Company profile, `domain`, recent news |
-| 7 | Culture & Team | Eng culture, PM org structure, decision-making style | `culture`, Glassdoor, company profile |
-| 8 | Interviewer Insights | Research on known interviewers (when names are available) | User-provided interviewer names |
-| 9 | Questions to Ask | Smart questions that demonstrate your understanding | Synthesized from sections 1-8 |
-| 10 | TMAY Script | "Tell me about yourself" — calibrated to positioning and level | `positioning`, `targetLevel`, JD text |
+| 1 | Role Decode | Parse JD: real problem, explicit/implied requirements, level signals, red flags | JD text |
+| 2 | Company Now | What's happening right now relevant to this role — news, launches, leadership changes | Company profile, web enrichment |
+| 3 | Funding & Corporate Structure | Funding rounds, investors, board, subsidiaries, acquisitions, financial health | Company profile, web enrichment |
+| 4 | Competitive Landscape | Named competitors in this role's product area, market dynamics, moat | JD text, company profile |
+| 5 | Team & Org Intelligence | Hiring manager, reporting line, team shape, interviewer research | JD text, interviewer names, connections |
+| 6 | Network & Connections | Who you know at this company, second-degree paths, warm intro candidates | `pf_connections` |
+| 7 | Fit Analysis | Your bullets vs JD requirements — green/yellow/red with gap positioning strategies | JD text, `pf_bullet_bank`, `pf_resume_log` |
+| 8 | Compensation Intelligence | Expected range, equity structure, negotiation leverage signals | `pf_comp_cache`, JD text |
+| 9 | Strategic Challenges & First 90 Days | What this role tackles first, your hypotheses for the interview | JD text, company context, Section 1+2+4 outputs |
+| 10 | Culture & Values Decode | Stated values vs reality, interview style signals, what gets rewarded | Company profile, culture data |
+| 11 | Questions to Ask | Role-specific, organized by round (recruiter, HM, panel, exec) | All previous sections |
+| 12 | TMAY Script | "Tell me About Yourself" — 90-sec and 2-min versions from your resume | `pf_bullet_bank`, Section 1 output |
+| 13 | Likely Interview Questions | Behavioral + technical from JD, matched to STAR stories from your bank | `pf_story_bank`, `pf_bullet_bank`, Section 1+7 outputs |
 
-#### 7.2.2 Streaming & Caching
+#### 7.2.2 Generation Architecture
 
-Each section streams independently via the Claude API. This means you see Section 1 rendering while Section 2 is still generating, and a network interruption at Section 5 doesn't lose Sections 1-4.
+All generation runs through MCP tool calls — no API keys in the browser. Sections execute in three batches based on dependencies:
 
-Caching is per-section with a composite key: `research_{companyName}_{roleId}_{sectionNumber}`. Cached sections render instantly on reload. Individual sections can be refreshed without regenerating the full brief — useful when you learn new information (e.g., interviewer names added, company news update).
+- **Batch 1** (parallel): Sections 1, 2, 3, 4, 5, 6, 8, 10 — all independent
+- **Batch 2** (parallel, after Batch 1): Sections 7, 9, 12, 13 — depend on earlier outputs
+- **Batch 3** (after Batch 2): Section 11 — synthesizes from all other sections
 
-**Cache invalidation triggers:**
-
-- JD text changes → invalidate #4 (Role Analysis), #5 (Why You Fit), #6 (Strategic Challenges), #9 (Questions to Ask), #10 (TMAY Script)
-- Positioning changes → invalidate #4 (Role Analysis), #5 (Why You Fit), #10 (TMAY Script)
-- Company profile updated → invalidate #1 (Company Overview), #2 (Product Deep Dive), #3 (Market & Competitive Landscape), #6 (Strategic Challenges), #7 (Culture & Team)
-- Interviewer names added → invalidate #8 (Interviewer Insights), #9 (Questions to Ask)
-- Manual refresh → invalidate the specific section
-
-#### 7.2.3 Auto-Save
-
-On completion (all 10 sections cached), the full brief is saved as an HTML artifact via the Artifacts MCP server, tagged with `{company, roleId, type: 'research_brief', date}`. Previous versions are retained — the system never overwrites, so you can compare how your prep evolved.
-
-#### 7.2.4 Prompt Architecture
-
-The Research Brief agent uses a single system prompt with section-specific instructions. The system prompt includes the full company profile, JD text, and positioning as context. Each section has a targeted user prompt that focuses generation on that section's purpose. The prompt explicitly instructs Claude to be honest about gaps (Section 5) and to avoid generic filler — every sentence should be specific to this company and role.
+Each section generates citations saved via `pf_save_citation` and content saved as MCP artifacts. See the standalone PRD for full prompt construction, caching/invalidation logic, degraded mode (unknown companies), export formats, and integration points.
 
 ### 7.3 Resume Tailor Agent
 
@@ -2395,6 +2497,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v1.3.8 | 2026-03-10 | Research Brief v2 overhaul (13 sections, MCP generation, standalone PRD), Opaque Recruiter Outreach (unknown company/role/both with reveal flow), Research Brief degraded mode for partial-info roles |
 | v1.3.7 | 2026-03-10 | Citations & Source Tracking PRD redesign — MCP-server-centric architecture (citations as artifact type, 3 new MCP tools), Source Ledger centralized roll-up view, inline citations in context (Research Brief, Pipeline detail, Outreach) |
 | v1.3.6 | 2026-03-10 | Pipeline: role detail/edit slide-out panel (full CRUD, stage history timeline, date editing, delete), URL import for Add New Role (CORS proxy chain), Research Brief persistence (auto-restore cached briefs on page load) |
 | v1.3.5 | 2026-03-10 | Research Brief & Resume Tailor Personal mode fixes (data normalization, targetLevel inference), Dashboard theme toggle fix, Job Feed sample-data banner |
