@@ -1162,9 +1162,75 @@
     }
 
     /**
+     * Converts any markdown remnants in Claude's response to proper HTML.
+     * Claude is prompted to return HTML, but sometimes mixes in markdown
+     * (e.g., **bold**, *italic*, numbered lists, headers).
+     * This function catches those patterns and converts them to clean HTML.
+     *
+     * INPUT: raw content string (may contain markdown mixed with HTML)
+     * RETURNS: clean HTML string
+     */
+    function sanitizeContent(raw) {
+      if (!raw || typeof raw !== 'string') return raw;
+
+      let html = raw;
+
+      // --- Block-level conversions (process BEFORE inline) ---
+
+      // Markdown headers: ### Title → <h3>, ## → <h2>
+      html = html.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
+      html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+      html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+      html = html.replace(/^#\s+(.+)$/gm, '<h2>$1</h2>');
+
+      // Markdown numbered lists: consecutive "1. Item\n2. Item" → <ol>
+      html = html.replace(/((?:^\d+\.\s+.+\n?)+)/gm, (block) => {
+        // Don't double-wrap if already HTML
+        if (block.includes('<li>')) return block;
+        const items = block.trim().split('\n')
+          .filter(l => /^\d+\.\s+/.test(l))
+          .map(l => `<li>${l.replace(/^\d+\.\s+/, '')}</li>`)
+          .join('\n');
+        return `<ol>${items}</ol>`;
+      });
+
+      // Markdown unordered lists: consecutive "- Item" or "* Item"
+      html = html.replace(/((?:^[\-\*]\s+.+\n?)+)/gm, (block) => {
+        if (block.includes('<li>') || block.includes('<ul>')) return block;
+        const items = block.trim().split('\n')
+          .filter(l => /^[\-\*]\s+/.test(l))
+          .map(l => `<li>${l.replace(/^[\-\*]\s+/, '')}</li>`)
+          .join('\n');
+        return `<ul>${items}</ul>`;
+      });
+
+      // --- Inline conversions ---
+
+      // Bold: **text** → <strong>text</strong>
+      html = html.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>');
+
+      // Italic: *text* → <em>text</em> (single *, not part of **)
+      html = html.replace(/(?<!\*)\*([^*]+?)\*(?!\*)/g, '<em>$1</em>');
+
+      // Inline code: `code` → <code>code</code>
+      html = html.replace(/`([^`]+?)`/g, '<code>$1</code>');
+
+      // --- Paragraph cleanup ---
+      // Convert double newlines into paragraph breaks (for plain text blocks)
+      html = html.replace(/\n{2,}/g, '</p><p>');
+      html = html.replace(/<p>\s*<\/p>/g, '');
+
+      // Fix <p> wrapping block elements (invalid nesting)
+      html = html.replace(/<p>\s*(<(?:h[1-6]|ul|ol|table|div|blockquote)[^>]*>)/g, '$1');
+      html = html.replace(/(<\/(?:h[1-6]|ul|ol|table|div|blockquote)>)\s*<\/p>/g, '$1');
+
+      return html;
+    }
+
+    /**
      * Gets a cached section from localStorage
      * Cache key format: research_{companySlug}_{roleId}_{sectionNum}
-     * INPUT: companySlug (string), roleId (string), sectionNum (number 1-10)
+     * INPUT: companySlug (string), roleId (string), sectionNum (number 0-13)
      * RETURNS: cached content string, or null if not cached
      */
     function getCachedSection(companySlug, roleId, sectionNum) {
@@ -2253,7 +2319,7 @@
         // Content area — populated from cache
         const content = document.createElement('div');
         content.className = 'section-content';
-        content.innerHTML = cached.content;
+        content.innerHTML = sanitizeContent(cached.content);
         section.appendChild(content);
 
         sectionsArea.appendChild(section);
@@ -2352,7 +2418,7 @@
             // Update the section UI
             if (sectionEl) {
               const contentEl = sectionEl.querySelector('.section-content');
-              contentEl.innerHTML = result.content;
+              contentEl.innerHTML = sanitizeContent(result.content);
               sectionEl.classList.remove('pending');
 
               const statusEl = sectionEl.querySelector('.section-status');
@@ -2496,7 +2562,7 @@
         state.generatedSections[sectionNum] = result.content;
         cacheSectionContent(companySlug, role.id, sectionNum, result.content);
 
-        contentEl.innerHTML = result.content;
+        contentEl.innerHTML = sanitizeContent(result.content);
         sectionEl.classList.remove('pending');
         statusEl.innerHTML = '<span class="badge">Fresh</span> <span style="font-size: 11px; color: var(--text-tertiary);">Just now</span>';
       } catch (error) {

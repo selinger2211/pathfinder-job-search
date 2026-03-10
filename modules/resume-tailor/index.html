@@ -1368,6 +1368,18 @@
        ================================================================ */
 
     /**
+     * Converts markdown bold **text** to <strong>text</strong> for display.
+     * Bullet bank entries store text with markdown-style bold markers.
+     * This converts them to proper HTML for rendering in the UI.
+     * INPUT: text string (may contain **bold** markers)
+     * RETURNS: HTML string with <strong> tags
+     */
+    function mdBold(text) {
+      if (!text) return text;
+      return text.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>');
+    }
+
+    /**
      * Gets companies from the Pipeline Tracker
      * INPUT: none
      * RETURNS: array of company objects
@@ -1841,6 +1853,27 @@
         role.id
       );
 
+      // Restore cached analysis, or auto-analyze if JD exists
+      if (cached?.analysis) {
+        currentAnalysis = cached.analysis;
+      } else {
+        const jdText = cached?.jdText || role.jdText || '';
+        if (jdText) {
+          currentAnalysis = analyzeJD(jdText);
+          // Cache the analysis for next time
+          const toCache = cached || {};
+          toCache.analysis = currentAnalysis;
+          toCache.jdText = jdText;
+          saveCachedResume(
+            role.company.toLowerCase().replace(/\s+/g, '-'),
+            role.id,
+            toCache
+          );
+        } else {
+          currentAnalysis = null;
+        }
+      }
+
       renderSidebar();
       renderWorkspace();
     }
@@ -2203,7 +2236,7 @@
                       return `
                         <div class="bullet-item ${!bullet.included ? 'hidden' : ''}" data-bullet-index="${bulletIdx}">
                           <input type="checkbox" class="bullet-checkbox" ${bullet.included ? 'checked' : ''} onchange="updateBulletIncluded(${expIdx}, ${bulletIdx}, this.checked)">
-                          <div class="bullet-text">${bulletObj?.text || 'Bullet text not found'}</div>
+                          <div class="bullet-text">${mdBold(bulletObj?.text) || 'Bullet text not found'}</div>
                         </div>
                       `;
                     }).join('')}
@@ -2510,7 +2543,7 @@
           <div class="bullets-list">
             ${bullets.map(bullet => `
               <div class="bullet-card">
-                <div class="bullet-card-text">${bullet.text}</div>
+                <div class="bullet-card-text">${mdBold(bullet.text)}</div>
                 <div class="bullet-card-meta">
                   <div class="bullet-card-tags">
                     <span class="bullet-tag">${bullet.theme}</span>

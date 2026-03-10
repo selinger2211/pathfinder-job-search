@@ -4,6 +4,17 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v1.4.1 — 2026-03-10
+
+### What Changed
+- **Research Brief — Markdown-to-HTML sanitization** — Added `sanitizeContent()` function that converts markdown remnants (bold, italic, headers, numbered/unordered lists, inline code) to proper HTML. Applied at all 3 content insertion points (cache restore, generate, refresh). Fixes sections 11 (Questions to Ask) and 13 (Likely Interview Questions) where Claude API responses contained raw `**bold**` text instead of rendered HTML
+- **Research Brief — Stronger system prompt** — Updated the MCP server's `claude.ts` system prompt to explicitly forbid markdown syntax and require HTML-only output. Reduces markdown leakage at the source
+- **Resume Builder — Markdown bold in bullets** — Added `mdBold()` helper that converts `**text**` to `<strong>text</strong>` at bullet rendering points. Fixes raw markdown showing in bullet bank entries
+- **Resume Builder — Auto-analysis on role selection** — `selectRole()` now auto-runs `analyzeJD()` when a role with existing JD text is selected, instead of requiring the user to manually click Edit JD → Analyze JD. Cached analysis is restored if available; otherwise, analysis runs automatically and gets cached for next time
+- **PRD updated** — System PRD bumped to v1.4.1
+
+---
+
 ## v1.4.0 — 2026-03-10
 
 ### What Changed
