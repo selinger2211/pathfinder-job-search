@@ -1049,6 +1049,9 @@
 
         <!-- TAB 1: Feed Review -->
         <div class="tab-content active" id="tab-feed">
+          <div id="feedBanner" class="demo-banner" style="margin: var(--space-3) var(--space-3) 0; display: none;">
+            Sample Data — Showing curated job postings scored against your preferences
+          </div>
           <div class="feed-cards" id="feedCards">
             <!-- Cards populated by JavaScript -->
           </div>
@@ -1057,7 +1060,7 @@
         <!-- TAB 2: Feed Sources -->
         <div class="tab-content" id="tab-sources">
           <div style="padding: var(--space-4);">
-            <div class="demo-banner">Demo Mode — Feed sources configured but not connected to real APIs</div>
+            <div class="demo-banner" id="sourcesBanner">Sample Data — Feed sources configured but not connected to real APIs</div>
             <div class="feed-sources" id="feedSources">
               <!-- Source cards populated by JavaScript -->
             </div>
@@ -2127,7 +2130,15 @@
       // Load preferences
       state.preferences = loadPreferences();
 
-      // Score all demo items
+      // Show sample data banner in Personal mode so user knows
+      // the feed uses curated sample postings (no real API yet)
+      const isPersonal = localStorage.getItem('pf_data_mode') === 'personal';
+      const feedBanner = document.getElementById('feedBanner');
+      if (feedBanner) {
+        feedBanner.style.display = isPersonal ? 'block' : 'none';
+      }
+
+      // Score all demo items (curated sample feed, used in both modes)
       const scored = DEMO_FEED_ITEMS
         .map(role => {
           const scoring = scoreRole(role, state.preferences);

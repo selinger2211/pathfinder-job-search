@@ -356,6 +356,9 @@ h3 { font-size: var(--text-lg); }
   display: flex;                     /* Arrange links in a row */
   gap: var(--space-1);               /* Small gap between each link */
   list-style: none;                  /* Remove bullet points */
+  flex: 1;                           /* Take available space between brand and right section */
+  overflow-x: auto;                  /* Scroll horizontally if links overflow */
+  white-space: nowrap;               /* Prevent links from wrapping */
 }
 
 .nav-links a {
@@ -366,6 +369,8 @@ h3 { font-size: var(--text-lg); }
   border-radius: var(--radius-sm);   /* Slightly rounded background */
   font-size: var(--text-sm);
   color: var(--text-secondary);      /* Dimmer color by default */
+  white-space: nowrap;               /* Keep link text on one line */
+  flex-shrink: 0;                    /* Don't compress links */
   /* Smooth animation when colors change or background appears on hover/active */
   transition: color var(--duration-fast) var(--ease-default),
               background var(--duration-fast) var(--ease-default);

@@ -13,16 +13,16 @@ The job search tool market is fragmented: Teal for tracking, Jobscan for ATS opt
 | Module | What It Does | Status |
 |--------|-------------|--------|
 | **Pipeline Tracker** | Kanban board + table view for tracking companies and roles through 8 stages | Built |
-| **Dashboard & Launcher** | Daily action queue, pipeline summary, streak tracking, nudge engine | Planned |
-| **Job Feed Listener** | Monitors Gmail alerts, Indeed, Dice; scores roles 0-100 against your preferences | Planned |
-| **Research Brief** | Streams a 10-section company/role prep brief from Claude | Planned |
-| **Resume Tailor** | Positioning-aware resume generation (IC vs. management framing) with bullet bank | Planned |
-| **Calendar Integration** | Links Google Calendar to pipeline, triggers stage transitions | Planned |
-| **Outreach Generator** | Drafts 8 message types with real personalization signals | Planned |
-| **Post-Interview Debrief** | Structured feedback capture, pattern detection across interviews | Planned |
-| **Comp Intelligence** | Benchmarks comp from Levels.fyi, negotiation support | Planned |
-| **Mock Interview** | Company-calibrated practice across 7 interview types | Planned |
-| **Artifacts MCP Server** | Shared file layer for research briefs, resumes, JDs, debriefs | Planned |
+| **Dashboard & Launcher** | Daily action queue, pipeline summary, streak tracking, nudge engine | Built |
+| **Job Feed Listener** | Monitors Gmail alerts, Indeed, Dice; scores roles 0-100 against your preferences | Built |
+| **Research Brief** | Streams a 10-section company/role prep brief from Claude | Built |
+| **Resume Tailor** | Positioning-aware resume generation (IC vs. management framing) with bullet bank | Built |
+| **Calendar Integration** | Links Google Calendar to pipeline, triggers stage transitions | Built |
+| **Outreach Generator** | Drafts 8 message types with real personalization signals | Built |
+| **Post-Interview Debrief** | Structured feedback capture, pattern detection across interviews | Built |
+| **Comp Intelligence** | Benchmarks comp from Levels.fyi, negotiation support | Built |
+| **Mock Interview** | Company-calibrated practice across 7 interview types | Built |
+| **Artifacts MCP Server** | Shared file layer for research briefs, resumes, JDs, debriefs | Built |
 
 ## Architecture
 
@@ -66,11 +66,34 @@ pathfinder-job-search/
 │   │   └── pathfinder.css               # Design system
 │   ├── pipeline/
 │   │   └── index.html                   # Pipeline Tracker
-│   ├── dashboard/                       # (planned)
-│   ├── job-feed-listener/               # (planned)
-│   ├── research-brief/                  # (planned)
-│   └── resume-tailor/                   # (planned)
-├── mcp-servers/                         # Artifacts MCP server
+│   ├── dashboard/
+│   │   └── index.html                   # Dashboard & Launcher
+│   ├── job-feed-listener/
+│   │   └── index.html                   # Job Feed Listener
+│   ├── research-brief/
+│   │   └── index.html                   # Research Brief Agent
+│   ├── resume-tailor/
+│   │   └── index.html                   # Resume Tailor Agent
+│   ├── outreach/
+│   │   └── index.html                   # Outreach Message Generator
+│   ├── mock-interview/
+│   │   └── index.html                   # Mock Interview Agent
+│   ├── debrief/
+│   │   └── index.html                   # Post-Interview Debrief
+│   ├── comp-intel/
+│   │   └── index.html                   # Comp Intelligence Agent
+│   └── calendar/
+│       └── index.html                   # Calendar Integration Agent
+├── mcp-servers/
+│   └── pathfinder-artifacts-mcp/        # Artifacts MCP server (TypeScript)
+│       ├── package.json
+│       ├── tsconfig.json
+│       └── src/
+│           ├── index.ts                 # Server entry point
+│           ├── types.ts                 # Type definitions
+│           ├── constants.ts             # Configuration
+│           ├── services/storage.ts      # File system + index management
+│           └── tools/                   # 6 MCP tools (save, get, list, search, tag, delete)
 └── skills/                              # Claude skill definitions
 ```
 

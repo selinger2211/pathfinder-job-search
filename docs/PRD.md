@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v1.3.4
+**Status:** v1.3.5
 
 ---
 
@@ -2232,6 +2232,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v1.3.5 | 2026-03-10 | Research Brief & Resume Tailor Personal mode fixes (data normalization, targetLevel inference), Dashboard theme toggle fix, Job Feed sample-data banner |
 | v1.3.4 | 2026-03-10 | Fix Research Brief role selector (script parse error), Dashboard nav aligned to shared .nav component |
 | v1.3.3 | 2026-03-10 | Fix Personal mode across all 7 modules (demo seeding guard), Debrief role selector grouped by company |
 | v1.3.2 | 2026-03-10 | Pipeline search across companies & roles, Personal mode demo data fix, Command Palette shows all companies |

@@ -1161,6 +1161,51 @@
     // The content is parameterized so it's not just lorem ipsum
 
     /**
+     * Fill in safe defaults for any missing company fields.
+     * Personal-mode companies from migration only have basic fields
+     * (name, domain, tier, missionStatement, logoUrl, contactCount).
+     * Generation templates expect richer data, so we backfill here.
+     */
+    function normalizeCompanyForBrief(company) {
+      return {
+        ...company,
+        fundingStage: company.fundingStage || 'Growth',
+        founded:      company.founded || '',
+        headcount:    company.headcount || '',
+        missionStatement: company.missionStatement || `Providing innovative solutions in the ${company.domain || 'technology'} space`,
+        industry:     company.industry || '',
+        techStack:    company.techStack || '',
+        values:       company.values || '',
+        glassdoor:    company.glassdoor || '',
+        linkedinUrl:  company.linkedinUrl || '',
+        domain:       company.domain || ''
+      };
+    }
+
+    /** Same for roles — Pipeline roles may lack fields the templates expect */
+    function normalizeRoleForBrief(role) {
+      // Infer targetLevel from role title if not explicitly set
+      const inferLevel = (r) => {
+        const t = (r.title || '').toLowerCase();
+        if (t.includes('principal')) return 'Principal';
+        if (t.includes('staff'))     return 'Staff';
+        if (t.includes('director'))  return r.title.includes('Sr.') ? 'Sr. Director' : 'Director';
+        if (t.includes('vp'))        return 'VP';
+        if (t.includes('senior') || t.includes('sr.')) return 'Senior';
+        return 'Senior';
+      };
+
+      return {
+        ...role,
+        stage:       role.stage || 'researching',
+        positioning: role.positioning || 'ic',
+        jdText:      role.jdText || '',
+        tier:        role.tier || 'active',
+        targetLevel: role.targetLevel || inferLevel(role)
+      };
+    }
+
+    /**
      * Section 1: Company Overview
      * What they do, business model, recent news, market position
      */
@@ -1686,10 +1731,15 @@
       const company = companies.find(c => c.name === role.company);
       if (!company) return;
 
-      state.selectedRole = role;
-      state.selectedCompany = company;
+      // Normalize data so generation templates have all expected fields
+      state.selectedRole = normalizeRoleForBrief(role);
+      state.selectedCompany = normalizeCompanyForBrief(company);
       state.currentSection = null;
       state.sectionStatus = {};
+
+      // Use normalized references for sidebar
+      const nc = state.selectedCompany;
+      const nr = state.selectedRole;
 
       // Update sidebar
       document.getElementById('companyCard').style.display = 'block';
@@ -1702,27 +1752,27 @@
       document.getElementById('printBtn').style.display = 'flex';
 
       // Populate company card
-      document.getElementById('companyName').textContent = company.name;
-      document.getElementById('companyDomain').textContent = company.domain;
-      document.getElementById('companyStage').textContent = company.fundingStage;
-      document.getElementById('companyHeadcount').textContent = company.headcount;
+      document.getElementById('companyName').textContent = nc.name;
+      document.getElementById('companyDomain').textContent = nc.domain;
+      document.getElementById('companyStage').textContent = nc.fundingStage;
+      document.getElementById('companyHeadcount').textContent = nc.headcount;
       document.getElementById('companyLogo').src = `https://logo.clearbit.com/${company.domain}`;
       document.getElementById('companyLogo').onerror = function() {
         this.style.display = 'none';
       };
 
       // Populate role details
-      document.getElementById('roleTitle').textContent = role.title;
-      document.getElementById('roleLevelBadge').textContent = role.targetLevel;
-      document.getElementById('rolesPositioningBadge').textContent = role.positioning === 'management' ? 'Management' : 'IC';
-      document.getElementById('roleAdded').textContent = formatDate(role.dateAdded);
+      document.getElementById('roleTitle').textContent = nr.title;
+      document.getElementById('roleLevelBadge').textContent = nr.targetLevel || nr.positioning;
+      document.getElementById('rolesPositioningBadge').textContent = nr.positioning === 'management' ? 'Management' : 'IC';
+      document.getElementById('roleAdded').textContent = formatDate(nr.dateAdded);
 
       // Populate JD text
-      document.getElementById('jdText').textContent = role.jdText || '(No job description provided)';
+      document.getElementById('jdText').textContent = nr.jdText || '(No job description provided)';
 
       // Update brief header
-      document.getElementById('briefTitle').textContent = `${company.name} — ${role.title}`;
-      document.getElementById('briefSubtitle').textContent = `${role.targetLevel} ${role.positioning === 'management' ? 'Management' : 'IC'} Role`;
+      document.getElementById('briefTitle').textContent = `${nc.name} — ${nr.title}`;
+      document.getElementById('briefSubtitle').textContent = `${nr.targetLevel || nr.positioning} ${nr.positioning === 'management' ? 'Management' : 'IC'} Role`;
 
       // Clear sections and show empty state
       document.getElementById('sectionsArea').innerHTML = `

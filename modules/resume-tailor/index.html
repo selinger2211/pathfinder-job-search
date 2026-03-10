@@ -1463,6 +1463,9 @@
      * OUTPUT: localStorage populated with demo companies, roles, bullets, and resume log
      */
     function initializeDemoData() {
+      // In Personal mode, never seed demo data — the data-switcher handles it
+      if (localStorage.getItem('pf_data_mode') === 'personal') return;
+
       // Only initialize if no data exists
       if (localStorage.getItem('pf_bullet_bank')) return;
 
@@ -1779,15 +1782,26 @@
 
       let html = '<option value="">Choose a role from your pipeline...</option>';
 
-      // Group roles by stage
+      // Group roles by stage (with fallback for roles without a known stage)
       const stages = ['discovered', 'researching', 'outreach', 'applied', 'screen', 'interviewing', 'offer'];
-      stages.forEach(stage => {
-        const rolesInStage = roles.filter(r => r.stage === stage);
-        if (rolesInStage.length > 0) {
-          html += `<optgroup label="${stage.toUpperCase()}">`;
+      const groupedByStage = {};
+
+      roles.forEach(role => {
+        const stage = (role.stage || 'other').toLowerCase();
+        if (!groupedByStage[stage]) groupedByStage[stage] = [];
+        groupedByStage[stage].push(role);
+      });
+
+      // Render known stages first, then any extras
+      const allStages = [...stages, ...Object.keys(groupedByStage).filter(s => !stages.includes(s))];
+      allStages.forEach(stage => {
+        const rolesInStage = groupedByStage[stage];
+        if (rolesInStage && rolesInStage.length > 0) {
+          const label = stage === 'other' ? 'PIPELINE' : stage.toUpperCase();
+          html += `<optgroup label="${label}">`;
           rolesInStage.forEach(role => {
             const company = companies.find(c => c.name === role.company);
-            html += `<option value="${role.id}">${company?.name || 'Unknown'} — ${role.title}</option>`;
+            html += `<option value="${role.id}">${company?.name || role.company || 'Unknown'} — ${role.title}</option>`;
           });
           html += '</optgroup>';
         }
