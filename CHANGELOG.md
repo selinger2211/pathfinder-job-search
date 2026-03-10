@@ -4,6 +4,15 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v1.4.2 — 2026-03-10
+
+### What Changed
+- **Resume Builder standalone PRD** — `docs/resume-builder-prd.md`. Redefines the Resume Builder as an opinionated, JD-driven agent. Key additions: auto-analysis on role selection, MCP-powered generation (Phase 2), bullet bank as a living system with 4 growth mechanisms (seed, manual, agent-proposed, research-brief-fed), keyword gap analysis, feedback loops between Research Brief and Resume Builder, and cover letter generation
+- **Job Feed Listener standalone PRD** — `docs/job-feed-prd.md`. Full spec for the top-of-funnel automation: 5-stage processing pipeline (Extract → Enrich → Dedup → Score → Create), weighted scoring model (title 25%, domain 25%, keywords 20%, location 15%, stage 10%, comp 5%), tiered career page monitoring, Gmail integration with Claude-powered email classification, feed queue for weak matches, and source ROI analytics. Inspired by n8n job automation workflows
+- **PRD updated** — System PRD bumped to v1.4.2
+
+---
+
 ## v1.4.1 — 2026-03-10
 
 ### What Changed
