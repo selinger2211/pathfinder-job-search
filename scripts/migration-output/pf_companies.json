@@ -1,0 +1,362 @@
+[
+  {
+    "name": "Yahoo",
+    "domain": "yahoo.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/yahoo.com",
+    "contactCount": 6
+  },
+  {
+    "name": "Meta",
+    "domain": "meta.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/meta.com",
+    "contactCount": 4
+  },
+  {
+    "name": "Cardlytics",
+    "domain": "cardlytics.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/cardlytics.com",
+    "contactCount": 2
+  },
+  {
+    "name": "Google",
+    "domain": "google.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/google.com",
+    "contactCount": 2
+  },
+  {
+    "name": "Amazon Ads",
+    "domain": "amazon.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/amazon.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Apple",
+    "domain": "apple.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/apple.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Bounti.ai",
+    "domain": "bountiai.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/bountiai.com",
+    "contactCount": 1
+  },
+  {
+    "name": "GoodLeap",
+    "domain": "goodleap.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/goodleap.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Singular",
+    "domain": "singular.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/singular.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Captiv8",
+    "domain": "captiv8.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/captiv8.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Stripe",
+    "domain": "stripe.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/stripe.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Epsilon",
+    "domain": "epsilon.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/epsilon.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Best Buy",
+    "domain": "bestbuy.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/bestbuy.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Enriches Lab",
+    "domain": "enricheslab.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/enricheslab.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Yelp",
+    "domain": "yelp.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/yelp.com",
+    "contactCount": 1
+  },
+  {
+    "name": "InMobi",
+    "domain": "inmobi.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/inmobi.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Reflectivity",
+    "domain": "reflectivity.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/reflectivity.com",
+    "contactCount": 1
+  },
+  {
+    "name": "RunLLM",
+    "domain": "runllm.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/runllm.com",
+    "contactCount": 1
+  },
+  {
+    "name": "eBay",
+    "domain": "ebay.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/ebay.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Conversant",
+    "domain": "conversant.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/conversant.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Albertsons Media",
+    "domain": "albertsonsmedia.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/albertsonsmedia.com",
+    "contactCount": 1
+  },
+  {
+    "name": "AskEffi",
+    "domain": "askeffi.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/askeffi.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Atlassian",
+    "domain": "atlassian.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/atlassian.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Shutterfly",
+    "domain": "shutterfly.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/shutterfly.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Indeed",
+    "domain": "indeed.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/indeed.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Coupang",
+    "domain": "coupang.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/coupang.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Rakuten",
+    "domain": "rakuten.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/rakuten.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Activision Blizzard",
+    "domain": "activisionblizzard.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/activisionblizzard.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Platformr",
+    "domain": "platformr.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/platformr.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Twilio",
+    "domain": "twilio.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/twilio.com",
+    "contactCount": 1
+  },
+  {
+    "name": "BC Ventures",
+    "domain": "bcventures.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/bcventures.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Clever",
+    "domain": "clever.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/clever.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Informatica",
+    "domain": "informatica.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/informatica.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Canopy",
+    "domain": "canopy.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/canopy.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Amazon",
+    "domain": "amazon.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/amazon.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Calendly",
+    "domain": "calendly.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/calendly.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Workday",
+    "domain": "workday.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/workday.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Square",
+    "domain": "squareup.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/squareup.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Notion",
+    "domain": "notion.so",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/notion.so",
+    "contactCount": 1
+  },
+  {
+    "name": "Blendid",
+    "domain": "blendid.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/blendid.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Gilead",
+    "domain": "gilead.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/gilead.com",
+    "contactCount": 1
+  },
+  {
+    "name": "EBSCO",
+    "domain": "ebsco.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/ebsco.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Okta",
+    "domain": "okta.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/okta.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Pandora",
+    "domain": "pandora.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/pandora.com",
+    "contactCount": 1
+  },
+  {
+    "name": "Roku",
+    "domain": "roku.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/roku.com",
+    "contactCount": 1
+  }
+]

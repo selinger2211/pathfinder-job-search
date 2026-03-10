@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v1.3.10
+**Status:** v1.4.0
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v1.4.0 | 2026-03-10 | Research Brief v2 engine: MCP server with Claude API integration (14 section-specific prompts), HTTP bridge (localhost:3456), browser-side 3-batch generation engine, API key settings UI, extended keyboard shortcuts |
 | v1.3.10 | 2026-03-10 | Pipeline: resume attachment (IndexedDB file storage, drag-and-drop upload, preview/download), comms log (timestamped notes tied to connections with channel + link tracking) |
 | v1.3.9 | 2026-03-10 | Pipeline: company logos (Google Favicons, ATS-aware domain extraction), connections section with LinkedIn links, inbound outreach tracking (optional title, contact capture, outreach context logging). Research Brief: company logos in sidebar |
 | v1.3.8 | 2026-03-10 | Research Brief v2 overhaul (13 sections, MCP generation, standalone PRD), Opaque Recruiter Outreach (unknown company/role/both with reveal flow), Research Brief degraded mode for partial-info roles |

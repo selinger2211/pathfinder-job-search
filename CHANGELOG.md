@@ -4,6 +4,20 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v1.4.0 — 2026-03-10
+
+### What Changed
+- **Research Brief v2 Engine — MCP Server + HTTP Bridge** — Built the actual generation backend that was spec'd in v1.3.8. The MCP server (`pathfinder-artifacts-mcp`) now includes a `pf_generate_brief_section` tool that calls the Anthropic API with section-specific prompts for all 14 sections (0-13). Each section has a custom system prompt, context block (JD, company, connections, bullets, stories, comp data), and output structure matching the PRD spec. Generated sections are cached as artifacts in `~/.pathfinder/artifacts/`
+- **HTTP Bridge Server** — Lightweight HTTP server (localhost:3456) runs alongside the MCP server so the browser can POST generation requests. Routes: `POST /api/generate-section`, `GET /api/section-defs`, `GET /api/health`, `GET /api/cached-brief`. Standalone mode available via `npm run bridge` for development without Claude Desktop
+- **Browser-side v2 Generation Engine** — Research Brief module rewritten to call the MCP server via HTTP bridge instead of generating template strings locally. 3-batch dependency ordering: pre-batch (Section 0 if no JD), Batch 1 (sections 1-6,8,10 in parallel), Batch 2 (7,9,12,13 depend on Batch 1), Batch 3 (11 depends on all). Real-time skeleton loading states, per-section error handling with retry buttons, and "missing inputs" callouts
+- **API Key Settings UI** — New sidebar section for entering/saving Anthropic API key. Key stored in localStorage (`pf_anthropic_key`), sent only to the local MCP bridge server. Visual feedback on save with masked display
+- **Keyboard shortcuts extended** — Sections 0-9 via digit keys, sections 10-13 via Shift+0-3. Updated from the old 1-10 range
+- **Dynamic progress tracking** — `updateProgress()` now accepts (completed, total) parameters from the generation engine instead of hardcoding 10
+- **New MCP server files:** `src/services/claude.ts` (Claude API client + 14 section prompts), `src/tools/generate-brief.ts` (tool handler + Zod validation), `src/http-bridge.ts` (HTTP bridge server), `src/bridge-standalone.ts` (standalone entry point)
+- **PRD updated** — Research Brief PRD at v2.0.0. System PRD bumped to v1.4.0
+
+---
+
 ## v1.3.10 — 2026-03-10
 
 ### What Changed

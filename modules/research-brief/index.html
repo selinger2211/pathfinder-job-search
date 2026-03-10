@@ -766,6 +766,19 @@
           <textarea class="interviewer-input" id="interviewerInput" placeholder="e.g., Sarah Chen, Mike Johnson, Lisa Park"></textarea>
         </div>
 
+        <!-- API Key Settings -->
+        <div id="apiKeySection" class="api-key-section" style="margin-top: var(--space-3); padding: var(--space-3); background: var(--bg-elevated); border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm);">
+          <label class="jd-label" style="display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="key" style="width: 14px; height: 14px;"></i>
+            Anthropic API Key
+          </label>
+          <div style="display: flex; gap: 6px; margin-top: var(--space-1);">
+            <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." style="flex: 1; padding: 6px 10px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); font-size: var(--text-sm); background: var(--bg-base); color: var(--text-primary); font-family: monospace;">
+            <button id="apiKeySaveBtn" onclick="saveApiKey()" title="Save API key" style="padding: 6px 10px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); background: var(--bg-elevated); cursor: pointer; font-size: var(--text-sm); color: var(--text-secondary);">Save</button>
+          </div>
+          <p id="apiKeyStatus" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;"></p>
+        </div>
+
         <!-- Action buttons -->
         <div class="sidebar-actions">
           <button class="btn btn-primary" id="generateBtn" style="display: none;">
@@ -809,7 +822,7 @@
             <div class="empty-state-text">
               <p>Select a role from the sidebar to generate your research brief.</p>
               <p style="font-size: var(--text-sm); margin-top: var(--space-2);">
-                This will create a comprehensive 10-section interview prep document.
+                This will create a comprehensive multi-section interview prep document.
               </p>
             </div>
           </div>
@@ -831,7 +844,7 @@
      * RESEARCH BRIEF AGENT — Architecture Overview
      * ================================================================
      *
-     * This module generates comprehensive 10-section interview prep briefs
+     * This module generates comprehensive multi-section (up to 14) interview prep briefs
      * for specific company + role combinations. It's a single-file, self-contained
      * application that reads data from the Pipeline Tracker (pf_companies, pf_roles)
      * and generates realistic, company-specific content using local templates.
@@ -846,7 +859,7 @@
      * 2. UI PATTERNS
      *    - Two-panel layout: left sidebar (context), right panel (content)
      *    - Left sidebar: role selector, company card, role details, JD text, interviewer input
-     *    - Right panel: 10 sections rendered as cards, floating TOC on right
+     *    - Right panel: sections (0-13) rendered as cards, floating TOC on right
      *    - Streaming simulation: sections generate sequentially with typing animation
      *
      * 3. CONTENT GENERATION (Local Demo Mode)
@@ -862,7 +875,7 @@
      *
      * 5. KEYBOARD SHORTCUTS
      *    - G: Generate brief
-     *    - 1-0: Jump to section 1-10
+     *    - 0-9: Jump to sections 0-9, Shift+0-3: sections 10-13
      *    - R: Refresh current section
      *    - [/]: Collapse/expand sidebar
      *    - P: Print
@@ -873,20 +886,56 @@
     // ================================================================
     // SECTION DEFINITIONS
     // ================================================================
-    // This array defines what each of the 10 sections does and where
+    // This array defines what each of the 14 sections (0-13) does and where
     // it appears. Each section is independent and can be refreshed alone.
+    // ================================================================
+    // v2 SECTION DEFINITIONS — 14 sections (0-13) matching the PRD
+    // ================================================================
+    // Section 0 only appears when there's no JD (recruiter outreach mode).
+    // Sections 1-13 are the full brief. Generation happens via the MCP
+    // server's HTTP bridge at localhost:3456.
+
     const SECTION_DEFINITIONS = [
-      { num: 1, title: 'Company Overview', icon: '🏢' },
-      { num: 2, title: 'Product Deep Dive', icon: '🛠️' },
-      { num: 3, title: 'Market & Competitive Landscape', icon: '📊' },
-      { num: 4, title: 'Role Analysis', icon: '📋' },
-      { num: 5, title: 'Why You Fit', icon: '💼' },
-      { num: 6, title: 'Strategic Challenges', icon: '🎯' },
-      { num: 7, title: 'Culture & Team', icon: '👥' },
-      { num: 8, title: 'Interviewer Insights', icon: '🤝' },
-      { num: 9, title: 'Questions to Ask', icon: '❓' },
-      { num: 10, title: 'TMAY Script', icon: '🎤' }
+      { num: 0,  title: 'Known Context',                  icon: '📎', conditionalOnNoJD: true },
+      { num: 1,  title: 'Role Decode',                    icon: '🔍' },
+      { num: 2,  title: 'Company Now',                    icon: '🏢' },
+      { num: 3,  title: 'Funding & Corporate Structure',  icon: '💰' },
+      { num: 4,  title: 'Competitive Landscape',          icon: '📊' },
+      { num: 5,  title: 'Team & Org Intelligence',        icon: '👥' },
+      { num: 6,  title: 'Network & Connections',          icon: '🤝' },
+      { num: 7,  title: 'Fit Analysis',                   icon: '💼' },
+      { num: 8,  title: 'Compensation Intelligence',      icon: '💵' },
+      { num: 9,  title: 'Strategic Challenges & First 90 Days', icon: '🎯' },
+      { num: 10, title: 'Culture & Values Decode',        icon: '🧭' },
+      { num: 11, title: 'Questions to Ask',               icon: '❓' },
+      { num: 12, title: 'TMAY Script',                    icon: '🎤' },
+      { num: 13, title: 'Likely Interview Questions',     icon: '🧩' }
     ];
+
+    // ================================================================
+    // GENERATION BATCHES — dependency ordering from the PRD
+    // ================================================================
+    // Pre-batch: Section 0 (only if no JD)
+    // Batch 1: Sections 1,2,3,4,5,6,8,10 — independent, can run in parallel
+    // Batch 2: Sections 7,9,12,13 — depend on Batch 1 outputs
+    // Batch 3: Section 11 — depends on all other sections
+    const GENERATION_BATCHES = {
+      preBatch: [0],                    // Only if no JD
+      batch1: [1, 2, 3, 4, 5, 6, 8, 10],  // Independent sections
+      batch2: [7, 9, 12, 13],              // Depend on batch 1
+      batch3: [11],                         // Depends on everything
+    };
+
+    // ================================================================
+    // MCP BRIDGE CONFIG — how the browser talks to the MCP server
+    // ================================================================
+    const BRIDGE_URL = localStorage.getItem('pf_bridge_url') || 'http://localhost:3456';
+    const BRIDGE_ENDPOINTS = {
+      generateSection: `${BRIDGE_URL}/api/generate-section`,
+      sectionDefs:     `${BRIDGE_URL}/api/section-defs`,
+      health:          `${BRIDGE_URL}/api/health`,
+      cachedBrief:     `${BRIDGE_URL}/api/cached-brief`,
+    };
 
     // ================================================================
     // STATE & CONFIG
@@ -896,9 +945,13 @@
       selectedRole: null,
       selectedCompany: null,
       currentSection: null,
-      sectionStatus: {}, // track which sections are completed/loading/cached
+      sectionStatus: {},       // track which sections are completed/loading/cached
       interviewerNames: [],
-      sidebarCollapsed: false
+      sidebarCollapsed: false,
+      apiKey: localStorage.getItem('pf_anthropic_key') || '',  // Claude API key
+      bridgeAvailable: false,  // Whether the HTTP bridge is reachable
+      generatedSections: {},   // { sectionNum: htmlContent } for dependency passing
+      isGenerating: false,     // Prevent duplicate generation
     };
 
     // ================================================================
@@ -1147,7 +1200,8 @@
      * OUTPUT: removes 10 cache entries from localStorage
      */
     function clearAllCachedSections(companySlug, roleId) {
-      for (let i = 1; i <= 10; i++) {
+      // Clear all 14 sections (0-13)
+      for (let i = 0; i <= 13; i++) {
         const key = `research_${companySlug}_${roleId}_${i}`;
         localStorage.removeItem(key);
       }
@@ -1263,6 +1317,264 @@
         targetLevel: role.targetLevel || inferLevel(role)
       };
     }
+
+    // ================================================================
+    // v2 GENERATION ENGINE — Claude API via HTTP bridge
+    // ================================================================
+
+    /**
+     * Check if the MCP HTTP bridge is available on localhost:3456.
+     * Sets state.bridgeAvailable and returns the result.
+     */
+    async function checkBridgeHealth() {
+      try {
+        const resp = await fetch(BRIDGE_ENDPOINTS.health, { signal: AbortSignal.timeout(3000) });
+        if (resp.ok) {
+          state.bridgeAvailable = true;
+          return true;
+        }
+      } catch (e) {
+        // Bridge not running — that's okay, we'll show a setup message
+      }
+      state.bridgeAvailable = false;
+      return false;
+    }
+
+    /**
+     * Gather all context data from localStorage that the MCP server needs.
+     * This is the "payload" sent with each generation request.
+     */
+    function gatherBriefContext(role, company) {
+      // Get connections for this company
+      const allConnections = JSON.parse(localStorage.getItem('pf_connections') || '[]');
+      const companyConnections = allConnections.filter(c =>
+        c.company && c.company.toLowerCase() === company.name.toLowerCase()
+      );
+
+      // Get bullet bank
+      const bulletBank = JSON.parse(localStorage.getItem('pf_bullet_bank') || '[]');
+
+      // Get story bank
+      const storyBank = JSON.parse(localStorage.getItem('pf_story_bank') || '[]');
+
+      // Get comp data for this company
+      const compCache = JSON.parse(localStorage.getItem('pf_comp_cache') || '{}');
+      const companySlug = getCompanySlug(company.name);
+      const compData = compCache[companySlug] || compCache[company.name] || {};
+
+      return {
+        role: {
+          id: role.id,
+          title: role.title,
+          company: role.company,
+          url: role.url,
+          jdText: role.jdText,
+          positioning: role.positioning,
+          targetLevel: role.targetLevel,
+          stage: role.stage,
+          dateAdded: role.dateAdded,
+          salary: role.salary,
+          roleHints: role.roleHints,
+          knownContext: role.knownContext,
+          recruiterSource: role.recruiterSource,
+          confidential: role.confidential,
+          interviewerNames: state.interviewerNames.length > 0 ? state.interviewerNames : undefined,
+        },
+        company: {
+          name: company.name,
+          domain: company.domain,
+          companyType: company.companyType,
+          fundingStage: company.fundingStage,
+          headcount: company.headcount,
+          missionStatement: company.missionStatement,
+          remotePolicy: company.remotePolicy,
+          techStack: company.techStack,
+          culture: company.culture,
+          glassdoor: company.glassdoor,
+        },
+        connections: companyConnections,
+        bulletBank,
+        storyBank,
+        compData,
+      };
+    }
+
+    /**
+     * Generate a single section via the MCP HTTP bridge.
+     * POSTs to /api/generate-section with full context.
+     * Returns { content, citations, inputsUsed, inputsMissing, ... }
+     */
+    async function generateSectionViaAPI(sectionNum, role, company, previousSections) {
+      const context = gatherBriefContext(role, company);
+
+      const payload = {
+        apiKey: state.apiKey,
+        sectionNum,
+        role: context.role,
+        company: context.company,
+        connections: context.connections,
+        bulletBank: context.bulletBank,
+        storyBank: context.storyBank,
+        compData: context.compData,
+        previousSections: previousSections || {},
+        forceRefresh: true,
+        model: localStorage.getItem('pf_claude_model') || 'claude-sonnet-4-20250514',
+      };
+
+      const resp = await fetch(BRIDGE_ENDPOINTS.generateSection, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!resp.ok) {
+        const errBody = await resp.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errBody.error || `HTTP ${resp.status}`);
+      }
+
+      return await resp.json();
+    }
+
+    /**
+     * Determine which sections to generate based on the role data.
+     * Section 0 only appears when there's no JD.
+     * Returns an array of batch arrays: [[preBatch], [batch1], [batch2], [batch3]]
+     */
+    function getBatchPlan(role) {
+      const hasJD = !!(role.jdText && role.jdText.trim().length > 0);
+      const batches = [];
+
+      // Pre-batch: Section 0 only if no JD
+      if (!hasJD) {
+        batches.push(GENERATION_BATCHES.preBatch);
+      }
+
+      // Batch 1: independent sections
+      batches.push(GENERATION_BATCHES.batch1);
+
+      // Batch 2: sections that depend on batch 1
+      batches.push(GENERATION_BATCHES.batch2);
+
+      // Batch 3: Section 11 depends on everything
+      batches.push(GENERATION_BATCHES.batch3);
+
+      return batches;
+    }
+
+    /**
+     * Get the list of sections that should be visible for this role.
+     * (Filters out Section 0 if JD exists.)
+     */
+    function getVisibleSections(role) {
+      const hasJD = !!(role.jdText && role.jdText.trim().length > 0);
+      return SECTION_DEFINITIONS.filter(s => {
+        if (s.conditionalOnNoJD && hasJD) return false;
+        return true;
+      });
+    }
+
+    /**
+     * Show the API key setup prompt if no key is configured.
+     * Returns true if key is available, false if user needs to set it up.
+     */
+    function ensureApiKey() {
+      if (state.apiKey) return true;
+
+      // Try loading from localStorage first
+      const stored = localStorage.getItem('pf_anthropic_key');
+      if (stored) {
+        state.apiKey = stored;
+        updateApiKeyUI();
+        return true;
+      }
+
+      // Fall back to prompt
+      const key = prompt(
+        'Enter your Anthropic API key to enable Claude-powered research briefs.\n\n' +
+        'This key is stored locally in your browser and sent only to the MCP server on your machine.\n\n' +
+        'Get a key at: https://console.anthropic.com/settings/keys'
+      );
+
+      if (key && key.trim()) {
+        state.apiKey = key.trim();
+        localStorage.setItem('pf_anthropic_key', state.apiKey);
+        updateApiKeyUI();
+        return true;
+      }
+
+      return false;
+    }
+
+    /**
+     * Saves the API key from the sidebar input field.
+     * Called by the Save button in the API Key settings section.
+     */
+    function saveApiKey() {
+      const input = document.getElementById('apiKeyInput');
+      const status = document.getElementById('apiKeyStatus');
+      const key = input.value.trim();
+
+      if (!key) {
+        status.textContent = 'Please enter an API key.';
+        status.style.color = 'rgb(239, 68, 68)';
+        return;
+      }
+
+      state.apiKey = key;
+      localStorage.setItem('pf_anthropic_key', key);
+
+      // Mask the displayed value
+      input.value = key.slice(0, 10) + '...' + key.slice(-4);
+      input.type = 'text';
+      status.textContent = 'Key saved. Stored locally in your browser.';
+      status.style.color = 'var(--text-tertiary)';
+
+      // Reset to password after 3s
+      setTimeout(() => { input.type = 'password'; input.value = key; }, 3000);
+    }
+
+    /**
+     * Syncs the sidebar API key input with current state.
+     */
+    function updateApiKeyUI() {
+      const input = document.getElementById('apiKeyInput');
+      const status = document.getElementById('apiKeyStatus');
+      if (state.apiKey) {
+        input.value = state.apiKey;
+        status.textContent = 'Key loaded from storage.';
+        status.style.color = 'var(--text-tertiary)';
+      }
+    }
+
+    /**
+     * Show a bridge-not-running error in the sections area.
+     */
+    function showBridgeError() {
+      document.getElementById('sectionsArea').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">🔌</div>
+          <div class="empty-state-text">
+            <p><strong>MCP Bridge Not Running</strong></p>
+            <p style="font-size: var(--text-sm); margin-top: var(--space-2); max-width: 500px;">
+              The Research Brief engine needs the Pathfinder MCP server running locally.<br><br>
+              Start it with:<br>
+              <code style="background: var(--bg-subtle); padding: 4px 8px; border-radius: 4px; font-family: monospace;">
+                cd mcp-servers/pathfinder-artifacts-mcp && npm run bridge
+              </code><br><br>
+              Then click "Generate Brief" again.
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+
+    // ================================================================
+    // LEGACY TEMPLATE FUNCTIONS (v1 fallback — kept for reference)
+    // ================================================================
+    // These are the old hardcoded template generators. They're no longer
+    // called by the v2 engine but are preserved in case the API bridge
+    // is unavailable and we need a degraded fallback.
 
     /**
      * Section 1: Company Overview
@@ -1730,6 +2042,13 @@
       setupKeyboardShortcuts();
       lucide.createIcons();
 
+      // Load saved API key from localStorage
+      const savedKey = localStorage.getItem('pf_anthropic_key');
+      if (savedKey) {
+        state.apiKey = savedKey;
+        updateApiKeyUI();
+      }
+
       // Pre-load with first role if in demo mode
       const roles = getRoles();
       if (roles.length > 0) {
@@ -1839,7 +2158,10 @@
 
       // Check if any cached sections exist for this role
       const companySlug = getCompanySlug(nc.name);
-      const hasCachedSections = getCachedSection(companySlug, nr.id, 1) !== null;
+      // Check multiple sections — Section 0 is conditional, so check 1 and 2 as well
+      const hasCachedSections = getCachedSection(companySlug, nr.id, 1) !== null
+        || getCachedSection(companySlug, nr.id, 2) !== null
+        || getCachedSection(companySlug, nr.id, 0) !== null;
 
       if (hasCachedSections) {
         // Restore previously generated brief from cache
@@ -1853,7 +2175,7 @@
             <div class="empty-state-text">
               <p>Ready to generate your research brief.</p>
               <p style="font-size: var(--text-sm); margin-top: var(--space-2);">
-                Click "Generate Brief" to create a comprehensive 10-section interview prep document.
+                Click "Generate Brief" to create a comprehensive interview prep document.
               </p>
             </div>
           </div>
@@ -1865,7 +2187,7 @@
 
     /**
      * Restores a previously generated brief from localStorage cache.
-     * Iterates over all 10 section definitions, checks cache for each,
+     * Iterates over visible section definitions, checks cache for each,
      * and renders any found sections with their cached content.
      * INPUT: companySlug (string), role (normalized), company (normalized)
      * OUTPUT: populates the sections area with cached content
@@ -1874,7 +2196,8 @@
       const sectionsArea = document.getElementById('sectionsArea');
       sectionsArea.innerHTML = '';
 
-      SECTION_DEFINITIONS.forEach((sectionDef, index) => {
+      const visibleSections = getVisibleSections(role);
+      visibleSections.forEach((sectionDef, index) => {
         const sectionNum = sectionDef.num;
         const cached = getCachedSection(companySlug, role.id, sectionNum);
 
@@ -1942,24 +2265,39 @@
     }
 
     /**
-     * Generates and displays all 10 sections of the brief
-     * Simulates streaming by rendering sections sequentially with animation
-     * INPUT: none (uses state.selectedRole and state.selectedCompany)
-     * OUTPUT: sections rendered to the right panel
+     * v2 GENERATE BRIEF — Claude API-powered generation via MCP bridge.
+     * Generates all sections in 3 dependency-ordered batches.
+     * Falls back to legacy templates if bridge is unavailable.
      */
-    function generateBrief() {
+    async function generateBrief() {
       const role = state.selectedRole;
       const company = state.selectedCompany;
       if (!role || !company) return;
+      if (state.isGenerating) return; // Prevent double-clicks
 
-      const companySlug = getCompanySlug(company.name);
+      // Gather interviewer names
       const interviewerNames = document.getElementById('interviewerInput').value
         .split(',')
         .map(n => n.trim())
         .filter(n => n.length > 0);
-
-      // Get interviewer names for section 8
       state.interviewerNames = interviewerNames;
+
+      // Check API key
+      if (!ensureApiKey()) return;
+
+      // Check bridge health
+      const bridgeUp = await checkBridgeHealth();
+      if (!bridgeUp) {
+        showBridgeError();
+        return;
+      }
+
+      state.isGenerating = true;
+      state.generatedSections = {};
+
+      const companySlug = getCompanySlug(company.name);
+      const visibleSections = getVisibleSections(role);
+      const batches = getBatchPlan(role);
 
       // Clear sections area and show TOC
       const sectionsArea = document.getElementById('sectionsArea');
@@ -1970,7 +2308,7 @@
       // Build TOC
       const tocList = document.getElementById('tocList');
       tocList.innerHTML = '';
-      SECTION_DEFINITIONS.forEach(sec => {
+      visibleSections.forEach(sec => {
         const li = document.createElement('li');
         li.className = 'toc-item';
         li.textContent = `${sec.num}. ${sec.title}`;
@@ -1978,37 +2316,96 @@
         tocList.appendChild(li);
       });
 
-      // Generate sections sequentially with delay
-      generateSectionsSequentially(companySlug, role, company, 0);
+      // Create skeleton placeholders for all sections
+      visibleSections.forEach(sec => {
+        const sectionEl = createSectionSkeleton(sec);
+        sectionsArea.appendChild(sectionEl);
+      });
+
+      lucide.createIcons();
+
+      // Generate batches sequentially (sections within a batch run in parallel)
+      let completedCount = 0;
+      const totalCount = visibleSections.length;
+
+      for (const batch of batches) {
+        // Filter to only sections visible for this role
+        const batchSections = batch.filter(num =>
+          visibleSections.some(s => s.num === num)
+        );
+        if (batchSections.length === 0) continue;
+
+        // Generate all sections in this batch in parallel
+        const promises = batchSections.map(async (sectionNum) => {
+          const sectionEl = document.getElementById(`section-${sectionNum}`);
+          try {
+            const result = await generateSectionViaAPI(
+              sectionNum, role, company, state.generatedSections
+            );
+
+            // Store the generated content for downstream sections
+            state.generatedSections[sectionNum] = result.content;
+
+            // Cache locally too
+            cacheSectionContent(companySlug, role.id, sectionNum, result.content);
+
+            // Update the section UI
+            if (sectionEl) {
+              const contentEl = sectionEl.querySelector('.section-content');
+              contentEl.innerHTML = result.content;
+              sectionEl.classList.remove('pending');
+
+              const statusEl = sectionEl.querySelector('.section-status');
+              statusEl.innerHTML = `<span class="badge">Fresh</span> <span style="font-size: 11px; color: var(--text-tertiary);">Just now</span>`;
+
+              // Show missing inputs callout if any
+              if (result.inputsMissing && result.inputsMissing.length > 0) {
+                const callout = document.createElement('div');
+                callout.style.cssText = 'margin-top: var(--space-3); padding: var(--space-3); background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: var(--radius-sm); font-size: var(--text-sm); color: var(--text-secondary);';
+                callout.innerHTML = `<strong>This section would be stronger with:</strong> ${result.inputsMissing.join(', ')}. Add them in Pipeline → Role Detail.`;
+                contentEl.appendChild(callout);
+              }
+            }
+
+            completedCount++;
+            updateProgress(completedCount, totalCount);
+          } catch (error) {
+            // Show error in the section
+            if (sectionEl) {
+              const contentEl = sectionEl.querySelector('.section-content');
+              contentEl.innerHTML = `
+                <div style="padding: var(--space-3); background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-sm);">
+                  <strong>Generation failed:</strong> ${error.message}
+                  <br><button onclick="refreshSection(${sectionNum})" style="margin-top: var(--space-2); padding: 4px 12px; border: 1px solid var(--bg-subtle); border-radius: 4px; cursor: pointer; background: var(--bg-elevated);">Retry</button>
+                </div>
+              `;
+              sectionEl.classList.remove('pending');
+              const statusEl = sectionEl.querySelector('.section-status');
+              statusEl.innerHTML = '<span class="badge" style="background: rgba(239,68,68,0.1); color: rgb(239,68,68);">Error</span>';
+            }
+            completedCount++;
+            updateProgress(completedCount, totalCount);
+          }
+        });
+
+        // Wait for all sections in this batch to complete before moving to next batch
+        await Promise.allSettled(promises);
+      }
+
+      state.isGenerating = false;
+      lucide.createIcons();
     }
 
     /**
-     * Recursively generates sections with a delay between each
-     * This simulates the streaming experience you'd get from Claude API
-     * INPUT: companySlug, role, company, currentSectionIndex
-     * OUTPUT: sections are rendered one by one
+     * Creates a skeleton placeholder element for a section while it generates.
      */
-    function generateSectionsSequentially(companySlug, role, company, sectionIndex) {
-      if (sectionIndex >= 10) {
-        // All sections generated, update progress
-        updateProgress();
-        lucide.createIcons();
-        return;
-      }
-
-      const sectionDef = SECTION_DEFINITIONS[sectionIndex];
-      const sectionNum = sectionDef.num;
-
-      // Create section element
+    function createSectionSkeleton(sectionDef) {
       const section = document.createElement('div');
       section.className = 'section pending';
-      section.id = `section-${sectionNum}`;
-      section.setAttribute('data-section-num', sectionNum);
+      section.id = `section-${sectionDef.num}`;
+      section.setAttribute('data-section-num', sectionDef.num);
 
-      const cached = getCachedSection(companySlug, role.id, sectionNum);
-      const isFromCache = !!cached;
-
-      // Section header
+      // Header
       const header = document.createElement('div');
       header.className = 'section-header';
 
@@ -2017,131 +2414,62 @@
 
       const badge = document.createElement('div');
       badge.className = 'section-badge';
-      badge.textContent = sectionNum;
+      badge.textContent = sectionDef.num;
       titleGroup.appendChild(badge);
 
       const titleEl = document.createElement('h3');
       titleEl.className = 'section-title';
-      titleEl.textContent = `${sectionDef.title}`;
+      titleEl.textContent = sectionDef.title;
       titleGroup.appendChild(titleEl);
-
       header.appendChild(titleGroup);
 
-      // Status and actions
+      // Status + actions
       const statusGroup = document.createElement('div');
-      statusGroup.style.display = 'flex';
-      statusGroup.style.gap = 'var(--space-3)';
-      statusGroup.style.alignItems = 'center';
+      statusGroup.style.cssText = 'display: flex; gap: var(--space-3); align-items: center;';
 
       const statusEl = document.createElement('div');
       statusEl.className = 'section-status';
-      if (isFromCache) {
-        statusEl.innerHTML = '<span class="badge">Cached</span> <span style="font-size: 11px; color: var(--text-tertiary);">' +
-          new Date(cached.timestamp).toLocaleDateString() + '</span>';
-      } else {
-        statusEl.innerHTML = '<i data-lucide="loader-2" class="spinner" style="width: 16px; height: 16px;"></i> <span>Generating...</span>';
-      }
+      statusEl.innerHTML = '<i data-lucide="loader-2" class="spinner" style="width: 16px; height: 16px;"></i> <span>Generating...</span>';
       statusGroup.appendChild(statusEl);
 
       const actionsDiv = document.createElement('div');
       actionsDiv.className = 'section-actions';
       const refreshBtn = document.createElement('button');
       refreshBtn.textContent = 'Refresh';
-      refreshBtn.onclick = () => refreshSection(sectionNum);
+      refreshBtn.onclick = () => refreshSection(sectionDef.num);
       actionsDiv.appendChild(refreshBtn);
       statusGroup.appendChild(actionsDiv);
 
       header.appendChild(statusGroup);
       section.appendChild(header);
 
-      // Content area (skeleton while loading)
+      // Skeleton content
       const content = document.createElement('div');
       content.className = 'section-content';
-      if (isFromCache) {
-        content.innerHTML = cached.content;
-      } else {
-        // Show skeleton while generating
-        content.innerHTML = `
-          <div class="skeleton-line" style="width: 100%;"></div>
-          <div class="skeleton-line" style="width: 95%;"></div>
-          <div class="skeleton-line" style="width: 90%;"></div>
-          <div class="skeleton-line short"></div>
-        `;
-      }
+      content.innerHTML = `
+        <div class="skeleton-line skeleton" style="width: 100%; height: 16px;"></div>
+        <div class="skeleton-line skeleton" style="width: 95%; height: 16px;"></div>
+        <div class="skeleton-line skeleton" style="width: 90%; height: 16px;"></div>
+        <div class="skeleton-line skeleton short" style="width: 60%; height: 16px;"></div>
+      `;
       section.appendChild(content);
 
-      document.getElementById('sectionsArea').appendChild(section);
-
-      // If from cache, mark as complete immediately
-      if (isFromCache) {
-        section.classList.remove('pending');
-        lucide.createIcons();
-      }
-
-      // Generate content if not cached
-      if (!isFromCache) {
-        setTimeout(() => {
-          const generatedContent = generateSectionContent(sectionNum, role, company);
-          content.innerHTML = generatedContent;
-          cacheSectionContent(companySlug, role.id, sectionNum, generatedContent);
-          section.classList.remove('pending');
-          statusEl.innerHTML = '<span class="badge">Fresh</span> <span style="font-size: 11px; color: var(--text-tertiary);">Just now</span>';
-          lucide.createIcons();
-
-          // Generate next section after a short delay
-          setTimeout(() => {
-            generateSectionsSequentially(companySlug, role, company, sectionIndex + 1);
-          }, 300);
-        }, 400);
-      } else {
-        // If from cache, continue to next section
-        setTimeout(() => {
-          generateSectionsSequentially(companySlug, role, company, sectionIndex + 1);
-        }, 200);
-      }
+      return section;
     }
 
-    /**
-     * Generates content for a specific section
-     * INPUT: sectionNum (1-10), role, company
-     * RETURNS: HTML string with section content
-     */
-    function generateSectionContent(sectionNum, role, company) {
-      switch (sectionNum) {
-        case 1:
-          return generateSection1(company, role);
-        case 2:
-          return generateSection2(company, role);
-        case 3:
-          return generateSection3(company, role);
-        case 4:
-          return generateSection4(company, role);
-        case 5:
-          return generateSection5(company, role);
-        case 6:
-          return generateSection6(company, role);
-        case 7:
-          return generateSection7(company, role);
-        case 8:
-          return generateSection8(company, role, state.interviewerNames);
-        case 9:
-          return generateSection9(company, role);
-        case 10:
-          return generateSection10(company, role);
-        default:
-          return '';
-      }
-    }
+    // (Legacy generateSectionsSequentially and generateSectionContent removed
+    //  — replaced by v2 generateBrief() with batch-based API generation above)
 
     /**
-     * Refreshes a single section (regenerates and re-caches it)
-     * INPUT: sectionNum (1-10)
-     * OUTPUT: section content is regenerated
+     * v2 Refreshes a single section via the Claude API.
+     * INPUT: sectionNum (0-13)
+     * OUTPUT: section content is regenerated via API
      */
-    function refreshSection(sectionNum) {
+    async function refreshSection(sectionNum) {
       const role = state.selectedRole;
       const company = state.selectedCompany;
       if (!role || !company) return;
+      if (!state.apiKey) { ensureApiKey(); return; }
 
       const companySlug = getCompanySlug(company.name);
       const sectionEl = document.getElementById(`section-${sectionNum}`);
@@ -2150,29 +2478,37 @@
       // Clear cache for this section
       localStorage.removeItem(`research_${companySlug}_${role.id}_${sectionNum}`);
 
-      // Find the content div and show skeleton
+      // Show skeleton
       const contentEl = sectionEl.querySelector('.section-content');
       contentEl.innerHTML = `
-        <div class="skeleton-line" style="width: 100%;"></div>
-        <div class="skeleton-line" style="width: 95%;"></div>
-        <div class="skeleton-line" style="width: 90%;"></div>
-        <div class="skeleton-line short"></div>
+        <div class="skeleton-line skeleton" style="width: 100%; height: 16px;"></div>
+        <div class="skeleton-line skeleton" style="width: 95%; height: 16px;"></div>
+        <div class="skeleton-line skeleton" style="width: 90%; height: 16px;"></div>
+        <div class="skeleton-line skeleton short" style="width: 60%; height: 16px;"></div>
       `;
-
-      // Mark as pending
       sectionEl.classList.add('pending');
       const statusEl = sectionEl.querySelector('.section-status');
       statusEl.innerHTML = '<i data-lucide="loader-2" class="spinner" style="width: 16px; height: 16px;"></i> <span>Regenerating...</span>';
+      lucide.createIcons();
 
-      // Regenerate after a delay
-      setTimeout(() => {
-        const generatedContent = generateSectionContent(sectionNum, role, company);
-        contentEl.innerHTML = generatedContent;
-        cacheSectionContent(companySlug, role.id, sectionNum, generatedContent);
+      try {
+        const result = await generateSectionViaAPI(sectionNum, role, company, state.generatedSections);
+        state.generatedSections[sectionNum] = result.content;
+        cacheSectionContent(companySlug, role.id, sectionNum, result.content);
+
+        contentEl.innerHTML = result.content;
         sectionEl.classList.remove('pending');
         statusEl.innerHTML = '<span class="badge">Fresh</span> <span style="font-size: 11px; color: var(--text-tertiary);">Just now</span>';
-        lucide.createIcons();
-      }, 400);
+      } catch (error) {
+        contentEl.innerHTML = `
+          <div style="padding: var(--space-3); background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-sm);">
+            <strong>Refresh failed:</strong> ${error.message}
+          </div>
+        `;
+        sectionEl.classList.remove('pending');
+        statusEl.innerHTML = '<span class="badge" style="background: rgba(239,68,68,0.1); color: rgb(239,68,68);">Error</span>';
+      }
+      lucide.createIcons();
     }
 
     /**
@@ -2307,19 +2643,25 @@
     }
 
     /**
-     * Updates the progress indicator (e.g., "7/10 sections complete")
+     * Updates the progress indicator (e.g., "7/13 sections complete")
      * INPUT: none
      * OUTPUT: progress text is updated in TOC
      */
-    function updateProgress() {
-      const total = 10;
+    function updateProgress(completed, total) {
       const progressEl = document.getElementById('tocProgress');
-      progressEl.textContent = `${total}/10 sections complete`;
+      if (completed != null && total != null) {
+        progressEl.textContent = `${completed}/${total} sections complete`;
+      } else {
+        // Fallback: count rendered sections that are NOT pending
+        const rendered = document.querySelectorAll('#sectionsArea .section:not(.pending)').length;
+        const all = document.querySelectorAll('#sectionsArea .section').length || 1;
+        progressEl.textContent = `${rendered}/${all} sections complete`;
+      }
     }
 
     /**
      * Scrolls to a specific section and highlights it
-     * INPUT: sectionNum (1-10)
+     * INPUT: sectionNum (0-13)
      * OUTPUT: page scrolls to section, TOC highlights it
      */
     function scrollToSection(sectionNum) {
@@ -2403,7 +2745,8 @@
 
     /**
      * Sets up keyboard shortcuts for power users
-     * G: Generate, 1-0: Jump to section, R: Refresh, P: Print, etc.
+     * G: Generate, 1-9: Jump to sections 1-9, 0: Jump to section 0 (Known Context),
+     * Shift+0-3: Jump to sections 10-13, R: Refresh, P: Print, etc.
      * INPUT: none
      * OUTPUT: keyboard events are handled
      */
@@ -2419,17 +2762,23 @@
           }
         }
 
-        if (e.key >= '1' && e.key <= '9') {
-          const sectionNum = parseInt(e.key);
-          if (sectionNum <= 10) {
-            e.preventDefault();
-            scrollToSection(sectionNum);
-          }
+        // Digits 1-9: jump to sections 1-9
+        if (e.key >= '1' && e.key <= '9' && !e.shiftKey) {
+          e.preventDefault();
+          scrollToSection(parseInt(e.key));
         }
 
-        if (e.key === '0') {
+        // Digit 0 (no shift): jump to section 0 (Known Context)
+        if (e.key === '0' && !e.shiftKey) {
           e.preventDefault();
-          scrollToSection(10);
+          scrollToSection(0);
+        }
+
+        // Shift+0 through Shift+3: jump to sections 10-13
+        if (e.shiftKey && e.key >= '0' && e.key <= '3') {
+          const sectionNum = 10 + parseInt(e.key);
+          e.preventDefault();
+          scrollToSection(sectionNum);
         }
 
         if (e.key === 'r' || e.key === 'R') {
