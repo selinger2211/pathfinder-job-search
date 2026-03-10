@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pathfinder — Post-Interview Debrief</title>
+  <meta name="description" content="Structured interview feedback capture and longitudinal pattern analysis">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>P</text></svg>">
+
+  <link rel="stylesheet" href="../shared/pathfinder.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* ================================================================
+       DEBRIEF MODULE — LAYOUT & COMPONENTS
+       Captures structured feedback from interviews and builds patterns.
+       ================================================================ */
+
+    /* Main container: flex layout with sidebar + main area */
+    .debrief-container {
+      display: flex;
+      height: calc(100vh - var(--nav-height));
+      background: var(--bg-secondary);
+      overflow: hidden;
+    }
+
+    /* Left sidebar: role/interview context (320px fixed width) */
+    .debrief-sidebar {
+      width: 320px;
+      background: var(--bg-primary);
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+      padding: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    /* Right main panel: debrief form + tabs */
+    .debrief-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Page header with title and nav */
+    .debrief-header {
+      padding: var(--space-6);
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .debrief-title {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* Tab navigation */
+    .tab-nav {
+      display: flex;
+      gap: var(--space-3);
+      background: var(--bg-secondary);
+      padding: 0 var(--space-6);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .tab-btn {
+      padding: var(--space-3) var(--space-4);
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: var(--text-sm);
+      font-weight: 500;
+      border-bottom: 2px solid transparent;
+      transition: all 200ms ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .tab-btn.active {
+      color: var(--accent-primary);
+      border-bottom-color: var(--accent-primary);
+    }
+
+    /* Content area for tabs */
+    .debrief-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-6);
+    }
+
+    /* ================================================================
+       SIDEBAR COMPONENTS
+       ================================================================ */
+
+    /* Card style for sidebar sections */
+    .sidebar-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+    }
+
+    .sidebar-label {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-2);
+      display: block;
+    }
+
+    /* Select and input styling */
+    .form-select,
+    .form-input {
+      width: 100%;
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      transition: border-color 200ms;
+    }
+
+    .form-select:focus,
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    /* Company/role card in sidebar */
+    .company-card,
+    .role-card {
+      padding: var(--space-3);
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      margin-top: var(--space-2);
+    }
+
+    .company-header {
+      display: flex;
+      gap: var(--space-3);
+      margin-bottom: var(--space-2);
+    }
+
+    .company-logo {
+      width: 48px;
+      height: 48px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--accent-primary);
+    }
+
+    .company-info {
+      flex: 1;
+    }
+
+    .company-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+    }
+
+    .company-domain {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+
+    .role-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      margin-bottom: var(--space-1);
+    }
+
+    .role-meta {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+    }
+
+    /* Previous debrief summaries */
+    .previous-debriefs {
+      margin-top: var(--space-2);
+    }
+
+    .debrief-summary-item {
+      font-size: var(--text-xs);
+      padding: var(--space-2);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-2);
+      border-left: 3px solid var(--accent-primary);
+    }
+
+    /* ================================================================
+       WIZARD FORM STYLES
+       ================================================================ */
+
+    /* Progress bar at top of wizard */
+    .wizard-progress {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-bottom: var(--space-6);
+      padding: 0 var(--space-6);
+      padding-top: var(--space-4);
+    }
+
+    .progress-step {
+      flex: 1;
+      height: 4px;
+      background: var(--bg-secondary);
+      border-radius: 2px;
+      transition: background 300ms ease;
+    }
+
+    .progress-step.active {
+      background: var(--accent-primary);
+    }
+
+    .progress-step.completed {
+      background: var(--success-color);
+    }
+
+    .progress-text {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      margin-left: var(--space-2);
+    }
+
+    /* Wizard section container */
+    .wizard-section {
+      display: none;
+      opacity: 0;
+      transition: opacity 300ms ease;
+    }
+
+    .wizard-section.active {
+      display: block;
+      opacity: 1;
+    }
+
+    .wizard-section-title {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .wizard-section-prompt {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      margin-bottom: var(--space-4);
+    }
+
+    /* Star rating component */
+    .star-rating {
+      display: flex;
+      gap: var(--space-2);
+      margin-bottom: var(--space-4);
+    }
+
+    .star-btn {
+      background: none;
+      border: none;
+      font-size: var(--text-2xl);
+      cursor: pointer;
+      transition: transform 200ms;
+      color: var(--text-tertiary);
+    }
+
+    .star-btn:hover,
+    .star-btn.active {
+      color: var(--accent-primary);
+      transform: scale(1.2);
+    }
+
+    /* Textarea for longer answers */
+    .form-textarea {
+      width: 100%;
+      padding: var(--space-3);
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: var(--text-sm);
+      min-height: 120px;
+      resize: vertical;
+      transition: border-color 200ms;
+    }
+
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    /* Inline text input for single lines */
+    .form-inline {
+      width: 100%;
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+    }
+
+    /* Tag selector for stories/priorities */
+    .tag-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      margin: var(--space-3) 0;
+    }
+
+    .tag {
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-full);
+      font-size: var(--text-sm);
+      cursor: pointer;
+      transition: all 200ms;
+    }
+
+    .tag:hover {
+      border-color: var(--accent-primary);
+    }
+
+    .tag.selected {
+      background: var(--accent-primary);
+      color: white;
+      border-color: var(--accent-primary);
+    }
+
+    /* Repeatable fields for questions */
+    .repeatable-fields {
+      margin-top: var(--space-4);
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 150px 100px auto;
+      gap: var(--space-3);
+      margin-bottom: var(--space-3);
+      padding: var(--space-3);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      align-items: end;
+    }
+
+    .field-row.full-width {
+      grid-template-columns: 1fr;
+    }
+
+    .btn-remove {
+      background: none;
+      border: none;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      padding: var(--space-2);
+      transition: color 200ms;
+    }
+
+    .btn-remove:hover {
+      color: var(--error-color);
+    }
+
+    /* Wizard navigation buttons */
+    .wizard-nav {
+      display: flex;
+      gap: var(--space-3);
+      margin-top: var(--space-6);
+      justify-content: space-between;
+    }
+
+    .btn-prev,
+    .btn-next,
+    .btn-primary {
+      padding: var(--space-3) var(--space-4);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 200ms;
+    }
+
+    .btn-prev {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-prev:hover:not(:disabled) {
+      background: var(--bg-tertiary);
+    }
+
+    .btn-next,
+    .btn-primary {
+      background: var(--accent-primary);
+      color: white;
+    }
+
+    .btn-next:hover:not(:disabled),
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-prev:disabled,
+    .btn-next:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ================================================================
+       SUMMARY CARD (after form completion)
+       ================================================================ */
+
+    .debrief-summary-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: var(--space-6);
+      margin-bottom: var(--space-6);
+    }
+
+    .summary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: var(--space-6);
+    }
+
+    .summary-title {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .summary-rating {
+      font-size: var(--text-2xl);
+      color: var(--accent-primary);
+    }
+
+    .summary-section {
+      margin-bottom: var(--space-4);
+    }
+
+    .summary-label {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-2);
+    }
+
+    .summary-content {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    .action-items {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .action-item {
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-secondary);
+      border-left: 3px solid var(--accent-primary);
+      border-radius: var(--radius-sm);
+    }
+
+    /* ================================================================
+       PATTERN ANALYSIS & CHARTS
+       ================================================================ */
+
+    .pattern-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--space-6);
+      margin-bottom: var(--space-6);
+    }
+
+    .chart-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+    }
+
+    .chart-title {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-4);
+    }
+
+    .bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .bar-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .bar-label {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      min-width: 100px;
+    }
+
+    .bar-container {
+      flex: 1;
+      height: 24px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-dark));
+      transition: width 300ms ease;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: var(--space-2);
+      color: white;
+      font-size: var(--text-xs);
+      font-weight: 600;
+    }
+
+    .bar-value {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      min-width: 30px;
+      text-align: right;
+    }
+
+    /* ================================================================
+       HISTORY & QUESTION BANK TABS
+       ================================================================ */
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3);
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 200ms;
+    }
+
+    .history-item:hover {
+      border-color: var(--accent-primary);
+      background: var(--bg-secondary);
+    }
+
+    .history-meta {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      flex: 1;
+    }
+
+    .history-company {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .history-details {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+    }
+
+    .history-rating {
+      font-size: var(--text-lg);
+      color: var(--accent-primary);
+    }
+
+    .question-item {
+      padding: var(--space-3);
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-3);
+    }
+
+    .question-text {
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .question-meta {
+      display: flex;
+      gap: var(--space-3);
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+    }
+
+    .question-tag {
+      padding: 2px 8px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-full);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: var(--space-6);
+      color: var(--text-secondary);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: var(--space-3);
+      opacity: 0.5;
+    }
+
+    /* ================================================================
+       RESPONSIVE & UTILITIES
+       ================================================================ */
+
+    @media (max-width: 1024px) {
+      .debrief-sidebar {
+        width: 280px;
+      }
+
+      .field-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .debrief-container {
+        flex-direction: column;
+      }
+
+      .debrief-sidebar {
+        width: 100%;
+        max-height: 40vh;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .pattern-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Utility classes */
+    .hidden {
+      display: none !important;
+    }
+
+    .mt-4 {
+      margin-top: var(--space-4);
+    }
+
+    .mb-4 {
+      margin-bottom: var(--space-4);
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="nav">
+    <div class="nav-brand"><span>P</span>athfinder</div>
+    <div class="nav-links">
+      <a href="../dashboard/index.html">Dashboard</a>
+      <a href="../pipeline/index.html">Pipeline</a>
+      <a href="../research-brief/index.html">Research</a>
+      <a href="../resume-tailor/index.html">Resume</a>
+      <a href="../job-feed-listener/index.html">Feed</a>
+      <a href="../outreach/index.html">Outreach</a>
+      <a href="../mock-interview/index.html">Mock</a>
+      <a href="index.html" class="active">Debrief</a>
+      <a href="../comp-intel/index.html">Comp</a>
+      <a href="../calendar/index.html">Calendar</a>
+    </div>
+    <div class="nav-right">
+      <span class="nav-kbd">⌘K</span>
+    </div>
+  </nav>
+
+  <div class="debrief-container" style="margin-top: var(--nav-height);">
+    <!-- ================================================================
+         LEFT SIDEBAR: Role & Interview Context
+         ================================================================ -->
+    <div class="debrief-sidebar">
+      <div>
+        <label class="sidebar-label">Role</label>
+        <select class="form-select" id="roleSelect">
+          <option value="">Select a role...</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="sidebar-label">Interview Round</label>
+        <select class="form-select" id="roundSelect">
+          <option value="1">Round 1 (Phone Screen)</option>
+          <option value="2">Round 2 (Technical)</option>
+          <option value="3">Round 3 (On-site)</option>
+          <option value="4">Round 4+ (Final)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="sidebar-label">Interview Type</label>
+        <select class="form-select" id="interviewTypeSelect">
+          <option value="phone">Phone Screen</option>
+          <option value="technical">Technical</option>
+          <option value="behavioral">Behavioral</option>
+          <option value="system">System Design</option>
+          <option value="culture">Culture Fit</option>
+          <option value="executive">Executive</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="sidebar-label">Interviewer Names</label>
+        <input type="text" class="form-input" id="interviewerNamesInput" placeholder="Jane Doe, John Smith">
+      </div>
+
+      <!-- Company Card -->
+      <div id="companyCardContainer"></div>
+
+      <!-- Role Card -->
+      <div id="roleCardContainer"></div>
+
+      <!-- Previous Debriefs Summary -->
+      <div id="previousDebriefs"></div>
+    </div>
+
+    <!-- ================================================================
+         RIGHT MAIN PANEL: Debrief Form & Tabs
+         ================================================================ -->
+    <div class="debrief-main">
+      <div class="debrief-header">
+        <h1 class="debrief-title">Post-Interview Debrief</h1>
+        <div style="display: flex; gap: var(--space-2);">
+          <button class="btn-primary" id="cmdPaletteBtn" title="Cmd+K">⌘K</button>
+        </div>
+      </div>
+
+      <div class="tab-nav">
+        <button class="tab-btn active" data-tab="form" title="Cmd+1">New Debrief</button>
+        <button class="tab-btn" data-tab="patterns" title="Cmd+2">Patterns</button>
+        <button class="tab-btn" data-tab="questions" title="Cmd+3">Question Bank</button>
+        <button class="tab-btn" data-tab="history" title="Cmd+4">History</button>
+      </div>
+
+      <div class="debrief-content">
+        <!-- ================================================
+             TAB 1: NEW DEBRIEF FORM (Wizard)
+             ================================================ -->
+        <div id="formTab" class="tab-pane active">
+          <!-- Progress indicator -->
+          <div class="wizard-progress">
+            <div class="progress-step active" id="step1"></div>
+            <div class="progress-step" id="step2"></div>
+            <div class="progress-step" id="step3"></div>
+            <div class="progress-step" id="step4"></div>
+            <div class="progress-step" id="step5"></div>
+            <div class="progress-step" id="step6"></div>
+            <div class="progress-step" id="step7"></div>
+            <div class="progress-step" id="step8"></div>
+            <div class="progress-text" id="progressText">1 / 8</div>
+          </div>
+
+          <!-- Wizard form sections -->
+          <form id="debriefForm">
+            <!-- Section 1: Overall Impression -->
+            <div class="wizard-section active" id="section1">
+              <h2 class="wizard-section-title">Overall Impression</h2>
+              <p class="wizard-section-prompt">How do you feel it went? Quick gut check.</p>
+
+              <label class="sidebar-label">Rating</label>
+              <div class="star-rating" id="overallRating">
+                <button class="star-btn" type="button" data-value="1">★</button>
+                <button class="star-btn" type="button" data-value="2">★</button>
+                <button class="star-btn" type="button" data-value="3">★</button>
+                <button class="star-btn" type="button" data-value="4">★</button>
+                <button class="star-btn" type="button" data-value="5">★</button>
+              </div>
+
+              <label class="sidebar-label">One-line Summary</label>
+              <input type="text" class="form-inline" id="overallSummary" placeholder="e.g., Strong technical discussion, good rapport">
+            </div>
+
+            <!-- Section 2: What Landed -->
+            <div class="wizard-section" id="section2">
+              <h2 class="wizard-section-title">What Landed</h2>
+              <p class="wizard-section-prompt">Which stories or answers resonated? What did they react positively to?</p>
+
+              <label class="sidebar-label">Notes</label>
+              <textarea class="form-textarea" id="whatLandedText" placeholder="Describe which moments went well..."></textarea>
+
+              <label class="sidebar-label">Tag Stories</label>
+              <div class="tag-selector" id="landedStories"></div>
+            </div>
+
+            <!-- Section 3: What Didn't Land -->
+            <div class="wizard-section" id="section3">
+              <h2 class="wizard-section-title">What Didn't Land</h2>
+              <p class="wizard-section-prompt">Any moments where you rambled, gave a weak answer, or lost them?</p>
+
+              <textarea class="form-textarea" id="whatDidntLandText" placeholder="Describe areas where you struggled..."></textarea>
+            </div>
+
+            <!-- Section 4: Questions They Asked -->
+            <div class="wizard-section" id="section4">
+              <h2 class="wizard-section-title">Questions They Asked</h2>
+              <p class="wizard-section-prompt">List the key questions. For each, note the type and how well you answered.</p>
+
+              <button type="button" class="btn-primary" id="addQuestionBtn" style="margin-bottom: var(--space-4);">+ Add Question</button>
+
+              <div class="repeatable-fields" id="questionsContainer"></div>
+            </div>
+
+            <!-- Section 5: Their Priorities -->
+            <div class="wizard-section" id="section5">
+              <h2 class="wizard-section-title">Their Priorities</h2>
+              <p class="wizard-section-prompt">Based on what they asked, what does this team care most about?</p>
+
+              <textarea class="form-textarea" id="prioritiesText" placeholder="What signals did their questions reveal?"></textarea>
+
+              <label class="sidebar-label" style="margin-top: var(--space-4);">Priority Tags</label>
+              <div class="tag-selector" id="priorityTags"></div>
+            </div>
+
+            <!-- Section 6: Red Flags -->
+            <div class="wizard-section" id="section6">
+              <h2 class="wizard-section-title">Red Flags</h2>
+              <p class="wizard-section-prompt">Anything that concerned you about the role, team, or company?</p>
+
+              <textarea class="form-textarea" id="redFlagsText" placeholder="Any concerns or reservations?"></textarea>
+
+              <label class="sidebar-label" style="margin-top: var(--space-4);">Severity</label>
+              <select class="form-select" id="redFlagSeverity">
+                <option value="">None</option>
+                <option value="minor">Minor</option>
+                <option value="moderate">Moderate</option>
+                <option value="major">Major</option>
+              </select>
+            </div>
+
+            <!-- Section 7: Follow-up Items -->
+            <div class="wizard-section" id="section7">
+              <h2 class="wizard-section-title">Follow-up Items</h2>
+              <p class="wizard-section-prompt">Did they mention next steps, timeline, or anything to follow up on?</p>
+
+              <textarea class="form-textarea" id="followUpText" placeholder="Next steps, timeline, action items..."></textarea>
+
+              <label class="sidebar-label" style="margin-top: var(--space-4);">Expected Next Steps Date</label>
+              <input type="date" class="form-inline" id="nextStepsDate">
+            </div>
+
+            <!-- Section 8: Interviewer Notes -->
+            <div class="wizard-section" id="section8">
+              <h2 class="wizard-section-title">Interviewer Notes</h2>
+              <p class="wizard-section-prompt">Personal notes about each interviewer — demeanor, interests, style?</p>
+
+              <button type="button" class="btn-primary" id="addInterviewerBtn" style="margin-bottom: var(--space-4);">+ Add Interviewer</button>
+
+              <div id="interviewersContainer"></div>
+            </div>
+
+            <!-- Navigation buttons -->
+            <div class="wizard-nav">
+              <button type="button" class="btn-prev" id="btnPrev" disabled>← Previous</button>
+              <button type="button" class="btn-next" id="btnNext">Next →</button>
+            </div>
+          </form>
+
+          <!-- Summary display (after completion) -->
+          <div id="summaryContainer" class="hidden"></div>
+        </div>
+
+        <!-- ================================================
+             TAB 2: PATTERN ANALYSIS
+             ================================================ -->
+        <div id="patternsTab" class="tab-pane hidden">
+          <h2 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-4);">Pattern Analysis</h2>
+          <div id="patternsContent"></div>
+        </div>
+
+        <!-- ================================================
+             TAB 3: QUESTION BANK
+             ================================================ -->
+        <div id="questionsTab" class="tab-pane hidden">
+          <div style="margin-bottom: var(--space-4);">
+            <input type="text" class="form-inline" id="questionSearch" placeholder="Search questions...">
+          </div>
+          <div id="questionBankContent"></div>
+        </div>
+
+        <!-- ================================================
+             TAB 4: HISTORY
+             ================================================ -->
+        <div id="historyTab" class="tab-pane hidden">
+          <h2 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-4);">Debrief History</h2>
+          <div id="historyContent"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Command Palette Modal -->
+  <div id="commandPaletteModal" class="modal hidden" style="
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 20vh;
+    z-index: 1000;
+  ">
+    <div style="
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    ">
+      <input type="text" id="commandInput" placeholder="Type command or search..." style="
+        width: 100%;
+        padding: var(--space-4);
+        border: none;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-size: var(--text-sm);
+      " autofocus>
+      <div id="commandResults" style="max-height: 300px; overflow-y: auto; padding: var(--space-2);"></div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * ================================================================
+     * POST-INTERVIEW DEBRIEF MODULE
+     * ================================================================
+     *
+     * This module captures structured feedback from interviews and builds
+     * a longitudinal dataset of interview patterns. It helps candidates:
+     * - Document what went well/poorly
+     * - Track interviewer feedback
+     * - Identify patterns across multiple rounds
+     * - Improve future interview performance
+     *
+     * Architecture:
+     * - Data layer: LocalStorage (pf_companies, pf_roles, pf_debriefs, etc)
+     * - UI: 2-panel layout (sidebar + main) with tabbed interface
+     * - Forms: Wizard-style with 8 sections and progress tracking
+     * - Analytics: Pattern detection for story performance, interview types
+     *
+     * Keyboard shortcuts:
+     * - Cmd+K: Command palette
+     * - Cmd+1-4: Switch tabs
+     * - Enter: Next wizard section
+     * - Backspace: Previous wizard section
+     * - Cmd+S: Save debrief
+     */
+
+    // ================================================================
+    // STATE & DATA MANAGEMENT
+    // ================================================================
+
+    /**
+     * In-memory application state that syncs to localStorage
+     */
+    const appState = {
+      currentRole: null,
+      currentRound: 1,
+      currentInterviewType: 'phone',
+      currentInterviewers: [],
+      wizardStep: 1,
+      formData: {},
+      debriefs: [],
+      questions: [],
+      companies: [],
+      roles: [],
+      storyBank: []
+    };
+
+    /**
+     * Load demo data and initialize application
+     */
+    function initializeApp() {
+      loadOrCreateDemoData();
+      renderRoleSelector();
+      renderCompanyCard();
+      renderRoleCard();
+      attachEventListeners();
+      renderPatternsTab();
+      renderQuestionBankTab();
+      renderHistoryTab();
+    }
+
+    /**
+     * Load demo data from localStorage or create defaults
+     */
+    function loadOrCreateDemoData() {
+      // Companies
+      appState.companies = JSON.parse(localStorage.getItem('pf_companies')) || [
+        {
+          id: 'acme',
+          name: 'Acme Corp',
+          domain: 'acme.com',
+          logo: 'A',
+          description: 'Leading SaaS platform'
+        },
+        {
+          id: 'techstart',
+          name: 'TechStart Inc',
+          domain: 'techstart.io',
+          logo: 'T',
+          description: 'AI/ML startup'
+        },
+        {
+          id: 'cloudly',
+          name: 'Cloudly',
+          domain: 'cloudly.dev',
+          logo: 'C',
+          description: 'Infrastructure company'
+        }
+      ];
+
+      // Roles
+      appState.roles = JSON.parse(localStorage.getItem('pf_roles')) || [
+        {
+          id: 'acme-senior-eng',
+          companyId: 'acme',
+          title: 'Senior Software Engineer',
+          stage: 'Round 2',
+          level: 'Senior',
+          description: 'Full-stack engineering role'
+        },
+        {
+          id: 'techstart-ml',
+          companyId: 'techstart',
+          title: 'ML Engineer',
+          stage: 'Round 1',
+          level: 'Mid',
+          description: 'Machine learning focus'
+        },
+        {
+          id: 'cloudly-arch',
+          companyId: 'cloudly',
+          title: 'Solutions Architect',
+          stage: 'Round 3',
+          level: 'Senior',
+          description: 'Customer-facing architecture'
+        }
+      ];
+
+      // Story Bank
+      appState.storyBank = JSON.parse(localStorage.getItem('pf_story_bank')) || [
+        { id: 'story-1', title: 'Led migration project', category: 'leadership' },
+        { id: 'story-2', title: 'Fixed critical production bug', category: 'problem-solving' },
+        { id: 'story-3', title: 'Mentored junior engineer', category: 'leadership' },
+        { id: 'story-4', title: 'Optimized database query', category: 'technical' },
+        { id: 'story-5', title: 'Improved team process', category: 'collaboration' }
+      ];
+
+      // Demo debriefs
+      if (!localStorage.getItem('pf_debriefs')) {
+        const demoDebriefs = [
+          {
+            id: 'debrief-1',
+            roleId: 'acme-senior-eng',
+            companyId: 'acme',
+            date: '2026-03-01',
+            round: 1,
+            interviewType: 'phone',
+            interviewers: ['Sarah Chen'],
+            overallRating: 4,
+            overallSummary: 'Good rapport, strong technical discussion',
+            whatLanded: 'Migration project story resonated well',
+            whatDidntLand: 'Rambled on architecture question',
+            questions: [
+              { text: 'Tell me about your biggest project', type: 'behavioral', rating: 4 },
+              { text: 'How do you handle tech debt?', type: 'technical', rating: 3 }
+            ],
+            priorities: 'Values system design and mentorship',
+            redFlags: '',
+            followUp: 'Second round scheduled for March 8',
+            nextStepsDate: '2026-03-08'
+          },
+          {
+            id: 'debrief-2',
+            roleId: 'techstart-ml',
+            companyId: 'techstart',
+            date: '2026-03-02',
+            round: 1,
+            interviewType: 'technical',
+            interviewers: ['Alex Kim', 'Lisa Wang'],
+            overallRating: 3,
+            overallSummary: 'Mixed - strong on theory, weak on coding',
+            whatLanded: 'Deep understanding of transformer architecture',
+            whatDidntLand: 'Code implementation was slower than expected',
+            questions: [
+              { text: 'Explain attention mechanisms', type: 'technical', rating: 5 },
+              { text: 'Write a neural network from scratch', type: 'coding', rating: 2 }
+            ],
+            priorities: 'Need strong ML fundamentals and Python skills',
+            redFlags: '',
+            followUp: '',
+            nextStepsDate: ''
+          },
+          {
+            id: 'debrief-3',
+            roleId: 'cloudly-arch',
+            companyId: 'cloudly',
+            date: '2026-02-28',
+            round: 2,
+            interviewType: 'technical',
+            interviewers: ['Michael O\'Brien'],
+            overallRating: 5,
+            overallSummary: 'Excellent discussion, strong fit',
+            whatLanded: 'System design approach impressed them',
+            whatDidntLand: 'Nothing significant',
+            questions: [
+              { text: 'Design a distributed database', type: 'system', rating: 5 },
+              { text: 'How would you scale this?', type: 'technical', rating: 5 }
+            ],
+            priorities: 'System thinking, scalability, customer empathy',
+            redFlags: '',
+            followUp: 'Final round coming next week',
+            nextStepsDate: '2026-03-15'
+          },
+          {
+            id: 'debrief-4',
+            roleId: 'acme-senior-eng',
+            companyId: 'acme',
+            date: '2026-03-05',
+            round: 2,
+            interviewType: 'behavioral',
+            interviewers: ['James Park', 'Emma Russell'],
+            overallRating: 4,
+            overallSummary: 'Strong behavioral fit, good team chemistry',
+            whatLanded: 'Mentorship story went over well',
+            whatDidntLand: 'Could have been more specific with metrics',
+            questions: [
+              { text: 'Tell us about a conflict you resolved', type: 'behavioral', rating: 4 },
+              { text: 'How do you prioritize?', type: 'behavioral', rating: 4 }
+            ],
+            priorities: 'Team collaboration, mentorship, communication',
+            redFlags: '',
+            followUp: 'Waiting to hear about final round',
+            nextStepsDate: ''
+          }
+        ];
+        localStorage.setItem('pf_debriefs', JSON.stringify(demoDebriefs));
+      }
+
+      // Load debriefs
+      appState.debriefs = JSON.parse(localStorage.getItem('pf_debriefs')) || [];
+
+      // Aggregate questions from debriefs
+      appState.questions = [];
+      appState.debriefs.forEach(debrief => {
+        debrief.questions?.forEach(q => {
+          appState.questions.push({
+            ...q,
+            debriefId: debrief.id,
+            companyId: debrief.companyId,
+            interviewType: debrief.interviewType,
+            date: debrief.date
+          });
+        });
+      });
+    }
+
+    /**
+     * Get company by ID
+     */
+    function getCompany(id) {
+      return appState.companies.find(c => c.id === id);
+    }
+
+    /**
+     * Get role by ID
+     */
+    function getRole(id) {
+      return appState.roles.find(r => r.id === id);
+    }
+
+    /**
+     * Save debrief to localStorage
+     */
+    function saveDebrief(debrief) {
+      const existing = appState.debriefs.findIndex(d => d.id === debrief.id);
+      if (existing >= 0) {
+        appState.debriefs[existing] = debrief;
+      } else {
+        appState.debriefs.push(debrief);
+      }
+      localStorage.setItem('pf_debriefs', JSON.stringify(appState.debriefs));
+    }
+
+    // ================================================================
+    // UI RENDERING FUNCTIONS
+    // ================================================================
+
+    /**
+     * Render role selector in sidebar
+     */
+    function renderRoleSelector() {
+      const select = document.getElementById('roleSelect');
+      select.innerHTML = '<option value="">Select a role...</option>';
+      appState.roles.forEach(role => {
+        const option = document.createElement('option');
+        option.value = role.id;
+        option.textContent = `${role.title} (${getCompany(role.companyId)?.name})`;
+        select.appendChild(option);
+      });
+    }
+
+    /**
+     * Render company card in sidebar
+     */
+    function renderCompanyCard() {
+      const container = document.getElementById('companyCardContainer');
+      if (!appState.currentRole) {
+        container.innerHTML = '';
+        return;
+      }
+
+      const role = getRole(appState.currentRole);
+      const company = getCompany(role.companyId);
+
+      container.innerHTML = `
+        <div class="sidebar-card">
+          <div class="sidebar-label">Company</div>
+          <div class="company-card">
+            <div class="company-header">
+              <div class="company-logo">${company.logo}</div>
+              <div class="company-info">
+                <div class="company-name">${company.name}</div>
+                <div class="company-domain">${company.domain}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * Render role card in sidebar
+     */
+    function renderRoleCard() {
+      const container = document.getElementById('roleCardContainer');
+      if (!appState.currentRole) {
+        container.innerHTML = '';
+        return;
+      }
+
+      const role = getRole(appState.currentRole);
+
+      container.innerHTML = `
+        <div class="sidebar-card">
+          <div class="sidebar-label">Role</div>
+          <div class="role-card">
+            <div class="role-title">${role.title}</div>
+            <div class="role-meta">Level: ${role.level}</div>
+            <div class="role-meta">Stage: ${role.stage}</div>
+          </div>
+        </div>
+      `;
+
+      // Render previous debriefs for this role
+      renderPreviousDebriefs();
+    }
+
+    /**
+     * Render previous debriefs summary for current role
+     */
+    function renderPreviousDebriefs() {
+      const container = document.getElementById('previousDebriefs');
+      const rolePath = appState.currentRole;
+      const previousDebriefs = appState.debriefs.filter(d => d.roleId === rolePath);
+
+      if (previousDebriefs.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      let html = '<div class="sidebar-card"><div class="sidebar-label">Previous Debriefs</div>';
+      previousDebriefs.forEach(d => {
+        const stars = '★'.repeat(d.overallRating) + '☆'.repeat(5 - d.overallRating);
+        html += `
+          <div class="debrief-summary-item">
+            <strong>Round ${d.round}</strong> • ${stars}
+            <div style="font-size: 11px; margin-top: 4px;">${d.date}</div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    /**
+     * Render story bank tags for "What Landed" section
+     */
+    function renderStoryTags() {
+      const container = document.getElementById('landedStories');
+      container.innerHTML = '';
+      appState.storyBank.forEach(story => {
+        const tag = document.createElement('button');
+        tag.className = 'tag';
+        tag.type = 'button';
+        tag.textContent = story.title;
+        tag.dataset.storyId = story.id;
+        tag.addEventListener('click', (e) => {
+          e.preventDefault();
+          tag.classList.toggle('selected');
+        });
+        container.appendChild(tag);
+      });
+    }
+
+    /**
+     * Render priority tags for section 5
+     */
+    function renderPriorityTags() {
+      const container = document.getElementById('priorityTags');
+      const priorities = [
+        'Technical depth', 'System design', 'Communication',
+        'Leadership', 'Mentorship', 'Speed', 'Collaboration'
+      ];
+      container.innerHTML = '';
+      priorities.forEach(priority => {
+        const tag = document.createElement('button');
+        tag.className = 'tag';
+        tag.type = 'button';
+        tag.textContent = priority;
+        tag.addEventListener('click', (e) => {
+          e.preventDefault();
+          tag.classList.toggle('selected');
+        });
+        container.appendChild(tag);
+      });
+    }
+
+    /**
+     * Render wizard progress bar
+     */
+    function updateWizardProgress() {
+      for (let i = 1; i <= 8; i++) {
+        const step = document.getElementById(`step${i}`);
+        if (i < appState.wizardStep) {
+          step.className = 'progress-step completed';
+        } else if (i === appState.wizardStep) {
+          step.className = 'progress-step active';
+        } else {
+          step.className = 'progress-step';
+        }
+      }
+      document.getElementById('progressText').textContent = `${appState.wizardStep} / 8`;
+    }
+
+    /**
+     * Show specific wizard section
+     */
+    function showWizardSection(sectionNum) {
+      for (let i = 1; i <= 8; i++) {
+        const section = document.getElementById(`section${i}`);
+        section.classList.remove('active');
+      }
+      document.getElementById(`section${sectionNum}`).classList.add('active');
+      updateWizardProgress();
+
+      // Update button states
+      document.getElementById('btnPrev').disabled = sectionNum === 1;
+      document.getElementById('btnNext').textContent = sectionNum === 8 ? 'Complete & Review' : 'Next →';
+    }
+
+    /**
+     * Add question field to repeatable questions section
+     */
+    function addQuestionField() {
+      const container = document.getElementById('questionsContainer');
+      const fieldId = `question-${Date.now()}`;
+
+      const html = `
+        <div class="field-row" id="${fieldId}">
+          <input type="text" class="form-inline" placeholder="Question text" data-field="questionText">
+          <select class="form-select" data-field="questionType">
+            <option value="behavioral">Behavioral</option>
+            <option value="technical">Technical</option>
+            <option value="system">System</option>
+            <option value="coding">Coding</option>
+          </select>
+          <div style="display: flex; gap: var(--space-2);">
+            <span style="flex: 1;">Rating:</span>
+            <select class="form-select" data-field="questionRating" style="width: 60px;">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3" selected>3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+          <button type="button" class="btn-remove" title="Remove">✕</button>
+        </div>
+      `;
+
+      container.insertAdjacentHTML('beforeend', html);
+
+      // Attach remove listener
+      document.querySelector(`#${fieldId} .btn-remove`).addEventListener('click', () => {
+        document.getElementById(fieldId).remove();
+      });
+    }
+
+    /**
+     * Add interviewer field to repeatable interviewers section
+     */
+    function addInterviewerField() {
+      const container = document.getElementById('interviewersContainer');
+      const fieldId = `interviewer-${Date.now()}`;
+
+      const html = `
+        <div class="field-row full-width" id="${fieldId}">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+            <div>
+              <label class="sidebar-label">Name</label>
+              <input type="text" class="form-inline" placeholder="Interviewer name" data-field="name">
+            </div>
+            <div>
+              <label class="sidebar-label">Impression (1-5)</label>
+              <select class="form-select" data-field="impression">
+                <option value="1">1 - Very negative</option>
+                <option value="2">2 - Negative</option>
+                <option value="3" selected>3 - Neutral</option>
+                <option value="4">4 - Positive</option>
+                <option value="5">5 - Very positive</option>
+              </select>
+            </div>
+          </div>
+          <textarea class="form-textarea" placeholder="Notes about this interviewer..." data-field="notes" style="margin-top: var(--space-3);"></textarea>
+          <button type="button" class="btn-remove" title="Remove">✕</button>
+        </div>
+      `;
+
+      container.insertAdjacentHTML('beforeend', html);
+
+      document.querySelector(`#${fieldId} .btn-remove`).addEventListener('click', () => {
+        document.getElementById(fieldId).remove();
+      });
+    }
+
+    /**
+     * Collect form data from all wizard sections
+     */
+    function collectFormData() {
+      const data = {
+        id: `debrief-${Date.now()}`,
+        roleId: appState.currentRole,
+        companyId: getRole(appState.currentRole).companyId,
+        date: new Date().toISOString().split('T')[0],
+        round: parseInt(document.getElementById('roundSelect').value),
+        interviewType: document.getElementById('interviewTypeSelect').value,
+        interviewers: document.getElementById('interviewerNamesInput').value
+          .split(',')
+          .map(n => n.trim())
+          .filter(n => n),
+        overallRating: document.querySelectorAll('#overallRating .star-btn.active').length,
+        overallSummary: document.getElementById('overallSummary').value,
+        whatLanded: document.getElementById('whatLandedText').value,
+        whatDidntLand: document.getElementById('whatDidntLandText').value,
+        questions: [],
+        priorities: document.getElementById('prioritiesText').value,
+        redFlags: document.getElementById('redFlagsText').value,
+        redFlagSeverity: document.getElementById('redFlagSeverity').value,
+        followUp: document.getElementById('followUpText').value,
+        nextStepsDate: document.getElementById('nextStepsDate').value,
+        interviewerNotes: []
+      };
+
+      // Collect questions
+      document.querySelectorAll('#questionsContainer .field-row').forEach(row => {
+        const text = row.querySelector('[data-field="questionText"]').value;
+        if (text) {
+          data.questions.push({
+            text,
+            type: row.querySelector('[data-field="questionType"]').value,
+            rating: parseInt(row.querySelector('[data-field="questionRating"]').value)
+          });
+        }
+      });
+
+      // Collect interviewer notes
+      document.querySelectorAll('#interviewersContainer .field-row').forEach(row => {
+        const name = row.querySelector('[data-field="name"]').value;
+        if (name) {
+          data.interviewerNotes.push({
+            name,
+            impression: parseInt(row.querySelector('[data-field="impression"]').value),
+            notes: row.querySelector('[data-field="notes"]').value
+          });
+        }
+      });
+
+      return data;
+    }
+
+    /**
+     * Display debrief summary after form completion
+     */
+    function displayDebriefsummary(data) {
+      const summaryContainer = document.getElementById('summaryContainer');
+
+      const stars = '★'.repeat(data.overallRating) + '☆'.repeat(5 - data.overallRating);
+
+      let questionsHtml = '';
+      data.questions.forEach(q => {
+        questionsHtml += `
+          <div class="action-item">
+            <strong>${q.text}</strong>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+              Type: ${q.type} | Rating: ${q.rating}/5
+            </div>
+          </div>
+        `;
+      });
+
+      let actionItemsHtml = '';
+      if (data.followUp) actionItemsHtml += `<div class="action-item">📋 ${data.followUp}</div>`;
+      if (data.nextStepsDate) actionItemsHtml += `<div class="action-item">📅 Next steps: ${data.nextStepsDate}</div>`;
+
+      const html = `
+        <div class="debrief-summary-card">
+          <div class="summary-header">
+            <div>
+              <h3 class="summary-title">Debrief Summary</h3>
+              <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-1);">${data.date} • Round ${data.round}</div>
+            </div>
+            <div class="summary-rating">${stars}</div>
+          </div>
+
+          <div class="summary-section">
+            <div class="summary-label">Overall Impression</div>
+            <div class="summary-content">${data.overallSummary}</div>
+          </div>
+
+          <div class="summary-section">
+            <div class="summary-label">What Landed</div>
+            <div class="summary-content">${data.whatLanded || '—'}</div>
+          </div>
+
+          <div class="summary-section">
+            <div class="summary-label">What Didn't Land</div>
+            <div class="summary-content">${data.whatDidntLand || '—'}</div>
+          </div>
+
+          ${questionsHtml ? `
+            <div class="summary-section">
+              <div class="summary-label">Key Questions</div>
+              <div class="action-items">${questionsHtml}</div>
+            </div>
+          ` : ''}
+
+          <div class="summary-section">
+            <div class="summary-label">Their Priorities</div>
+            <div class="summary-content">${data.priorities || '—'}</div>
+          </div>
+
+          ${data.redFlags ? `
+            <div class="summary-section">
+              <div class="summary-label">Red Flags (${data.redFlagSeverity})</div>
+              <div class="summary-content">${data.redFlags}</div>
+            </div>
+          ` : ''}
+
+          ${actionItemsHtml ? `
+            <div class="summary-section">
+              <div class="summary-label">Action Items</div>
+              <div class="action-items">${actionItemsHtml}</div>
+            </div>
+          ` : ''}
+
+          <div style="display: flex; gap: var(--space-3); margin-top: var(--space-6);">
+            <button class="btn-primary" id="saveDebriefBtn">Save Debrief</button>
+            <button class="btn-primary" style="background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);" id="resetFormBtn">Start New Debrief</button>
+          </div>
+        </div>
+      `;
+
+      summaryContainer.innerHTML = html;
+      summaryContainer.classList.remove('hidden');
+
+      document.getElementById('saveDebriefBtn').addEventListener('click', () => {
+        saveDebrief(data);
+        alert('Debrief saved successfully!');
+        resetForm();
+      });
+
+      document.getElementById('resetFormBtn').addEventListener('click', resetForm);
+    }
+
+    /**
+     * Reset form for new debrief
+     */
+    function resetForm() {
+      document.getElementById('debriefForm').reset();
+      appState.wizardStep = 1;
+      showWizardSection(1);
+      document.getElementById('summaryContainer').classList.add('hidden');
+      document.getElementById('overallRating').querySelectorAll('.star-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('questionsContainer').innerHTML = '';
+      document.getElementById('interviewersContainer').innerHTML = '';
+    }
+
+    /**
+     * Render patterns analysis tab
+     */
+    function renderPatternsTab() {
+      const container = document.getElementById('patternsContent');
+
+      if (appState.debriefs.length < 3) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><p>Complete 3+ debriefs to see patterns.</p></div>';
+        return;
+      }
+
+      let html = '<div class="pattern-grid">';
+
+      // Story performance
+      const storyPerformance = {};
+      appState.debriefs.forEach(d => {
+        d.questions?.forEach(q => {
+          if (!storyPerformance[q.type]) {
+            storyPerformance[q.type] = { count: 0, totalRating: 0 };
+          }
+          storyPerformance[q.type].count++;
+          storyPerformance[q.type].totalRating += q.rating;
+        });
+      });
+
+      html += `
+        <div class="chart-card">
+          <div class="chart-title">Average Performance by Question Type</div>
+          <div class="bar-chart">
+      `;
+
+      Object.entries(storyPerformance).forEach(([type, data]) => {
+        const avg = (data.totalRating / data.count).toFixed(1);
+        const percentage = (avg / 5) * 100;
+        html += `
+          <div class="bar-item">
+            <div class="bar-label">${type}</div>
+            <div class="bar-container">
+              <div class="bar-fill" style="width: ${percentage}%;">${avg}</div>
+            </div>
+            <div class="bar-value">${data.count} Q's</div>
+          </div>
+        `;
+      });
+
+      html += '</div></div>';
+
+      // Overall trend
+      const debriefsSorted = [...appState.debriefs].sort((a, b) => new Date(a.date) - new Date(b.date));
+      html += `
+        <div class="chart-card">
+          <div class="chart-title">Overall Rating Trend</div>
+          <div class="bar-chart">
+      `;
+
+      debriefsSorted.slice(-5).forEach(d => {
+        const avg = d.overallRating;
+        const percentage = (avg / 5) * 100;
+        const company = getCompany(d.companyId);
+        html += `
+          <div class="bar-item">
+            <div class="bar-label">${company.name.substring(0, 10)}</div>
+            <div class="bar-container">
+              <div class="bar-fill" style="width: ${percentage}%;">★${avg}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      html += '</div></div>';
+
+      // Interview type breakdown
+      const typeBreakdown = {};
+      appState.debriefs.forEach(d => {
+        if (!typeBreakdown[d.interviewType]) {
+          typeBreakdown[d.interviewType] = { count: 0, totalRating: 0 };
+        }
+        typeBreakdown[d.interviewType].count++;
+        typeBreakdown[d.interviewType].totalRating += d.overallRating;
+      });
+
+      html += `
+        <div class="chart-card">
+          <div class="chart-title">Performance by Interview Type</div>
+          <div class="bar-chart">
+      `;
+
+      Object.entries(typeBreakdown).forEach(([type, data]) => {
+        const avg = (data.totalRating / data.count).toFixed(1);
+        const percentage = (avg / 5) * 100;
+        html += `
+          <div class="bar-item">
+            <div class="bar-label">${type}</div>
+            <div class="bar-container">
+              <div class="bar-fill" style="width: ${percentage}%;">${avg}</div>
+            </div>
+            <div class="bar-value">${data.count}</div>
+          </div>
+        `;
+      });
+
+      html += '</div></div></div>';
+      container.innerHTML = html;
+    }
+
+    /**
+     * Render question bank tab
+     */
+    function renderQuestionBankTab() {
+      const container = document.getElementById('questionBankContent');
+
+      if (appState.questions.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">❓</div><p>No questions captured yet.</p></div>';
+        return;
+      }
+
+      let html = '<div>';
+      appState.questions.forEach(q => {
+        const company = getCompany(q.companyId);
+        const stars = '★'.repeat(q.rating) + '☆'.repeat(5 - q.rating);
+        html += `
+          <div class="question-item">
+            <div class="question-text">${q.text}</div>
+            <div class="question-meta">
+              <span class="question-tag">${q.type}</span>
+              <span class="question-tag">${company.name}</span>
+              <span class="question-tag">${stars}</span>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    /**
+     * Render history tab
+     */
+    function renderHistoryTab() {
+      const container = document.getElementById('historyContent');
+
+      if (appState.debriefs.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div><p>No debriefs yet. Complete your first interview!</p></div>';
+        return;
+      }
+
+      const sorted = [...appState.debriefs].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      let html = '<div class="history-list">';
+      sorted.forEach(d => {
+        const company = getCompany(d.companyId);
+        const role = getRole(d.roleId);
+        const stars = '★'.repeat(d.overallRating) + '☆'.repeat(5 - d.overallRating);
+
+        html += `
+          <div class="history-item">
+            <div class="history-meta">
+              <div class="history-company">${company.name} • ${role.title}</div>
+              <div class="history-details">${d.date} • Round ${d.round} • ${d.interviewType}</div>
+            </div>
+            <div class="history-rating">${stars}</div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    /**
+     * Command palette functionality
+     */
+    function initCommandPalette() {
+      const modal = document.getElementById('commandPaletteModal');
+      const input = document.getElementById('commandInput');
+      const results = document.getElementById('commandResults');
+
+      const commands = [
+        { name: 'Save Debrief', key: 'cmd+s', action: () => document.getElementById('saveDebriefBtn')?.click() },
+        { name: 'Next Section', key: 'enter', action: () => handleWizardNext() },
+        { name: 'Previous Section', key: 'backspace', action: () => handleWizardPrev() },
+        { name: 'New Debrief', key: 'cmd+1', action: () => switchTab('form') },
+        { name: 'Patterns', key: 'cmd+2', action: () => switchTab('patterns') },
+        { name: 'Question Bank', key: 'cmd+3', action: () => switchTab('questions') },
+        { name: 'History', key: 'cmd+4', action: () => switchTab('history') }
+      ];
+
+      document.getElementById('cmdPaletteBtn').addEventListener('click', () => {
+        modal.classList.remove('hidden');
+        input.focus();
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          modal.classList.add('hidden');
+        } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+        }
+      });
+
+      input.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        results.innerHTML = '';
+
+        const filtered = commands.filter(c =>
+          c.name.toLowerCase().includes(query) || c.key.includes(query)
+        );
+
+        filtered.forEach(cmd => {
+          const div = document.createElement('div');
+          div.style.cssText = `
+            padding: var(--space-2) var(--space-3);
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+          `;
+          div.innerHTML = `
+            <span>${cmd.name}</span>
+            <span style="color: var(--text-secondary); font-size: 12px;">${cmd.key}</span>
+          `;
+          div.addEventListener('click', () => {
+            cmd.action();
+            modal.classList.add('hidden');
+          });
+          results.appendChild(div);
+        });
+      });
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.add('hidden');
+      });
+    }
+
+    /**
+     * Tab switching
+     */
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+      const tabMap = {
+        form: 'formTab',
+        patterns: 'patternsTab',
+        questions: 'questionsTab',
+        history: 'historyTab'
+      };
+
+      document.getElementById(tabMap[tabName]).classList.remove('hidden');
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    }
+
+    /**
+     * Wizard navigation handlers
+     */
+    function handleWizardNext() {
+      if (appState.wizardStep < 8) {
+        appState.wizardStep++;
+        showWizardSection(appState.wizardStep);
+      } else {
+        const data = collectFormData();
+        displayDebriefsummary(data);
+      }
+    }
+
+    function handleWizardPrev() {
+      if (appState.wizardStep > 1) {
+        appState.wizardStep--;
+        showWizardSection(appState.wizardStep);
+      }
+    }
+
+    /**
+     * Attach all event listeners
+     */
+    function attachEventListeners() {
+      // Role selection
+      document.getElementById('roleSelect').addEventListener('change', (e) => {
+        appState.currentRole = e.target.value;
+        renderCompanyCard();
+        renderRoleCard();
+      });
+
+      // Wizard navigation
+      document.getElementById('btnNext').addEventListener('click', (e) => {
+        e.preventDefault();
+        handleWizardNext();
+      });
+
+      document.getElementById('btnPrev').addEventListener('click', (e) => {
+        e.preventDefault();
+        handleWizardPrev();
+      });
+
+      // Star rating
+      document.getElementById('overallRating').addEventListener('click', (e) => {
+        if (e.target.classList.contains('star-btn')) {
+          e.preventDefault();
+          const value = parseInt(e.target.dataset.value);
+          document.querySelectorAll('#overallRating .star-btn').forEach(btn => {
+            btn.classList.toggle('active', parseInt(btn.dataset.value) <= value);
+          });
+        }
+      });
+
+      // Add question button
+      document.getElementById('addQuestionBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        addQuestionField();
+      });
+
+      // Add interviewer button
+      document.getElementById('addInterviewerBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        addInterviewerField();
+      });
+
+      // Tab navigation
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+          e.preventDefault();
+          document.getElementById('cmdPaletteBtn').click();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+          e.preventDefault();
+          document.getElementById('saveDebriefBtn')?.click();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === '1') {
+          e.preventDefault();
+          switchTab('form');
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === '2') {
+          e.preventDefault();
+          switchTab('patterns');
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === '3') {
+          e.preventDefault();
+          switchTab('questions');
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === '4') {
+          e.preventDefault();
+          switchTab('history');
+        }
+      });
+
+      // Render story tags after roles are loaded
+      setTimeout(() => {
+        renderStoryTags();
+        renderPriorityTags();
+      }, 100);
+    }
+
+    // ================================================================
+    // INITIALIZATION
+    // ================================================================
+
+    initializeApp();
+    initCommandPalette();
+  </script>
+  <script src="../shared/data-switcher.js"></script>
+</body>
+</html>

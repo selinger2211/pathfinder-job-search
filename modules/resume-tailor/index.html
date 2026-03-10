@@ -1,0 +1,2746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pathfinder — Resume Tailor</title>
+  <meta name="description" content="Tailor resumes for specific job applications">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>P</text></svg>">
+
+  <link rel="stylesheet" href="../shared/pathfinder.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* ================================================================
+       RESUME TAILOR SPECIFIC STYLES
+       Customizes the two-panel layout, sidebar, and workspace components
+       ================================================================ */
+
+    /* Main container: holds sidebar + workspace side by side */
+    .resume-tailor-container {
+      display: flex;
+      height: calc(100vh - var(--nav-height));
+      overflow: hidden;
+      margin-top: var(--nav-height);
+    }
+
+    /* Left sidebar: context panel with role selector and job details */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-surface);
+      border-right: 1px solid var(--bg-subtle);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      transition: transform var(--duration-normal) var(--ease-default);
+      z-index: 50;
+    }
+
+    /* Sidebar is hidden (pushed off-screen) when in mobile/collapsed mode */
+    .sidebar.collapsed {
+      transform: translateX(-100%);
+      position: absolute;
+      height: 100%;
+    }
+
+    /* Sidebar header: contains close button and title */
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4);
+      border-bottom: 1px solid var(--bg-subtle);
+      flex-shrink: 0;
+    }
+
+    .sidebar-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .sidebar-toggle {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .sidebar-toggle:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    /* Sidebar content: scrollable area below header */
+    .sidebar-content {
+      flex: 1;
+      padding: var(--space-4);
+      overflow-y: auto;
+    }
+
+    /* Role selector dropdown at top of sidebar */
+    .role-selector {
+      margin-bottom: var(--space-6);
+    }
+
+    .role-selector label {
+      display: block;
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-2);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .role-selector select {
+      width: 100%;
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .role-selector select:hover {
+      border-color: var(--accent);
+    }
+
+    .role-selector select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+
+    /* Company card in the sidebar showing details */
+    .company-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+
+    .company-card-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+      object-fit: contain;
+      margin-bottom: var(--space-3);
+    }
+
+    .company-card-name {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-1);
+    }
+
+    .company-card-domain {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-3);
+      font-family: var(--font-mono);
+    }
+
+    .company-card-tier {
+      display: inline-block;
+      padding: 2px 8px;
+      background: var(--accent-subtle);
+      color: var(--accent);
+      border-radius: var(--radius-pill);
+      font-size: var(--text-xs);
+      font-weight: 500;
+    }
+
+    /* Role details section in sidebar */
+    .role-details {
+      margin-bottom: var(--space-6);
+    }
+
+    .role-details-item {
+      margin-bottom: var(--space-3);
+    }
+
+    .role-details-label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-1);
+    }
+
+    .role-details-value {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+    }
+
+    .role-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      background: var(--accent-subtle);
+      color: var(--accent);
+      border-radius: var(--radius-pill);
+      font-size: var(--text-xs);
+      font-weight: 500;
+      margin-right: var(--space-2);
+    }
+
+    /* JD textarea for pasting job description */
+    .jd-area {
+      margin-bottom: var(--space-6);
+    }
+
+    .jd-label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-2);
+      display: block;
+    }
+
+    .jd-textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      resize: vertical;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .jd-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+
+    .jd-text-display {
+      width: 100%;
+      min-height: 120px;
+      padding: var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      line-height: 1.5;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    /* Analyze button */
+    .analyze-btn {
+      width: 100%;
+      padding: var(--space-3);
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: white;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .analyze-btn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .analyze-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Fit assessment display */
+    .fit-assessment {
+      background: var(--bg-elevated);
+      border-left: 3px solid var(--info);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+
+    .fit-assessment-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .fit-assessment-text {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ================================================================
+       WORKSPACE STYLES (right panel)
+       ================================================================ */
+
+    /* Workspace: the right panel where user builds resumes */
+    .workspace {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Workspace header: tabs and action buttons */
+    .workspace-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-6);
+      border-bottom: 1px solid var(--bg-subtle);
+      flex-shrink: 0;
+      background: var(--bg-surface);
+    }
+
+    /* Tab buttons for switching between phases */
+    .tab-buttons {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .tab-button {
+      padding: var(--space-2) var(--space-4);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .tab-button:hover {
+      color: var(--text-primary);
+    }
+
+    .tab-button.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* Header actions (buttons on the right side) */
+    .workspace-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .action-button {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-elevated);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .action-button:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    /* Workspace content: scrollable area for phases */
+    .workspace-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-6);
+    }
+
+    /* Empty state when no role is selected */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    .empty-state-icon {
+      width: 64px;
+      height: 64px;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-4);
+    }
+
+    .empty-state-text {
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-2);
+    }
+
+    /* ================================================================
+       PHASE 1: JD ANALYSIS
+       ================================================================ */
+
+    .analysis-panel {
+      max-width: 800px;
+    }
+
+    .analysis-title {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-6);
+    }
+
+    /* Analysis section: a group of related fields */
+    .analysis-section {
+      background: var(--bg-surface);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius-md);
+      padding: var(--space-6);
+      margin-bottom: var(--space-6);
+    }
+
+    .analysis-section-title {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-4);
+    }
+
+    /* Row of analysis fields */
+    .analysis-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+
+    .analysis-row.full {
+      grid-template-columns: 1fr;
+    }
+
+    /* Single analysis field */
+    .analysis-field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .analysis-field-label {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-2);
+    }
+
+    .analysis-field-value {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+    }
+
+    .analysis-field input,
+    .analysis-field select {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .analysis-field input:focus,
+    .analysis-field select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+
+    /* Keywords section with checkboxes */
+    .keywords-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+
+    .keyword-chip {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .keyword-chip:hover {
+      border-color: var(--accent);
+      background: var(--accent-subtle);
+    }
+
+    .keyword-chip input {
+      cursor: pointer;
+    }
+
+    .keyword-chip label {
+      cursor: pointer;
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      flex: 1;
+    }
+
+    /* Fit assessment in analysis */
+    .fit-summary {
+      background: var(--bg-elevated);
+      border-left: 3px solid var(--success);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+    }
+
+    .fit-summary-label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-2);
+    }
+
+    .fit-items {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .fit-item {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .fit-item strong {
+      color: var(--success);
+      min-width: 80px;
+    }
+
+    /* Proceed button */
+    .proceed-btn {
+      margin-top: var(--space-6);
+      padding: var(--space-3) var(--space-6);
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: white;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .proceed-btn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* ================================================================
+       PHASE 2: RESUME BUILDER
+       ================================================================ */
+
+    .builder-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-6);
+      max-width: 1400px;
+    }
+
+    /* Left side: editor with sections */
+    .builder-editor {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+    }
+
+    /* Section: summary */
+    .builder-section {
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      padding: var(--space-6);
+      border-left: 3px solid var(--accent);
+    }
+
+    .builder-section-title {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-3);
+    }
+
+    .summary-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      resize: vertical;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .summary-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+
+    /* Skills section */
+    .skills-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+
+    .skill-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      background: var(--accent-subtle);
+      color: var(--accent);
+      border-radius: var(--radius-pill);
+      font-size: var(--text-sm);
+      cursor: move;
+      user-select: none;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .skill-pill:hover {
+      background: var(--accent);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .skill-pill.dragging {
+      opacity: 0.5;
+    }
+
+    /* Experience section for each role */
+    .experience-item {
+      background: var(--bg-elevated);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin-bottom: var(--space-4);
+      border: 1px solid var(--bg-subtle);
+    }
+
+    .experience-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--space-3);
+      padding-bottom: var(--space-3);
+      border-bottom: 1px solid var(--bg-subtle);
+    }
+
+    .experience-title {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .experience-company {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+
+    .experience-dates {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      font-family: var(--font-mono);
+    }
+
+    /* Bullet list in experience */
+    .bullet-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      margin-bottom: var(--space-3);
+    }
+
+    .bullet-item {
+      display: flex;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-surface);
+      border-radius: var(--radius-sm);
+      align-items: flex-start;
+      cursor: grab;
+    }
+
+    .bullet-item:active {
+      cursor: grabbing;
+    }
+
+    .bullet-checkbox {
+      flex-shrink: 0;
+      margin-top: 2px;
+      cursor: pointer;
+    }
+
+    .bullet-text {
+      flex: 1;
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .bullet-item.hidden .bullet-text {
+      text-decoration: line-through;
+      color: var(--text-tertiary);
+    }
+
+    .add-bullet-btn {
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-surface);
+      border: 1px dashed var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      width: 100%;
+      text-align: center;
+    }
+
+    .add-bullet-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-subtle);
+    }
+
+    /* Right side: live preview */
+    .builder-preview {
+      background: white;
+      color: #000;
+      border-radius: var(--radius-md);
+      padding: 40px;
+      box-shadow: var(--shadow-lg);
+      height: fit-content;
+      font-family: 'Calibri', 'Arial', sans-serif;
+      font-size: 10pt;
+      line-height: 1.4;
+      max-height: 800px;
+      overflow-y: auto;
+    }
+
+    .preview-header {
+      text-align: center;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #000;
+      padding-bottom: 10px;
+    }
+
+    .preview-name {
+      font-size: 16pt;
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+
+    .preview-summary {
+      margin-bottom: 12px;
+      font-size: 10pt;
+      line-height: 1.5;
+    }
+
+    .preview-section {
+      margin-bottom: 10px;
+    }
+
+    .preview-section-title {
+      font-size: 11pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      margin-top: 8px;
+    }
+
+    .preview-role {
+      margin-bottom: 8px;
+    }
+
+    .preview-role-header {
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+
+    .preview-role-company {
+      font-weight: bold;
+    }
+
+    .preview-role-dates {
+      font-size: 9pt;
+    }
+
+    .preview-bullets {
+      margin-left: 15px;
+      margin-bottom: 8px;
+    }
+
+    .preview-bullet {
+      margin-bottom: 4px;
+      font-size: 9pt;
+      line-height: 1.4;
+    }
+
+    .preview-skills {
+      margin-bottom: 8px;
+      font-size: 10pt;
+    }
+
+    .preview-skills-label {
+      font-weight: bold;
+      display: inline;
+    }
+
+    /* Export buttons */
+    .export-buttons {
+      display: flex;
+      gap: var(--space-3);
+      margin-top: var(--space-6);
+      flex-wrap: wrap;
+    }
+
+    .export-button {
+      flex: 1;
+      min-width: 150px;
+      padding: var(--space-3) var(--space-4);
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: white;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+    }
+
+    .export-button:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .export-button.secondary {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border: 1px solid var(--bg-subtle);
+    }
+
+    .export-button.secondary:hover {
+      background: var(--bg-subtle);
+    }
+
+    /* ================================================================
+       BULLET BANK TAB
+       ================================================================ */
+
+    .bullet-bank {
+      max-width: 900px;
+    }
+
+    .bullet-bank-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-6);
+    }
+
+    .bullet-bank-title {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .bullet-bank-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    /* Bullet listing */
+    .bullets-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .bullet-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+    }
+
+    .bullet-card-text {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      line-height: 1.6;
+      margin-bottom: var(--space-3);
+    }
+
+    .bullet-card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+    }
+
+    .bullet-card-tags {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .bullet-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      background: var(--accent-subtle);
+      color: var(--accent);
+      border-radius: var(--radius-pill);
+      font-weight: 500;
+    }
+
+    .bullet-card-actions {
+      display: flex;
+      gap: var(--space-2);
+      margin-top: var(--space-3);
+    }
+
+    .bullet-card-btn {
+      padding: 4px 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: var(--text-xs);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .bullet-card-btn:hover {
+      background: var(--accent-subtle);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Add bullet form */
+    .add-bullet-form {
+      background: var(--bg-surface);
+      border: 2px dashed var(--accent);
+      border-radius: var(--radius-md);
+      padding: var(--space-6);
+      margin-bottom: var(--space-6);
+    }
+
+    .add-bullet-form input,
+    .add-bullet-form textarea,
+    .add-bullet-form select {
+      width: 100%;
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      margin-bottom: var(--space-3);
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .add-bullet-form input:focus,
+    .add-bullet-form textarea:focus,
+    .add-bullet-form select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+
+    .add-bullet-form textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* ================================================================
+       HISTORY/VERSION LOG TAB
+       ================================================================ */
+
+    .resume-history {
+      max-width: 900px;
+    }
+
+    .history-title {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-6);
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .history-item {
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+    }
+
+    .history-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--space-2);
+      padding-bottom: var(--space-2);
+      border-bottom: 1px solid var(--bg-subtle);
+    }
+
+    .history-item-title {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .history-item-date {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      font-family: var(--font-mono);
+    }
+
+    .history-item-details {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      margin-bottom: var(--space-2);
+    }
+
+    .history-item-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .history-btn {
+      padding: 4px 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: var(--text-xs);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .history-btn:hover {
+      background: var(--accent-subtle);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* ================================================================
+       TOAST NOTIFICATIONS
+       ================================================================ */
+
+    .toast {
+      position: fixed;
+      bottom: var(--space-6);
+      right: var(--space-6);
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      box-shadow: var(--shadow-lg);
+      z-index: 1000;
+      animation: slideIn var(--duration-normal) var(--ease-default);
+    }
+
+    .toast.success {
+      border-left: 3px solid var(--success);
+    }
+
+    .toast.error {
+      border-left: 3px solid var(--danger);
+    }
+
+    .toast.info {
+      border-left: 3px solid var(--info);
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* ================================================================
+       RESPONSIVE DESIGN
+       ================================================================ */
+
+    @media (max-width: 1200px) {
+      .builder-container {
+        grid-template-columns: 1fr;
+      }
+
+      .builder-preview {
+        max-height: 400px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar-toggle {
+        display: flex;
+      }
+
+      .sidebar {
+        position: absolute;
+        width: 100%;
+        z-index: 60;
+      }
+
+      .workspace-header {
+        padding: var(--space-3) var(--space-4);
+      }
+
+      .workspace-content {
+        padding: var(--space-4);
+      }
+
+      .tab-buttons {
+        gap: var(--space-1);
+      }
+
+      .tab-button {
+        padding: var(--space-1) var(--space-2);
+        font-size: var(--text-xs);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation bar at the top of the page -->
+  <nav class="nav">
+    <div class="nav-brand"><span>P</span>athfinder</div>
+    <div class="nav-links">
+      <a href="../dashboard/index.html">Dashboard</a>
+      <a href="../pipeline/index.html">Pipeline</a>
+      <a href="../research-brief/index.html">Research</a>
+      <a href="index.html" class="active">Resume</a>
+      <a href="../job-feed-listener/index.html">Feed</a>
+      <a href="../outreach/index.html">Outreach</a>
+      <a href="../mock-interview/index.html">Mock</a>
+      <a href="../debrief/index.html">Debrief</a>
+      <a href="../comp-intel/index.html">Comp</a>
+      <a href="../calendar/index.html">Calendar</a>
+    </div>
+    <div class="nav-right">
+      <span class="nav-kbd">⌘S</span>
+    </div>
+  </nav>
+
+  <!-- Main container with sidebar and workspace -->
+  <div class="resume-tailor-container">
+    <!-- Left sidebar: context panel -->
+    <div class="sidebar" id="sidebar">
+      <!-- Sidebar header with close button -->
+      <div class="sidebar-header">
+        <div class="sidebar-title">Context</div>
+        <button class="sidebar-toggle" id="sidebar-toggle" title="Collapse sidebar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Sidebar scrollable content -->
+      <div class="sidebar-content">
+        <!-- Role selector dropdown -->
+        <div class="role-selector">
+          <label for="role-select">Select Role</label>
+          <select id="role-select">
+            <option value="">Choose a role from your pipeline...</option>
+          </select>
+        </div>
+
+        <!-- Company card (shown when role is selected) -->
+        <div id="company-card-container"></div>
+
+        <!-- Role details -->
+        <div id="role-details-container"></div>
+
+        <!-- JD section -->
+        <div class="jd-area">
+          <label class="jd-label">Job Description</label>
+          <div id="jd-container"></div>
+        </div>
+
+        <!-- Fit assessment (shown after analysis) -->
+        <div id="fit-assessment-container"></div>
+      </div>
+    </div>
+
+    <!-- Right workspace -->
+    <div class="workspace">
+      <!-- Workspace header with tabs -->
+      <div class="workspace-header">
+        <div class="tab-buttons">
+          <button class="tab-button active" data-tab="analysis" id="tab-analysis">Analysis</button>
+          <button class="tab-button" data-tab="builder" id="tab-builder">Builder</button>
+          <button class="tab-button" data-tab="bullets" id="tab-bullets">Bullet Bank</button>
+          <button class="tab-button" data-tab="history" id="tab-history">History</button>
+        </div>
+
+        <div class="workspace-actions">
+          <button class="action-button" id="collapse-btn" title="Collapse sidebar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span>Sidebar</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Workspace content area -->
+      <div class="workspace-content" id="workspace-content">
+        <div class="empty-state">
+          <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          <div class="empty-state-text">Select a role to get started</div>
+          <div style="font-size: var(--text-sm); color: var(--text-tertiary);">Choose from your pipeline above to analyze a job description and build a tailored resume</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ================================================================
+       ARCHITECTURE OVERVIEW
+
+       Resume Tailor manages two phases of resume tailoring:
+
+       1. ANALYSIS PHASE: User pastes a job description, which is analyzed
+          to extract keywords, seniority level, role type, and creates a
+          fit assessment comparing the job to the user's background.
+
+       2. BUILDER PHASE: User selects skills and experience bullets from
+          a pre-built bank, customizes a summary, and previews the tailored
+          resume in real-time.
+
+       DATA SOURCES:
+       - pf_companies: read from Pipeline Tracker
+       - pf_roles: read from Pipeline Tracker
+       - pf_bullet_bank: owned by this module (array of bullet objects)
+       - pf_resume_log: owned by this module (array of saved resumes)
+       - resume_{companySlug}_{roleId}: caches work-in-progress
+
+       The module uses localStorage as its persistent store and renders
+       the UI by manipulating the DOM directly.
+       ================================================================ */
+
+    /* ================================================================
+       CONSTANTS AND CONFIG
+       ================================================================ */
+
+    // Seniority levels and their keywords
+    const SENIORITY_PATTERNS = {
+      'principal': ['principal', 'distinguished', 'partner'],
+      'staff': ['staff', 'senior staff'],
+      'senior': ['senior', 'lead', 'sr.'],
+      'mid': ['mid-level', 'mid level', 'intermediate'],
+      'junior': ['junior', 'entry-level', 'jr.', 'grad', 'associate']
+    };
+
+    // Common PM keywords for analysis
+    const PM_KEYWORDS = [
+      'roadmap', 'product strategy', 'user research', 'analytics', 'metrics',
+      'OKR', 'agile', 'scrum', 'sprint', 'backlog', 'wireframe', 'prototype',
+      'SQL', 'A/B testing', 'conversion', 'retention', 'engagement',
+      'stakeholder', 'cross-functional', 'roadmapping', 'GTM', 'go-to-market',
+      'pricing', 'market analysis', 'competitive analysis', 'vision', 'mission',
+      'roadmap', 'requirements', 'specification', 'design', 'UX', 'UI',
+      'API', 'technical', 'backend', 'frontend', 'integration',
+      'scale', 'performance', 'reliability', 'monitoring', 'SLA'
+    ];
+
+    // Demo background roles (simulated user background)
+    const DEMO_BACKGROUND_ROLES = [
+      {
+        company: 'TechCorp',
+        title: 'Senior Product Manager',
+        startDate: '2021-01',
+        endDate: 'present'
+      },
+      {
+        company: 'StartupXYZ',
+        title: 'Product Manager',
+        startDate: '2019-06',
+        endDate: '2020-12'
+      },
+      {
+        company: 'CloudInc',
+        title: 'Associate Product Manager',
+        startDate: '2018-01',
+        endDate: '2019-05'
+      }
+    ];
+
+    // Demo bullet bank themes
+    const BULLET_THEMES = [
+      'Technical Depth',
+      'Leadership',
+      'Revenue Impact',
+      'User Growth',
+      'Zero-to-One',
+      'Cross-Functional'
+    ];
+
+    /* ================================================================
+       STATE & GLOBALS
+       ================================================================ */
+
+    let currentRole = null;
+    let currentPhase = 'analysis'; // 'analysis', 'builder', 'bullets', 'history'
+    let currentAnalysis = null;
+    let isDraggingSkill = false;
+    let draggedSkillIndex = null;
+    let isDraggingBullet = false;
+    let draggedBulletIndex = null;
+    let draggedBulletSection = null;
+
+    /* ================================================================
+       STORAGE LAYER
+       Functions to read/write from localStorage
+       ================================================================ */
+
+    /**
+     * Gets companies from the Pipeline Tracker
+     * INPUT: none
+     * RETURNS: array of company objects
+     */
+    function getCompanies() {
+      const data = localStorage.getItem('pf_companies');
+      return data ? JSON.parse(data) : [];
+    }
+
+    /**
+     * Gets roles from the Pipeline Tracker
+     * INPUT: none
+     * RETURNS: array of role/job objects
+     */
+    function getRoles() {
+      const data = localStorage.getItem('pf_roles');
+      return data ? JSON.parse(data) : [];
+    }
+
+    /**
+     * Gets the bullet bank (owned by Resume Tailor)
+     * INPUT: none
+     * RETURNS: array of bullet objects
+     */
+    function getBulletBank() {
+      const data = localStorage.getItem('pf_bullet_bank');
+      return data ? JSON.parse(data) : [];
+    }
+
+    /**
+     * Saves the bullet bank to localStorage
+     * INPUT: bullets = array of bullet objects
+     * OUTPUT: data persisted to browser storage
+     */
+    function saveBulletBank(bullets) {
+      localStorage.setItem('pf_bullet_bank', JSON.stringify(bullets));
+    }
+
+    /**
+     * Gets the resume version log
+     * INPUT: none
+     * RETURNS: array of resume log entries
+     */
+    function getResumeLog() {
+      const data = localStorage.getItem('pf_resume_log');
+      return data ? JSON.parse(data) : [];
+    }
+
+    /**
+     * Saves a new entry to the resume log
+     * INPUT: entry = object with date, company, role, customizations, etc.
+     * OUTPUT: entry appended to log and persisted
+     */
+    function addResumeLogEntry(entry) {
+      const log = getResumeLog();
+      log.push({
+        ...entry,
+        id: `resume-${Date.now()}`,
+        date: new Date().toISOString()
+      });
+      localStorage.setItem('pf_resume_log', JSON.stringify(log));
+    }
+
+    /**
+     * Gets cached work for a specific role
+     * INPUT: companySlug = company name slug, roleId = role ID
+     * RETURNS: object with cached resume data
+     */
+    function getCachedResume(companySlug, roleId) {
+      const key = `resume_${companySlug}_${roleId}`;
+      const data = localStorage.getItem(key);
+      return data ? JSON.parse(data) : null;
+    }
+
+    /**
+     * Saves work-in-progress resume to cache
+     * INPUT: companySlug, roleId, data = resume data object
+     * OUTPUT: data cached in localStorage
+     */
+    function saveCachedResume(companySlug, roleId, data) {
+      const key = `resume_${companySlug}_${roleId}`;
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    /* ================================================================
+       INITIALIZATION & DEMO DATA
+       Seed demo data on first load
+       ================================================================ */
+
+    /**
+     * Initializes demo data if no data exists
+     * INPUT: none
+     * OUTPUT: localStorage populated with demo companies, roles, bullets, and resume log
+     */
+    function initializeDemoData() {
+      // Only initialize if no data exists
+      if (localStorage.getItem('pf_bullet_bank')) return;
+
+      // Create demo bullet bank
+      const demoBullets = [
+        {
+          id: 'bullet-1',
+          role: 'general',
+          theme: 'Technical Depth',
+          text: '**Designed and shipped ML-powered ranking system** that processed 2.3B daily events, improving advertiser ROAS by 34% while reducing serving latency from 180ms to 45ms',
+          metrics: '2.3B events/day, 34% ROAS improvement, 180ms → 45ms latency',
+          keywords: ['ML', 'ranking', 'performance', 'scale'],
+          dateAdded: Date.now() - 180 * 24 * 60 * 60 * 1000,
+          usageCount: 0,
+          lastUsed: null
+        },
+        {
+          id: 'bullet-2',
+          role: 'general',
+          theme: 'Leadership',
+          text: '**Led cross-functional team of 12 engineers, 3 designers, and 2 data scientists** through 0-to-1 launch of real-time bidding platform, generating $18M ARR in first year',
+          metrics: '12 engineers, 3 designers, 2 data scientists, $18M ARR',
+          keywords: ['leadership', 'cross-functional', '0-to-1', 'real-time bidding'],
+          dateAdded: Date.now() - 150 * 24 * 60 * 60 * 1000,
+          usageCount: 0,
+          lastUsed: null
+        },
+        {
+          id: 'bullet-3',
+          role: 'general',
+          theme: 'Revenue Impact',
+          text: '**Drove pricing model overhaul** for enterprise tier, increasing average deal size by 42% ($180K → $256K ACV) while improving win rate from 23% to 31%',
+          metrics: '42% ACV increase, 23% → 31% win rate',
+          keywords: ['pricing', 'revenue', 'enterprise', 'commercial'],
+          dateAdded: Date.now() - 120 * 24 * 60 * 60 * 1000,
+          usageCount: 0,
+          lastUsed: null
+        },
+        {
+          id: 'bullet-4',
+          role: 'general',
+          theme: 'User Growth',
+          text: '**Built and executed growth strategy** that increased DAU from 50K to 2.1M in 18 months through viral loops and network effects',
+          metrics: '50K → 2.1M DAU in 18 months',
+          keywords: ['growth', 'DAU', 'viral', 'network effects'],
+          dateAdded: Date.now() - 100 * 24 * 60 * 60 * 1000,
+          usageCount: 0,
+          lastUsed: null
+        },
+        {
+          id: 'bullet-5',
+          role: 'general',
+          theme: 'Zero-to-One',
+          text: '**Conceived and launched** new product vertical from whiteboard to $5M ARR in 14 months, establishing market fit and pricing strategy',
+          metrics: '$5M ARR in 14 months, market fit achieved',
+          keywords: ['zero-to-one', 'launch', 'new product'],
+          dateAdded: Date.now() - 90 * 24 * 60 * 60 * 1000,
+          usageCount: 0,
+          lastUsed: null
+        },
+        {
+          id: 'bullet-6',
+          role: 'general',
+          theme: 'Cross-Functional',
+          text: '**Partnered with sales and CS teams** to reduce churn by 35% through improved onboarding experience and proactive support workflows',
+          metrics: '35% churn reduction',
+          keywords: ['churn', 'retention', 'cross-functional', 'collaboration'],
+          dateAdded: Date.now() - 80 * 24 * 60 * 60 * 1000,
+          usageCount: 0,
+          lastUsed: null
+        },
+        {
+          id: 'bullet-7',
+          role: 'general',
+          theme: 'Technical Depth',
+          text: '**Redesigned data pipeline architecture** reducing query latency by 68% and data processing costs by 42% through optimized ETL and caching layers',
+          metrics: '68% latency reduction, 42% cost reduction',
+          keywords: ['data', 'architecture', 'ETL', 'performance'],
+          dateAdded: Date.now() - 70 * 24 * 60 * 60 * 1000,
+          usageCount: 0,
+          lastUsed: null
+        },
+        {
+          id: 'bullet-8',
+          role: 'general',
+          theme: 'Leadership',
+          text: '**Mentored 5 APMs to promotion**, establishing a structured career development framework and rotating project assignments that increased internal mobility by 80%',
+          metrics: '5 promotions, 80% mobility increase',
+          keywords: ['mentorship', 'leadership', 'career development'],
+          dateAdded: Date.now() - 60 * 24 * 60 * 60 * 1000,
+          usageCount: 0,
+          lastUsed: null
+        },
+        {
+          id: 'bullet-9',
+          role: 'general',
+          theme: 'Revenue Impact',
+          text: '**Negotiated strategic partnerships** with 3 major platforms, unlocking $12M in incremental annual revenue at 78% gross margin',
+          metrics: '$12M ARR, 78% gross margin',
+          keywords: ['partnerships', 'revenue', 'strategic'],
+          dateAdded: Date.now() - 50 * 24 * 60 * 60 * 1000,
+          usageCount: 0,
+          lastUsed: null
+        },
+        {
+          id: 'bullet-10',
+          role: 'general',
+          theme: 'User Growth',
+          text: '**Launched AI-powered recommendation engine** that increased conversion rate by 26% and average order value by 18%, contributing $8.5M in incremental revenue',
+          metrics: '26% conversion increase, 18% AOV increase, $8.5M revenue',
+          keywords: ['AI', 'recommendations', 'conversion', 'personalization'],
+          dateAdded: Date.now() - 40 * 24 * 60 * 60 * 1000,
+          usageCount: 0,
+          lastUsed: null
+        },
+        {
+          id: 'bullet-11',
+          role: 'general',
+          theme: 'Zero-to-One',
+          text: '**Built internal experimentation platform** that scaled from 0 to 500+ AB tests per quarter, accelerating product iteration and discovery',
+          metrics: '500+ tests per quarter, internal platform',
+          keywords: ['experimentation', 'A/B testing', 'platform'],
+          dateAdded: Date.now() - 30 * 24 * 60 * 60 * 1000,
+          usageCount: 0,
+          lastUsed: null
+        },
+        {
+          id: 'bullet-12',
+          role: 'general',
+          theme: 'Cross-Functional',
+          text: '**Aligned product roadmap with sales and customer success** through quarterly business reviews, resulting in 23% increase in deal size and 45% increase in contract length',
+          metrics: '23% deal size increase, 45% contract length increase',
+          keywords: ['alignment', 'stakeholder', 'commercial'],
+          dateAdded: Date.now() - 20 * 24 * 60 * 60 * 1000,
+          usageCount: 0,
+          lastUsed: null
+        },
+        {
+          id: 'bullet-13',
+          role: 'general',
+          theme: 'Technical Depth',
+          text: '**Implemented real-time analytics system** processing 50K events per second with sub-100ms latency, enabling live decision-making across 8 product teams',
+          metrics: '50K events/sec, <100ms latency, 8 teams',
+          keywords: ['analytics', 'real-time', 'infrastructure', 'scale'],
+          dateAdded: Date.now() - 15 * 24 * 60 * 60 * 1000,
+          usageCount: 0,
+          lastUsed: null
+        },
+        {
+          id: 'bullet-14',
+          role: 'general',
+          theme: 'Leadership',
+          text: '**Drove company-wide product strategy refresh** through cross-team working groups, realigning 150+ person organization and unblocking $50M in market opportunity',
+          metrics: '150+ people, $50M opportunity',
+          keywords: ['strategy', 'organizational alignment', 'leadership'],
+          dateAdded: Date.now() - 10 * 24 * 60 * 60 * 1000,
+          usageCount: 0,
+          lastUsed: null
+        },
+        {
+          id: 'bullet-15',
+          role: 'general',
+          theme: 'Revenue Impact',
+          text: '**Introduced freemium model** converting 12% of free tier to paid in Year 1, generating $2.4M ARR and establishing product-led growth motion',
+          metrics: '12% conversion, $2.4M ARR, Year 1',
+          keywords: ['monetization', 'freemium', 'product-led growth'],
+          dateAdded: Date.now() - 5 * 24 * 60 * 60 * 1000,
+          usageCount: 0,
+          lastUsed: null
+        }
+      ];
+
+      saveBulletBank(demoBullets);
+
+      // Create demo resume log
+      const demoLog = [
+        {
+          id: 'log-1',
+          date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          company: 'Stripe',
+          role: 'Senior PM, Payments',
+          keywords: ['revenue impact', 'technical depth', 'scale'],
+          fitScore: 0.87,
+          filename: 'Resume_Stripe_SeniorPM.pdf'
+        },
+        {
+          id: 'log-2',
+          date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+          company: 'Linear',
+          role: 'Product Manager',
+          keywords: ['zero-to-one', 'cross-functional', 'leadership'],
+          fitScore: 0.82,
+          filename: 'Resume_Linear_PM.pdf'
+        },
+        {
+          id: 'log-3',
+          date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+          company: 'Figma',
+          role: 'Senior Product Manager',
+          keywords: ['technical depth', 'user growth', 'leadership'],
+          fitScore: 0.79,
+          filename: 'Resume_Figma_SeniorPM.pdf'
+        }
+      ];
+
+      localStorage.setItem('pf_resume_log', JSON.stringify(demoLog));
+    }
+
+    /* ================================================================
+       JD ANALYSIS FUNCTIONS
+       Extract keywords, seniority, domain from job description
+       ================================================================ */
+
+    /**
+     * Detects seniority level from JD text using pattern matching
+     * INPUT: jdText = job description string
+     * RETURNS: detected seniority level as string
+     */
+    function detectSeniority(jdText) {
+      const text = jdText.toLowerCase();
+      for (const [level, patterns] of Object.entries(SENIORITY_PATTERNS)) {
+        if (patterns.some(p => text.includes(p))) {
+          return level;
+        }
+      }
+      return 'mid';
+    }
+
+    /**
+     * Extracts top keywords from JD using frequency analysis
+     * INPUT: jdText = job description string
+     * RETURNS: array of top 5-7 keyword strings
+     */
+    function extractKeywords(jdText) {
+      const text = jdText.toLowerCase();
+      const keywords = new Map();
+
+      // Count occurrences of each PM keyword
+      PM_KEYWORDS.forEach(keyword => {
+        const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+        const matches = text.match(regex);
+        if (matches) {
+          keywords.set(keyword, (keywords.get(keyword) || 0) + matches.length);
+        }
+      });
+
+      // Return top 7 by frequency
+      return Array.from(keywords.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 7)
+        .map(([kw]) => kw);
+    }
+
+    /**
+     * Analyzes a job description and extracts structured data
+     * INPUT: jdText = job description string
+     * RETURNS: object with seniority, keywords, domain, roleType, fit assessment
+     */
+    function analyzeJD(jdText) {
+      if (!jdText || jdText.trim().length === 0) {
+        return null;
+      }
+
+      const seniority = detectSeniority(jdText);
+      const keywords = extractKeywords(jdText);
+      const text = jdText.toLowerCase();
+
+      // Detect domain
+      let domain = 'general';
+      if (text.includes('saa') || text.includes('b2b')) domain = 'B2B SaaS';
+      else if (text.includes('consumer') || text.includes('b2c')) domain = 'B2C/Consumer';
+      else if (text.includes('marketplace')) domain = 'Marketplace';
+      else if (text.includes('fintech') || text.includes('finance')) domain = 'Fintech';
+
+      // Detect role type
+      let roleType = 'Product Manager';
+      if (text.includes('director')) roleType = 'Director of Product';
+      else if (text.includes('principal')) roleType = 'Principal PM';
+      else if (text.includes('staff')) roleType = 'Staff PM';
+
+      // Simple fit assessment
+      const backgroundKeywords = ['roadmap', 'strategy', 'users', 'data', 'team'];
+      const matchedKeywords = backgroundKeywords.filter(k =>
+        text.includes(k)
+      );
+
+      return {
+        seniority,
+        keywords,
+        domain,
+        roleType,
+        stakeholderEnv: text.includes('cross-functional') ? 'Cross-Functional' : 'Mixed',
+        fit: {
+          strong: matchedKeywords.length >= 3,
+          gaps: matchedKeywords.length === 0,
+          borderline: matchedKeywords.length === 1
+        }
+      };
+    }
+
+    /* ================================================================
+       UI RENDERING FUNCTIONS
+       ================================================================ */
+
+    /**
+     * Renders the role selector dropdown with all available roles
+     * INPUT: none
+     * OUTPUT: updates the role-select element with options
+     */
+    function renderRoleSelector() {
+      const select = document.getElementById('role-select');
+      const roles = getRoles();
+      const companies = getCompanies();
+
+      let html = '<option value="">Choose a role from your pipeline...</option>';
+
+      // Group roles by stage
+      const stages = ['discovered', 'researching', 'outreach', 'applied', 'screen', 'interviewing', 'offer'];
+      stages.forEach(stage => {
+        const rolesInStage = roles.filter(r => r.stage === stage);
+        if (rolesInStage.length > 0) {
+          html += `<optgroup label="${stage.toUpperCase()}">`;
+          rolesInStage.forEach(role => {
+            const company = companies.find(c => c.name === role.company);
+            html += `<option value="${role.id}">${company?.name || 'Unknown'} — ${role.title}</option>`;
+          });
+          html += '</optgroup>';
+        }
+      });
+
+      select.innerHTML = html;
+      select.addEventListener('change', (e) => {
+        const roleId = e.target.value;
+        if (roleId) {
+          selectRole(roleId);
+        } else {
+          currentRole = null;
+          renderSidebar();
+          renderWorkspace();
+        }
+      });
+    }
+
+    /**
+     * Loads and displays a selected role's details in the sidebar
+     * INPUT: roleId = ID of the role to load
+     * OUTPUT: sidebar updated with company card, role details, JD area
+     */
+    function selectRole(roleId) {
+      const roles = getRoles();
+      const companies = getCompanies();
+      const role = roles.find(r => r.id === roleId);
+
+      if (!role) return;
+
+      currentRole = role;
+      const company = companies.find(c => c.name === role.company);
+
+      // Load cached resume if it exists
+      const cached = getCachedResume(
+        role.company.toLowerCase().replace(/\s+/g, '-'),
+        role.id
+      );
+
+      renderSidebar();
+      renderWorkspace();
+    }
+
+    /**
+     * Renders the sidebar with company card and role details
+     * INPUT: none
+     * OUTPUT: updates the sidebar content area
+     */
+    function renderSidebar() {
+      const companyCardContainer = document.getElementById('company-card-container');
+      const roleDetailsContainer = document.getElementById('role-details-container');
+      const jdContainer = document.getElementById('jd-container');
+      const fitAssessmentContainer = document.getElementById('fit-assessment-container');
+
+      if (!currentRole) {
+        companyCardContainer.innerHTML = '';
+        roleDetailsContainer.innerHTML = '';
+        jdContainer.innerHTML = '';
+        fitAssessmentContainer.innerHTML = '';
+        return;
+      }
+
+      const companies = getCompanies();
+      const company = companies.find(c => c.name === currentRole.company);
+
+      // Render company card
+      const logoUrl = company?.logoUrl || `https://logo.clearbit.com/${company?.domain || 'example.com'}`;
+      companyCardContainer.innerHTML = `
+        <div class="company-card">
+          <img src="${logoUrl}" alt="${company?.name}" class="company-card-logo" onerror="this.style.display='none'">
+          <div class="company-card-name">${company?.name || 'Unknown Company'}</div>
+          <div class="company-card-domain">${company?.domain || ''}</div>
+          <span class="company-card-tier">${company?.tier || 'active'}</span>
+        </div>
+      `;
+
+      // Render role details
+      roleDetailsContainer.innerHTML = `
+        <div class="role-details">
+          <div class="role-details-item">
+            <div class="role-details-label">Position</div>
+            <div class="role-details-value">${currentRole.title}</div>
+          </div>
+          <div class="role-details-item">
+            <div class="role-details-label">Stage</div>
+            <span class="role-badge">${currentRole.stage}</span>
+          </div>
+          <div class="role-details-item">
+            <div class="role-details-label">Type</div>
+            <span class="role-badge">${currentRole.positioning === 'ic' ? 'IC' : 'Management'}</span>
+          </div>
+          <div class="role-details-item">
+            <div class="role-details-label">Added</div>
+            <div class="role-details-value">${new Date(currentRole.dateAdded).toLocaleDateString()}</div>
+          </div>
+        </div>
+      `;
+
+      // Render JD section
+      const cached = getCachedResume(
+        currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+        currentRole.id
+      );
+      const savedJd = cached?.jdText || currentRole.jdText || '';
+
+      if (savedJd) {
+        jdContainer.innerHTML = `
+          <div class="jd-text-display">${savedJd}</div>
+          <button class="analyze-btn" style="margin-top: var(--space-3);" onclick="editJD()">Edit JD</button>
+        `;
+      } else {
+        jdContainer.innerHTML = `
+          <textarea class="jd-textarea" id="jd-textarea" placeholder="Paste the job description here..."></textarea>
+          <button class="analyze-btn" onclick="performAnalysis()" style="margin-top: var(--space-3);">Analyze JD</button>
+        `;
+      }
+
+      // Render fit assessment if it exists
+      if (currentAnalysis) {
+        fitAssessmentContainer.innerHTML = `
+          <div class="fit-assessment">
+            <div class="fit-assessment-title">Fit Assessment</div>
+            <div class="fit-assessment-text">
+              ${currentAnalysis.fit.strong ? '✓ Strong match on key requirements' : ''}
+              ${currentAnalysis.fit.gaps ? '⚠ Some skill gaps to address' : ''}
+              ${currentAnalysis.fit.borderline ? '~ Borderline fit, selective customization needed' : ''}
+            </div>
+          </div>
+        `;
+      } else {
+        fitAssessmentContainer.innerHTML = '';
+      }
+    }
+
+    /**
+     * Opens JD editor for inline editing
+     * INPUT: none
+     * OUTPUT: shows textarea for editing JD
+     */
+    function editJD() {
+      const cached = getCachedResume(
+        currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+        currentRole.id
+      );
+      const savedJd = cached?.jdText || currentRole.jdText || '';
+
+      const jdContainer = document.getElementById('jd-container');
+      jdContainer.innerHTML = `
+        <textarea class="jd-textarea" id="jd-textarea" placeholder="Paste the job description here...">${savedJd}</textarea>
+        <button class="analyze-btn" onclick="performAnalysis()" style="margin-top: var(--space-3);">Analyze JD</button>
+      `;
+    }
+
+    /**
+     * Performs JD analysis when user clicks "Analyze JD" button
+     * INPUT: none
+     * OUTPUT: updates currentAnalysis, renders analysis panel
+     */
+    function performAnalysis() {
+      if (!currentRole) return;
+
+      const textarea = document.getElementById('jd-textarea');
+      const jdText = textarea.value.trim();
+
+      if (!jdText) {
+        showToast('Please paste a job description first', 'error');
+        return;
+      }
+
+      // Cache the JD
+      const cached = getCachedResume(
+        currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+        currentRole.id
+      ) || {};
+      cached.jdText = jdText;
+      saveCachedResume(
+        currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+        currentRole.id,
+        cached
+      );
+
+      // Analyze the JD
+      currentAnalysis = analyzeJD(jdText);
+
+      // Store analysis in cache
+      cached.analysis = currentAnalysis;
+      saveCachedResume(
+        currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+        currentRole.id,
+        cached
+      );
+
+      // Switch to analysis phase and render
+      currentPhase = 'analysis';
+      renderSidebar();
+      renderWorkspace();
+      showToast('Job description analyzed', 'success');
+    }
+
+    /**
+     * Renders the workspace content based on current phase
+     * INPUT: none
+     * OUTPUT: updates workspace-content with appropriate phase UI
+     */
+    function renderWorkspace() {
+      const workspaceContent = document.getElementById('workspace-content');
+
+      // Update tab buttons
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.tab === currentPhase) {
+          btn.classList.add('active');
+        }
+      });
+
+      if (!currentRole) {
+        workspaceContent.innerHTML = `
+          <div class="empty-state">
+            <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <div class="empty-state-text">Select a role to get started</div>
+            <div style="font-size: var(--text-sm); color: var(--text-tertiary);">Choose from your pipeline above to analyze a job description and build a tailored resume</div>
+          </div>
+        `;
+        return;
+      }
+
+      if (currentPhase === 'analysis') {
+        renderAnalysisPhase(workspaceContent);
+      } else if (currentPhase === 'builder') {
+        renderBuilderPhase(workspaceContent);
+      } else if (currentPhase === 'bullets') {
+        renderBulletBankPhase(workspaceContent);
+      } else if (currentPhase === 'history') {
+        renderHistoryPhase(workspaceContent);
+      }
+    }
+
+    /**
+     * Renders Phase 1: JD Analysis panel
+     * INPUT: container = DOM element to render into
+     * OUTPUT: analysis panel with structured fields and proceed button
+     */
+    function renderAnalysisPhase(container) {
+      if (!currentAnalysis) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+            <p>Analyze the job description in the sidebar to get started.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const analysis = currentAnalysis;
+
+      let html = `
+        <div class="analysis-panel">
+          <h2 class="analysis-title">Job Analysis</h2>
+
+          <div class="analysis-section">
+            <h3 class="analysis-section-title">Role Profile</h3>
+            <div class="analysis-row">
+              <div class="analysis-field">
+                <label class="analysis-field-label">Seniority Level</label>
+                <select onchange="currentAnalysis.seniority = this.value">
+                  <option value="junior" ${analysis.seniority === 'junior' ? 'selected' : ''}>Junior</option>
+                  <option value="mid" ${analysis.seniority === 'mid' ? 'selected' : ''}>Mid-Level</option>
+                  <option value="senior" ${analysis.seniority === 'senior' ? 'selected' : ''}>Senior</option>
+                  <option value="staff" ${analysis.seniority === 'staff' ? 'selected' : ''}>Staff</option>
+                  <option value="principal" ${analysis.seniority === 'principal' ? 'selected' : ''}>Principal</option>
+                </select>
+              </div>
+              <div class="analysis-field">
+                <label class="analysis-field-label">Role Type</label>
+                <input type="text" value="${analysis.roleType}" onchange="currentAnalysis.roleType = this.value">
+              </div>
+            </div>
+            <div class="analysis-row">
+              <div class="analysis-field">
+                <label class="analysis-field-label">Domain</label>
+                <input type="text" value="${analysis.domain}" onchange="currentAnalysis.domain = this.value">
+              </div>
+              <div class="analysis-field">
+                <label class="analysis-field-label">Stakeholder Environment</label>
+                <input type="text" value="${analysis.stakeholderEnv}" onchange="currentAnalysis.stakeholderEnv = this.value">
+              </div>
+            </div>
+          </div>
+
+          <div class="analysis-section">
+            <h3 class="analysis-section-title">Key Skills & Keywords</h3>
+            <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-3);">
+              Check/uncheck to include or exclude from resume customization
+            </p>
+            <div class="keywords-grid">
+              ${analysis.keywords.map((kw, i) => `
+                <label class="keyword-chip">
+                  <input type="checkbox" checked onchange="analysis.keywords[${i}] = analysis.keywords[${i}] ? null : '${kw}'; analysis.keywords = analysis.keywords.filter(k => k !== null);">
+                  <span>${kw}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="analysis-section">
+            <h3 class="analysis-section-title">Fit Assessment</h3>
+            <div class="fit-summary">
+              <div class="fit-summary-label">Your Fit</div>
+              <div class="fit-items">
+                ${analysis.fit.strong ? '<div class="fit-item"><strong style="color: var(--success);">Strong:</strong> You have experience in core areas</div>' : ''}
+                ${analysis.fit.gaps ? '<div class="fit-item"><strong style="color: var(--warning);">Gaps:</strong> Some new technical skills needed</div>' : ''}
+                ${analysis.fit.borderline ? '<div class="fit-item"><strong style="color: var(--info);">Borderline:</strong> Selective customization recommended</div>' : ''}
+                <div class="fit-item"><strong>Recommendation:</strong> Focus on ${analysis.keywords.slice(0, 3).join(', ')} in your tailored resume</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="proceed-btn" onclick="proceedToBuilder()">Proceed to Resume Builder</button>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    /**
+     * Proceeds from analysis to builder phase
+     * INPUT: none
+     * OUTPUT: switches to builder phase and renders
+     */
+    function proceedToBuilder() {
+      currentPhase = 'builder';
+      renderWorkspace();
+      showToast('Ready to build your tailored resume', 'success');
+    }
+
+    /**
+     * Renders Phase 2: Resume Builder with live preview
+     * INPUT: container = DOM element to render into
+     * OUTPUT: builder with summary, skills, experience, and live preview
+     */
+    function renderBuilderPhase(container) {
+      const cached = getCachedResume(
+        currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+        currentRole.id
+      ) || {};
+
+      const builderData = cached.builderData || {
+        summary: generateSummary(),
+        selectedSkills: ['Product Strategy', 'Data Analytics', 'User Research', 'Roadmapping', 'Agile', 'SQL', 'Storytelling', 'Cross-Functional Leadership'],
+        experience: DEMO_BACKGROUND_ROLES.map((role, i) => ({
+          ...role,
+          bullets: getBulletBank().slice(i * 3, i * 3 + 3).map((b, j) => ({
+            bulletId: b.id,
+            included: j < 2
+          }))
+        }))
+      };
+
+      let html = `
+        <div class="builder-container">
+          <div class="builder-editor">
+            <!-- Summary Section -->
+            <div class="builder-section">
+              <h3 class="builder-section-title">Professional Summary</h3>
+              <textarea class="summary-textarea" id="summary-textarea" onchange="updateBuilderData()">${builderData.summary}</textarea>
+            </div>
+
+            <!-- Skills Section -->
+            <div class="builder-section">
+              <h3 class="builder-section-title">Core Skills</h3>
+              <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-3);">
+                Drag to reorder or click to swap
+              </p>
+              <div class="skills-container" id="skills-container">
+                ${builderData.selectedSkills.map((skill, i) => `
+                  <div class="skill-pill" draggable="true" data-skill-index="${i}">${skill}</div>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Experience Section -->
+            <div class="builder-section">
+              <h3 class="builder-section-title">Experience</h3>
+              ${builderData.experience.map((exp, expIdx) => `
+                <div class="experience-item">
+                  <div class="experience-header">
+                    <div>
+                      <div class="experience-title">${exp.title}</div>
+                      <div class="experience-company">${exp.company}</div>
+                    </div>
+                    <div class="experience-dates">${exp.startDate} - ${exp.endDate}</div>
+                  </div>
+
+                  <div class="bullet-list" data-exp-index="${expIdx}">
+                    ${(exp.bullets || []).map((bullet, bulletIdx) => {
+                      const bulletObj = getBulletBank().find(b => b.id === bullet.bulletId);
+                      return `
+                        <div class="bullet-item ${!bullet.included ? 'hidden' : ''}" data-bullet-index="${bulletIdx}">
+                          <input type="checkbox" class="bullet-checkbox" ${bullet.included ? 'checked' : ''} onchange="updateBulletIncluded(${expIdx}, ${bulletIdx}, this.checked)">
+                          <div class="bullet-text">${bulletObj?.text || 'Bullet text not found'}</div>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                  <button class="add-bullet-btn" onclick="addNewBullet(${expIdx})">+ Add Bullet</button>
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- Export Buttons -->
+            <div class="export-buttons">
+              <button class="export-button" onclick="copyToClipboard()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                </svg>
+                Copy to Clipboard
+              </button>
+              <button class="export-button secondary" onclick="saveVersion()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                Save Version
+              </button>
+            </div>
+          </div>
+
+          <!-- Live Preview -->
+          <div class="builder-preview" id="preview-pane">
+            ${renderPreview(builderData)}
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+
+      // Attach skill drag handlers
+      setupSkillDragHandlers();
+
+      // Save data on any change
+      document.getElementById('summary-textarea').addEventListener('input', updateBuilderData);
+    }
+
+    /**
+     * Generates a professional summary based on seniority and analysis
+     * INPUT: none
+     * RETURNS: summary text string
+     */
+    function generateSummary() {
+      if (!currentAnalysis) {
+        return 'Experienced product manager with expertise in product strategy, user research, and cross-functional leadership.';
+      }
+
+      const seniority = currentAnalysis.seniority;
+      const keywords = currentAnalysis.keywords.slice(0, 3).join(', ');
+
+      const templates = {
+        'principal': `Visionary Principal Product Manager with 12+ years of experience building and scaling innovative products. Expertise in ${keywords}. Proven track record of leading teams through 0-to-1 launches and defining product strategy for high-impact initiatives.`,
+        'staff': `Strategic Staff Product Manager with 10+ years of experience. Skilled in ${keywords} and cross-functional leadership. Proven ability to align complex organizations around product vision and drive measurable business outcomes.`,
+        'senior': `Results-driven Senior Product Manager with 6+ years of experience. Expertise in ${keywords}. Track record of shipping products that drive revenue growth and user engagement at scale.`,
+        'mid': `Product Manager with 3+ years of experience. Skilled in ${keywords} and translating user needs into product solutions. Passionate about building products that solve real problems.`,
+        'junior': `Associate Product Manager with strong foundation in ${keywords}. Driven to learn and grow as a PM while contributing to cross-functional product initiatives.`
+      };
+
+      return templates[seniority] || templates['mid'];
+    }
+
+    /**
+     * Updates the cached builder data when user makes changes
+     * INPUT: none
+     * OUTPUT: saves current builder state to cache
+     */
+    function updateBuilderData() {
+      const summaryText = document.getElementById('summary-textarea').value;
+      const skillPills = Array.from(document.querySelectorAll('.skill-pill')).map(pill => pill.textContent.trim());
+
+      const cached = getCachedResume(
+        currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+        currentRole.id
+      ) || {};
+
+      cached.builderData = {
+        summary: summaryText,
+        selectedSkills: skillPills,
+        experience: cached.builderData?.experience || DEMO_BACKGROUND_ROLES.map((role, i) => ({
+          ...role,
+          bullets: getBulletBank().slice(i * 3, i * 3 + 3).map((b, j) => ({
+            bulletId: b.id,
+            included: j < 2
+          }))
+        }))
+      };
+
+      saveCachedResume(
+        currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+        currentRole.id,
+        cached
+      );
+
+      // Update preview
+      const preview = document.getElementById('preview-pane');
+      if (preview) {
+        preview.innerHTML = renderPreview(cached.builderData);
+      }
+    }
+
+    /**
+     * Updates whether a bullet is included in the resume
+     * INPUT: expIdx, bulletIdx, included = boolean
+     * OUTPUT: updates cache and refreshes preview
+     */
+    function updateBulletIncluded(expIdx, bulletIdx, included) {
+      const cached = getCachedResume(
+        currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+        currentRole.id
+      ) || {};
+
+      if (cached.builderData?.experience?.[expIdx]?.bullets?.[bulletIdx]) {
+        cached.builderData.experience[expIdx].bullets[bulletIdx].included = included;
+        saveCachedResume(
+          currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+          currentRole.id,
+          cached
+        );
+
+        updateBuilderData();
+      }
+    }
+
+    /**
+     * Adds a new custom bullet to an experience section
+     * INPUT: expIdx = experience index
+     * OUTPUT: shows inline editor for creating new bullet
+     */
+    function addNewBullet(expIdx) {
+      showToast('Custom bullet creation coming soon', 'info');
+    }
+
+    /**
+     * Sets up drag-and-drop for reordering skills
+     * INPUT: none
+     * OUTPUT: attaches drag event handlers to skill pills
+     */
+    function setupSkillDragHandlers() {
+      const skillPills = document.querySelectorAll('.skill-pill');
+
+      skillPills.forEach((pill, index) => {
+        pill.addEventListener('dragstart', (e) => {
+          isDraggingSkill = true;
+          draggedSkillIndex = index;
+          pill.style.opacity = '0.5';
+        });
+
+        pill.addEventListener('dragend', (e) => {
+          pill.style.opacity = '1';
+          isDraggingSkill = false;
+        });
+
+        pill.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          if (isDraggingSkill && draggedSkillIndex !== index) {
+            const allPills = Array.from(skillPills);
+            const draggedPill = allPills[draggedSkillIndex];
+            const targetPill = pill;
+
+            if (draggedSkillIndex < index) {
+              targetPill.parentNode.insertBefore(draggedPill, targetPill.nextSibling);
+            } else {
+              targetPill.parentNode.insertBefore(draggedPill, targetPill);
+            }
+
+            draggedSkillIndex = index;
+          }
+        });
+      });
+
+      // Save order after dragging
+      document.getElementById('skills-container').addEventListener('dragend', updateBuilderData);
+    }
+
+    /**
+     * Renders the live preview of the resume
+     * INPUT: builderData = object with summary, skills, experience
+     * RETURNS: HTML string for preview pane
+     */
+    function renderPreview(builderData) {
+      const bulletBank = getBulletBank();
+
+      const experienceHtml = builderData.experience.map(exp => {
+        const includedBullets = (exp.bullets || [])
+          .filter(b => b.included)
+          .map(b => bulletBank.find(bullet => bullet.id === b.bulletId))
+          .filter(b => b);
+
+        return `
+          <div class="preview-role">
+            <div class="preview-role-header">
+              <span class="preview-role-company">${exp.title}</span>
+              <span class="preview-role-dates">${exp.startDate} – ${exp.endDate}</span>
+            </div>
+            <div style="color: #666; font-size: 9pt; margin-bottom: 4px;">${exp.company}</div>
+            <div class="preview-bullets">
+              ${includedBullets.map(bullet => `
+                <div class="preview-bullet">• ${bullet.text.replace(/\*\*/g, '')}</div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="preview-header">
+          <div class="preview-name">Your Name</div>
+          <div style="font-size: 9pt; color: #666;">Product Manager | San Francisco, CA | (555) 123-4567</div>
+        </div>
+
+        <div class="preview-summary">${builderData.summary}</div>
+
+        <div class="preview-section">
+          <div class="preview-section-title">Experience</div>
+          ${experienceHtml}
+        </div>
+
+        <div class="preview-skills">
+          <span class="preview-skills-label">Skills:</span>
+          ${builderData.selectedSkills.join(', ')}
+        </div>
+      `;
+    }
+
+    /**
+     * Copies the resume preview to clipboard as text
+     * INPUT: none
+     * OUTPUT: text copied to clipboard, toast notification shown
+     */
+    function copyToClipboard() {
+      const previewPane = document.getElementById('preview-pane');
+      if (!previewPane) return;
+
+      const text = previewPane.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Resume copied to clipboard', 'success');
+      }).catch(() => {
+        showToast('Failed to copy to clipboard', 'error');
+      });
+    }
+
+    /**
+     * Saves the current resume version to the log
+     * INPUT: none
+     * OUTPUT: adds entry to pf_resume_log and shows toast
+     */
+    function saveVersion() {
+      const cached = getCachedResume(
+        currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+        currentRole.id
+      ) || {};
+
+      addResumeLogEntry({
+        company: currentRole.company,
+        role: currentRole.title,
+        keywords: currentAnalysis?.keywords || [],
+        fitScore: 0.85,
+        filename: `Resume_${currentRole.company}_${currentRole.title.replace(/\s+/g, '_')}.pdf`,
+        customizations: 'Resume tailored with selected bullets and skills'
+      });
+
+      showToast(`Resume version saved for ${currentRole.company}`, 'success');
+    }
+
+    /**
+     * Renders the Bullet Bank tab showing all available bullets
+     * INPUT: container = DOM element to render into
+     * OUTPUT: bullet bank with list of all bullets and add form
+     */
+    function renderBulletBankPhase(container) {
+      const bullets = getBulletBank();
+
+      const html = `
+        <div class="bullet-bank">
+          <div class="bullet-bank-header">
+            <h2 class="bullet-bank-title">Bullet Bank</h2>
+            <div class="bullet-bank-actions">
+              <button class="action-button" onclick="exportBulletBank()">Export</button>
+              <button class="action-button" onclick="importBulletBank()">Import</button>
+            </div>
+          </div>
+
+          <!-- Add Bullet Form -->
+          <div class="add-bullet-form">
+            <h3 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-3);">Add New Bullet</h3>
+            <input type="text" id="bullet-text-input" placeholder="Bullet text..." style="font-size: var(--text-sm);">
+            <select id="bullet-theme-select" style="font-size: var(--text-sm);">
+              <option value="">Select theme...</option>
+              ${BULLET_THEMES.map(theme => `<option value="${theme}">${theme}</option>`).join('')}
+            </select>
+            <input type="text" id="bullet-keywords-input" placeholder="Keywords (comma-separated)..." style="font-size: var(--text-sm);">
+            <button onclick="addBulletToBulletBank()" style="background: var(--accent); color: white; padding: var(--space-2) var(--space-4); border-radius: var(--radius-sm); border: none; cursor: pointer; font-weight: 600; width: 100%;">Add to Bank</button>
+          </div>
+
+          <!-- Bullets List -->
+          <div class="bullets-list">
+            ${bullets.map(bullet => `
+              <div class="bullet-card">
+                <div class="bullet-card-text">${bullet.text}</div>
+                <div class="bullet-card-meta">
+                  <div class="bullet-card-tags">
+                    <span class="bullet-tag">${bullet.theme}</span>
+                    <span class="bullet-tag" style="background: var(--info-subtle); color: var(--info);">Used ${bullet.usageCount} times</span>
+                  </div>
+                  <div>${bullet.metrics}</div>
+                </div>
+                <div class="bullet-card-actions">
+                  <button class="bullet-card-btn" onclick="editBullet('${bullet.id}')">Edit</button>
+                  <button class="bullet-card-btn" onclick="deleteBullet('${bullet.id}')" style="color: var(--danger); border-color: var(--danger);">Delete</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    /**
+     * Adds a new bullet to the bullet bank from form inputs
+     * INPUT: none
+     * OUTPUT: new bullet added to pf_bullet_bank
+     */
+    function addBulletToBulletBank() {
+      const text = document.getElementById('bullet-text-input').value.trim();
+      const theme = document.getElementById('bullet-theme-select').value;
+      const keywords = document.getElementById('bullet-keywords-input').value
+        .split(',')
+        .map(k => k.trim())
+        .filter(k => k);
+
+      if (!text || !theme) {
+        showToast('Please fill in bullet text and select a theme', 'error');
+        return;
+      }
+
+      const bullets = getBulletBank();
+      bullets.push({
+        id: `bullet-${Date.now()}`,
+        role: 'general',
+        theme,
+        text,
+        metrics: '',
+        keywords,
+        dateAdded: Date.now(),
+        usageCount: 0,
+        lastUsed: null
+      });
+
+      saveBulletBank(bullets);
+
+      // Clear form
+      document.getElementById('bullet-text-input').value = '';
+      document.getElementById('bullet-theme-select').value = '';
+      document.getElementById('bullet-keywords-input').value = '';
+
+      renderBulletBankPhase(document.getElementById('workspace-content'));
+      showToast('Bullet added to bank', 'success');
+    }
+
+    /**
+     * Deletes a bullet from the bank
+     * INPUT: bulletId = ID of bullet to delete
+     * OUTPUT: bullet removed from pf_bullet_bank
+     */
+    function deleteBullet(bulletId) {
+      if (!confirm('Delete this bullet? This action cannot be undone.')) return;
+
+      let bullets = getBulletBank();
+      bullets = bullets.filter(b => b.id !== bulletId);
+      saveBulletBank(bullets);
+
+      renderBulletBankPhase(document.getElementById('workspace-content'));
+      showToast('Bullet deleted', 'success');
+    }
+
+    /**
+     * Exports bullet bank as JSON
+     * INPUT: none
+     * OUTPUT: JSON file downloaded
+     */
+    function exportBulletBank() {
+      const bullets = getBulletBank();
+      const json = JSON.stringify(bullets, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bullet-bank-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Bullet bank exported', 'success');
+    }
+
+    /**
+     * Imports bullet bank from JSON file (placeholder)
+     * INPUT: none
+     * OUTPUT: shows toast with info about import
+     */
+    function importBulletBank() {
+      showToast('Import feature coming soon', 'info');
+    }
+
+    /**
+     * Edits an existing bullet (placeholder)
+     * INPUT: bulletId = ID of bullet to edit
+     * OUTPUT: shows edit form
+     */
+    function editBullet(bulletId) {
+      showToast('Inline editing coming soon', 'info');
+    }
+
+    /**
+     * Renders the History tab showing all saved resume versions
+     * INPUT: container = DOM element to render into
+     * OUTPUT: list of saved resumes with metadata
+     */
+    function renderHistoryPhase(container) {
+      const log = getResumeLog();
+
+      const html = `
+        <div class="resume-history">
+          <h2 class="history-title">Resume History</h2>
+
+          <div class="history-list">
+            ${log.length === 0 ? '<p style="color: var(--text-secondary);">No resume versions saved yet.</p>' : ''}
+            ${log.map(entry => `
+              <div class="history-item">
+                <div class="history-item-header">
+                  <div>
+                    <div class="history-item-title">${entry.company} — ${entry.role}</div>
+                    <div style="font-size: var(--text-xs); color: var(--text-tertiary);">${entry.filename}</div>
+                  </div>
+                  <div class="history-item-date">${new Date(entry.date).toLocaleDateString()}</div>
+                </div>
+                <div class="history-item-details">
+                  <strong>Keywords:</strong> ${entry.keywords.join(', ') || '—'}<br>
+                  <strong>Customizations:</strong> ${entry.customizations || '—'}
+                </div>
+                <div class="history-item-actions">
+                  <button class="history-btn" onclick="loadResumeVersion('${entry.id}')">Load</button>
+                  <button class="history-btn" onclick="deleteResumeVersion('${entry.id}')" style="color: var(--danger);">Delete</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    /**
+     * Loads a saved resume version (placeholder)
+     * INPUT: entryId = ID of resume log entry
+     * OUTPUT: shows toast about loading
+     */
+    function loadResumeVersion(entryId) {
+      showToast('Loading resume version...', 'info');
+    }
+
+    /**
+     * Deletes a resume version from history
+     * INPUT: entryId = ID of resume log entry
+     * OUTPUT: entry removed from log
+     */
+    function deleteResumeVersion(entryId) {
+      if (!confirm('Delete this resume version?')) return;
+
+      let log = getResumeLog();
+      log = log.filter(e => e.id !== entryId);
+      localStorage.setItem('pf_resume_log', JSON.stringify(log));
+
+      renderHistoryPhase(document.getElementById('workspace-content'));
+      showToast('Resume version deleted', 'success');
+    }
+
+    /* ================================================================
+       UTILITY FUNCTIONS
+       ================================================================ */
+
+    /**
+     * Shows a toast notification in the bottom-right corner
+     * INPUT: message = notification text, type = 'success' | 'error' | 'info'
+     * OUTPUT: toast element added to page, auto-removes after 3 seconds
+     */
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    /* ================================================================
+       EVENT HANDLERS & INITIALIZATION
+       ================================================================ */
+
+    // Tab button clicks
+    document.querySelectorAll('.tab-button').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        currentPhase = e.target.dataset.tab;
+        renderWorkspace();
+      });
+    });
+
+    // Collapse sidebar button
+    document.getElementById('collapse-btn').addEventListener('click', () => {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('collapsed');
+    });
+
+    // Sidebar toggle button
+    document.getElementById('sidebar-toggle').addEventListener('click', () => {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('collapsed');
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (currentPhase === 'builder' && currentRole) {
+          saveVersion();
+        }
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        // Command palette would go here
+      }
+    });
+
+    // Initialize the module
+    window.addEventListener('DOMContentLoaded', () => {
+      initializeDemoData();
+      renderRoleSelector();
+      renderSidebar();
+      renderWorkspace();
+    });
+  </script>
+  <script src="../shared/data-switcher.js"></script>
+</body>
+</html>

@@ -1,0 +1,2270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pathfinder — Research Brief</title>
+  <meta name="description" content="Generate comprehensive interview prep briefs for company + role combinations">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>P</text></svg>">
+
+  <link rel="stylesheet" href="../shared/pathfinder.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* ================================================================
+       RESEARCH BRIEF SPECIFIC STYLES
+       Two-panel layout with left sidebar for context, right panel for brief
+       ================================================================ */
+
+    /* Main container: holds sidebar + brief area side by side */
+    .research-brief-container {
+      display: flex;
+      height: calc(100vh - var(--nav-height));
+      overflow: hidden;
+      margin-top: var(--nav-height);
+    }
+
+    /* Left sidebar: context panel with role selector and company info */
+    .sidebar {
+      width: 320px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--bg-subtle);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      transition: transform var(--duration-normal) var(--ease-default);
+      z-index: 50;
+      flex-shrink: 0;
+    }
+
+    .sidebar.collapsed {
+      transform: translateX(-100%);
+      position: absolute;
+      height: 100%;
+    }
+
+    /* Sidebar header: title and collapse button */
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4);
+      border-bottom: 1px solid var(--bg-subtle);
+      flex-shrink: 0;
+    }
+
+    .sidebar-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .sidebar-toggle {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      border: none;
+      padding: 0;
+    }
+
+    .sidebar-toggle:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    .sidebar-content {
+      flex: 1;
+      padding: var(--space-4);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    /* Role selector dropdown at top */
+    .role-selector {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .role-selector label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .role-selector select {
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      cursor: pointer;
+    }
+
+    /* Company card in sidebar */
+    .company-card {
+      padding: var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .company-card-logo {
+      width: 100%;
+      height: 48px;
+      background: var(--bg-surface);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .company-card-logo img {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+    }
+
+    .company-card-name {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .company-card-meta {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: 2px 8px;
+      background: var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 500;
+      width: fit-content;
+      text-transform: capitalize;
+    }
+
+    .badge.hot {
+      background: rgba(239, 68, 68, 0.1);
+      color: rgb(239, 68, 68);
+    }
+
+    .badge.active {
+      background: rgba(34, 197, 94, 0.1);
+      color: rgb(34, 197, 94);
+    }
+
+    .badge.watching {
+      background: rgba(59, 130, 246, 0.1);
+      color: rgb(59, 130, 246);
+    }
+
+    /* Role details section */
+    .role-details {
+      padding: var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .role-details-field {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    .role-details-label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .role-details-value {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+    }
+
+    /* Job description text area */
+    .jd-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .jd-label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .jd-text {
+      padding: var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      max-height: 200px;
+      overflow-y: auto;
+      line-height: 1.5;
+    }
+
+    /* Interviewer names input */
+    .interviewer-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .interviewer-input {
+      padding: var(--space-3);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      font-family: inherit;
+      resize: none;
+      height: 80px;
+    }
+
+    /* Action buttons in sidebar */
+    .sidebar-actions {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      margin-top: auto;
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--bg-subtle);
+    }
+
+    .btn {
+      padding: var(--space-3) var(--space-4);
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn-primary:active {
+      opacity: 0.8;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--bg-subtle);
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    /* Right panel: brief content area */
+    .brief-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .brief-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-6);
+      border-bottom: 1px solid var(--bg-subtle);
+      background: var(--bg-surface);
+      flex-shrink: 0;
+    }
+
+    .brief-title {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .brief-actions {
+      display: flex;
+      gap: var(--space-2);
+      align-items: center;
+    }
+
+    .brief-actions button {
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      cursor: pointer;
+      font-size: var(--text-sm);
+      transition: all var(--duration-fast) var(--ease-default);
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    .brief-actions button:hover {
+      background: var(--bg-subtle);
+    }
+
+    .brief-content {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      gap: var(--space-6);
+      padding: var(--space-6);
+    }
+
+    /* Main sections area */
+    .sections-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+    }
+
+    /* Right-side TOC */
+    .toc-sidebar {
+      width: 240px;
+      background: var(--bg-surface);
+      border-left: 1px solid var(--bg-subtle);
+      padding: var(--space-4);
+      overflow-y: auto;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: calc(100vh - var(--nav-height) - 60px - var(--space-12));
+    }
+
+    .toc-title {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-3);
+    }
+
+    .toc-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .toc-item {
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      border-left: 2px solid transparent;
+    }
+
+    .toc-item:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .toc-item.active {
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--accent);
+      border-left-color: var(--accent);
+    }
+
+    .toc-progress {
+      margin-top: var(--space-4);
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--bg-subtle);
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+    }
+
+    /* Section card */
+    .section {
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-6);
+      scroll-margin-top: var(--space-6);
+      transition: all var(--duration-normal) var(--ease-default));
+    }
+
+    .section.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1), inset 0 0 0 2px rgba(99, 102, 241, 0.2);
+      border-left: 3px solid var(--accent);
+    }
+
+    .section.pending {
+      opacity: 0.6;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--bg-subtle);
+    }
+
+    .section-title-group {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      flex: 1;
+    }
+
+    .section-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--accent);
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: var(--text-sm);
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .section-status {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+    }
+
+    .status-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+    }
+
+    .spinner {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .section-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .section-actions button {
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: var(--text-xs);
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .section-actions button:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    /* Section content with streaming animation */
+    .section-content {
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+
+    .section-content p {
+      margin: 0 0 var(--space-3) 0;
+      font-size: var(--text-base);
+    }
+
+    .section-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-content strong {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .section-content em {
+      font-style: italic;
+      color: var(--text-secondary);
+    }
+
+    .section-content ul, .section-content ol {
+      margin: var(--space-3) 0 var(--space-3) var(--space-4);
+      padding-left: var(--space-3);
+    }
+
+    .section-content li {
+      margin-bottom: var(--space-2);
+    }
+
+    /* Skeleton loading state */
+    .skeleton {
+      background: linear-gradient(
+        90deg,
+        var(--bg-subtle) 25%,
+        var(--bg-surface) 50%,
+        var(--bg-subtle) 75%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite;
+      border-radius: var(--radius-sm);
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .skeleton-line {
+      height: 16px;
+      margin-bottom: var(--space-2);
+      border-radius: var(--radius-sm);
+    }
+
+    .skeleton-line.short {
+      width: 60%;
+    }
+
+    /* Typing animation effect */
+    .typing-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      background: var(--accent);
+      margin-left: 2px;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: var(--space-4);
+      color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      opacity: 0.3;
+    }
+
+    .empty-state-text {
+      font-size: var(--text-base);
+      text-align: center;
+    }
+
+    /* Responsive design */
+    @media (max-width: 1024px) {
+      .toc-sidebar {
+        display: none;
+      }
+
+      .sidebar {
+        width: 280px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+      }
+
+      .sidebar-toggle {
+        display: flex;
+      }
+
+      .brief-content {
+        flex-direction: column;
+      }
+
+      .toc-sidebar {
+        display: none;
+      }
+    }
+
+    /* Print styles */
+    @media print {
+      .sidebar, .brief-header, .toc-sidebar, .brief-actions {
+        display: none;
+      }
+
+      .brief-content {
+        padding: 0;
+      }
+
+      .section {
+        page-break-inside: avoid;
+        margin-bottom: 2cm;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="nav">
+    <div class="nav-brand"><span>P</span>athfinder</div>
+    <div class="nav-links">
+      <a href="../dashboard/index.html">Dashboard</a>
+      <a href="../pipeline/index.html">Pipeline</a>
+      <a href="index.html" class="active">Research</a>
+      <a href="../resume-tailor/index.html">Resume</a>
+      <a href="../job-feed-listener/index.html">Feed</a>
+      <a href="../outreach/index.html">Outreach</a>
+      <a href="../mock-interview/index.html">Mock</a>
+      <a href="../debrief/index.html">Debrief</a>
+      <a href="../comp-intel/index.html">Comp</a>
+      <a href="../calendar/index.html">Calendar</a>
+    </div>
+    <div class="nav-right">
+      <span class="nav-kbd">⌘K</span>
+    </div>
+  </nav>
+
+  <div class="research-brief-container" style="margin-top: var(--nav-height);">
+    <!-- LEFT SIDEBAR: Context panel with role selector -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h2 class="sidebar-title">Research Brief</h2>
+        <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">
+          <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+        </button>
+      </div>
+
+      <div class="sidebar-content">
+        <!-- Role selector dropdown -->
+        <div class="role-selector">
+          <label for="roleSelect">Select Role</label>
+          <select id="roleSelect">
+            <option value="">-- Choose a role --</option>
+          </select>
+        </div>
+
+        <!-- Company card (shown when role selected) -->
+        <div id="companyCard" class="company-card" style="display: none;">
+          <div class="company-card-logo">
+            <img id="companyLogo" src="" alt="Company logo">
+          </div>
+          <div class="company-card-name" id="companyName"></div>
+          <div class="company-card-meta">
+            <div><strong>Domain:</strong> <span id="companyDomain"></span></div>
+            <div><strong>Stage:</strong> <span id="companyStage"></span></div>
+            <div><strong>Headcount:</strong> <span id="companyHeadcount"></span></div>
+          </div>
+        </div>
+
+        <!-- Role details -->
+        <div id="roleDetails" style="display: none;">
+          <div class="role-details">
+            <div class="role-details-field">
+              <div class="role-details-label">Title</div>
+              <div class="role-details-value" id="roleTitle"></div>
+            </div>
+            <div class="role-details-field">
+              <div class="role-details-label">Level</div>
+              <div style="display: flex; gap: var(--space-2); align-items: center;">
+                <span class="badge" id="roleLevelBadge"></span>
+                <span class="badge" id="rolesPositioningBadge"></span>
+              </div>
+            </div>
+            <div class="role-details-field">
+              <div class="role-details-label">Added</div>
+              <div class="role-details-value" id="roleAdded"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Job description text -->
+        <div id="jdSection" style="display: none;" class="jd-section">
+          <label class="jd-label">Job Description</label>
+          <div class="jd-text" id="jdText"></div>
+        </div>
+
+        <!-- Interviewer names input -->
+        <div id="interviewerSection" style="display: none;" class="interviewer-section">
+          <label class="jd-label">Interviewer Names (comma-separated)</label>
+          <textarea class="interviewer-input" id="interviewerInput" placeholder="e.g., Sarah Chen, Mike Johnson, Lisa Park"></textarea>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="sidebar-actions">
+          <button class="btn btn-primary" id="generateBtn" style="display: none;">
+            <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i>
+            Generate Brief
+          </button>
+          <button class="btn btn-ghost" id="clearCacheBtn" style="display: none;">
+            <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+            Clear Cache
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: Brief content and TOC -->
+    <div class="brief-area">
+      <!-- Brief header with actions -->
+      <div class="brief-header">
+        <div>
+          <h1 class="brief-title" id="briefTitle">Research Brief</h1>
+          <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: var(--space-1);" id="briefSubtitle"></p>
+        </div>
+        <div class="brief-actions">
+          <button id="exportBtn" title="Export as HTML" style="display: none;">
+            <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+            Export
+          </button>
+          <button id="printBtn" title="Print brief" style="display: none;">
+            <i data-lucide="printer" style="width: 16px; height: 16px;"></i>
+            Print
+          </button>
+        </div>
+      </div>
+
+      <!-- Main content area with sections and TOC -->
+      <div class="brief-content">
+        <!-- Sections area (center) -->
+        <div class="sections-area" id="sectionsArea">
+          <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <div class="empty-state-text">
+              <p>Select a role from the sidebar to generate your research brief.</p>
+              <p style="font-size: var(--text-sm); margin-top: var(--space-2);">
+                This will create a comprehensive 10-section interview prep document.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right TOC sidebar -->
+        <div class="toc-sidebar" id="tocSidebar" style="display: none;">
+          <div class="toc-title">Sections</div>
+          <ul class="toc-list" id="tocList"></ul>
+          <div class="toc-progress" id="tocProgress"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * ================================================================
+     * RESEARCH BRIEF AGENT — Architecture Overview
+     * ================================================================
+     *
+     * This module generates comprehensive 10-section interview prep briefs
+     * for specific company + role combinations. It's a single-file, self-contained
+     * application that reads data from the Pipeline Tracker (pf_companies, pf_roles)
+     * and generates realistic, company-specific content using local templates.
+     *
+     * KEY COMPONENTS:
+     *
+     * 1. DATA LAYER
+     *    - Reads pf_companies and pf_roles from localStorage (Pipeline Tracker)
+     *    - Caches sections individually: research_{companySlug}_{roleId}_{sectionNum}
+     *    - Demo data auto-created if no Pipeline data exists
+     *
+     * 2. UI PATTERNS
+     *    - Two-panel layout: left sidebar (context), right panel (content)
+     *    - Left sidebar: role selector, company card, role details, JD text, interviewer input
+     *    - Right panel: 10 sections rendered as cards, floating TOC on right
+     *    - Streaming simulation: sections generate sequentially with typing animation
+     *
+     * 3. CONTENT GENERATION (Local Demo Mode)
+     *    - No Claude API integration yet, so we use template functions
+     *    - Each section pulls real data from company/role records
+     *    - Content feels realistic, not lorem ipsum
+     *    - Templates are parameterized by company name, stage, JD text, etc.
+     *
+     * 4. CACHING & INVALIDATION
+     *    - Each section is cached independently
+     *    - When certain data changes, affected sections are invalidated
+     *    - Cache status shown as badge: "Cached", "Fresh", or "Stale"
+     *
+     * 5. KEYBOARD SHORTCUTS
+     *    - G: Generate brief
+     *    - 1-0: Jump to section 1-10
+     *    - R: Refresh current section
+     *    - [/]: Collapse/expand sidebar
+     *    - P: Print
+     *
+     * ================================================================
+     */
+
+    // ================================================================
+    // SECTION DEFINITIONS
+    // ================================================================
+    // This array defines what each of the 10 sections does and where
+    // it appears. Each section is independent and can be refreshed alone.
+    const SECTION_DEFINITIONS = [
+      { num: 1, title: 'Company Overview', icon: '🏢' },
+      { num: 2, title: 'Product Deep Dive', icon: '🛠️' },
+      { num: 3, title: 'Market & Competitive Landscape', icon: '📊' },
+      { num: 4, title: 'Role Analysis', icon: '📋' },
+      { num: 5, title: 'Why You Fit', icon: '💼' },
+      { num: 6, title: 'Strategic Challenges', icon: '🎯' },
+      { num: 7, title: 'Culture & Team', icon: '👥' },
+      { num: 8, title: 'Interviewer Insights', icon: '🤝' },
+      { num: 9, title: 'Questions to Ask', icon: '❓' },
+      { num: 10, title: 'TMAY Script', icon: '🎤' }
+    ];
+
+    // ================================================================
+    // STATE & CONFIG
+    // ================================================================
+
+    let state = {
+      selectedRole: null,
+      selectedCompany: null,
+      currentSection: null,
+      sectionStatus: {}, // track which sections are completed/loading/cached
+      interviewerNames: [],
+      sidebarCollapsed: false
+    };
+
+    // ================================================================
+    // UTILITY: Company slug generator
+    // ================================================================
+    // Converts "Scale AI" -> "scale-ai", "Stripe" -> "stripe"
+    // Used for localStorage key formatting
+    function getCompanySlug(companyName) {
+      return companyName
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
+    }
+
+    // ================================================================
+    // UTILITY: Format dates as human-readable strings
+    // ================================================================
+    // Takes a Unix timestamp and returns "2 days ago" or "Mar 9, 2026"
+    function formatDate(timestamp) {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 7) return `${diffDays} days ago`;
+
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: diffDays > 365 ? 'numeric' : undefined
+      });
+    }
+
+    // ================================================================
+    // DATA: Demo companies (if no Pipeline data exists)
+    // ================================================================
+    // These are used as initial data when the user hasn't created roles
+    // in the Pipeline Tracker yet. Format matches Pipeline's data structure.
+    const DEMO_COMPANIES = [
+      {
+        name: 'Stripe',
+        domain: 'stripe.com',
+        tier: 'hot',
+        missionStatement: 'Financial infrastructure for the internet',
+        headcount: '1000-5000',
+        fundingStage: 'Private',
+        remotePolicy: 'Flexible',
+        industryFocus: 'FinTech',
+        founded: 2010
+      },
+      {
+        name: 'Anthropic',
+        domain: 'anthropic.com',
+        tier: 'hot',
+        missionStatement: 'AI safety research and products',
+        headcount: '100-500',
+        fundingStage: 'Series C',
+        remotePolicy: 'Flexible',
+        industryFocus: 'AI/ML',
+        founded: 2021
+      },
+      {
+        name: 'Figma',
+        domain: 'figma.com',
+        tier: 'active',
+        missionStatement: 'Collaborative design platform for teams',
+        headcount: '500-1000',
+        fundingStage: 'Series E',
+        remotePolicy: 'Flexible',
+        industryFocus: 'Design Tools',
+        founded: 2012
+      },
+      {
+        name: 'Scale AI',
+        domain: 'scale.com',
+        tier: 'watching',
+        missionStatement: 'Data infrastructure for AI',
+        headcount: '100-500',
+        fundingStage: 'Series D',
+        remotePolicy: 'Flexible',
+        industryFocus: 'AI/Data',
+        founded: 2016
+      }
+    ];
+
+    // ================================================================
+    // DATA: Demo roles (if no Pipeline data exists)
+    // ================================================================
+    // These jobs map to demo companies so there's something to research
+    const DEMO_ROLES = [
+      {
+        id: 'stripe-pm-1',
+        company: 'Stripe',
+        title: 'Staff Product Manager, AI Platform',
+        url: 'https://stripe.com/jobs',
+        jdText: 'We\'re looking for a Staff Product Manager to lead our AI platform initiatives. You will own the strategy for how Stripe uses AI to improve payment success, reduce fraud, and build new capabilities. You\'ll work cross-functionally with our ML engineers, design, and Go-To-Market teams. We need someone who can think both strategically about our long-term AI vision and tactically about near-term execution.',
+        positioning: 'ic',
+        targetLevel: 'Staff',
+        stage: 'researching',
+        salary: '250k-300k',
+        dateAdded: Date.now() - 5 * 24 * 60 * 60 * 1000
+      },
+      {
+        id: 'anthropic-pm-1',
+        company: 'Anthropic',
+        title: 'Product Manager, Claude Platform',
+        url: 'https://anthropic.com/careers',
+        jdText: 'As a PM for Claude (our flagship AI assistant), you\'ll drive the product roadmap for how developers and enterprises use Claude. You\'ll define features, APIs, and pricing models that help customers succeed with large language models. This role requires deep technical understanding of LLMs, product sense in an emerging market, and ability to collaborate with research and safety teams.',
+        positioning: 'ic',
+        targetLevel: 'Senior',
+        stage: 'applied',
+        salary: '200k-250k',
+        dateAdded: Date.now() - 3 * 24 * 60 * 60 * 1000
+      },
+      {
+        id: 'figma-pm-1',
+        company: 'Figma',
+        title: 'Senior Product Manager, AI Features',
+        url: 'https://figma.com/careers',
+        jdText: 'Lead product strategy for AI-powered design features. You\'ll own our Gen-AI capabilities in the editor, including text generation, image generation, and intelligent layout suggestions. You\'ll partner with design, research, and ML teams to ship features that delight our 100k+ daily active creator users. The role requires a strong understanding of design workflows and how to integrate AI thoughtfully.',
+        positioning: 'ic',
+        targetLevel: 'Senior',
+        stage: 'interviewing',
+        salary: '200k-240k',
+        dateAdded: Date.now() - 1 * 24 * 60 * 60 * 1000
+      },
+      {
+        id: 'scale-pm-1',
+        company: 'Scale AI',
+        title: 'Senior Product Manager, Data Engine',
+        url: 'https://scale.com/careers',
+        jdText: 'Scale\'s data engine powers AI training at the largest companies. As a PM on this team, you\'ll own products that help enterprises quickly label and curate training data. You\'ll work with our ML engineers to define interfaces and capabilities that make data curation fast and accurate. The role combines technical depth, customer empathy, and product sense in the rapidly evolving AI/ML space.',
+        positioning: 'ic',
+        targetLevel: 'Senior',
+        stage: 'discovered',
+        salary: '160k-200k',
+        dateAdded: Date.now() - 8 * 24 * 60 * 60 * 1000
+      }
+    ];
+
+    // ================================================================
+    // DATA LAYER: Read/write from localStorage
+    // ================================================================
+
+    /**
+     * Retrieves all companies from browser memory (localStorage)
+     * If Pipeline data exists, use it. Otherwise, use demo data.
+     * INPUT: none
+     * RETURNS: array of company objects
+     */
+    function getCompanies() {
+      const fromPipeline = localStorage.getItem('pf_companies');
+      if (fromPipeline) {
+        return JSON.parse(fromPipeline);
+      }
+      // No pipeline data: initialize demo data
+      initializeDemo();
+      return getCompanies();
+    }
+
+    /**
+     * Retrieves all roles from browser memory
+     * If Pipeline data exists, use it. Otherwise, use demo data.
+     * INPUT: none
+     * RETURNS: array of role/job objects
+     */
+    function getRoles() {
+      const fromPipeline = localStorage.getItem('pf_roles');
+      if (fromPipeline) {
+        return JSON.parse(fromPipeline);
+      }
+      // No pipeline data: initialize demo data
+      initializeDemo();
+      return getRoles();
+    }
+
+    /**
+     * Initializes demo data for first-time users
+     * Saves to localStorage so it persists across page reloads
+     * INPUT: none
+     * OUTPUT: populates localStorage with pf_companies and pf_roles
+     */
+    function initializeDemo() {
+      if (!localStorage.getItem('pf_companies')) {
+        const companies = DEMO_COMPANIES.map(c => ({
+          ...c,
+          url: `https://${c.domain}`,
+          logoUrl: `https://logo.clearbit.com/${c.domain}`,
+          enrichmentStatus: 'complete',
+          dateAdded: Date.now()
+        }));
+        localStorage.setItem('pf_companies', JSON.stringify(companies));
+      }
+      if (!localStorage.getItem('pf_roles')) {
+        const roles = DEMO_ROLES.map(r => ({
+          ...r,
+          dateAdded: r.dateAdded || Date.now(),
+          stageHistory: [],
+          connections: 0
+        }));
+        localStorage.setItem('pf_roles', JSON.stringify(roles));
+      }
+    }
+
+    /**
+     * Gets a cached section from localStorage
+     * Cache key format: research_{companySlug}_{roleId}_{sectionNum}
+     * INPUT: companySlug (string), roleId (string), sectionNum (number 1-10)
+     * RETURNS: cached content string, or null if not cached
+     */
+    function getCachedSection(companySlug, roleId, sectionNum) {
+      const key = `research_${companySlug}_${roleId}_${sectionNum}`;
+      const cached = localStorage.getItem(key);
+      if (cached) {
+        const data = JSON.parse(cached);
+        return {
+          content: data.content,
+          timestamp: data.timestamp
+        };
+      }
+      return null;
+    }
+
+    /**
+     * Saves a section to cache in localStorage
+     * INPUT: companySlug, roleId, sectionNum, content (HTML string)
+     * OUTPUT: data persisted to localStorage
+     */
+    function cacheSectionContent(companySlug, roleId, sectionNum, content) {
+      const key = `research_${companySlug}_${roleId}_${sectionNum}`;
+      localStorage.setItem(key, JSON.stringify({
+        content: content,
+        timestamp: Date.now()
+      }));
+    }
+
+    /**
+     * Clears all cached sections for a specific role
+     * Used when user clicks "Clear Cache" button
+     * INPUT: companySlug, roleId
+     * OUTPUT: removes 10 cache entries from localStorage
+     */
+    function clearAllCachedSections(companySlug, roleId) {
+      for (let i = 1; i <= 10; i++) {
+        const key = `research_${companySlug}_${roleId}_${i}`;
+        localStorage.removeItem(key);
+      }
+    }
+
+    // ================================================================
+    // CONTENT GENERATION: Template functions for each section
+    // ================================================================
+    // These functions generate realistic, company-specific content
+    // They take company and role data, and return HTML strings
+    // The content is parameterized so it's not just lorem ipsum
+
+    /**
+     * Section 1: Company Overview
+     * What they do, business model, recent news, market position
+     */
+    function generateSection1(company, role) {
+      const fundingIcon = company.fundingStage.includes('Public') ? '📈' : '💰';
+      const headcountRange = company.headcount || '500-1000';
+
+      return `
+        <p><strong>${company.name}</strong> is a leading player in the ${getIndustry(company)} space.
+        Founded in ${company.founded || 2015}, the company has grown to ${headcountRange} employees and achieved
+        ${company.fundingStage.includes('Public') ? 'public company' : company.fundingStage} status.</p>
+
+        <p>The company's mission is straightforward: <em>"${company.missionStatement}"</em>
+        This focus has allowed them to build a defensible market position and become a platform that
+        other companies build on top of.</p>
+
+        <p>Financially, ${company.name} is in a ${company.fundingStage} round and operating at scale.
+        They've demonstrated product-market fit and are now focused on vertical integration, entering new markets,
+        and capturing share. Recent moves suggest they're investing heavily in AI/ML capabilities and enterprise features.</p>
+
+        <p>The company culture emphasizes ${getCultureEmphasis(company)}.
+        They're known for hiring strong product thinkers and giving them significant autonomy over their roadmaps.</p>
+      `;
+    }
+
+    /**
+     * Section 2: Product Deep Dive
+     * Core products, user segments, monetization, technical architecture
+     */
+    function generateSection2(company, role) {
+      return `
+        <p>${company.name}'s core product serves ${getPrimaryUserSegment(company)}
+        who need to ${getPrimaryUserNeed(company)}. The platform has evolved from a single offering
+        to a comprehensive suite of features that address multiple pain points in the workflow.</p>
+
+        <p>The product architecture is characterized by:</p>
+        <ul>
+          <li><strong>Modular design:</strong> Users can adopt individual features or use them together</li>
+          <li><strong>Deep integration:</strong> Native support for workflows that matter to customers</li>
+          <li><strong>Extensibility:</strong> APIs and integrations that make the product more valuable in a larger ecosystem</li>
+          <li><strong>Performance:</strong> Real-time collaboration and responsiveness are core architectural concerns</li>
+        </ul>
+
+        <p>Monetization is primarily based on ${getMonetizationStrategy(company)}.
+        This has proved effective at capturing value while maintaining strong unit economics as the company scales.</p>
+
+        <p>The technical stack reflects the company's scale and challenges. They use cloud infrastructure,
+        distributed systems for reliability, and modern data pipelines for analytics and personalization.</p>
+      `;
+    }
+
+    /**
+     * Section 3: Market & Competitive Landscape
+     * TAM, competitors, positioning, moat
+     */
+    function generateSection3(company, role) {
+      const competitors = getCompetitors(company);
+      return `
+        <p>The total addressable market for ${company.name}'s products is substantial and growing.
+        Estimates suggest a TAM of $10B+ across their target segments, with growth driven by digital transformation
+        and enterprise automation.</p>
+
+        <p>The competitive landscape includes:</p>
+        <ul>
+          <li><strong>${competitors[0]}:</strong> Direct competitor with similar positioning</li>
+          <li><strong>${competitors[1]}:</strong> Adjacent player expanding into ${company.name}'s space</li>
+          <li><strong>Emerging startups:</strong> Focused on niche segments or next-gen approaches</li>
+          <li><strong>In-house solutions:</strong> Large enterprises building custom alternatives</li>
+        </ul>
+
+        <p>${company.name}'s defensible advantages include:</p>
+        <ul>
+          <li>Network effects and lock-in from widespread adoption</li>
+          <li>Data moat from usage patterns and customer insights</li>
+          <li>Product breadth that competitors struggle to match</li>
+          <li>Engineering talent and R&D investment velocity</li>
+        </ul>
+
+        <p>The company's position is strong. They set the standard for what customers expect,
+        giving them the ability to shape market definition and customer preferences.</p>
+      `;
+    }
+
+    /**
+     * Section 4: Role Analysis
+     * What the role really is, team placement, success criteria
+     */
+    function generateSection4(company, role) {
+      const deptName = getTargetDepartment(role);
+      const teamSize = getTeamSize(role);
+      const reportingLine = getReportingLine(company, role);
+
+      return `
+        <p>This ${role.title} role is a <strong>${deptName}</strong> position that plays a critical part
+        in how ${company.name} builds and ships products. The role sits within the ${deptName} organization,
+        reporting to ${reportingLine}.</p>
+
+        <p>Based on the job description, success in this role means:</p>
+        <ul>
+          <li>Defining and shipping ${getProductArea(role)} with measurable business impact</li>
+          <li>Building and maintaining strong partnerships with design, engineering, and go-to-market teams</li>
+          <li>Making data-informed decisions and setting metrics for product success</li>
+          <li>Communicating product strategy to internal stakeholders and customers</li>
+          <li>Recruiting and developing team members (if applicable to the level)</li>
+        </ul>
+
+        <p>The team structure is likely ${teamSize}. The team owns a specific slice of the product roadmap
+        and has clear KPIs around adoption, retention, revenue, or efficiency.</p>
+
+        <p>At the ${role.targetLevel} level, this role requires both hands-on execution and strategic thinking.
+        You'll spend time in the weeds (writing specs, talking to customers) and time at 30,000 feet
+        (defining multi-year strategy and organizational design).</p>
+      `;
+    }
+
+    /**
+     * Section 5: Why You Fit
+     * Map your experience to their needs — honest, not embellished
+     */
+    function generateSection5(company, role) {
+      return `
+        <p>You're a strong candidate for this role based on several factors:</p>
+
+        <p><strong>Relevant domain expertise:</strong> Your experience in ${getRelevantDomain()}
+        gives you context for the challenges ${company.name} is solving. You understand the user behaviors,
+        workflows, and pain points that drive adoption of these products.</p>
+
+        <p><strong>Product thinking:</strong> You've demonstrated the ability to define product strategy,
+        work with engineering and design, and launch features that move the needle. Your track record shows
+        you can operate at the level this role requires.</p>
+
+        <p><strong>Execution velocity:</strong> In your previous roles, you've shipped products end-to-end
+        and managed the ambiguity that comes with building something new. You're comfortable making decisions
+        with incomplete information and iterating based on customer feedback.</p>
+
+        <p><strong>Collaboration skills:</strong> You've worked effectively with cross-functional teams and
+        built credibility with engineers, designers, and go-to-market partners. This is essential at ${company.name}
+        because product success depends on alignment across the organization.</p>
+
+        <p><strong>Areas to emphasize in your interviews:</strong> Focus on projects where you defined
+        product direction, shipped features that moved key metrics, and influenced engineering or design
+        decisions. Be ready to talk about how you prioritize and make tradeoffs.</p>
+      `;
+    }
+
+    /**
+     * Section 6: Strategic Challenges
+     * What keeps their PM leadership up at night?
+     */
+    function generateSection6(company, role) {
+      return `
+        <p>Based on public information and industry trends, here are the key strategic challenges
+        ${company.name} is likely wrestling with:</p>
+
+        <p><strong>AI/ML Integration:</strong> Every company in the tech space is figuring out how to
+        integrate generative AI into their product. For ${company.name}, the challenge is deciding which
+        features to augment with AI, how to maintain quality, and how to price the new capabilities.</p>
+
+        <p><strong>Competitive Pressure:</strong> As the market matures, new competitors are emerging.
+        ${company.name} must balance defending their core business with investing in next-generation capabilities.
+        This requires disciplined prioritization and clear trade-offs.</p>
+
+        <p><strong>Enterprise vs. SMB:</strong> Many of ${company.name}'s customers are growing.
+        As they move upmarket, they need to decide how much product complexity to add, how to simplify,
+        and how to serve customers at different scale tiers.</p>
+
+        <p><strong>International Expansion:</strong> The company is likely thinking about global expansion,
+        which brings regulatory, localization, and go-to-market challenges. Products that work in the US
+        may need significant adaptation for other regions.</p>
+
+        <p><strong>Retention and Expansion Revenue:</strong> Growth is slowing in mature markets.
+        The focus shifts to making customers more successful (retention) and selling them more of the product
+        (expansion revenue). This changes how product decisions are made.</p>
+      `;
+    }
+
+    /**
+     * Section 7: Culture & Team
+     * Eng culture, PM org structure, decision-making style
+     */
+    function generateSection7(company, role) {
+      return `
+        <p>${company.name} has a distinctive engineering and product culture that shapes how work gets done:</p>
+
+        <p><strong>Product Organization:</strong> The company uses a pod or squad structure where small
+        teams (typically 1 PM, 2-3 designers, 4-8 engineers) own a specific slice of the product.
+        PMs have significant autonomy over their roadmap but work within company-wide OKRs.</p>
+
+        <p><strong>Data-Driven Culture:</strong> Decisions are informed by data, not just intuition.
+        The company has strong analytics, and PMs are expected to set metrics, track them, and adjust strategy
+        based on results. A/B testing is common for high-impact decisions.</p>
+
+        <p><strong>Writing Culture:</strong> ${company.name} places a premium on clear thinking and writing.
+        You'll be expected to write specs, design docs, and strategy documents that articulate your thinking.
+        Meetings are seen as lower-fidelity than written communication.</p>
+
+        <p><strong>Speed and Iteration:</strong> The company ships frequently and iterates based on feedback.
+        There's an appreciation for "good enough to ship" rather than waiting for perfection.
+        This requires comfort with ambiguity and rapid course-correction.</p>
+
+        <p><strong>Hiring and Growth:</strong> The company is still growing and hiring. There's an expectation
+        that senior PMs like yourself will recruit, mentor junior PMs, and help scale the organization.
+        This is part of the job, especially at Staff level and above.</p>
+      `;
+    }
+
+    /**
+     * Section 8: Interviewer Insights
+     * Research on known interviewers (when names are available)
+     */
+    function generateSection8(company, role, interviewerNames = []) {
+      if (!interviewerNames || interviewerNames.length === 0) {
+        return `
+          <p>No interviewer names were provided. When you learn who will be interviewing you,
+          research them on LinkedIn and their public profiles:</p>
+
+          <ul>
+            <li><strong>LinkedIn:</strong> Check their background, current role, and recent activity</li>
+            <li><strong>Company blog/talks:</strong> Have they written or spoken about their work?</li>
+            <li><strong>Twitter/X:</strong> Do they share insights about product, engineering, or leadership?</li>
+            <li><strong>Product changes:</strong> Have you used their product features? That shows you've done your homework</li>
+          </ul>
+
+          <p>During the interview, mention something specific you noticed about their work or the company.
+          This demonstrates genuine interest and that you've prepared.</p>
+        `;
+      }
+
+      // If interviewer names provided, generate insights for each
+      let html = '<p>Here are your interviewers and what to know:</p>';
+      interviewerNames.forEach((name) => {
+        html += `
+          <p><strong>${name}</strong></p>
+          <ul>
+            <li>Search LinkedIn for their background and current focus areas</li>
+            <li>Look for public talks, tweets, or blog posts they've published</li>
+            <li>Check if they've been quoted in company blog posts or press releases</li>
+            <li>See if they have a medium or personal blog with insights on product/leadership</li>
+          </ul>
+        `;
+      });
+
+      html += `
+        <p>For each interviewer, prepare a 1-2 sentence explanation of who they are and what they do at ${company.name}.
+        This shows you've prepared and gives you something to say at the start of each interview ("I saw you lead the
+        Platform team, so I was excited to talk about..."). Customization matters.</p>
+      `;
+
+      return html;
+    }
+
+    /**
+     * Section 9: Questions to Ask
+     * Smart questions that demonstrate understanding
+     */
+    function generateSection9(company, role) {
+      return `
+        <p>Great interview questions demonstrate that you've done your homework and are thinking carefully
+        about the role. Here are questions worth asking:</p>
+
+        <p><strong>About the role:</strong></p>
+        <ul>
+          <li>"Can you walk me through a recent decision your team made that you're proud of? What made it hard?"</li>
+          <li>"What's the biggest constraint your team faces right now? Is it engineering capacity, design, or something else?"</li>
+          <li>"What's one thing you wish the previous PM in this role had done differently?"</li>
+          <li>"How do you define success for this role in the first 30/60/90 days?"</li>
+        </ul>
+
+        <p><strong>About the company:</strong></p>
+        <ul>
+          <li>"How is ${company.name} thinking about AI/ML integration? What's the philosophy?"</li>
+          <li>"I've noticed you're expanding in [specific area]. Can you talk about the strategic thinking behind that?"</li>
+          <li>"What's the relationship like between the PM organization and the GTM team? How closely do they collaborate?"</li>
+        </ul>
+
+        <p><strong>About career growth:</strong></p>
+        <ul>
+          <li>"What does a great PM look like at ${company.name}? What traits do your best PMs share?"</li>
+          <li>"If I join and perform well, what would progression to the next level look like?"</li>
+          <li>"Are there other teams or orgs in the company where a PM like me could make an impact?"</li>
+        </ul>
+
+        <p><strong>Avoid asking:</strong> Anything that's easily answered on the website or in the job description.
+        Avoid questions that signal you haven't prepared. Do ask things that only an insider would know.</p>
+      `;
+    }
+
+    /**
+     * Section 10: TMAY Script
+     * "Tell me about yourself" — calibrated to positioning and level
+     */
+    function generateSection10(company, role) {
+      const level = role.targetLevel;
+      const positioning = role.positioning;
+
+      if (positioning === 'management') {
+        return `
+          <p>Here's a scripted TMAY (Tell Me About Yourself) response calibrated to a ${level} management role at ${company.name}:</p>
+
+          <p><em>"I'm a product leader with 12+ years of experience building and scaling products that matter.
+          Most recently, I led a team of 8 PMs and designers at [previous company], where we shipped features
+          that drove $50M in ARR growth and 2x improvement in customer retention.</em></p>
+
+          <p><em>Before that, I spent 6 years in individual contributor roles, so I understand both the PM perspective
+          and what makes engineers and designers tick. That's shaped how I lead: I hire strong people, give them autonomy,
+          and hold them accountable for outcomes.</em></p>
+
+          <p><em>I'm drawn to ${company.name} because I've been following your work in [specific area],
+          and I think the ${role.title} role is the perfect next step for me. I'm at a point in my career where
+          I want to take on a bigger team, influence broader product strategy, and help build your PM organization
+          as the company scales. I've built PM teams from 1 to 8 people, and I'm ready for the challenge of taking it to 20+."</em></p>
+
+          <p><strong>Key elements of this script:</strong></p>
+          <ul>
+            <li>Start with your elevator pitch: years of experience, current role, one key metric</li>
+            <li>Show breadth: you've done IC and management, or multiple companies/industries</li>
+            <li>Name a specific company initiative or product you respect</li>
+            <li>Explain why this role is right for you at this stage of your career</li>
+            <li>End with a specific ask: "I'd love to hear more about..."</li>
+          </ul>
+
+          <p><strong>Practice this 2-3 times so it sounds natural.</strong> The goal is to come across as confident,
+          thoughtful, and genuinely interested in the company and role—not rehearsed or generic.</p>
+        `;
+      } else {
+        // IC positioning
+        return `
+          <p>Here's a scripted TMAY response calibrated to a ${level} IC role at ${company.name}:</p>
+
+          <p><em>"I'm a product manager with 8 years of experience. I've spent the last 3 years at [previous company]
+          leading [product area], where I owned the roadmap end-to-end and shipped 12+ features that drove
+          15% retention improvement and $20M in incremental revenue.</em></p>
+
+          <p><em>Before that, I was at [company 2] as a PM intern and then APM, where I got really close to the customer
+          and learned how to operate in a fast-moving organization. That experience taught me the importance of
+          speed, iteration, and customer empathy.</em></p>
+
+          <p><em>I'm excited about the ${role.title} role at ${company.name} because I've been using your product
+          for years and I see the opportunity to [specific product opportunity]. I think my track record of shipping
+          products, working cross-functionally with design and eng, and moving metrics would be a great fit.</em></p>
+
+          <p><em>I'd love to learn more about your roadmap and team structure."</em></p>
+
+          <p><strong>Key elements of this script:</strong></p>
+          <ul>
+            <li>Lead with your current title and years of experience</li>
+            <li>Give ONE concrete example from your current role with metrics</li>
+            <li>Briefly mention your background (shows range)</li>
+            <li>Name something specific you like about ${company.name}'s product or strategy</li>
+            <li>End with a forward-looking question: "What's the biggest challenge your team is tackling right now?"</li>
+          </ul>
+
+          <p><strong>Practice this until it takes 60-90 seconds to deliver.</strong> You want it to feel conversational,
+          not rehearsed. Good interviewers will interrupt with follow-ups, which is fine—this is just your starting script.</p>
+        `;
+      }
+    }
+
+    // ================================================================
+    // HELPER FUNCTIONS: Generate context-specific content
+    // ================================================================
+    // These functions return realistic values based on company data
+    // They ensure content is company-specific, not generic
+
+    function getIndustry(company) {
+      if (company.domain.includes('stripe') || company.domain.includes('plaid') || company.domain.includes('ramp')) return 'FinTech';
+      if (company.domain.includes('anthropic') || company.domain.includes('openai') || company.domain.includes('scale')) return 'AI';
+      if (company.domain.includes('figma') || company.domain.includes('miro')) return 'Design Tools';
+      if (company.domain.includes('notion') || company.domain.includes('airtable')) return 'Productivity';
+      if (company.domain.includes('datadog') || company.domain.includes('mongodb') || company.domain.includes('snowflake')) return 'Data & Infrastructure';
+      return 'B2B SaaS';
+    }
+
+    function getCultureEmphasis(company) {
+      if (company.domain.includes('stripe')) return 'pragmatism, customer obsession, and shipping';
+      if (company.domain.includes('anthropic')) return 'safety, research rigor, and thoughtfulness';
+      if (company.domain.includes('figma')) return 'design excellence, collaboration, and product-market fit';
+      if (company.domain.includes('scale')) return 'data quality, scale, and customer success';
+      return 'execution, innovation, and impact';
+    }
+
+    function getPrimaryUserSegment(company) {
+      if (company.domain.includes('stripe')) return 'e-commerce companies and online businesses';
+      if (company.domain.includes('anthropic')) return 'developers and enterprises using AI';
+      if (company.domain.includes('figma')) return 'design and product teams';
+      if (company.domain.includes('scale')) return 'AI/ML teams building training data';
+      if (company.domain.includes('notion')) return 'teams managing knowledge and tasks';
+      return 'enterprise customers at scale';
+    }
+
+    function getPrimaryUserNeed(company) {
+      if (company.domain.includes('stripe')) return 'accept payments and manage their business online';
+      if (company.domain.includes('anthropic')) return 'build products with large language models';
+      if (company.domain.includes('figma')) return 'collaborate on design at scale';
+      if (company.domain.includes('scale')) return 'label and curate training data efficiently';
+      return 'run their business more effectively';
+    }
+
+    function getMonetizationStrategy(company) {
+      if (company.fundingStage.includes('Public')) return 'SaaS subscriptions plus transaction fees';
+      if (company.domain.includes('stripe')) return 'take rates on payment volume';
+      if (company.domain.includes('figma')) return 'SaaS subscriptions based on team size';
+      return 'SaaS subscriptions with upsells';
+    }
+
+    function getCompetitors(company) {
+      const competitors = {
+        'stripe.com': ['Square', 'Adyen', 'PayPal'],
+        'anthropic.com': ['OpenAI', 'Google', 'Mistral'],
+        'figma.com': ['Adobe XD', 'Sketch', 'Framer'],
+        'scale.com': ['Labelbox', 'Snorkel', 'Prodigy'],
+        'notion.so': ['Coda', 'Confluence', 'Obsidian'],
+        'datadog.com': ['Splunk', 'New Relic', 'Sumo Logic']
+      };
+      return competitors[company.domain] || ['Direct competitor A', 'Direct competitor B'];
+    }
+
+    function getTargetDepartment(role) {
+      if (role.positioning === 'management') return 'Product Management';
+      return 'Product';
+    }
+
+    function getTeamSize(role) {
+      if (role.targetLevel.includes('Principal')) return 'a team of 10+ PMs and designers';
+      if (role.targetLevel.includes('Staff')) return 'a team of 5-8 PMs and designers';
+      if (role.targetLevel.includes('Senior')) return 'a team of 2-4 people';
+      return 'a small team of 1-3 people';
+    }
+
+    function getReportingLine(company, role) {
+      if (role.positioning === 'management') {
+        if (role.targetLevel.includes('Director')) return 'the VP of Product';
+        if (role.targetLevel.includes('Sr. Director')) return 'the Chief Product Officer';
+      }
+      return 'a director or VP of Product';
+    }
+
+    function getProductArea(role) {
+      if (role.title.includes('AI')) return 'AI features';
+      if (role.title.includes('Platform')) return 'platform capabilities';
+      if (role.title.includes('Infrastructure')) return 'infrastructure and developer tools';
+      return 'core product features';
+    }
+
+    function getRelevantDomain() {
+      return 'B2B SaaS and product management';
+    }
+
+    // ================================================================
+    // UI MANAGEMENT: Initialize and update the interface
+    // ================================================================
+
+    /**
+     * Initializes the entire UI when the page loads
+     * Loads demo data, populates role selector, sets up event listeners
+     * INPUT: none
+     * OUTPUT: UI is ready to use
+     */
+    function initializeUI() {
+      initializeDemo();
+      populateRoleSelector();
+      setupEventListeners();
+      setupKeyboardShortcuts();
+      lucide.createIcons();
+
+      // Pre-load with first role if in demo mode
+      const roles = getRoles();
+      if (roles.length > 0) {
+        document.getElementById('roleSelect').value = roles[0].id;
+        selectRole(roles[0].id);
+      }
+    }
+
+    /**
+     * Populates the role selector dropdown with all available roles
+     * Groups roles by stage (discovered, researching, applied, etc.)
+     * INPUT: none
+     * OUTPUT: role selector dropdown is populated
+     */
+    function populateRoleSelector() {
+      const roleSelect = document.getElementById('roleSelect');
+      const roles = getRoles();
+
+      // Group roles by stage
+      const byStage = {};
+      roles.forEach(role => {
+        const stage = role.stage || 'discovered';
+        if (!byStage[stage]) byStage[stage] = [];
+        byStage[stage].push(role);
+      });
+
+      // Clear and repopulate
+      roleSelect.innerHTML = '<option value="">-- Choose a role --</option>';
+
+      const stages = ['discovered', 'researching', 'applied', 'screen', 'interviewing', 'offer'];
+      stages.forEach(stage => {
+        if (byStage[stage]) {
+          const group = document.createElement('optgroup');
+          group.label = stage.charAt(0).toUpperCase() + stage.slice(1);
+          byStage[stage].forEach(role => {
+            const option = document.createElement('option');
+            option.value = role.id;
+            option.textContent = `${role.company} — ${role.title}`;
+            group.appendChild(option);
+          });
+          roleSelect.appendChild(group);
+        }
+      });
+    }
+
+    /**
+     * Handles when user selects a role from the dropdown
+     * Loads company data, populates sidebar, shows section list
+     * INPUT: roleId (string)
+     * OUTPUT: UI is updated with company and role information
+     */
+    function selectRole(roleId) {
+      const roles = getRoles();
+      const role = roles.find(r => r.id === roleId);
+      if (!role) return;
+
+      const companies = getCompanies();
+      const company = companies.find(c => c.name === role.company);
+      if (!company) return;
+
+      state.selectedRole = role;
+      state.selectedCompany = company;
+      state.currentSection = null;
+      state.sectionStatus = {};
+
+      // Update sidebar
+      document.getElementById('companyCard').style.display = 'block';
+      document.getElementById('roleDetails').style.display = 'block';
+      document.getElementById('jdSection').style.display = 'block';
+      document.getElementById('interviewerSection').style.display = 'block';
+      document.getElementById('generateBtn').style.display = 'flex';
+      document.getElementById('clearCacheBtn').style.display = 'flex';
+      document.getElementById('exportBtn').style.display = 'flex';
+      document.getElementById('printBtn').style.display = 'flex';
+
+      // Populate company card
+      document.getElementById('companyName').textContent = company.name;
+      document.getElementById('companyDomain').textContent = company.domain;
+      document.getElementById('companyStage').textContent = company.fundingStage;
+      document.getElementById('companyHeadcount').textContent = company.headcount;
+      document.getElementById('companyLogo').src = `https://logo.clearbit.com/${company.domain}`;
+      document.getElementById('companyLogo').onerror = function() {
+        this.style.display = 'none';
+      };
+
+      // Populate role details
+      document.getElementById('roleTitle').textContent = role.title;
+      document.getElementById('roleLevelBadge').textContent = role.targetLevel;
+      document.getElementById('rolesPositioningBadge').textContent = role.positioning === 'management' ? 'Management' : 'IC';
+      document.getElementById('roleAdded').textContent = formatDate(role.dateAdded);
+
+      // Populate JD text
+      document.getElementById('jdText').textContent = role.jdText || '(No job description provided)';
+
+      // Update brief header
+      document.getElementById('briefTitle').textContent = `${company.name} — ${role.title}`;
+      document.getElementById('briefSubtitle').textContent = `${role.targetLevel} ${role.positioning === 'management' ? 'Management' : 'IC'} Role`;
+
+      // Clear sections and show empty state
+      document.getElementById('sectionsArea').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">📋</div>
+          <div class="empty-state-text">
+            <p>Ready to generate your research brief.</p>
+            <p style="font-size: var(--text-sm); margin-top: var(--space-2);">
+              Click "Generate Brief" to create a comprehensive 10-section interview prep document.
+            </p>
+          </div>
+        </div>
+      `;
+
+      lucide.createIcons();
+    }
+
+    /**
+     * Generates and displays all 10 sections of the brief
+     * Simulates streaming by rendering sections sequentially with animation
+     * INPUT: none (uses state.selectedRole and state.selectedCompany)
+     * OUTPUT: sections rendered to the right panel
+     */
+    function generateBrief() {
+      const role = state.selectedRole;
+      const company = state.selectedCompany;
+      if (!role || !company) return;
+
+      const companySlug = getCompanySlug(company.name);
+      const interviewerNames = document.getElementById('interviewerInput').value
+        .split(',')
+        .map(n => n.trim())
+        .filter(n => n.length > 0);
+
+      // Get interviewer names for section 8
+      state.interviewerNames = interviewerNames;
+
+      // Clear sections area and show TOC
+      const sectionsArea = document.getElementById('sectionsArea');
+      const tocSidebar = document.getElementById('tocSidebar');
+      sectionsArea.innerHTML = '';
+      tocSidebar.style.display = 'block';
+
+      // Build TOC
+      const tocList = document.getElementById('tocList');
+      tocList.innerHTML = '';
+      SECTION_DEFINITIONS.forEach(sec => {
+        const li = document.createElement('li');
+        li.className = 'toc-item';
+        li.textContent = `${sec.num}. ${sec.title}`;
+        li.onclick = () => scrollToSection(sec.num);
+        tocList.appendChild(li);
+      });
+
+      // Generate sections sequentially with delay
+      generateSectionsSequentially(companySlug, role, company, 0);
+    }
+
+    /**
+     * Recursively generates sections with a delay between each
+     * This simulates the streaming experience you'd get from Claude API
+     * INPUT: companySlug, role, company, currentSectionIndex
+     * OUTPUT: sections are rendered one by one
+     */
+    function generateSectionsSequentially(companySlug, role, company, sectionIndex) {
+      if (sectionIndex >= 10) {
+        // All sections generated, update progress
+        updateProgress();
+        lucide.createIcons();
+        return;
+      }
+
+      const sectionDef = SECTION_DEFINITIONS[sectionIndex];
+      const sectionNum = sectionDef.num;
+
+      // Create section element
+      const section = document.createElement('div');
+      section.className = 'section pending';
+      section.id = `section-${sectionNum}`;
+      section.setAttribute('data-section-num', sectionNum);
+
+      const cached = getCachedSection(companySlug, role.id, sectionNum);
+      const isFromCache = !!cached;
+
+      // Section header
+      const header = document.createElement('div');
+      header.className = 'section-header';
+
+      const titleGroup = document.createElement('div');
+      titleGroup.className = 'section-title-group';
+
+      const badge = document.createElement('div');
+      badge.className = 'section-badge';
+      badge.textContent = sectionNum;
+      titleGroup.appendChild(badge);
+
+      const titleEl = document.createElement('h3');
+      titleEl.className = 'section-title';
+      titleEl.textContent = `${sectionDef.title}`;
+      titleGroup.appendChild(titleEl);
+
+      header.appendChild(titleGroup);
+
+      // Status and actions
+      const statusGroup = document.createElement('div');
+      statusGroup.style.display = 'flex';
+      statusGroup.style.gap = 'var(--space-3)';
+      statusGroup.style.alignItems = 'center';
+
+      const statusEl = document.createElement('div');
+      statusEl.className = 'section-status';
+      if (isFromCache) {
+        statusEl.innerHTML = '<span class="badge">Cached</span> <span style="font-size: 11px; color: var(--text-tertiary);">' +
+          new Date(cached.timestamp).toLocaleDateString() + '</span>';
+      } else {
+        statusEl.innerHTML = '<i data-lucide="loader-2" class="spinner" style="width: 16px; height: 16px;"></i> <span>Generating...</span>';
+      }
+      statusGroup.appendChild(statusEl);
+
+      const actionsDiv = document.createElement('div');
+      actionsDiv.className = 'section-actions';
+      const refreshBtn = document.createElement('button');
+      refreshBtn.textContent = 'Refresh';
+      refreshBtn.onclick = () => refreshSection(sectionNum);
+      actionsDiv.appendChild(refreshBtn);
+      statusGroup.appendChild(actionsDiv);
+
+      header.appendChild(statusGroup);
+      section.appendChild(header);
+
+      // Content area (skeleton while loading)
+      const content = document.createElement('div');
+      content.className = 'section-content';
+      if (isFromCache) {
+        content.innerHTML = cached.content;
+      } else {
+        // Show skeleton while generating
+        content.innerHTML = `
+          <div class="skeleton-line" style="width: 100%;"></div>
+          <div class="skeleton-line" style="width: 95%;"></div>
+          <div class="skeleton-line" style="width: 90%;"></div>
+          <div class="skeleton-line short"></div>
+        `;
+      }
+      section.appendChild(content);
+
+      document.getElementById('sectionsArea').appendChild(section);
+
+      // If from cache, mark as complete immediately
+      if (isFromCache) {
+        section.classList.remove('pending');
+        lucide.createIcons();
+      }
+
+      // Generate content if not cached
+      if (!isFromCache) {
+        setTimeout(() => {
+          const generatedContent = generateSectionContent(sectionNum, role, company);
+          content.innerHTML = generatedContent;
+          cacheSectionContent(companySlug, role.id, sectionNum, generatedContent);
+          section.classList.remove('pending');
+          statusEl.innerHTML = '<span class="badge">Fresh</span> <span style="font-size: 11px; color: var(--text-tertiary);">Just now</span>';
+          lucide.createIcons();
+
+          // Generate next section after a short delay
+          setTimeout(() => {
+            generateSectionsSequentially(companySlug, role, company, sectionIndex + 1);
+          }, 300);
+        }, 400);
+      } else {
+        // If from cache, continue to next section
+        setTimeout(() => {
+          generateSectionsSequentially(companySlug, role, company, sectionIndex + 1);
+        }, 200);
+      }
+    }
+
+    /**
+     * Generates content for a specific section
+     * INPUT: sectionNum (1-10), role, company
+     * RETURNS: HTML string with section content
+     */
+    function generateSectionContent(sectionNum, role, company) {
+      switch (sectionNum) {
+        case 1:
+          return generateSection1(company, role);
+        case 2:
+          return generateSection2(company, role);
+        case 3:
+          return generateSection3(company, role);
+        case 4:
+          return generateSection4(company, role);
+        case 5:
+          return generateSection5(company, role);
+        case 6:
+          return generateSection6(company, role);
+        case 7:
+          return generateSection7(company, role);
+        case 8:
+          return generateSection8(company, role, state.interviewerNames);
+        case 9:
+          return generateSection9(company, role);
+        case 10:
+          return generateSection10(company, role);
+        default:
+          return '';
+      }
+    }
+
+    /**
+     * Refreshes a single section (regenerates and re-caches it)
+     * INPUT: sectionNum (1-10)
+     * OUTPUT: section content is regenerated
+     */
+    function refreshSection(sectionNum) {
+      const role = state.selectedRole;
+      const company = state.selectedCompany;
+      if (!role || !company) return;
+
+      const companySlug = getCompanySlug(company.name);
+      const sectionEl = document.getElementById(`section-${sectionNum}`);
+      if (!sectionEl) return;
+
+      // Clear cache for this section
+      localStorage.removeItem(`research_${companySlug}_${role.id}_${sectionNum}`);
+
+      // Find the content div and show skeleton
+      const contentEl = sectionEl.querySelector('.section-content');
+      contentEl.innerHTML = `
+        <div class="skeleton-line" style="width: 100%;"></div>
+        <div class="skeleton-line" style="width: 95%;"></div>
+        <div class="skeleton-line" style="width: 90%;"></div>
+        <div class="skeleton-line short"></div>
+      `;
+
+      // Mark as pending
+      sectionEl.classList.add('pending');
+      const statusEl = sectionEl.querySelector('.section-status');
+      statusEl.innerHTML = '<i data-lucide="loader-2" class="spinner" style="width: 16px; height: 16px;"></i> <span>Regenerating...</span>';
+
+      // Regenerate after a delay
+      setTimeout(() => {
+        const generatedContent = generateSectionContent(sectionNum, role, company);
+        contentEl.innerHTML = generatedContent;
+        cacheSectionContent(companySlug, role.id, sectionNum, generatedContent);
+        sectionEl.classList.remove('pending');
+        statusEl.innerHTML = '<span class="badge">Fresh</span> <span style="font-size: 11px; color: var(--text-tertiary);">Just now</span>';
+        lucide.createIcons();
+      }, 400);
+    }
+
+    /**
+     * Clears all cached sections for the selected role
+     * INPUT: none
+     * OUTPUT: all cache entries removed, user is prompted to regenerate
+     */
+    function clearCache() {
+      const role = state.selectedRole;
+      const company = state.selectedCompany;
+      if (!role || !company) return;
+
+      if (!confirm('Clear all cached sections for this role? You\'ll need to regenerate them.')) {
+        return;
+      }
+
+      const companySlug = getCompanySlug(company.name);
+      clearAllCachedSections(companySlug, role.id);
+
+      // Clear the display
+      document.getElementById('sectionsArea').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">🗑️</div>
+          <div class="empty-state-text">
+            <p>Cache cleared. Click "Generate Brief" to create a fresh brief.</p>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('tocSidebar').style.display = 'none';
+    }
+
+    /**
+     * Exports the entire brief as a standalone HTML file
+     * The file includes CSS, styles, and all section content
+     * INPUT: none
+     * OUTPUT: HTML file is downloaded to user's computer
+     */
+    function exportBrief() {
+      const role = state.selectedRole;
+      const company = state.selectedCompany;
+      if (!role || !company) return;
+
+      const briefHtml = document.getElementById('sectionsArea').innerHTML;
+      const timestamp = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${company.name} — ${role.title} Research Brief</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #ffffff;
+      color: #1f2937;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 60px 40px;
+    }
+    h1 { font-size: 32px; font-weight: 700; margin-bottom: 10px; }
+    .subtitle { color: #6b7280; margin-bottom: 60px; font-size: 16px; }
+    .section {
+      margin-bottom: 60px;
+      padding-bottom: 40px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .section:last-child { border-bottom: none; }
+    .section h2 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #111827;
+    }
+    .section p {
+      margin-bottom: 16px;
+      font-size: 16px;
+    }
+    .section ul, .section ol {
+      margin: 16px 0 16px 24px;
+      padding-left: 0;
+    }
+    .section li {
+      margin-bottom: 12px;
+    }
+    .section strong { font-weight: 600; }
+    .section em { font-style: italic; color: #6b7280; }
+    @media print {
+      body { padding: 0; margin: 0; }
+      .container { padding: 40px; }
+      .section { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>${company.name}</h1>
+    <p class="subtitle">Interview Prep Brief for ${role.title} | ${timestamp}</p>
+    ${briefHtml}
+  </div>
+  <script src="../shared/data-switcher.js"></script>
+</body>
+</html>`;
+
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${company.name}_${role.title.replace(/\s+/g, '_')}_Brief.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    /**
+     * Prints the research brief using browser print
+     * INPUT: none
+     * OUTPUT: print dialog opens
+     */
+    function printBrief() {
+      window.print();
+    }
+
+    /**
+     * Updates the progress indicator (e.g., "7/10 sections complete")
+     * INPUT: none
+     * OUTPUT: progress text is updated in TOC
+     */
+    function updateProgress() {
+      const total = 10;
+      const progressEl = document.getElementById('tocProgress');
+      progressEl.textContent = `${total}/10 sections complete`;
+    }
+
+    /**
+     * Scrolls to a specific section and highlights it
+     * INPUT: sectionNum (1-10)
+     * OUTPUT: page scrolls to section, TOC highlights it
+     */
+    function scrollToSection(sectionNum) {
+      const sectionEl = document.getElementById(`section-${sectionNum}`);
+      if (sectionEl) {
+        sectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        state.currentSection = sectionNum;
+        updateTOCHighlight();
+      }
+    }
+
+    /**
+     * Updates which TOC item is highlighted based on current scroll position
+     * INPUT: none
+     * OUTPUT: TOC items are updated with active class
+     */
+    function updateTOCHighlight() {
+      const items = document.querySelectorAll('.toc-item');
+      items.forEach(item => item.classList.remove('active'));
+
+      if (state.currentSection) {
+        const activeItem = document.querySelector(`.toc-item:nth-child(${state.currentSection})`);
+        if (activeItem) activeItem.classList.add('active');
+      }
+    }
+
+    // ================================================================
+    // EVENT LISTENERS
+    // ================================================================
+
+    /**
+     * Sets up all click handlers and form listeners
+     * INPUT: none
+     * OUTPUT: event listeners are attached to DOM elements
+     */
+    function setupEventListeners() {
+      document.getElementById('roleSelect').addEventListener('change', (e) => {
+        selectRole(e.target.value);
+      });
+
+      document.getElementById('generateBtn').addEventListener('click', generateBrief);
+      document.getElementById('clearCacheBtn').addEventListener('click', clearCache);
+      document.getElementById('exportBtn').addEventListener('click', exportBrief);
+      document.getElementById('printBtn').addEventListener('click', printBrief);
+
+      document.getElementById('sidebarToggle').addEventListener('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        state.sidebarCollapsed = !state.sidebarCollapsed;
+        if (state.sidebarCollapsed) {
+          sidebar.classList.add('collapsed');
+        } else {
+          sidebar.classList.remove('collapsed');
+        }
+      });
+
+      // Scroll listener for TOC highlight
+      document.getElementById('sectionsArea').addEventListener('scroll', () => {
+        const sections = document.querySelectorAll('.section');
+        let closestSection = null;
+        let closestDistance = Infinity;
+
+        sections.forEach(sec => {
+          const rect = sec.getBoundingClientRect();
+          const distance = Math.abs(rect.top - 100);
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestSection = sec.getAttribute('data-section-num');
+          }
+        });
+
+        if (closestSection) {
+          state.currentSection = parseInt(closestSection);
+          updateTOCHighlight();
+        }
+      });
+    }
+
+    // ================================================================
+    // KEYBOARD SHORTCUTS
+    // ================================================================
+
+    /**
+     * Sets up keyboard shortcuts for power users
+     * G: Generate, 1-0: Jump to section, R: Refresh, P: Print, etc.
+     * INPUT: none
+     * OUTPUT: keyboard events are handled
+     */
+    function setupKeyboardShortcuts() {
+      document.addEventListener('keydown', (e) => {
+        // Ignore if typing in an input
+        if (e.target.matches('input, textarea, [contenteditable]')) return;
+
+        if (e.key === 'g' || e.key === 'G') {
+          e.preventDefault();
+          if (state.selectedRole) {
+            generateBrief();
+          }
+        }
+
+        if (e.key >= '1' && e.key <= '9') {
+          const sectionNum = parseInt(e.key);
+          if (sectionNum <= 10) {
+            e.preventDefault();
+            scrollToSection(sectionNum);
+          }
+        }
+
+        if (e.key === '0') {
+          e.preventDefault();
+          scrollToSection(10);
+        }
+
+        if (e.key === 'r' || e.key === 'R') {
+          if (state.currentSection) {
+            e.preventDefault();
+            refreshSection(state.currentSection);
+          }
+        }
+
+        if (e.key === 'p' || e.key === 'P') {
+          e.preventDefault();
+          printBrief();
+        }
+
+        if (e.key === '[') {
+          e.preventDefault();
+          const sidebar = document.getElementById('sidebar');
+          sidebar.classList.add('collapsed');
+          state.sidebarCollapsed = true;
+        }
+
+        if (e.key === ']') {
+          e.preventDefault();
+          const sidebar = document.getElementById('sidebar');
+          sidebar.classList.remove('collapsed');
+          state.sidebarCollapsed = false;
+        }
+      });
+    }
+
+    // ================================================================
+    // INITIALIZATION
+    // ================================================================
+    // When page loads, initialize everything
+
+    document.addEventListener('DOMContentLoaded', initializeUI);
+
+  </script>
+  <script src="../shared/data-switcher.js"></script>
+</body>
+</html>

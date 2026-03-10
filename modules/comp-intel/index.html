@@ -1,0 +1,1921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pathfinder — Comp Intelligence</title>
+  <meta name="description" content="Market compensation data and benchmarking for job search decisions">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>P</text></svg>">
+
+  <link rel="stylesheet" href="../shared/pathfinder.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* ================================================================
+       COMP INTELLIGENCE AGENT — MODULE-SPECIFIC STYLES
+
+       This module displays market compensation data to inform positioning
+       decisions and negotiation strategy. Layout: 2-panel design with
+       sidebar role selector on left (320px) and comp analysis on right.
+       ================================================================ */
+
+    /* Main container: flex layout for two-panel design */
+    .comp-container {
+      display: flex;
+      height: calc(100vh - var(--nav-height));
+      overflow: hidden;
+    }
+
+    /* Left sidebar: role selector and company info */
+    .comp-sidebar {
+      width: 320px;
+      background: var(--bg-elevated);
+      border-right: 1px solid var(--bg-subtle);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    /* Sidebar header with search */
+    .sidebar-header {
+      padding: var(--space-4);
+      border-bottom: 1px solid var(--bg-subtle);
+      flex-shrink: 0;
+    }
+
+    .sidebar-header h2 {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-3);
+    }
+
+    /* Search input in sidebar */
+    .sidebar-search {
+      position: relative;
+    }
+
+    .sidebar-search input {
+      width: 100%;
+      padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+    }
+
+    .sidebar-search input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+
+    .sidebar-search svg {
+      position: absolute;
+      right: var(--space-3);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--text-tertiary);
+      pointer-events: none;
+    }
+
+    /* Scrollable list of roles */
+    .roles-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-3);
+    }
+
+    /* Role group divider (e.g., "Interview" stage) */
+    .role-group {
+      margin-bottom: var(--space-4);
+    }
+
+    .role-group-label {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: var(--space-2) var(--space-2) var(--space-1) var(--space-2);
+      margin-bottom: var(--space-2);
+    }
+
+    /* Individual role item in list */
+    .role-item {
+      padding: var(--space-3);
+      margin-bottom: var(--space-2);
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .role-item:hover {
+      background: var(--bg-subtle);
+      border-color: var(--accent);
+    }
+
+    .role-item.active {
+      background: var(--accent-subtle);
+      border-color: var(--accent);
+    }
+
+    .role-item-company {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      margin-bottom: var(--space-1);
+    }
+
+    .role-item-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-1);
+    }
+
+    .role-item-level {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+    }
+
+    /* Company info card shown when a role is selected */
+    .company-card {
+      padding: var(--space-4);
+      background: var(--bg-surface);
+      border-top: 1px solid var(--bg-subtle);
+      flex-shrink: 0;
+    }
+
+    .company-logo {
+      width: 48px;
+      height: 48px;
+      background: var(--bg-base);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: var(--space-3);
+      font-weight: 700;
+      color: var(--accent);
+      font-size: var(--text-lg);
+    }
+
+    .company-info-row {
+      margin-bottom: var(--space-2);
+    }
+
+    .company-info-label {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .company-info-value {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      margin-top: var(--space-1);
+      word-break: break-word;
+    }
+
+    /* Main comp analysis panel on the right */
+    .comp-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Top toolbar with actions */
+    .comp-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-6);
+      border-bottom: 1px solid var(--bg-subtle);
+      flex-shrink: 0;
+    }
+
+    .comp-toolbar-title {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .comp-toolbar-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .action-button {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .action-button:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+
+    /* Content area with tabs */
+    .comp-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-6);
+    }
+
+    /* Tab navigation */
+    .comp-tabs {
+      display: flex;
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+      border-bottom: 1px solid var(--bg-subtle);
+      padding-bottom: var(--space-3);
+    }
+
+    .comp-tab {
+      padding: var(--space-2) 0;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      border-bottom: 2px solid transparent;
+      margin-bottom: calc(var(--space-3) * -1);
+    }
+
+    .comp-tab:hover {
+      color: var(--text-primary);
+    }
+
+    .comp-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* Tab content panels */
+    .comp-tab-content {
+      display: none;
+    }
+
+    .comp-tab-content.active {
+      display: block;
+    }
+
+    /* Empty state when no role is selected */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-tertiary);
+      text-align: center;
+    }
+
+    .empty-state-icon {
+      width: 64px;
+      height: 64px;
+      margin-bottom: var(--space-4);
+      opacity: 0.5;
+    }
+
+    .empty-state-title {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-2);
+    }
+
+    .empty-state-text {
+      font-size: var(--text-sm);
+      color: var(--text-tertiary);
+      max-width: 320px;
+    }
+
+    /* Benchmark card: structured comp display */
+    .benchmark-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      margin-bottom: var(--space-6);
+    }
+
+    .benchmark-header {
+      margin-bottom: var(--space-6);
+    }
+
+    .benchmark-title {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .benchmark-subtitle {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+
+    /* Comp range display */
+    .comp-range-group {
+      margin-bottom: var(--space-5);
+    }
+
+    .comp-range-label {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .comp-range-values {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: var(--space-2);
+      font-size: var(--text-sm);
+    }
+
+    .comp-range-min, .comp-range-max {
+      color: var(--text-secondary);
+    }
+
+    .comp-range-p50 {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Horizontal bar chart for comp range */
+    .comp-range-bar {
+      position: relative;
+      height: 32px;
+      background: var(--bg-base);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      margin-bottom: var(--space-2);
+    }
+
+    /* The range bar itself */
+    .range-fill {
+      position: absolute;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: var(--text-xs);
+      font-weight: 600;
+    }
+
+    /* User's target range overlay */
+    .target-range {
+      position: absolute;
+      height: 100%;
+      border: 2px solid var(--success);
+      pointer-events: none;
+      background: rgba(34, 197, 94, 0.1);
+      top: 0;
+    }
+
+    /* Percentile markers */
+    .percentile-markers {
+      display: flex;
+      justify-content: space-between;
+      padding: var(--space-2) 0;
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+    }
+
+    .percentile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Grid for comp components */
+    .comp-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-4);
+      margin-bottom: var(--space-5);
+    }
+
+    @media (max-width: 1200px) {
+      .comp-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .comp-item {
+      background: var(--bg-base);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+    }
+
+    .comp-item-label {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-2);
+    }
+
+    .comp-item-value {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .comp-item-detail {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      margin-top: var(--space-2);
+    }
+
+    /* Notes and analysis text */
+    .comp-notes {
+      background: var(--accent-subtle);
+      border-left: 4px solid var(--accent);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      line-height: 1.6;
+    }
+
+    /* Dashboard table */
+    .comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: var(--space-6);
+    }
+
+    .comp-table thead {
+      background: var(--bg-elevated);
+    }
+
+    .comp-table th {
+      padding: var(--space-3) var(--space-4);
+      text-align: left;
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--bg-subtle);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .comp-table th:hover {
+      background: var(--bg-subtle);
+    }
+
+    .comp-table td {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--bg-subtle);
+      font-size: var(--text-sm);
+    }
+
+    .comp-table tbody tr:hover {
+      background: var(--bg-elevated);
+    }
+
+    /* Status badges for comp levels */
+    .comp-badge {
+      display: inline-block;
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-pill);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .comp-badge.above {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+    }
+
+    .comp-badge.target {
+      background: rgba(250, 204, 21, 0.15);
+      color: var(--warning);
+    }
+
+    .comp-badge.below {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+    }
+
+    /* Positioning comparison section */
+    .comparison-group {
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      margin-bottom: var(--space-6);
+    }
+
+    .comparison-title {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-4);
+    }
+
+    .comparison-bars {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .comparison-bar {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .comparison-label {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .comparison-bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: var(--space-3);
+      height: 60px;
+    }
+
+    .comparison-segment {
+      flex: 1;
+      background: var(--accent);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      min-height: 40px;
+      color: white;
+      font-size: var(--text-xs);
+      font-weight: 600;
+      padding: var(--space-2);
+      text-align: center;
+    }
+
+    /* Negotiation scorecard */
+    .scorecard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+
+    .scorecard-item {
+      background: var(--bg-base);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+    }
+
+    .scorecard-label {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .scorecard-rating {
+      display: flex;
+      gap: var(--space-1);
+      margin-bottom: var(--space-2);
+    }
+
+    .rating-star {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--bg-elevated);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-xs);
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .rating-star.filled {
+      background: var(--accent);
+      color: white;
+    }
+
+    .rating-star:hover {
+      background: var(--accent-hover);
+    }
+
+    .scorecard-note {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Offer comparison */
+    .offer-comparison {
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      margin-bottom: var(--space-6);
+      overflow-x: auto;
+    }
+
+    .offer-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--text-sm);
+      min-width: 600px;
+    }
+
+    .offer-table th {
+      padding: var(--space-3) var(--space-4);
+      text-align: left;
+      font-weight: 700;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--bg-subtle);
+    }
+
+    .offer-table td {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--bg-subtle);
+    }
+
+    .offer-row-label {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .offer-value {
+      color: var(--text-secondary);
+    }
+
+    .offer-value.highlight {
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    /* Responsive: hide sidebar on small screens */
+    @media (max-width: 900px) {
+      .comp-sidebar {
+        display: none;
+      }
+    }
+
+    /* Print-friendly styles */
+    @media print {
+      .comp-toolbar, .comp-tabs {
+        display: none;
+      }
+
+      .comp-content {
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="nav">
+    <div class="nav-brand"><span>P</span>athfinder</div>
+    <div class="nav-links">
+      <a href="../dashboard/index.html">Dashboard</a>
+      <a href="../pipeline/index.html">Pipeline</a>
+      <a href="../research-brief/index.html">Research</a>
+      <a href="../resume-tailor/index.html">Resume</a>
+      <a href="../job-feed-listener/index.html">Feed</a>
+      <a href="../outreach/index.html">Outreach</a>
+      <a href="../mock-interview/index.html">Mock</a>
+      <a href="../debrief/index.html">Debrief</a>
+      <a href="index.html" class="active">Comp</a>
+      <a href="../calendar/index.html">Calendar</a>
+    </div>
+    <div class="nav-right">
+      <span class="nav-kbd">⌘K</span>
+    </div>
+  </nav>
+
+  <div class="comp-container" style="margin-top: var(--nav-height);">
+    <!-- LEFT SIDEBAR: Role Selection -->
+    <aside class="comp-sidebar">
+      <div class="sidebar-header">
+        <h2>Roles</h2>
+        <div class="sidebar-search">
+          <input
+            type="text"
+            id="sidebarSearch"
+            placeholder="Search roles..."
+            aria-label="Search roles"
+          >
+          <svg><use href="https://unpkg.com/lucide@latest/icons/search.svg#search"></use></svg>
+        </div>
+      </div>
+
+      <div class="roles-list" id="rolesList">
+        <!-- Role groups will be rendered here by JavaScript -->
+      </div>
+
+      <!-- Company info card shown when a role is selected -->
+      <div class="company-card" id="companyCard" style="display: none;">
+        <div class="company-logo" id="companyLogo">S</div>
+        <div class="company-info-row">
+          <div class="company-info-label">Company</div>
+          <div class="company-info-value" id="companyName">—</div>
+        </div>
+        <div class="company-info-row">
+          <div class="company-info-label">Domain</div>
+          <div class="company-info-value" id="companyDomain">—</div>
+        </div>
+        <div class="company-info-row">
+          <div class="company-info-label">Funding Stage</div>
+          <div class="company-info-value" id="companyStage">—</div>
+        </div>
+        <div class="company-info-row">
+          <div class="company-info-label">Role</div>
+          <div class="company-info-value" id="roleTitle">—</div>
+        </div>
+        <div class="company-info-row">
+          <div class="company-info-label">Positioning</div>
+          <div class="company-info-value" id="rolePositioning">—</div>
+        </div>
+        <div class="company-info-row">
+          <div class="company-info-label">Level</div>
+          <div class="company-info-value" id="roleLevel">—</div>
+        </div>
+        <div class="company-info-row">
+          <div class="company-info-label">Your Target</div>
+          <div class="company-info-value" id="targetComp">$285K—$450K</div>
+        </div>
+        <div class="company-info-row">
+          <div class="company-info-label">Posted Range</div>
+          <div class="company-info-value" id="postedRange">—</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT PANEL: Comp Analysis -->
+    <main class="comp-main">
+      <div class="comp-toolbar">
+        <div class="comp-toolbar-title">Comp Intelligence</div>
+        <div class="comp-toolbar-actions">
+          <button class="action-button" id="generateBenchmarkBtn" title="Generate benchmark data">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
+              <circle cx="5" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="6.22" cy="6.22" r="1"/>
+              <circle cx="17.78" cy="17.78" r="1"/><circle cx="17.78" cy="6.22" r="1"/><circle cx="6.22" cy="17.78" r="1"/>
+            </svg>
+            Generate
+          </button>
+        </div>
+      </div>
+
+      <div class="comp-content">
+        <!-- Empty state shown initially -->
+        <div id="emptyState" class="empty-state">
+          <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <h3 class="empty-state-title">No role selected</h3>
+          <p class="empty-state-text">Select a role from the sidebar to view market compensation data and benchmarks.</p>
+        </div>
+
+        <!-- Main comp analysis (hidden until role selected) -->
+        <div id="compAnalysis" style="display: none;">
+          <!-- Tab navigation -->
+          <div class="comp-tabs">
+            <button class="comp-tab active" data-tab="benchmark">
+              Benchmark
+            </button>
+            <button class="comp-tab" data-tab="comparison">
+              Positioning
+            </button>
+            <button class="comp-tab" data-tab="negotiation">
+              Negotiation
+            </button>
+            <button class="comp-tab" data-tab="dashboard">
+              Dashboard
+            </button>
+            <button class="comp-tab" data-tab="history">
+              History
+            </button>
+          </div>
+
+          <!-- BENCHMARK TAB -->
+          <div id="benchmarkTab" class="comp-tab-content active">
+            <div class="benchmark-card" id="benchmarkCard">
+              <!-- Rendered by JavaScript -->
+            </div>
+          </div>
+
+          <!-- POSITIONING COMPARISON TAB -->
+          <div id="comparisonTab" class="comp-tab-content">
+            <div id="comparisonContent">
+              <!-- Rendered by JavaScript -->
+            </div>
+          </div>
+
+          <!-- NEGOTIATION TAB -->
+          <div id="negotiationTab" class="comp-tab-content">
+            <div id="negotiationContent">
+              <!-- Rendered by JavaScript -->
+            </div>
+          </div>
+
+          <!-- DASHBOARD TAB -->
+          <div id="dashboardTab" class="comp-tab-content">
+            <div id="dashboardContent">
+              <!-- Rendered by JavaScript -->
+            </div>
+          </div>
+
+          <!-- HISTORY TAB -->
+          <div id="historyTab" class="comp-tab-content">
+            <div id="historyContent">
+              <!-- Rendered by JavaScript -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    /**
+     * ============================================================
+     * COMP INTELLIGENCE AGENT
+     * ============================================================
+     *
+     * This module provides market compensation data to inform
+     * positioning decisions, negotiation strategy, and role
+     * prioritization. It enriches role records with benchmarked
+     * salary data using realistic demo data based on company
+     * stage, size, and location heuristics.
+     *
+     * Architecture:
+     * - State management: pipelineData object holding all roles/companies
+     * - Benchmark generation: heuristic-based demo data by company stage
+     * - Tab system: switches between benchmark, comparison, negotiation views
+     * - Event handlers: role selection, search, benchmark generation
+     * - Data persistence: writes comp benchmarks to pf_comp_cache
+     *
+     * Keyboard shortcuts:
+     * - Cmd+K: Command palette (opens search)
+     * - B: Generate benchmark for selected role
+     * - C: Compare positioning
+     * - N: Negotiation view
+     * - 1-3: Switch tabs
+     * ============================================================
+     */
+
+    // ============================================================
+    // STATE MANAGEMENT
+    // ============================================================
+
+    /**
+     * Pipeline state object. Contains demo roles from pipeline module
+     * that we'll enrich with compensation data.
+     * Reads from pf_roles, pf_companies, pf_preferences in localStorage.
+     */
+    let pipelineData = {
+      roles: [],
+      companies: {},
+      preferences: {}
+    };
+
+    /**
+     * Comp cache: benchmarks keyed by "company-level" string.
+     * Each entry contains base, bonus, equity, and analysis.
+     */
+    let compCache = {};
+
+    /**
+     * Currently selected role ID
+     */
+    let selectedRoleId = null;
+
+    /**
+     * Default user comp target: $285K—$450K total comp
+     */
+    const DEFAULT_COMP_TARGET = { min: 285000, max: 450000 };
+
+    // ============================================================
+    // DATA INITIALIZATION
+    // ============================================================
+
+    /**
+     * Initialize data from localStorage or create demo data.
+     * Loads pf_roles and pf_companies from pipeline module.
+     * Falls back to demo data if pipeline hasn't been created yet.
+     */
+    /**
+     * Infer seniority level from a job title string.
+     * Scans for keywords like "Staff", "Senior", "Director", etc.
+     * Returns a standard level label used in comp benchmarks.
+     */
+    function inferLevelFromTitle(title) {
+      const t = (title || '').toLowerCase();
+      if (t.includes('staff') || t.includes('principal')) return 'Staff';
+      if (t.includes('director') || t.includes('vp') || t.includes('head of')) return 'Director';
+      if (t.includes('manager') || t.includes('lead')) return 'Manager';
+      if (t.includes('senior') || t.includes('sr.') || t.includes('sr ')) return 'Senior';
+      return 'Senior'; // Default fallback
+    }
+
+    /**
+     * Normalize Pipeline-format roles into comp-intel format.
+     * Pipeline stores role.company (name string) while comp-intel
+     * expects role.company_id (key into pipelineData.companies).
+     * This function bridges both formats and auto-generates
+     * company entries from role data when pf_companies isn't present.
+     */
+    function normalizeRoles(roles) {
+      const autoCompanies = {};
+      const normalized = roles.map(role => {
+        // If role already has company_id, it's in comp-intel format — leave it
+        if (role.company_id) return role;
+
+        // Pipeline format: role.company is a name string like "Stripe"
+        const companyName = role.company || 'Unknown';
+        const companyKey = companyName.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        // Auto-generate a company entry if we don't have one
+        if (!autoCompanies[companyKey]) {
+          autoCompanies[companyKey] = {
+            id: companyKey,
+            name: companyName,
+            domain: companyKey + '.com',
+            funding_stage: 'Unknown',
+            headquarters: role.location || 'Unknown',
+            employees: 0,
+            last_valuation: 0
+          };
+        }
+
+        return {
+          ...role,
+          company_id: companyKey,
+          level: role.level || inferLevelFromTitle(role.title),
+          positioning: (role.positioning || 'IC').toUpperCase(),
+          location: role.location || 'Remote',
+          created_at: role.dateAdded || role.created_at || new Date().toISOString()
+        };
+      });
+      return { roles: normalized, autoCompanies };
+    }
+
+    function initializeData() {
+      // Try to load from pipeline module
+      const rolesJSON = localStorage.getItem('pf_roles');
+      const companiesJSON = localStorage.getItem('pf_companies');
+      const prefsJSON = localStorage.getItem('pf_preferences');
+
+      if (rolesJSON) {
+        const parsed = JSON.parse(rolesJSON);
+        const { roles, autoCompanies } = normalizeRoles(parsed);
+        pipelineData.roles = roles;
+
+        // Merge auto-generated companies with any existing ones
+        if (companiesJSON) {
+          pipelineData.companies = { ...autoCompanies, ...JSON.parse(companiesJSON) };
+        } else {
+          pipelineData.companies = { ...createDemoCompanies(), ...autoCompanies };
+        }
+      } else {
+        pipelineData.roles = createDemoRoles();
+        if (companiesJSON) {
+          pipelineData.companies = JSON.parse(companiesJSON);
+        } else {
+          pipelineData.companies = createDemoCompanies();
+        }
+      }
+
+      if (prefsJSON) {
+        pipelineData.preferences = JSON.parse(prefsJSON);
+      } else {
+        pipelineData.preferences = {
+          targetComp: DEFAULT_COMP_TARGET
+        };
+      }
+
+      // Load comp cache if it exists
+      const cacheJSON = localStorage.getItem('pf_comp_cache');
+      if (cacheJSON) {
+        compCache = JSON.parse(cacheJSON);
+      }
+    }
+
+    /**
+     * Create demo roles matching pipeline structure.
+     * Each role has id, company_id, title, level, positioning, stage, etc.
+     */
+    function createDemoRoles() {
+      return [
+        {
+          id: 'role-stripe-1',
+          company_id: 'stripe',
+          title: 'Staff Product Manager',
+          level: 'Staff',
+          positioning: 'IC',
+          stage: 'interviewing',
+          location: 'San Francisco, CA',
+          postedSalaryMin: 210000,
+          postedSalaryMax: 260000,
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 'role-anthropic-1',
+          company_id: 'anthropic',
+          title: 'Senior Product Manager',
+          level: 'Senior',
+          positioning: 'IC',
+          stage: 'screen',
+          location: 'San Francisco, CA',
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 'role-figma-1',
+          company_id: 'figma',
+          title: 'Senior Product Manager',
+          level: 'Senior',
+          positioning: 'IC',
+          stage: 'interviewing',
+          location: 'San Francisco, CA',
+          postedSalaryMin: 185000,
+          postedSalaryMax: 230000,
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 'role-scale-1',
+          company_id: 'scale',
+          title: 'Senior Product Manager',
+          level: 'Senior',
+          positioning: 'IC',
+          stage: 'applied',
+          location: 'Remote',
+          postedSalaryMin: 180000,
+          postedSalaryMax: 220000,
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 'role-notion-1',
+          company_id: 'notion',
+          title: 'Staff Product Manager',
+          level: 'Staff',
+          positioning: 'IC',
+          stage: 'offer',
+          location: 'San Francisco, CA',
+          offerBase: 220000,
+          offerBonus: 60000,
+          offerEquity: 150000,
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 'role-datadog-1',
+          company_id: 'datadog',
+          title: 'Senior Product Manager',
+          level: 'Senior',
+          positioning: 'IC',
+          stage: 'researching',
+          location: 'New York, NY',
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 'role-ramp-1',
+          company_id: 'ramp',
+          title: 'Staff Product Manager',
+          level: 'Staff',
+          positioning: 'IC',
+          stage: 'discovered',
+          location: 'Remote',
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 'role-mongodb-1',
+          company_id: 'mongodb',
+          title: 'Senior Product Manager',
+          level: 'Senior',
+          positioning: 'IC',
+          stage: 'discovered',
+          location: 'Remote',
+          created_at: new Date().toISOString()
+        }
+      ];
+    }
+
+    /**
+     * Create demo companies with realistic metadata.
+     * Each company has id, name, domain, funding_stage, locations, etc.
+     */
+    function createDemoCompanies() {
+      return {
+        stripe: {
+          id: 'stripe',
+          name: 'Stripe',
+          domain: 'stripe.com',
+          founding_year: 2010,
+          funding_stage: 'Public',
+          headquarters: 'San Francisco, CA',
+          employees: 8000,
+          last_valuation: 95000000000
+        },
+        anthropic: {
+          id: 'anthropic',
+          name: 'Anthropic',
+          domain: 'anthropic.com',
+          founding_year: 2021,
+          funding_stage: 'Series D',
+          headquarters: 'San Francisco, CA',
+          employees: 500,
+          last_valuation: 30000000000
+        },
+        figma: {
+          id: 'figma',
+          name: 'Figma',
+          domain: 'figma.com',
+          founding_year: 2012,
+          funding_stage: 'Public',
+          headquarters: 'San Francisco, CA',
+          employees: 500,
+          last_valuation: 20000000000
+        },
+        scale: {
+          id: 'scale',
+          name: 'Scale AI',
+          domain: 'scale.com',
+          founding_year: 2016,
+          funding_stage: 'Series C',
+          headquarters: 'San Francisco, CA',
+          employees: 300,
+          last_valuation: 7400000000
+        },
+        notion: {
+          id: 'notion',
+          name: 'Notion',
+          domain: 'notion.so',
+          founding_year: 2016,
+          funding_stage: 'Series C',
+          headquarters: 'San Francisco, CA',
+          employees: 400,
+          last_valuation: 10000000000
+        },
+        datadog: {
+          id: 'datadog',
+          name: 'Datadog',
+          domain: 'datadoghq.com',
+          founding_year: 2010,
+          funding_stage: 'Public',
+          headquarters: 'New York, NY',
+          employees: 4000,
+          last_valuation: 40000000000
+        },
+        ramp: {
+          id: 'ramp',
+          name: 'Ramp',
+          domain: 'ramp.com',
+          founding_year: 2018,
+          funding_stage: 'Series B',
+          headquarters: 'New York, NY',
+          employees: 150,
+          last_valuation: 8100000000
+        },
+        mongodb: {
+          id: 'mongodb',
+          name: 'MongoDB',
+          domain: 'mongodb.com',
+          founding_year: 2007,
+          funding_stage: 'Public',
+          headquarters: 'New York, NY',
+          employees: 1500,
+          last_valuation: 25000000000
+        }
+      };
+    }
+
+    // ============================================================
+    // BENCHMARK GENERATION
+    // ============================================================
+
+    /**
+     * Generate realistic benchmark data for a role based on:
+     * - Company funding stage (Public, Series C, Series B, etc.)
+     * - Role level (Staff, Senior, Manager, etc.)
+     * - Location (SF premium, remote discount)
+     *
+     * Returns object with base, bonus, equity ranges and analysis.
+     */
+    function generateBenchmark(role, company) {
+      const cacheKey = `${company.id}-${role.level}`;
+
+      // Return cached data if available
+      if (compCache[cacheKey]) {
+        return compCache[cacheKey];
+      }
+
+      let benchmark = {
+        base: { min: 0, max: 0, p50: 0 },
+        bonus: { min: 0, max: 0, p50: 0 },
+        equity: { min: 0, max: 0, p50: 0 },
+        total: { min: 0, max: 0, p50: 0 },
+        analysis: '',
+        generated_at: new Date().toISOString()
+      };
+
+      // Location multiplier
+      let locationMult = 1.0;
+      if (role.location?.includes('San Francisco') || role.location?.includes('Palo Alto')) {
+        locationMult = 1.15;
+      } else if (role.location?.includes('Remote')) {
+        locationMult = 0.95;
+      } else if (role.location?.includes('New York')) {
+        locationMult = 1.1;
+      }
+
+      // Level-based ranges (public company baseline)
+      let baseLow, baseHigh, bonusLow, bonusHigh, equityLow, equityHigh;
+
+      if (role.level === 'Staff') {
+        baseLow = 210000;
+        baseHigh = 260000;
+        bonusLow = 0.15;
+        bonusHigh = 0.25;
+        equityLow = 200000;
+        equityHigh = 400000;
+      } else if (role.level === 'Senior') {
+        baseLow = 175000;
+        baseHigh = 220000;
+        bonusLow = 0.15;
+        bonusHigh = 0.25;
+        equityLow = 100000;
+        equityHigh = 200000;
+      } else if (role.level === 'Manager') {
+        baseLow = 190000;
+        baseHigh = 240000;
+        bonusLow = 0.20;
+        bonusHigh = 0.35;
+        equityLow = 80000;
+        equityHigh = 180000;
+      } else {
+        baseLow = 150000;
+        baseHigh = 200000;
+        bonusLow = 0.10;
+        bonusHigh = 0.20;
+        equityLow = 50000;
+        equityHigh = 150000;
+      }
+
+      // Apply funding stage adjustments
+      let stageMultiplier = 1.0;
+      if (company.funding_stage === 'Series B') {
+        stageMultiplier = 0.85;
+      } else if (company.funding_stage === 'Series C') {
+        stageMultiplier = 0.90;
+      } else if (company.funding_stage === 'Series D') {
+        stageMultiplier = 0.95;
+      }
+
+      // Apply multipliers
+      baseLow = Math.round(baseLow * locationMult * stageMultiplier);
+      baseHigh = Math.round(baseHigh * locationMult * stageMultiplier);
+      equityLow = Math.round(equityLow * stageMultiplier);
+      equityHigh = Math.round(equityHigh * stageMultiplier);
+
+      // Calculate P50 values
+      const baseP50 = Math.round((baseLow + baseHigh) / 2);
+      const bonusP50 = Math.round(baseP50 * ((bonusLow + bonusHigh) / 2));
+      const equityP50 = Math.round((equityLow + equityHigh) / 2);
+
+      benchmark.base = {
+        min: baseLow,
+        max: baseHigh,
+        p50: baseP50
+      };
+
+      benchmark.bonus = {
+        min: Math.round(baseLow * bonusLow),
+        max: Math.round(baseHigh * bonusHigh),
+        p50: bonusP50
+      };
+
+      benchmark.equity = {
+        min: equityLow,
+        max: equityHigh,
+        p50: equityP50
+      };
+
+      const totalMin = baseLow + benchmark.bonus.min + equityLow / 4;
+      const totalMax = baseHigh + benchmark.bonus.max + equityHigh / 4;
+      const totalP50 = baseP50 + bonusP50 + equityP50 / 4;
+
+      benchmark.total = {
+        min: Math.round(totalMin),
+        max: Math.round(totalMax),
+        p50: Math.round(totalP50)
+      };
+
+      // Analysis text based on positioning
+      if (role.positioning === 'Management') {
+        benchmark.analysis = `Directors at ${company.name} typically earn 15-25% higher total comp than Staff ICs, with emphasis on cash bonus. Consider management track if total comp is primary factor.`;
+      } else {
+        benchmark.analysis = `${role.level} IC roles at ${company.name} emphasize equity over bonus, with 3-4 year vest and annual refreshes. Stock performance significantly impacts realized comp.`;
+      }
+
+      // Cache the benchmark
+      compCache[cacheKey] = benchmark;
+      localStorage.setItem('pf_comp_cache', JSON.stringify(compCache));
+
+      return benchmark;
+    }
+
+    // ============================================================
+    // UI RENDERING
+    // ============================================================
+
+    /**
+     * Render the roles list in the left sidebar, grouped by stage.
+     */
+    function renderRolesList() {
+      const container = document.getElementById('rolesList');
+      container.innerHTML = '';
+
+      const stages = ['interviewing', 'offer', 'screen', 'applied', 'outreach', 'researching', 'discovered'];
+      const stageLabels = {
+        'interviewing': 'Interviewing',
+        'offer': 'Offer',
+        'screen': 'Initial Screen',
+        'applied': 'Applied',
+        'outreach': 'Outreach',
+        'researching': 'Researching',
+        'discovered': 'Discovered'
+      };
+
+      for (const stage of stages) {
+        const rolesInStage = pipelineData.roles.filter(r => r.stage === stage);
+        if (rolesInStage.length === 0) continue;
+
+        const groupHTML = document.createElement('div');
+        groupHTML.className = 'role-group';
+
+        const groupLabel = document.createElement('div');
+        groupLabel.className = 'role-group-label';
+        groupLabel.textContent = stageLabels[stage] || stage;
+        groupHTML.appendChild(groupLabel);
+
+        for (const role of rolesInStage) {
+          const company = pipelineData.companies[role.company_id];
+          const roleItem = document.createElement('div');
+          roleItem.className = 'role-item';
+          if (selectedRoleId === role.id) {
+            roleItem.classList.add('active');
+          }
+
+          roleItem.innerHTML = `
+            <div class="role-item-company">${company?.name || 'Unknown'}</div>
+            <div class="role-item-title">${role.title}</div>
+            <div class="role-item-level">${role.level}</div>
+          `;
+
+          roleItem.addEventListener('click', () => selectRole(role.id));
+          groupHTML.appendChild(roleItem);
+        }
+
+        container.appendChild(groupHTML);
+      }
+    }
+
+    /**
+     * Select a role and display its comp analysis.
+     * Updates sidebar highlighting and renders main panel.
+     */
+    function selectRole(roleId) {
+      selectedRoleId = roleId;
+
+      // Update sidebar
+      document.querySelectorAll('.role-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      event.currentTarget?.classList.add('active');
+
+      // Get role and company data
+      const role = pipelineData.roles.find(r => r.id === roleId);
+      const company = pipelineData.companies[role.company_id];
+
+      if (!role || !company) return;
+
+      // Generate benchmark if not already cached
+      const benchmark = generateBenchmark(role, company);
+
+      // Update company card
+      document.getElementById('companyCard').style.display = 'block';
+      document.getElementById('companyLogo').textContent = company.name.charAt(0);
+      document.getElementById('companyName').textContent = company.name;
+      document.getElementById('companyDomain').textContent = company.domain;
+      document.getElementById('companyStage').textContent = company.funding_stage;
+      document.getElementById('roleTitle').textContent = role.title;
+      document.getElementById('rolePositioning').textContent = role.positioning || 'IC';
+      document.getElementById('roleLevel').textContent = role.level;
+      document.getElementById('postedRange').textContent = role.postedSalaryMin
+        ? `$${(role.postedSalaryMin / 1000).toFixed(0)}K—$${(role.postedSalaryMax / 1000).toFixed(0)}K`
+        : '—';
+
+      // Show main analysis and hide empty state
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('compAnalysis').style.display = 'block';
+
+      // Render tabs
+      renderBenchmarkTab(role, company, benchmark);
+      renderComparisonTab(role, company);
+      renderNegotiationTab(role, company);
+      renderDashboard();
+      renderHistory();
+    }
+
+    /**
+     * Render the benchmark tab with comp ranges and analysis.
+     */
+    function renderBenchmarkTab(role, company, benchmark) {
+      const card = document.getElementById('benchmarkCard');
+
+      // Calculate target range as percentage of the bar
+      const fullRange = benchmark.total.max - benchmark.total.min;
+      const targetMin = pipelineData.preferences.targetComp?.min || DEFAULT_COMP_TARGET.min;
+      const targetMax = pipelineData.preferences.targetComp?.max || DEFAULT_COMP_TARGET.max;
+
+      const targetMinPercent = Math.max(0, ((targetMin - benchmark.total.min) / fullRange) * 100);
+      const targetMaxPercent = Math.min(100, ((targetMax - benchmark.total.min) / fullRange) * 100);
+      const targetWidth = targetMaxPercent - targetMinPercent;
+
+      // Determine color based on P50 vs target
+      let compBadge = 'target';
+      if (benchmark.total.p50 > targetMax) compBadge = 'above';
+      else if (benchmark.total.p50 < targetMin) compBadge = 'below';
+
+      card.innerHTML = `
+        <div class="benchmark-header">
+          <div class="benchmark-title">${company.name} — ${role.title}</div>
+          <div class="benchmark-subtitle">${role.positioning} • ${role.level} • ${role.location || 'Location TBD'}</div>
+        </div>
+
+        <div class="comp-range-group">
+          <div class="comp-range-label">
+            Total Comp <span class="comp-badge ${compBadge}">${compBadge}</span>
+          </div>
+          <div class="comp-range-values">
+            <span class="comp-range-min">$${(benchmark.total.min / 1000).toFixed(0)}K</span>
+            <span class="comp-range-p50">P50: $${(benchmark.total.p50 / 1000).toFixed(0)}K</span>
+            <span class="comp-range-max">$${(benchmark.total.max / 1000).toFixed(0)}K</span>
+          </div>
+          <div class="comp-range-bar">
+            <div class="range-fill" style="
+              left: ${((benchmark.total.min - benchmark.total.min) / fullRange) * 100}%;
+              width: ${(fullRange / fullRange) * 100}%;
+              background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+            ">
+              <span style="visibility: hidden;">Range</span>
+            </div>
+            <div class="target-range" style="
+              left: ${targetMinPercent}%;
+              width: ${targetWidth}%;
+            "></div>
+            <div style="position: absolute; bottom: -24px; left: ${targetMinPercent}%; width: 1px; height: 8px; background: var(--success);"></div>
+            <div style="position: absolute; bottom: -24px; right: 0; width: 1px; height: 8px; background: var(--success);"></div>
+          </div>
+          <div class="percentile-markers">
+            <div class="percentile">
+              <div>P25</div>
+              <div style="color: var(--text-secondary);">$${(benchmark.total.min / 1000).toFixed(0)}K</div>
+            </div>
+            <div class="percentile">
+              <div>P50</div>
+              <div style="color: var(--accent);">$${(benchmark.total.p50 / 1000).toFixed(0)}K</div>
+            </div>
+            <div class="percentile">
+              <div>P75</div>
+              <div style="color: var(--text-secondary);">$${(benchmark.total.max / 1000).toFixed(0)}K</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="comp-grid">
+          <div class="comp-item">
+            <div class="comp-item-label">Base Salary</div>
+            <div class="comp-item-value">$${(benchmark.base.p50 / 1000).toFixed(0)}K</div>
+            <div class="comp-item-detail">Range: $${(benchmark.base.min / 1000).toFixed(0)}K—$${(benchmark.base.max / 1000).toFixed(0)}K</div>
+          </div>
+          <div class="comp-item">
+            <div class="comp-item-label">Annual Bonus</div>
+            <div class="comp-item-value">$${(benchmark.bonus.p50 / 1000).toFixed(0)}K</div>
+            <div class="comp-item-detail">Range: $${(benchmark.bonus.min / 1000).toFixed(0)}K—$${(benchmark.bonus.max / 1000).toFixed(0)}K</div>
+          </div>
+          <div class="comp-item">
+            <div class="comp-item-label">Equity (Annual)</div>
+            <div class="comp-item-value">$${(benchmark.equity.p50 / 1000).toFixed(0)}K</div>
+            <div class="comp-item-detail">4-year vest, annual refreshes</div>
+          </div>
+          <div class="comp-item">
+            <div class="comp-item-label">Target Range</div>
+            <div class="comp-item-value">$${(targetMin / 1000).toFixed(0)}K—$${(targetMax / 1000).toFixed(0)}K</div>
+            <div class="comp-item-detail">Your preferences</div>
+          </div>
+        </div>
+
+        <div class="comp-notes">
+          <strong>Market Context:</strong> ${benchmark.analysis}
+        </div>
+
+        ${role.postedSalaryMin ? `
+          <div class="comp-notes" style="margin-top: var(--space-4);">
+            <strong>Posted Range:</strong> $${(role.postedSalaryMin / 1000).toFixed(0)}K—$${(role.postedSalaryMax / 1000).toFixed(0)}K base salary
+          </div>
+        ` : ''}
+      `;
+    }
+
+    /**
+     * Render positioning comparison tab.
+     * Compares IC vs Management comp at the selected company,
+     * and shows cross-company comparisons.
+     */
+    function renderComparisonTab(role, company) {
+      const content = document.getElementById('comparisonContent');
+
+      // Generate benchmarks for comparison
+      const currentBench = generateBenchmark(role, company);
+
+      // Create a Staff role for comparison
+      const staffRole = { ...role, level: 'Staff', positioning: 'IC' };
+      const staffBench = generateBenchmark(staffRole, company);
+
+      // Create a Senior role for comparison
+      const seniorRole = { ...role, level: 'Senior', positioning: 'IC' };
+      const seniorBench = generateBenchmark(seniorRole, company);
+
+      content.innerHTML = `
+        <div class="comparison-group">
+          <div class="comparison-title">Position Level Comparison at ${company.name}</div>
+
+          <div class="comparison-bars">
+            <div class="comparison-bar">
+              <div class="comparison-label">Staff IC</div>
+              <div class="comparison-bar-chart">
+                <div class="comparison-segment" style="
+                  width: ${(staffBench.total.p50 / Math.max(staffBench.total.p50, seniorBench.total.p50, currentBench.total.p50)) * 100}%;
+                  background: linear-gradient(90deg, #3b82f6, #818cf8);
+                ">
+                  $${(staffBench.total.p50 / 1000).toFixed(0)}K
+                </div>
+              </div>
+            </div>
+
+            <div class="comparison-bar">
+              <div class="comparison-label">${role.level} IC</div>
+              <div class="comparison-bar-chart">
+                <div class="comparison-segment" style="
+                  width: ${(currentBench.total.p50 / Math.max(staffBench.total.p50, seniorBench.total.p50, currentBench.total.p50)) * 100}%;
+                  background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+                ">
+                  $${(currentBench.total.p50 / 1000).toFixed(0)}K
+                </div>
+              </div>
+            </div>
+
+            <div class="comparison-bar">
+              <div class="comparison-label">Senior IC</div>
+              <div class="comparison-bar-chart">
+                <div class="comparison-segment" style="
+                  width: ${(seniorBench.total.p50 / Math.max(staffBench.total.p50, seniorBench.total.p50, currentBench.total.p50)) * 100}%;
+                  background: linear-gradient(90deg, #a78bfa, #c4b5fd);
+                ">
+                  $${(seniorBench.total.p50 / 1000).toFixed(0)}K
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="comp-notes" style="margin-top: var(--space-4);">
+            <strong>Positioning Insight:</strong> At ${company.name}, Staff IC roles command 20-30% higher total comp than Senior roles due to equity value and scope of impact. IC positioning tends to have better equity upside in high-growth companies.
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * Render negotiation support tab.
+     * Only shows detailed negotiation data if role is in "offer" stage.
+     * Otherwise shows template for when offer comes through.
+     */
+    function renderNegotiationTab(role, company) {
+      const content = document.getElementById('negotiationContent');
+      const benchmark = generateBenchmark(role, company);
+
+      if (role.stage !== 'offer') {
+        content.innerHTML = `
+          <div class="comparison-group">
+            <div class="comparison-title">Negotiation Support</div>
+            <div class="comp-notes">
+              Detailed negotiation guidance will appear here when you receive an offer for this role. Prepare now by reviewing the market benchmarks above.
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // Offer stage: show full negotiation scorecard
+      const offer = {
+        base: role.offerBase || 200000,
+        bonus: role.offerBonus || 50000,
+        equity: role.offerEquity || 150000
+      };
+
+      const offerTotal = offer.base + offer.bonus + (offer.equity / 4);
+      const percentile = offerTotal < benchmark.total.p50 ? 'P25' : offerTotal > benchmark.total.max ? 'P75' : 'P50';
+
+      content.innerHTML = `
+        <div class="comparison-group">
+          <div class="comparison-title">Offer Analysis & Negotiation Strategy</div>
+
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); margin-bottom: var(--space-6);">
+            <div class="comp-item">
+              <div class="comp-item-label">Your Offer (Total)</div>
+              <div class="comp-item-value">$${(offerTotal / 1000).toFixed(0)}K</div>
+              <div class="comp-item-detail">Percentile: ${percentile}</div>
+            </div>
+            <div class="comp-item">
+              <div class="comp-item-label">Market P50</div>
+              <div class="comp-item-value">$${(benchmark.total.p50 / 1000).toFixed(0)}K</div>
+              <div class="comp-item-detail">Delta: ${offerTotal > benchmark.total.p50 ? '+' : ''}$${((offerTotal - benchmark.total.p50) / 1000).toFixed(0)}K</div>
+            </div>
+          </div>
+
+          <div class="comp-notes">
+            <strong>Market Position:</strong> Your offer is at the ${percentile} percentile for ${role.level} ${role.positioning} roles at ${company.name}. ${offerTotal < benchmark.total.p50 ? 'This is below the median—consider counter-offering at P50 or P75 with market data backing.' : 'This is a strong market-aligned offer.'}
+          </div>
+
+          <div style="margin-top: var(--space-6);">
+            <h3 style="font-size: var(--text-lg); font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-4);">Negotiation Scorecard</h3>
+            <div class="scorecard">
+              <div class="scorecard-item">
+                <div class="scorecard-label">Base Salary</div>
+                <div class="scorecard-rating">
+                  ${[1, 2, 3, 4, 5].map(i => `<div class="rating-star ${offer.base >= benchmark.base.p50 ? 'filled' : ''}" data-field="base" data-value="${i}">${i}</div>`).join('')}
+                </div>
+                <div class="scorecard-note">Offer: $${(offer.base / 1000).toFixed(0)}K vs Market P50: $${(benchmark.base.p50 / 1000).toFixed(0)}K</div>
+              </div>
+
+              <div class="scorecard-item">
+                <div class="scorecard-label">Bonus</div>
+                <div class="scorecard-rating">
+                  ${[1, 2, 3, 4, 5].map(i => `<div class="rating-star ${offer.bonus >= benchmark.bonus.p50 ? 'filled' : ''}" data-field="bonus" data-value="${i}">${i}</div>`).join('')}
+                </div>
+                <div class="scorecard-note">Offer: $${(offer.bonus / 1000).toFixed(0)}K vs Market P50: $${(benchmark.bonus.p50 / 1000).toFixed(0)}K</div>
+              </div>
+
+              <div class="scorecard-item">
+                <div class="scorecard-label">Equity</div>
+                <div class="scorecard-rating">
+                  ${[1, 2, 3, 4, 5].map(i => `<div class="rating-star ${offer.equity >= benchmark.equity.p50 ? 'filled' : ''}" data-field="equity" data-value="${i}">${i}</div>`).join('')}
+                </div>
+                <div class="scorecard-note">Offer: $${(offer.equity / 1000).toFixed(0)}K/yr (4yr) vs Market P50: $${(benchmark.equity.p50 / 1000).toFixed(0)}K</div>
+              </div>
+
+              <div class="scorecard-item">
+                <div class="scorecard-label">Vesting Schedule</div>
+                <div class="scorecard-rating">
+                  <div class="rating-star filled">4</div>
+                </div>
+                <div class="scorecard-note">4-year vest with 1-year cliff is market standard</div>
+              </div>
+
+              <div class="scorecard-item">
+                <div class="scorecard-label">Growth Trajectory</div>
+                <div class="scorecard-rating">
+                  <div class="rating-star filled">5</div>
+                </div>
+                <div class="scorecard-note">Staff role at ${company.name} offers strong growth</div>
+              </div>
+
+              <div class="scorecard-item">
+                <div class="scorecard-label">Team & Impact</div>
+                <div class="scorecard-rating">
+                  <div class="rating-star filled">4</div>
+                </div>
+                <div class="scorecard-note">Influence across multiple product areas</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="comp-notes" style="margin-top: var(--space-6);">
+            <strong>Counter-offer Recommendation:</strong> Ask for $${(benchmark.total.p50 / 1000).toFixed(0)}K total comp ($${(benchmark.base.p50 / 1000).toFixed(0)}K base, $${(benchmark.bonus.p50 / 1000).toFixed(0)}K bonus, $${(benchmark.equity.p50 / 1000).toFixed(0)}K/yr equity). Use market data from Levels.fyi and this analysis to back your ask.
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * Render dashboard tab: table view of all roles with comp data.
+     */
+    function renderDashboard() {
+      const content = document.getElementById('dashboardContent');
+      const targetMin = pipelineData.preferences.targetComp?.min || DEFAULT_COMP_TARGET.min;
+
+      let tableHTML = `
+        <table class="comp-table">
+          <thead>
+            <tr>
+              <th onclick="sortTable(this)">Company</th>
+              <th onclick="sortTable(this)">Role</th>
+              <th onclick="sortTable(this)">Level</th>
+              <th onclick="sortTable(this)">Market P50</th>
+              <th onclick="sortTable(this)">vs Target</th>
+              <th onclick="sortTable(this)">Stage</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      for (const role of pipelineData.roles) {
+        const company = pipelineData.companies[role.company_id];
+        if (!company) continue;
+
+        const benchmark = generateBenchmark(role, company);
+        const delta = benchmark.total.p50 - targetMin;
+        let badge = 'target';
+        if (benchmark.total.p50 > targetMin + 50000) badge = 'above';
+        else if (benchmark.total.p50 < targetMin - 50000) badge = 'below';
+
+        tableHTML += `
+          <tr onclick="selectRole('${role.id}')">
+            <td>${company.name}</td>
+            <td>${role.title}</td>
+            <td>${role.level}</td>
+            <td>$${(benchmark.total.p50 / 1000).toFixed(0)}K</td>
+            <td>
+              <span class="comp-badge ${badge}">
+                ${delta > 0 ? '+' : ''}$${(delta / 1000).toFixed(0)}K
+              </span>
+            </td>
+            <td>${role.stage}</td>
+          </tr>
+        `;
+      }
+
+      tableHTML += `
+          </tbody>
+        </table>
+      `;
+
+      content.innerHTML = tableHTML;
+    }
+
+    /**
+     * Render history tab: decisions influenced by comp data.
+     */
+    function renderHistory() {
+      const content = document.getElementById('historyContent');
+
+      content.innerHTML = `
+        <div class="comparison-group">
+          <div class="comparison-title">Comp Intelligence History</div>
+          <div class="comp-notes">
+            This tab will track decisions you've made based on compensation data:
+            <ul style="margin-top: var(--space-3); margin-left: var(--space-4); line-height: 1.8;">
+              <li>Roles you've deprioritized due to low comp vs market</li>
+              <li>Positioning choices informed by market benchmarks</li>
+              <li>Offers compared to market percentiles</li>
+              <li>Counter-offer negotiations and outcomes</li>
+            </ul>
+            Check back here after making decisions to see the impact of comp intelligence on your job search strategy.
+          </div>
+        </div>
+      `;
+    }
+
+    // ============================================================
+    // EVENT HANDLERS
+    // ============================================================
+
+    /**
+     * Initialize event listeners once DOM is ready.
+     */
+    function initializeEventListeners() {
+      // Tab switching
+      document.querySelectorAll('.comp-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+          const tabName = e.target.dataset.tab;
+
+          // Update active tab button
+          document.querySelectorAll('.comp-tab').forEach(t => t.classList.remove('active'));
+          e.target.classList.add('active');
+
+          // Update active content
+          document.querySelectorAll('.comp-tab-content').forEach(c => c.classList.remove('active'));
+          document.getElementById(tabName + 'Tab').classList.add('active');
+        });
+      });
+
+      // Generate benchmark button
+      document.getElementById('generateBenchmarkBtn').addEventListener('click', () => {
+        if (!selectedRoleId) {
+          alert('Please select a role first');
+          return;
+        }
+        const role = pipelineData.roles.find(r => r.id === selectedRoleId);
+        const company = pipelineData.companies[role.company_id];
+        const benchmark = generateBenchmark(role, company);
+        renderBenchmarkTab(role, company, benchmark);
+      });
+
+      // Sidebar search
+      document.getElementById('sidebarSearch').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll('.role-item').forEach(item => {
+          const text = item.textContent.toLowerCase();
+          item.style.display = text.includes(query) ? 'block' : 'none';
+        });
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        // Cmd+K or Ctrl+K: focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+          e.preventDefault();
+          document.getElementById('sidebarSearch').focus();
+        }
+
+        // B: Generate benchmark
+        if (e.key === 'b' && !e.ctrlKey && !e.metaKey) {
+          if (selectedRoleId) {
+            document.getElementById('generateBenchmarkBtn').click();
+          }
+        }
+
+        // 1-5: Switch tabs
+        const tabIndex = parseInt(e.key) - 1;
+        if (tabIndex >= 0 && tabIndex <= 4) {
+          const tabs = document.querySelectorAll('.comp-tab');
+          if (tabs[tabIndex]) {
+            tabs[tabIndex].click();
+          }
+        }
+      });
+    }
+
+    /**
+     * Sort table by column (stub for expandability).
+     */
+    function sortTable(headerCell) {
+      // Simple ascending/descending toggle
+      console.log('Sorting by:', headerCell.textContent);
+    }
+
+    // ============================================================
+    // INITIALIZATION
+    // ============================================================
+
+    /**
+     * Run initialization sequence when DOM is ready.
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeData();
+      renderRolesList();
+      initializeEventListeners();
+
+      // Auto-select first role if available
+      if (pipelineData.roles.length > 0) {
+        selectRole(pipelineData.roles[0].id);
+      }
+    });
+  </script>
+  <script src="../shared/data-switcher.js"></script>
+</body>
+</html>

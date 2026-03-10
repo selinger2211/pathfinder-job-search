@@ -1,0 +1,2866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pathfinder - Calendar Integration</title>
+    <link rel="stylesheet" href="../shared/pathfinder.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* ============================================================================
+           THEME & DESIGN TOKENS
+           ============================================================================ */
+        :root {
+            --bg-base: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --bg-tertiary: #252d3d;
+            --text-primary: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --text-tertiary: #5f6368;
+            --accent: #8ab4f8;
+            --accent-hover: #aecbfa;
+            --accent-dark: #5f97f7;
+            --border: #3c4453;
+            --success: #81c995;
+            --warning: #fcc934;
+            --error: #f28482;
+            --info: #5f97f7;
+            --radius: 8px;
+            --radius-sm: 4px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+            --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
+        }
+
+        [data-theme="light"] {
+            --bg-base: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #eeeeee;
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --text-tertiary: #9aa0a6;
+            --border: #dadce0;
+            --accent: #1f71d8;
+            --accent-hover: #2b7de9;
+            --accent-dark: #1a5cb8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg-base);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        /* ============================================================================
+           NAVIGATION BAR
+           ============================================================================ */
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            gap: 24px;
+        }
+
+        .nav-brand {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--accent);
+            min-width: fit-content;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            overflow-x: auto;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .nav-links a:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .nav-links a.active {
+            color: var(--accent);
+            background: var(--bg-tertiary);
+            font-weight: 500;
+        }
+
+        #themeToggle {
+            background: none;
+            border: 1px solid var(--border);
+            padding: 6px 8px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        #themeToggle:hover {
+            background: var(--bg-tertiary);
+            color: var(--accent);
+        }
+
+        /* ============================================================================
+           MAIN LAYOUT
+           ============================================================================ */
+        .container {
+            display: flex;
+            height: calc(100vh - 53px);
+            gap: 0;
+        }
+
+        .sidebar {
+            width: 320px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: width 0.3s;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            border-right: none;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .workspace-header {
+            padding: 16px 24px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .workspace-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .workspace-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .workspace-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* ============================================================================
+           WEEK SELECTOR
+           ============================================================================ */
+        .week-selector {
+            margin-bottom: 16px;
+        }
+
+        .week-selector-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            margin-bottom: 8px;
+        }
+
+        .week-selector-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .week-selector-controls button {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .week-selector-controls button:hover {
+            background: var(--bg-base);
+            color: var(--accent);
+        }
+
+        .week-selector-label {
+            font-size: 13px;
+            color: var(--text-primary);
+            white-space: nowrap;
+            flex: 1;
+            text-align: center;
+        }
+
+        /* ============================================================================
+           FILTERS
+           ============================================================================ */
+        .filters {
+            margin-bottom: 20px;
+        }
+
+        .filters-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            margin-bottom: 8px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-btn {
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .filter-btn:hover {
+            background: var(--bg-base);
+            color: var(--text-primary);
+        }
+
+        .filter-btn.active {
+            background: var(--accent);
+            color: var(--bg-base);
+            border-color: var(--accent);
+        }
+
+        .filter-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* ============================================================================
+           EVENT LIST
+           ============================================================================ */
+        .event-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .event-item {
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .event-item:hover {
+            background: var(--bg-base);
+            border-color: var(--accent);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .event-item.unlinked {
+            border-color: var(--warning);
+        }
+
+        .event-item-time {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-bottom: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .event-item-title {
+            font-size: 13px;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .event-item-company {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .event-item-company-logo {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+            object-fit: cover;
+            background: var(--bg-base);
+        }
+
+        .event-item-meta {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .event-item-status {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        .event-item-status.linked {
+            background: var(--success);
+        }
+
+        .event-item-status.unlinked {
+            background: var(--warning);
+        }
+
+        /* ============================================================================
+           TABS
+           ============================================================================ */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+
+        .tab-btn {
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ============================================================================
+           WEEK VIEW
+           ============================================================================ */
+        .week-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+            height: 100%;
+        }
+
+        .day-column {
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .day-header {
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .day-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .day-date {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .day-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .day-event-card {
+            padding: 8px;
+            border-radius: var(--radius-sm);
+            border-left: 3px solid;
+            background: var(--bg-base);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 11px;
+        }
+
+        .day-event-card:hover {
+            box-shadow: var(--shadow-sm);
+            transform: translateY(-2px);
+        }
+
+        .day-event-card.interview {
+            border-left-color: var(--accent);
+        }
+
+        .day-event-card.screen {
+            border-left-color: var(--info);
+        }
+
+        .day-event-card.offer {
+            border-left-color: var(--success);
+        }
+
+        .day-event-card.followup {
+            border-left-color: var(--warning);
+        }
+
+        .day-event-card.unlinked {
+            border-left-color: var(--error);
+        }
+
+        .day-event-time {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            margin-bottom: 2px;
+        }
+
+        .day-event-title {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+            line-height: 1.3;
+        }
+
+        .day-event-company {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        /* ============================================================================
+           EVENT MANAGER / DETECTION
+           ============================================================================ */
+        .detection-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .scan-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .scan-btn {
+            padding: 10px 20px;
+            background: var(--accent);
+            color: var(--bg-base);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .scan-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .scan-btn:active {
+            transform: scale(0.98);
+        }
+
+        .scan-status {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .scan-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--text-tertiary);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .detection-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .detection-card {
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .detection-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .detection-logo {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-sm);
+            object-fit: cover;
+            background: var(--bg-tertiary);
+        }
+
+        .detection-info {
+            flex: 1;
+        }
+
+        .detection-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .detection-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .detection-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .detection-signals {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .signal {
+            padding: 8px 12px;
+            background: var(--bg-base);
+            border-left: 3px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .signal.high {
+            border-left-color: var(--success);
+        }
+
+        .signal.medium {
+            border-left-color: var(--warning);
+        }
+
+        .signal.low {
+            border-left-color: var(--text-tertiary);
+        }
+
+        .signal-text {
+            color: var(--text-secondary);
+            flex: 1;
+        }
+
+        .signal-badge {
+            padding: 2px 8px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            white-space: nowrap;
+        }
+
+        .signal.high .signal-badge {
+            background: rgba(129, 201, 149, 0.2);
+            color: var(--success);
+        }
+
+        .signal.medium .signal-badge {
+            background: rgba(252, 201, 52, 0.2);
+            color: var(--warning);
+        }
+
+        .detection-match {
+            padding: 12px;
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .detection-match-icon {
+            color: var(--success);
+        }
+
+        .detection-match-text {
+            flex: 1;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .detection-match-role {
+            font-weight: 600;
+        }
+
+        .detection-actions {
+            display: flex;
+            gap: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+        }
+
+        .detection-action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-base);
+            color: var(--text-primary);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .detection-action-btn:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
+        }
+
+        .detection-action-btn.confirm {
+            background: var(--accent);
+            color: var(--bg-base);
+            border-color: var(--accent);
+        }
+
+        .detection-action-btn.confirm:hover {
+            background: var(--accent-hover);
+        }
+
+        /* ============================================================================
+           NUDGE TIMELINE
+           ============================================================================ */
+        .nudge-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .nudge-group {
+            margin-bottom: 24px;
+        }
+
+        .nudge-group-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            margin-bottom: 12px;
+            padding-left: 12px;
+            border-left: 3px solid var(--text-tertiary);
+        }
+
+        .nudge-card {
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: var(--radius);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+
+        .nudge-card:hover {
+            background: var(--bg-tertiary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .nudge-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .nudge-timing {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 48px;
+            height: 48px;
+            background: var(--accent);
+            color: var(--bg-base);
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 11px;
+            text-align: center;
+            padding: 4px;
+        }
+
+        .nudge-content {
+            flex: 1;
+        }
+
+        .nudge-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .nudge-description {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .nudge-metadata {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .nudge-action {
+            padding: 8px 16px;
+            background: var(--accent);
+            color: var(--bg-base);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nudge-action:hover {
+            background: var(--accent-hover);
+        }
+
+        .nudge-action-secondary {
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        .nudge-action-secondary:hover {
+            background: var(--bg-base);
+            border-color: var(--accent);
+        }
+
+        /* ============================================================================
+           SYNC LOG
+           ============================================================================ */
+        .sync-log-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .sync-log-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .sync-refresh-btn {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sync-refresh-btn:hover {
+            background: var(--bg-base);
+            border-color: var(--accent);
+        }
+
+        .sync-log-entries {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .sync-log-entry {
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sync-log-entry.success {
+            border-left: 3px solid var(--success);
+        }
+
+        .sync-log-entry.warning {
+            border-left: 3px solid var(--warning);
+        }
+
+        .sync-log-entry-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .sync-log-time {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            white-space: nowrap;
+        }
+
+        .sync-log-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .sync-log-status.success {
+            background: rgba(129, 201, 149, 0.2);
+            color: var(--success);
+        }
+
+        .sync-log-status.warning {
+            background: rgba(252, 201, 52, 0.2);
+            color: var(--warning);
+        }
+
+        .sync-log-details {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 8px;
+        }
+
+        .sync-log-detail-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sync-log-detail-label {
+            color: var(--text-tertiary);
+        }
+
+        .sync-log-detail-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* ============================================================================
+           MODALS & OVERLAYS
+           ============================================================================ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .modal-content {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: 1px solid var(--border);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-btn:hover {
+            background: var(--bg-base);
+        }
+
+        .modal-btn.primary {
+            background: var(--accent);
+            color: var(--bg-base);
+            border-color: var(--accent);
+        }
+
+        .modal-btn.primary:hover {
+            background: var(--accent-hover);
+        }
+
+        /* ============================================================================
+           UTILITY CLASSES
+           ============================================================================ */
+        .empty-state {
+            padding: 48px 24px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            width: 48px;
+            height: 48px;
+            color: var(--text-tertiary);
+            opacity: 0.5;
+        }
+
+        .empty-state-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .badge.success {
+            background: rgba(129, 201, 149, 0.2);
+            color: var(--success);
+        }
+
+        .badge.warning {
+            background: rgba(252, 201, 52, 0.2);
+            color: var(--warning);
+        }
+
+        .badge.error {
+            background: rgba(242, 132, 130, 0.2);
+            color: var(--error);
+        }
+
+        .badge.info {
+            background: rgba(95, 151, 247, 0.2);
+            color: var(--info);
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--text-tertiary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="nav-bar">
+        <span class="nav-brand">Pathfinder</span>
+        <div class="nav-links">
+            <a href="../dashboard/index.html">Dashboard</a>
+            <a href="../pipeline/index.html">Pipeline</a>
+            <a href="../research-brief/index.html">Research</a>
+            <a href="../resume-tailor/index.html">Resume</a>
+            <a href="../job-feed-listener/index.html">Feed</a>
+            <a href="../outreach/index.html">Outreach</a>
+            <a href="../mock-interview/index.html">Mock</a>
+            <a href="../debrief/index.html">Debrief</a>
+            <a href="../comp-intel/index.html">Comp</a>
+            <a href="index.html" class="active">Calendar</a>
+            <button id="themeToggle" onclick="toggleTheme()" title="Toggle theme">
+                <i id="themeIcon" data-lucide="moon" width="16" height="16"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <span style="font-size: 12px; font-weight: 600; color: var(--text-primary);">SCHEDULE</span>
+                <button id="toggleSidebar" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px;">
+                    <i data-lucide="chevron-left" width="16" height="16"></i>
+                </button>
+            </div>
+            <div class="sidebar-content">
+                <!-- Week Selector -->
+                <div class="week-selector">
+                    <div class="week-selector-title">Week View</div>
+                    <div class="week-selector-controls">
+                        <button id="prevWeekBtn" onclick="previousWeek()">← Prev</button>
+                        <div class="week-selector-label" id="weekLabel">This Week</div>
+                        <button id="nextWeekBtn" onclick="nextWeek()">Next →</button>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="filters">
+                    <div class="filters-title">Filter Events</div>
+                    <div class="filter-group">
+                        <button class="filter-btn active" onclick="filterEvents('all')" id="filterAll">
+                            <span>All Events</span>
+                            <span class="filter-badge" id="badgeAll">0</span>
+                        </button>
+                        <button class="filter-btn" onclick="filterEvents('interview')" id="filterInterview">
+                            <span>Interviews</span>
+                            <span class="filter-badge" id="badgeInterview">0</span>
+                        </button>
+                        <button class="filter-btn" onclick="filterEvents('followup')" id="filterFollowup">
+                            <span>Follow-ups</span>
+                            <span class="filter-badge" id="badgeFollowup">0</span>
+                        </button>
+                        <button class="filter-btn" onclick="filterEvents('unlinked')" id="filterUnlinked">
+                            <span>Unlinked</span>
+                            <span class="filter-badge" id="badgeUnlinked">0</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Upcoming Events List -->
+                <div style="margin-top: 20px;">
+                    <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 8px;">Next 7 Days</div>
+                    <div class="event-list" id="upcomingEventList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Workspace -->
+        <div class="workspace">
+            <div class="workspace-header">
+                <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
+                    <h1 class="workspace-title">Calendar Integration</h1>
+                </div>
+                <div class="workspace-controls">
+                    <button style="background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 6px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm);" onclick="openCommandPalette()" title="Command Palette (Cmd+K)">
+                        <i data-lucide="command" width="18" height="18"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('week')">Week View</button>
+                <button class="tab-btn" onclick="switchTab('detection')">Event Manager</button>
+                <button class="tab-btn" onclick="switchTab('nudges')">Nudges</button>
+                <button class="tab-btn" onclick="switchTab('log')">Sync Log</button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="workspace-content">
+                <!-- Tab 1: Week View -->
+                <div class="tab-content active" id="tabWeek">
+                    <div class="week-grid" id="weekGrid"></div>
+                </div>
+
+                <!-- Tab 2: Event Manager / Detection -->
+                <div class="tab-content" id="tabDetection">
+                    <div class="detection-container">
+                        <div class="scan-controls">
+                            <button class="scan-btn" id="scanBtn" onclick="scanCalendar()">
+                                <i data-lucide="radio" width="16" height="16"></i>
+                                <span>Scan Calendar</span>
+                            </button>
+                            <div class="scan-status" id="scanStatus"></div>
+                        </div>
+                        <div class="detection-grid" id="detectionGrid"></div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Nudge Timeline -->
+                <div class="tab-content" id="tabNudges">
+                    <div class="nudge-list" id="nudgeList"></div>
+                </div>
+
+                <!-- Tab 4: Sync Log -->
+                <div class="tab-content" id="tabLog">
+                    <div class="sync-log-container">
+                        <div class="sync-log-header">
+                            <h3 style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Recent Syncs</h3>
+                            <button class="sync-refresh-btn" onclick="refreshSyncLog()">
+                                <i data-lucide="rotate-cw" width="16" height="16"></i>
+                                <span>Refresh</span>
+                            </button>
+                        </div>
+                        <div class="sync-log-entries" id="syncLogEntries"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Detail Modal -->
+    <div class="modal-overlay" id="eventModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="eventModalTitle">Event Details</h2>
+                </div>
+                <button class="modal-close" onclick="closeModal('eventModal')">
+                    <i data-lucide="x" width="18" height="18"></i>
+                </button>
+            </div>
+            <div class="modal-content" id="eventModalContent"></div>
+            <div class="modal-footer">
+                <div class="modal-actions">
+                    <button class="modal-btn" onclick="closeModal('eventModal')">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Command Palette Modal -->
+    <div class="modal-overlay" id="commandModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <input type="text" id="commandInput" placeholder="Type a command..." style="background: var(--bg-base); border: 1px solid var(--border); color: var(--text-primary); padding: 10px 12px; border-radius: var(--radius-sm); flex: 1; font-size: 14px;">
+                <button class="modal-close" onclick="closeModal('commandModal')">
+                    <i data-lucide="x" width="18" height="18"></i>
+                </button>
+            </div>
+            <div class="modal-content" id="commandList" style="padding: 0;"></div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // DATA MANAGEMENT & INITIALIZATION
+        // ============================================================================
+
+        /**
+         * Initialize the calendar module with demo data and event listeners.
+         * This runs once when the page loads.
+         */
+        function initializeModule() {
+            // Load or create demo data
+            loadOrCreateDemoData();
+
+            // Set up event listeners
+            document.addEventListener('keydown', handleKeyboardShortcuts);
+            document.addEventListener('click', handleOutsideClick);
+
+            // Render initial views
+            renderWeekView();
+            updateUpcomingEventList();
+            updateFilterBadges();
+            generateNudges();
+            renderNudgeTimeline();
+            loadSyncLog();
+
+            // Initialize Lucide icons
+            lucide.createIcons();
+        }
+
+        /**
+         * Create or retrieve demo calendar events with realistic interview scenarios.
+         * Includes mix of linked, unlinked, phone screens, technical interviews, offer discussions.
+         */
+        function loadOrCreateDemoData() {
+            // Check if demo data already exists
+            let calendarEvents = getStorageData('pf_calendar_events');
+            if (!calendarEvents || calendarEvents.length === 0) {
+                calendarEvents = generateDemoCalendarEvents();
+                saveStorageData('pf_calendar_events', calendarEvents);
+            }
+
+            // Ensure nudges exist
+            let nudges = getStorageData('pf_calendar_nudges');
+            if (!nudges) {
+                nudges = [];
+                saveStorageData('pf_calendar_nudges', nudges);
+            }
+
+            // Ensure sync log exists
+            let syncLog = getStorageData('pf_sync_log');
+            if (!syncLog) {
+                syncLog = [];
+                saveStorageData('pf_sync_log', syncLog);
+            }
+
+            // Load or create demo roles if they don't exist
+            let roles = getStorageData('pf_roles');
+            if (!roles || roles.length === 0) {
+                roles = generateDemoRoles();
+                saveStorageData('pf_roles', roles);
+            }
+
+            // Load or create demo companies if they don't exist
+            let companies = getStorageData('pf_companies');
+            if (!companies || companies.length === 0) {
+                companies = generateDemoCompanies();
+                saveStorageData('pf_companies', companies);
+            }
+
+            // Load theme preference
+            const theme = getStorageData('pf_theme');
+            if (theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                updateThemeIcon(theme);
+            }
+        }
+
+        /**
+         * Generate realistic demo calendar events spanning 2 weeks.
+         */
+        function generateDemoCalendarEvents() {
+            const now = new Date();
+            const events = [];
+
+            // Helper to create event date
+            function eventDate(daysFromNow, hour, minute = 0) {
+                const d = new Date(now);
+                d.setDate(d.getDate() + daysFromNow);
+                d.setHours(hour, minute, 0, 0);
+                return d;
+            }
+
+            // Event 1: Stripe Phone Screen (Day 2, 10 AM) - Linked to role
+            events.push({
+                id: 'evt-001',
+                title: 'Phone Screen - Stripe',
+                company: 'Stripe',
+                companyDomain: 'stripe.com',
+                description: 'Initial phone screen with recruiter',
+                start: eventDate(2, 10),
+                end: eventDate(2, 10.5),
+                attendees: ['recruiter@stripe.com', 'You'],
+                type: 'screen',
+                linkedRoleId: 'role-001',
+                calendarEventId: 'cal-001',
+                detectionConfidence: 0.95,
+                detectionSignals: [
+                    { signal: 'Title keywords', confidence: 'High' },
+                    { signal: 'Attendee domain match', confidence: 'High' },
+                    { signal: 'Recruiter name match', confidence: 'High' }
+                ]
+            });
+
+            // Event 2: Meta Technical Interview (Day 4, 2 PM) - Unlinked
+            events.push({
+                id: 'evt-002',
+                title: 'Technical Round - Meta',
+                company: 'Meta',
+                companyDomain: 'facebook.com',
+                description: 'System design interview with senior engineer',
+                start: eventDate(4, 14),
+                end: eventDate(4, 15),
+                attendees: ['engineering@meta.com', 'You'],
+                type: 'interview',
+                linkedRoleId: null,
+                calendarEventId: 'cal-002',
+                detectionConfidence: 0.88,
+                detectionSignals: [
+                    { signal: 'Title keywords', confidence: 'High' },
+                    { signal: 'Attendee domain match', confidence: 'High' }
+                ]
+            });
+
+            // Event 3: Datadog Hiring Manager Call (Day 5, 3:30 PM) - Linked
+            events.push({
+                id: 'evt-003',
+                title: 'Hiring Manager Round - Datadog',
+                company: 'Datadog',
+                companyDomain: 'datadoghq.com',
+                description: 'Final round interview with hiring manager',
+                start: eventDate(5, 15.5),
+                end: eventDate(5, 16.5),
+                attendees: ['hiring@datadog.com', 'You'],
+                type: 'interview',
+                linkedRoleId: 'role-003',
+                calendarEventId: 'cal-003',
+                detectionConfidence: 0.92,
+                detectionSignals: [
+                    { signal: 'Title keywords', confidence: 'High' },
+                    { signal: 'Attendee domain match', confidence: 'High' }
+                ]
+            });
+
+            // Event 4: Figma Take-home Review (Day 7, 1 PM) - Linked
+            events.push({
+                id: 'evt-004',
+                title: 'Take-home Review Session',
+                company: 'Figma',
+                companyDomain: 'figma.com',
+                description: 'Review and discussion of take-home project',
+                start: eventDate(7, 13),
+                end: eventDate(7, 14),
+                attendees: ['engineering@figma.com', 'You'],
+                type: 'interview',
+                linkedRoleId: 'role-004',
+                calendarEventId: 'cal-004',
+                detectionConfidence: 0.80,
+                detectionSignals: [
+                    { signal: 'Duration heuristic', confidence: 'Low' },
+                    { signal: 'Description content', confidence: 'Medium' }
+                ]
+            });
+
+            // Event 5: Notion Follow-up (Day 9, 11 AM) - Linked, potential next round
+            events.push({
+                id: 'evt-005',
+                title: 'Final Round Interview - Notion',
+                company: 'Notion',
+                companyDomain: 'notion.so',
+                description: 'Final interview with co-founder',
+                start: eventDate(9, 11),
+                end: eventDate(9, 12),
+                attendees: ['recruiting@notion.so', 'You'],
+                type: 'interview',
+                linkedRoleId: 'role-005',
+                calendarEventId: 'cal-005',
+                detectionConfidence: 0.89,
+                detectionSignals: [
+                    { signal: 'Title keywords', confidence: 'High' },
+                    { signal: 'Attendee domain match', confidence: 'High' }
+                ]
+            });
+
+            // Event 6: Stripe Follow-up (Day 10, 2 PM) - Linked, second round
+            events.push({
+                id: 'evt-006',
+                title: 'Technical Interview - Stripe',
+                company: 'Stripe',
+                companyDomain: 'stripe.com',
+                description: 'Technical round with engineering team',
+                start: eventDate(10, 14),
+                end: eventDate(10, 15),
+                attendees: ['engineering@stripe.com', 'You'],
+                type: 'interview',
+                linkedRoleId: 'role-001',
+                calendarEventId: 'cal-006',
+                detectionConfidence: 0.91,
+                detectionSignals: [
+                    { signal: 'Title keywords', confidence: 'High' },
+                    { signal: 'Attendee domain match', confidence: 'High' }
+                ]
+            });
+
+            // Event 7: Figma Offer Discussion (Day 11, 4 PM) - Linked, potential offer
+            events.push({
+                id: 'evt-007',
+                title: 'Offer Discussion - Figma',
+                company: 'Figma',
+                companyDomain: 'figma.com',
+                description: 'Discuss offer and compensation',
+                start: eventDate(11, 16),
+                end: eventDate(11, 16.5),
+                attendees: ['hr@figma.com', 'You'],
+                type: 'offer',
+                linkedRoleId: 'role-004',
+                calendarEventId: 'cal-007',
+                detectionConfidence: 0.85,
+                detectionSignals: [
+                    { signal: 'Title keywords', confidence: 'High' },
+                    { signal: 'Attendee domain match', confidence: 'High' }
+                ]
+            });
+
+            // Event 8: Unlinked meeting with generic title (Day 6, 9 AM) - Unlinked
+            events.push({
+                id: 'evt-008',
+                title: 'Coffee Chat',
+                company: 'Unknown',
+                companyDomain: '',
+                description: 'Meeting with external contact',
+                start: eventDate(6, 9),
+                end: eventDate(6, 9.5),
+                attendees: ['contact@company.com', 'You'],
+                type: 'followup',
+                linkedRoleId: null,
+                calendarEventId: 'cal-008',
+                detectionConfidence: 0.35,
+                detectionSignals: [
+                    { signal: 'Duration heuristic', confidence: 'Low' }
+                ]
+            });
+
+            return events;
+        }
+
+        /**
+         * Generate demo roles for the pipeline.
+         */
+        function generateDemoRoles() {
+            return [
+                {
+                    id: 'role-001',
+                    companyId: 'company-001',
+                    title: 'Senior Product Manager',
+                    stage: 'screen',
+                    appliedDate: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+                    interviewRounds: [
+                        {
+                            date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+                            type: 'phone_screen',
+                            interviewers: ['recruiter@stripe.com'],
+                            calendarEventId: 'cal-001'
+                        }
+                    ]
+                },
+                {
+                    id: 'role-002',
+                    companyId: 'company-002',
+                    title: 'Product Manager - Growth',
+                    stage: 'applied',
+                    appliedDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+                    interviewRounds: []
+                },
+                {
+                    id: 'role-003',
+                    companyId: 'company-003',
+                    title: 'Senior PM, Infrastructure',
+                    stage: 'interviewing',
+                    appliedDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+                    interviewRounds: [
+                        {
+                            date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+                            type: 'hiring_manager',
+                            interviewers: ['hiring@datadog.com'],
+                            calendarEventId: 'cal-003'
+                        }
+                    ]
+                },
+                {
+                    id: 'role-004',
+                    companyId: 'company-004',
+                    title: 'Product Manager - Design Systems',
+                    stage: 'interviewing',
+                    appliedDate: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000),
+                    interviewRounds: [
+                        {
+                            date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                            type: 'technical_round',
+                            interviewers: ['engineering@figma.com'],
+                            calendarEventId: 'cal-004'
+                        }
+                    ]
+                },
+                {
+                    id: 'role-005',
+                    companyId: 'company-005',
+                    title: 'Product Manager',
+                    stage: 'interviewing',
+                    appliedDate: new Date(Date.now() - 22 * 24 * 60 * 60 * 1000),
+                    interviewRounds: [
+                        {
+                            date: new Date(Date.now() + 9 * 24 * 60 * 60 * 1000),
+                            type: 'final_round',
+                            interviewers: ['recruiting@notion.so'],
+                            calendarEventId: 'cal-005'
+                        }
+                    ]
+                }
+            ];
+        }
+
+        /**
+         * Generate demo companies.
+         */
+        function generateDemoCompanies() {
+            return [
+                { id: 'company-001', name: 'Stripe', domain: 'stripe.com' },
+                { id: 'company-002', name: 'Meta', domain: 'facebook.com' },
+                { id: 'company-003', name: 'Datadog', domain: 'datadoghq.com' },
+                { id: 'company-004', name: 'Figma', domain: 'figma.com' },
+                { id: 'company-005', name: 'Notion', domain: 'notion.so' },
+                { id: 'company-006', name: 'Slack', domain: 'slack.com' },
+                { id: 'company-007', name: 'Airbnb', domain: 'airbnb.com' },
+                { id: 'company-008', name: 'Square', domain: 'square.com' }
+            ];
+        }
+
+        // ============================================================================
+        // STORAGE UTILITIES
+        // ============================================================================
+
+        /**
+         * Get data from localStorage with pf_ prefix.
+         */
+        function getStorageData(key) {
+            try {
+                const data = localStorage.getItem(`pf_${key}`);
+                return data ? JSON.parse(data) : null;
+            } catch (e) {
+                console.error(`Error reading storage key ${key}:`, e);
+                return null;
+            }
+        }
+
+        /**
+         * Save data to localStorage with pf_ prefix.
+         */
+        function saveStorageData(key, data) {
+            try {
+                localStorage.setItem(`pf_${key}`, JSON.stringify(data));
+            } catch (e) {
+                console.error(`Error saving storage key ${key}:`, e);
+            }
+        }
+
+        // ============================================================================
+        // DATE & TIME UTILITIES
+        // ============================================================================
+
+        /**
+         * Get start of week (Monday) for a given date.
+         */
+        function getWeekStart(date = new Date()) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+
+        /**
+         * Format date as "Mon, Mar 9".
+         */
+        function formatDateShort(date) {
+            const options = { weekday: 'short', month: 'short', day: 'numeric' };
+            return new Intl.DateTimeFormat('en-US', options).format(date);
+        }
+
+        /**
+         * Format time as "2:30 PM".
+         */
+        function formatTime(date) {
+            const options = { hour: 'numeric', minute: '2-digit', hour12: true };
+            return new Intl.DateTimeFormat('en-US', options).format(date);
+        }
+
+        /**
+         * Check if event is today.
+         */
+        function isToday(date) {
+            const today = new Date();
+            return date.toDateString() === today.toDateString();
+        }
+
+        /**
+         * Get human-readable time difference (e.g., "in 2 days").
+         */
+        function getTimeUntil(date) {
+            const now = new Date();
+            const diff = date - now;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+            if (days > 0) return `in ${days} day${days > 1 ? 's' : ''}`;
+            if (hours > 0) return `in ${hours} hour${hours > 1 ? 's' : ''}`;
+            if (diff > 0) return 'soon';
+            return 'now';
+        }
+
+        // ============================================================================
+        // WEEK VIEW RENDERING
+        // ============================================================================
+
+        let currentWeekStart = getWeekStart();
+
+        function nextWeek() {
+            currentWeekStart = new Date(currentWeekStart);
+            currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+            renderWeekView();
+            updateUpcomingEventList();
+        }
+
+        function previousWeek() {
+            currentWeekStart = new Date(currentWeekStart);
+            currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+            renderWeekView();
+            updateUpcomingEventList();
+        }
+
+        /**
+         * Render the 7-day week grid with events.
+         */
+        function renderWeekView() {
+            const weekGrid = document.getElementById('weekGrid');
+            weekGrid.innerHTML = '';
+
+            const calendarEvents = getStorageData('calendar_events') || [];
+
+            // Create 7 day columns
+            for (let i = 0; i < 7; i++) {
+                const dayDate = new Date(currentWeekStart);
+                dayDate.setDate(dayDate.getDate() + i);
+
+                const dayColumn = document.createElement('div');
+                dayColumn.className = 'day-column';
+
+                // Day header
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'day-header';
+                const dayName = document.createElement('div');
+                dayName.className = 'day-name';
+                dayName.textContent = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayDate.getDay()];
+                const dayDateEl = document.createElement('div');
+                dayDateEl.className = 'day-date';
+                dayDateEl.textContent = dayDate.getDate();
+                dayHeader.appendChild(dayName);
+                dayHeader.appendChild(dayDateEl);
+                dayColumn.appendChild(dayHeader);
+
+                // Day content with events
+                const dayContent = document.createElement('div');
+                dayContent.className = 'day-content';
+
+                // Filter events for this day
+                const allEvents = getStorageData('calendar_events') || [];
+                const dayEvents = allEvents.filter(evt => {
+                    const eventDate = new Date(evt.start);
+                    return eventDate.toDateString() === dayDate.toDateString();
+                });
+
+                if (dayEvents.length === 0) {
+                    const emptyMsg = document.createElement('div');
+                    emptyMsg.style.fontSize = '11px';
+                    emptyMsg.style.color = 'var(--text-tertiary)';
+                    emptyMsg.style.textAlign = 'center';
+                    emptyMsg.style.padding = '12px 4px';
+                    emptyMsg.textContent = 'No events';
+                    dayContent.appendChild(emptyMsg);
+                } else {
+                    dayEvents.forEach(evt => {
+                        const eventCard = document.createElement('div');
+                        eventCard.className = `day-event-card ${evt.type} ${!evt.linkedRoleId ? 'unlinked' : ''}`;
+                        eventCard.style.cursor = 'pointer';
+                        eventCard.onclick = () => openEventDetail(evt);
+
+                        const timeEl = document.createElement('div');
+                        timeEl.className = 'day-event-time';
+                        timeEl.textContent = formatTime(new Date(evt.start));
+                        eventCard.appendChild(timeEl);
+
+                        const titleEl = document.createElement('div');
+                        titleEl.className = 'day-event-title';
+                        titleEl.textContent = evt.title;
+                        eventCard.appendChild(titleEl);
+
+                        const companyEl = document.createElement('div');
+                        companyEl.className = 'day-event-company';
+                        companyEl.textContent = evt.company;
+                        eventCard.appendChild(companyEl);
+
+                        dayContent.appendChild(eventCard);
+                    });
+                }
+
+                dayColumn.appendChild(dayContent);
+                weekGrid.appendChild(dayColumn);
+            }
+
+            // Update week label
+            const weekEnd = new Date(currentWeekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+            const weekLabel = document.getElementById('weekLabel');
+            weekLabel.textContent = `${currentWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+        }
+
+        // ============================================================================
+        // SIDEBAR & FILTERING
+        // ============================================================================
+
+        let activeFilter = 'all';
+
+        function filterEvents(type) {
+            activeFilter = type;
+
+            // Update button states
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`filter${type.charAt(0).toUpperCase() + type.slice(1)}`).classList.add('active');
+
+            updateUpcomingEventList();
+        }
+
+        /**
+         * Update the upcoming events list in the sidebar based on active filter.
+         */
+        function updateUpcomingEventList() {
+            const eventList = document.getElementById('upcomingEventList');
+            eventList.innerHTML = '';
+
+            const allEvents = getStorageData('calendar_events') || [];
+            const now = new Date();
+
+            // Filter events from next 7 days
+            let filteredEvents = allEvents.filter(evt => {
+                const eventDate = new Date(evt.start);
+                const daysAway = Math.floor((eventDate - now) / (1000 * 60 * 60 * 24));
+                if (daysAway < 0 || daysAway > 7) return false;
+
+                if (activeFilter === 'all') return true;
+                if (activeFilter === 'interview') return evt.type === 'interview';
+                if (activeFilter === 'followup') return evt.type === 'followup';
+                if (activeFilter === 'unlinked') return !evt.linkedRoleId;
+
+                return true;
+            });
+
+            // Sort by date
+            filteredEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+            if (filteredEvents.length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'empty-state' ;
+                emptyMsg.style.padding = '24px 12px';
+                emptyMsg.textContent = 'No events';
+                eventList.appendChild(emptyMsg);
+                return;
+            }
+
+            filteredEvents.forEach(evt => {
+                const item = document.createElement('div');
+                item.className = `event-item ${!evt.linkedRoleId ? 'unlinked' : ''}`;
+                item.onclick = () => openEventDetail(evt);
+
+                const time = document.createElement('div');
+                time.className = 'event-item-time';
+                time.textContent = formatTime(new Date(evt.start));
+                item.appendChild(time);
+
+                const title = document.createElement('div');
+                title.className = 'event-item-title';
+                title.textContent = evt.title;
+                item.appendChild(title);
+
+                const company = document.createElement('div');
+                company.className = 'event-item-company';
+                if (evt.company !== 'Unknown') {
+                    const logo = document.createElement('img');
+                    logo.className = 'event-item-company-logo';
+                    logo.src = `https://logo.clearbit.com/${evt.companyDomain}`;
+                    logo.onerror = function() { this.style.display = 'none'; };
+                    company.appendChild(logo);
+                }
+                const companyName = document.createElement('span');
+                companyName.textContent = evt.company;
+                company.appendChild(companyName);
+                item.appendChild(company);
+
+                const meta = document.createElement('div');
+                meta.className = 'event-item-meta';
+                const statusDot = document.createElement('span');
+                statusDot.className = `event-item-status ${evt.linkedRoleId ? 'linked' : 'unlinked'}`;
+                meta.appendChild(statusDot);
+                const metaText = document.createElement('span');
+                metaText.textContent = evt.linkedRoleId ? 'Linked' : 'Unlinked';
+                meta.appendChild(metaText);
+                item.appendChild(meta);
+
+                eventList.appendChild(item);
+            });
+        }
+
+        /**
+         * Update badge counts for filters.
+         */
+        function updateFilterBadges() {
+            const allEvents = getStorageData('calendar_events') || [];
+
+            const allCount = allEvents.length;
+            const interviewCount = allEvents.filter(e => e.type === 'interview').length;
+            const followupCount = allEvents.filter(e => e.type === 'followup').length;
+            const unlinkedCount = allEvents.filter(e => !e.linkedRoleId).length;
+
+            document.getElementById('badgeAll').textContent = allCount;
+            document.getElementById('badgeInterview').textContent = interviewCount;
+            document.getElementById('badgeFollowup').textContent = followupCount;
+            document.getElementById('badgeUnlinked').textContent = unlinkedCount;
+        }
+
+        // ============================================================================
+        // EVENT DETECTION & SCANNING
+        // ============================================================================
+
+        let isScanning = false;
+
+        /**
+         * Simulate a calendar scan that detects potential event-to-role matches.
+         * Shows detection confidence and matching signals.
+         */
+        async function scanCalendar() {
+            if (isScanning) return;
+
+            isScanning = true;
+            const scanBtn = document.getElementById('scanBtn');
+            const scanStatus = document.getElementById('scanStatus');
+
+            scanBtn.disabled = true;
+            scanBtn.innerHTML = '<span style="width: 16px; height: 16px; border: 2px solid var(--bg-base); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block;"></span> <span>Scanning...</span>';
+            scanStatus.textContent = 'Initializing scan...';
+
+            // Simulate scan delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            scanStatus.textContent = 'Matching events...';
+
+            // Simulate more delay
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Render detected events
+            renderDetectionCards();
+
+            scanBtn.disabled = false;
+            scanBtn.innerHTML = '<i data-lucide="radio" width="16" height="16"></i> <span>Scan Calendar</span>';
+            scanStatus.textContent = '✓ Scan complete';
+            lucide.createIcons();
+
+            // Log scan to sync log
+            logSync('scan', 'completed', {
+                eventsScanned: getStorageData('calendar_events').length,
+                linkedCount: getStorageData('calendar_events').filter(e => e.linkedRoleId).length
+            });
+
+            isScanning = false;
+
+            // Clear status after 3 seconds
+            setTimeout(() => {
+                scanStatus.textContent = '';
+            }, 3000);
+        }
+
+        /**
+         * Render detection cards showing unlinked events with matching signals and confidence.
+         */
+        function renderDetectionCards() {
+            const detectionGrid = document.getElementById('detectionGrid');
+            detectionGrid.innerHTML = '';
+
+            const allEvents = getStorageData('calendar_events') || [];
+            const roles = getStorageData('pf_roles') || [];
+            const companies = getStorageData('pf_companies') || [];
+
+            // Only show events that are not yet linked or have low confidence
+            const detectableEvents = allEvents.filter(evt => !evt.linkedRoleId);
+
+            if (detectableEvents.length === 0) {
+                const msg = document.createElement('div');
+                msg.className = 'empty-state';
+                msg.textContent = 'All events are linked!';
+                detectionGrid.appendChild(msg);
+                return;
+            }
+
+            detectableEvents.forEach(evt => {
+                const card = document.createElement('div');
+                card.className = 'detection-card fade-in';
+
+                // Header with logo and title
+                const header = document.createElement('div');
+                header.className = 'detection-header';
+
+                const logo = document.createElement('img');
+                logo.className = 'detection-logo';
+                logo.src = `https://logo.clearbit.com/${evt.companyDomain}`;
+                logo.onerror = function() { this.style.display = 'none'; };
+                header.appendChild(logo);
+
+                const info = document.createElement('div');
+                info.className = 'detection-info';
+
+                const title = document.createElement('div');
+                title.className = 'detection-title';
+                title.textContent = evt.title;
+                info.appendChild(title);
+
+                const meta = document.createElement('div');
+                meta.className = 'detection-meta';
+
+                const timeEl = document.createElement('div');
+                timeEl.className = 'detection-meta-item';
+                timeEl.innerHTML = `<i data-lucide="clock" width="14" height="14"></i> ${formatTime(new Date(evt.start))}`;
+                meta.appendChild(timeEl);
+
+                const dateEl = document.createElement('div');
+                dateEl.className = 'detection-meta-item';
+                dateEl.innerHTML = `<i data-lucide="calendar" width="14" height="14"></i> ${formatDateShort(new Date(evt.start))}`;
+                meta.appendChild(dateEl);
+
+                info.appendChild(meta);
+                header.appendChild(info);
+                card.appendChild(header);
+
+                // Detection signals
+                const signals = document.createElement('div');
+                signals.className = 'detection-signals';
+
+                evt.detectionSignals.forEach(sig => {
+                    const signal = document.createElement('div');
+                    signal.className = `signal ${sig.confidence.toLowerCase()}`;
+
+                    const sigText = document.createElement('div');
+                    sigText.className = 'signal-text';
+                    sigText.textContent = sig.signal;
+                    signal.appendChild(sigText);
+
+                    const badge = document.createElement('div');
+                    badge.className = 'signal-badge';
+                    badge.textContent = sig.confidence;
+                    signal.appendChild(badge);
+
+                    signals.appendChild(signal);
+                });
+
+                card.appendChild(signals);
+
+                // Suggested match
+                // Find matching role if company match exists
+                const matchedRole = roles.find(role => {
+                    const roleCompany = companies.find(c => c.id === role.companyId);
+                    return roleCompany && roleCompany.name === evt.company;
+                });
+
+                if (matchedRole) {
+                    const match = document.createElement('div');
+                    match.className = 'detection-match';
+
+                    const matchIcon = document.createElement('div');
+                    matchIcon.className = 'detection-match-icon';
+                    matchIcon.innerHTML = '<i data-lucide="check-circle" width="18" height="18"></i>';
+                    match.appendChild(matchIcon);
+
+                    const matchText = document.createElement('div');
+                    matchText.className = 'detection-match-text';
+                    const matchRole = document.createElement('span');
+                    matchRole.className = 'detection-match-role';
+                    matchRole.textContent = matchedRole.title;
+                    matchText.appendChild(matchRole);
+                    matchText.appendChild(document.createTextNode(' at ' + evt.company));
+                    match.appendChild(matchText);
+
+                    card.appendChild(match);
+                }
+
+                // Actions
+                const actions = document.createElement('div');
+                actions.className = 'detection-actions';
+
+                const confirmBtn = document.createElement('button');
+                confirmBtn.className = 'detection-action-btn confirm';
+                confirmBtn.textContent = matchedRole ? 'Link Event' : 'Create Role';
+                confirmBtn.onclick = () => linkEventToRole(evt, matchedRole);
+                actions.appendChild(confirmBtn);
+
+                const dismissBtn = document.createElement('button');
+                dismissBtn.className = 'detection-action-btn';
+                dismissBtn.textContent = 'Dismiss';
+                dismissBtn.onclick = () => dismissDetection(evt.id);
+                actions.appendChild(dismissBtn);
+
+                card.appendChild(actions);
+                detectionGrid.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        /**
+         * Link an event to a role and update localStorage.
+         */
+        function linkEventToRole(event, role) {
+            const allEvents = getStorageData('calendar_events') || [];
+            const eventIndex = allEvents.findIndex(e => e.id === event.id);
+
+            if (eventIndex !== -1 && role) {
+                allEvents[eventIndex].linkedRoleId = role.id;
+                saveStorageData('calendar_events', allEvents);
+
+                // Log this action
+                logSync('link', 'completed', {
+                    event: event.title,
+                    role: role.title,
+                    confidence: event.detectionConfidence
+                });
+
+                // Refresh UI
+                renderDetectionCards();
+                renderWeekView();
+                updateUpcomingEventList();
+                updateFilterBadges();
+                generateNudges();
+                renderNudgeTimeline();
+
+                // Show confirmation
+                showNotification(`Linked "${event.title}" to "${role.title}"`);
+            }
+        }
+
+        /**
+         * Remove an event from detection list (mark as dismissed).
+         */
+        function dismissDetection(eventId) {
+            // Just re-render without this event
+            const detectionGrid = document.getElementById('detectionGrid');
+            const cards = detectionGrid.querySelectorAll('.detection-card');
+            cards.forEach(card => {
+                if (card.dataset.eventId === eventId) {
+                    card.remove();
+                }
+            });
+        }
+
+        // ============================================================================
+        // NUDGES & REMINDERS
+        // ============================================================================
+
+        /**
+         * Generate nudges based on upcoming events and their timing.
+         * Nudges are pre-interview, morning-of, and post-interview prompts.
+         */
+        function generateNudges() {
+            const nudges = [];
+            const allEvents = getStorageData('calendar_events') || [];
+            const now = new Date();
+
+            allEvents.forEach(evt => {
+                const eventDate = new Date(evt.start);
+                const msUntilEvent = eventDate - now;
+                const hoursUntil = msUntilEvent / (1000 * 60 * 60);
+                const daysUntil = msUntilEvent / (1000 * 60 * 60 * 24);
+
+                // 72 hours before: research nudge
+                if (hoursUntil > 72 && hoursUntil <= 73) {
+                    nudges.push({
+                        id: `nudge-72h-${evt.id}`,
+                        eventId: evt.id,
+                        timing: '72h',
+                        title: `Interview at ${evt.company} in 3 days`,
+                        description: `Research brief not started for the ${evt.type} round. Prepare to discuss the company, product, and strategy.`,
+                        action: 'Launch Research Brief',
+                        actionUrl: '../research-brief/index.html',
+                        timestamp: now
+                    });
+                }
+
+                // 48 hours before: prep nudge
+                if (hoursUntil > 48 && hoursUntil <= 49) {
+                    nudges.push({
+                        id: `nudge-48h-${evt.id}`,
+                        eventId: evt.id,
+                        timing: '48h',
+                        title: `Prepare for ${evt.company} ${evt.type}`,
+                        description: `Review your prep and notes. Make sure you have questions to ask prepared.`,
+                        action: 'Open Brief',
+                        actionUrl: '../research-brief/index.html',
+                        timestamp: now
+                    });
+                }
+
+                // Morning of: review nudge
+                if (isToday(eventDate)) {
+                    nudges.push({
+                        id: `nudge-morning-${evt.id}`,
+                        eventId: evt.id,
+                        timing: 'morning',
+                        title: `${evt.company} interview today at ${formatTime(eventDate)}`,
+                        description: `Review your TMAY script and questions. Check the Zoom link and give yourself time to compose.`,
+                        action: 'Review Interview Notes',
+                        actionUrl: '../research-brief/index.html',
+                        timestamp: now
+                    });
+                }
+            });
+
+            saveStorageData('calendar_nudges', nudges);
+        }
+
+        /**
+         * Render the nudge timeline showing upcoming nudges in chronological order.
+         */
+        function renderNudgeTimeline() {
+            const nudgeList = document.getElementById('nudgeList');
+            nudgeList.innerHTML = '';
+
+            const nudges = getStorageData('calendar_nudges') || [];
+            const now = new Date();
+
+            if (nudges.length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'empty-state';
+                emptyMsg.textContent = 'No upcoming nudges';
+                nudgeList.appendChild(emptyMsg);
+                return;
+            }
+
+            // Group nudges by timing
+            const grouped = {
+                'up_soon': [],
+                '72h': [],
+                '48h': [],
+                'morning': [],
+                'past': []
+            };
+
+            nudges.forEach(nudge => {
+                if (nudge.timing === '72h') grouped['72h'].push(nudge);
+                else if (nudge.timing === '48h') grouped['48h'].push(nudge);
+                else if (nudge.timing === 'morning') grouped['morning'].push(nudge);
+                else if (nudge.timing === '1h-after') grouped['past'].push(nudge);
+            });
+
+            // Render each group
+            Object.entries(grouped).forEach(([groupKey, groupNudges]) => {
+                if (groupNudges.length === 0) return;
+
+                const group = document.createElement('div');
+                group.className = 'nudge-group';
+
+                const groupTitle = document.createElement('div');
+                groupTitle.className = 'nudge-group-title';
+                const labels = {
+                    'up_soon': 'Coming Up',
+                    '72h': '72 Hours Before',
+                    '48h': '48 Hours Before',
+                    'morning': 'Morning Of',
+                    'past': 'Post-Interview'
+                };
+                groupTitle.textContent = labels[groupKey];
+                group.appendChild(groupTitle);
+
+                groupNudges.forEach(nudge => {
+                    const card = document.createElement('div');
+                    card.className = 'nudge-card slide-in';
+
+                    const header = document.createElement('div');
+                    header.className = 'nudge-header';
+
+                    const timing = document.createElement('div');
+                    timing.className = 'nudge-timing';
+                    const timingLabels = {
+                        '72h': '72h',
+                        '48h': '48h',
+                        'morning': 'Now',
+                        '1h-after': '1h'
+                    };
+                    timing.textContent = timingLabels[nudge.timing];
+                    header.appendChild(timing);
+
+                    const content = document.createElement('div');
+                    content.className = 'nudge-content';
+
+                    const title = document.createElement('div');
+                    title.className = 'nudge-title';
+                    title.textContent = nudge.title;
+                    content.appendChild(title);
+
+                    const desc = document.createElement('div');
+                    desc.className = 'nudge-description';
+                    desc.textContent = nudge.description;
+                    content.appendChild(desc);
+
+                    const metadata = document.createElement('div');
+                    metadata.className = 'nudge-metadata';
+                    metadata.textContent = `Created ${new Date(nudge.timestamp).toLocaleDateString()}`;
+                    content.appendChild(metadata);
+
+                    header.appendChild(content);
+                    card.appendChild(header);
+
+                    const actionBtn = document.createElement('button');
+                    actionBtn.className = 'nudge-action';
+                    actionBtn.textContent = nudge.action;
+                    actionBtn.onclick = () => window.location.href = nudge.actionUrl;
+                    card.appendChild(actionBtn);
+
+                    const dismissBtn = document.createElement('button');
+                    dismissBtn.className = 'nudge-action-secondary';
+                    dismissBtn.textContent = 'Dismiss';
+                    dismissBtn.onclick = () => dismissNudge(nudge.id);
+                    card.appendChild(dismissBtn);
+
+                    group.appendChild(card);
+                });
+
+                nudgeList.appendChild(group);
+            });
+        }
+
+        /**
+         * Dismiss a nudge from the timeline.
+         */
+        function dismissNudge(nudgeId) {
+            const nudges = getStorageData('calendar_nudges') || [];
+            const filtered = nudges.filter(n => n.id !== nudgeId);
+            saveStorageData('calendar_nudges', filtered);
+            renderNudgeTimeline();
+        }
+
+        // ============================================================================
+        // SYNC LOG
+        // ============================================================================
+
+        /**
+         * Log a sync action to the sync log.
+         */
+        function logSync(action, status, details) {
+            const syncLog = getStorageData('sync_log') || [];
+            syncLog.unshift({
+                id: `log-${Date.now()}`,
+                timestamp: new Date(),
+                action: action,
+                status: status,
+                details: details
+            });
+
+            // Keep only last 20 entries
+            if (syncLog.length > 20) syncLog.pop();
+
+            saveStorageData('sync_log', syncLog);
+        }
+
+        /**
+         * Load and render the sync log.
+         */
+        function loadSyncLog() {
+            const syncLog = getStorageData('sync_log') || [];
+            const container = document.getElementById('syncLogEntries');
+            container.innerHTML = '';
+
+            if (syncLog.length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'empty-state';
+                emptyMsg.textContent = 'No sync history yet';
+                container.appendChild(emptyMsg);
+                return;
+            }
+
+            syncLog.forEach(entry => {
+                const entryEl = document.createElement('div');
+                entryEl.className = `sync-log-entry ${entry.status}`;
+
+                const header = document.createElement('div');
+                header.className = 'sync-log-entry-header';
+
+                const time = document.createElement('div');
+                time.className = 'sync-log-time';
+                time.textContent = new Date(entry.timestamp).toLocaleTimeString();
+                header.appendChild(time);
+
+                const statusBadge = document.createElement('div');
+                statusBadge.className = `sync-log-status ${entry.status}`;
+                const statusIcon = entry.status === 'success' ? '✓' : '⚠';
+                statusBadge.textContent = `${statusIcon} ${entry.action}`;
+                header.appendChild(statusBadge);
+
+                entryEl.appendChild(header);
+
+                if (entry.details) {
+                    const details = document.createElement('div');
+                    details.className = 'sync-log-details';
+
+                    Object.entries(entry.details).forEach(([key, value]) => {
+                        const item = document.createElement('div');
+                        item.className = 'sync-log-detail-item';
+
+                        const label = document.createElement('span');
+                        label.className = 'sync-log-detail-label';
+                        label.textContent = key + ':';
+                        item.appendChild(label);
+
+                        const val = document.createElement('span');
+                        val.className = 'sync-log-detail-value';
+                        val.textContent = value;
+                        item.appendChild(val);
+
+                        details.appendChild(item);
+                    });
+
+                    entryEl.appendChild(details);
+                }
+
+                container.appendChild(entryEl);
+            });
+        }
+
+        /**
+         * Refresh the sync log display.
+         */
+        function refreshSyncLog() {
+            loadSyncLog();
+            showNotification('Sync log refreshed');
+        }
+
+        // ============================================================================
+        // TAB NAVIGATION
+        // ============================================================================
+
+        /**
+         * Switch active tab in the workspace.
+         */
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Show selected tab
+            const tabEl = document.getElementById(`tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
+            if (tabEl) {
+                tabEl.classList.add('active');
+
+                // Refresh data for specific tabs
+                if (tabName === 'detection') {
+                    renderDetectionCards();
+                } else if (tabName === 'nudges') {
+                    renderNudgeTimeline();
+                } else if (tabName === 'log') {
+                    loadSyncLog();
+                }
+            }
+
+            lucide.createIcons();
+        }
+
+        // ============================================================================
+        // MODALS & DIALOGS
+        // ============================================================================
+
+        /**
+         * Open event detail modal.
+         */
+        function openEventDetail(event) {
+            const modal = document.getElementById('eventModal');
+            const title = document.getElementById('eventModalTitle');
+            const content = document.getElementById('eventModalContent');
+
+            title.textContent = event.title;
+
+            content.innerHTML = `
+                <div style="display: grid; gap: 16px;">
+                    <div>
+                        <label style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-tertiary); display: block; margin-bottom: 8px;">Company</label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <img src="https://logo.clearbit.com/${event.companyDomain}" style="width: 24px; height: 24px; border-radius: 4px; background: var(--bg-tertiary);" onerror="this.style.display='none'">
+                            <span style="font-size: 14px; color: var(--text-primary); font-weight: 500;">${event.company}</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-tertiary); display: block; margin-bottom: 8px;">Date & Time</label>
+                        <div style="font-size: 14px; color: var(--text-primary);">
+                            ${formatDateShort(new Date(event.start))} at ${formatTime(new Date(event.start))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-tertiary); display: block; margin-bottom: 8px;">Type</label>
+                        <span class="badge">${event.type}</span>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-tertiary); display: block; margin-bottom: 8px;">Status</label>
+                        <div style="font-size: 14px; color: var(--text-primary);">
+                            ${event.linkedRoleId ? '<span class="badge success">✓ Linked</span>' : '<span class="badge warning">Unlinked</span>'}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-tertiary); display: block; margin-bottom: 8px;">Attendees</label>
+                        <div style="font-size: 13px; color: var(--text-secondary);">
+                            ${event.attendees.join(', ')}
+                        </div>
+                    </div>
+
+                    ${event.description ? `
+                    <div>
+                        <label style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-tertiary); display: block; margin-bottom: 8px;">Description</label>
+                        <div style="font-size: 13px; color: var(--text-secondary);">
+                            ${event.description}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <div>
+                        <label style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-tertiary); display: block; margin-bottom: 8px;">Detection Confidence</label>
+                        <div style="font-size: 14px; color: var(--text-primary); font-weight: 600;">
+                            ${Math.round(event.detectionConfidence * 100)}%
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.add('active');
+        }
+
+        /**
+         * Close a modal.
+         */
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        /**
+         * Handle clicks outside modal to close it.
+         */
+        function handleOutsideClick(e) {
+            if (e.target.classList.contains('modal-overlay')) {
+                e.target.classList.remove('active');
+            }
+        }
+
+        // ============================================================================
+        // COMMAND PALETTE
+        // ============================================================================
+
+        /**
+         * Open the command palette for keyboard navigation.
+         */
+        function openCommandPalette() {
+            const modal = document.getElementById('commandModal');
+            const input = document.getElementById('commandInput');
+            const list = document.getElementById('commandList');
+
+            modal.classList.add('active');
+            input.focus();
+            input.value = '';
+            renderCommandList('');
+        }
+
+        /**
+         * Render command suggestions based on input.
+         */
+        function renderCommandList(query) {
+            const list = document.getElementById('commandList');
+            list.innerHTML = '';
+
+            const commands = [
+                { label: 'Scan Calendar', action: () => { scanCalendar(); closeModal('commandModal'); } },
+                { label: 'Go to Week View', action: () => { switchTab('week'); closeModal('commandModal'); } },
+                { label: 'Go to Event Manager', action: () => { switchTab('detection'); closeModal('commandModal'); } },
+                { label: 'Go to Nudges', action: () => { switchTab('nudges'); closeModal('commandModal'); } },
+                { label: 'Go to Sync Log', action: () => { switchTab('log'); closeModal('commandModal'); } },
+                { label: 'Next Week', action: () => { nextWeek(); } },
+                { label: 'Previous Week', action: () => { previousWeek(); } },
+                { label: 'Toggle Sidebar', action: () => { toggleSidebarCollapse(); } }
+            ];
+
+            const filtered = query
+                ? commands.filter(cmd => cmd.label.toLowerCase().includes(query.toLowerCase()))
+                : commands;
+
+            filtered.forEach(cmd => {
+                const item = document.createElement('div');
+                item.style.padding = '12px 16px';
+                item.style.cursor = 'pointer';
+                item.style.borderBottom = '1px solid var(--border)';
+                item.style.fontSize = '13px';
+                item.style.color = 'var(--text-primary)';
+                item.onmouseover = () => {
+                    item.style.background = 'var(--bg-tertiary)';
+                };
+                item.onmouseout = () => {
+                    item.style.background = 'transparent';
+                };
+                item.textContent = cmd.label;
+                item.onclick = cmd.action;
+                list.appendChild(item);
+            });
+
+            if (filtered.length === 0) {
+                const msg = document.createElement('div');
+                msg.style.padding = '24px 16px';
+                msg.style.textAlign = 'center';
+                msg.style.color = 'var(--text-tertiary)';
+                msg.textContent = 'No commands found';
+                list.appendChild(msg);
+            }
+        }
+
+        /**
+         * Toggle sidebar collapse state.
+         */
+        function toggleSidebarCollapse() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        // ============================================================================
+        // THEME MANAGEMENT
+        // ============================================================================
+
+        /**
+         * Toggle between light and dark themes.
+         */
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+
+            html.setAttribute('data-theme', newTheme);
+            saveStorageData('pf_theme', newTheme);
+            updateThemeIcon(newTheme);
+            lucide.createIcons();
+        }
+
+        /**
+         * Update theme icon.
+         */
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('themeIcon');
+            if (theme === 'light') {
+                icon.setAttribute('data-lucide', 'sun');
+            } else {
+                icon.setAttribute('data-lucide', 'moon');
+            }
+            lucide.createIcons();
+        }
+
+        // ============================================================================
+        // KEYBOARD SHORTCUTS
+        // ============================================================================
+
+        /**
+         * Handle global keyboard shortcuts.
+         */
+        function handleKeyboardShortcuts(e) {
+            // Cmd/Ctrl + K: Open command palette
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                openCommandPalette();
+            }
+
+            // Escape: Close modals
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay').forEach(modal => {
+                    if (modal.classList.contains('active')) {
+                        modal.classList.remove('active');
+                    }
+                });
+            }
+
+            // Command palette filtering
+            const commandInput = document.getElementById('commandInput');
+            if (commandInput && document.getElementById('commandModal').classList.contains('active')) {
+                if (e.key !== 'Escape') {
+                    renderCommandList(commandInput.value);
+                }
+            }
+        }
+
+        // Add event listener for command input
+        document.addEventListener('DOMContentLoaded', () => {
+            const commandInput = document.getElementById('commandInput');
+            if (commandInput) {
+                commandInput.addEventListener('input', (e) => {
+                    renderCommandList(e.target.value);
+                });
+            }
+        });
+
+        // ============================================================================
+        // NOTIFICATIONS
+        // ============================================================================
+
+        /**
+         * Show a temporary notification message.
+         */
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.position = 'fixed';
+            notification.style.bottom = '24px';
+            notification.style.right = '24px';
+            notification.style.padding = '12px 16px';
+            notification.style.background = 'var(--success)';
+            notification.style.color = 'var(--bg-base)';
+            notification.style.borderRadius = 'var(--radius-sm)';
+            notification.style.fontSize = '13px';
+            notification.style.fontWeight = '500';
+            notification.style.boxShadow = 'var(--shadow-lg)';
+            notification.style.zIndex = '2000';
+            notification.style.animation = 'slideIn 0.3s ease-out';
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'fadeIn 0.3s ease-out reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // ============================================================================
+        // INITIALIZATION
+        // ============================================================================
+
+        // Run initialization when DOM is ready
+        document.addEventListener('DOMContentLoaded', initializeModule);
+    </script>
+  <script src="../shared/data-switcher.js"></script>
+</body>
+</html>

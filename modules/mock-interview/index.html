@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pathfinder — Mock Interview Agent</title>
+  <meta name="description" content="AI-powered mock interview practice with evaluation and coaching">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>P</text></svg>">
+
+  <link rel="stylesheet" href="../shared/pathfinder.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* ================================================================
+       MOCK INTERVIEW MODULE STYLES
+       Chat-style Q&A interface with two-panel layout (sidebar + thread)
+       ================================================================ */
+
+    .mock-interview-container {
+      display: flex;
+      height: calc(100vh - var(--nav-height) - var(--space-6));
+      gap: var(--space-4);
+      padding: var(--space-4) var(--space-6);
+      overflow: hidden;
+    }
+
+    /* LEFT SIDEBAR: Session setup and context */
+    .interview-sidebar {
+      width: var(--sidebar-width);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    /* Sidebar section with title and content */
+    .sidebar-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .sidebar-section-title {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* Form inputs in the sidebar */
+    .sidebar-input,
+    .sidebar-select {
+      width: 100%;
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-sm);
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .sidebar-input:focus,
+    .sidebar-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+
+    /* Company context card */
+    .company-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      border-left: 3px solid var(--accent);
+    }
+
+    .company-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-xl);
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: var(--space-2);
+    }
+
+    .company-name {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-1);
+    }
+
+    .company-meta {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Framework reference card */
+    .framework-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      border-top: 2px solid var(--info);
+    }
+
+    .framework-title {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: var(--info);
+      margin-bottom: var(--space-2);
+    }
+
+    .framework-steps {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+    }
+
+    .framework-step {
+      display: flex;
+      gap: var(--space-2);
+      align-items: flex-start;
+    }
+
+    .framework-step-num {
+      min-width: 20px;
+      font-weight: 600;
+      color: var(--info);
+    }
+
+    /* Start session button */
+    .btn-start-session {
+      width: 100%;
+      padding: var(--space-3);
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      margin-top: auto;
+    }
+
+    .btn-start-session:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-start-session:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* RIGHT PANEL: Interview thread */
+    .interview-thread {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      overflow-y: auto;
+      padding-right: var(--space-2);
+    }
+
+    /* Thread header with current question number */
+    .thread-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3);
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      border-left: 3px solid var(--stage-interviewing);
+    }
+
+    .thread-title {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .thread-progress {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+
+    /* Idle state (before session starts) */
+    .thread-idle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-4);
+      text-align: center;
+      flex: 1;
+    }
+
+    .idle-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--accent-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+    }
+
+    .idle-text {
+      font-size: var(--text-lg);
+      color: var(--text-secondary);
+      max-width: 400px;
+    }
+
+    /* Message styles (Q&A thread) */
+    .thread-message {
+      display: flex;
+      margin-bottom: var(--space-4);
+    }
+
+    .thread-message.interviewer {
+      justify-content: flex-start;
+    }
+
+    .thread-message.user {
+      justify-content: flex-end;
+    }
+
+    .message-content {
+      max-width: 70%;
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-md);
+    }
+
+    .interviewer .message-content {
+      background: var(--bg-surface);
+      border-left: 3px solid var(--accent);
+      color: var(--text-primary);
+    }
+
+    .user .message-content {
+      background: var(--accent);
+      color: white;
+      border-radius: var(--radius-md);
+    }
+
+    /* Evaluation section (after user answer) */
+    .evaluation-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      border-top: 3px solid var(--warning);
+      margin-left: 0;
+      margin-right: auto;
+    }
+
+    .evaluation-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-bottom: var(--space-3);
+    }
+
+    .evaluation-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      flex: 1;
+    }
+
+    /* Star rating */
+    .star-rating {
+      display: flex;
+      gap: var(--space-1);
+      align-items: center;
+    }
+
+    .star {
+      width: 20px;
+      height: 20px;
+      color: var(--warning);
+      cursor: pointer;
+    }
+
+    .star.empty {
+      opacity: 0.3;
+    }
+
+    /* Rubric section: shows scoring dimensions */
+    .rubric-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      margin-bottom: var(--space-3);
+    }
+
+    .rubric-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: var(--text-xs);
+    }
+
+    .rubric-label {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .rubric-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--bg-elevated);
+      border-radius: 2px;
+      margin: 0 var(--space-2);
+      overflow: hidden;
+    }
+
+    .rubric-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width var(--duration-normal) var(--ease-default);
+    }
+
+    /* Highlights and improvements */
+    .eval-section {
+      margin-bottom: var(--space-3);
+    }
+
+    .eval-section-title {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-1);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .eval-content {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-elevated);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--success);
+    }
+
+    .eval-content.warning {
+      border-left-color: var(--warning);
+    }
+
+    .eval-content.info {
+      border-left-color: var(--info);
+    }
+
+    /* Framework adherence checklist */
+    .framework-check {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      margin-top: var(--space-2);
+    }
+
+    .framework-check-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+    }
+
+    .check-mark {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--success);
+      flex-shrink: 0;
+    }
+
+    .check-mark.x {
+      color: var(--warning);
+    }
+
+    /* Answer input section */
+    .answer-input-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      margin-top: var(--space-4);
+    }
+
+    .answer-textarea {
+      width: 100%;
+      padding: var(--space-3);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans);
+      font-size: var(--text-sm);
+      line-height: 1.6;
+      resize: vertical;
+      min-height: 100px;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .answer-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+
+    .answer-actions {
+      display: flex;
+      gap: var(--space-2);
+      align-items: center;
+    }
+
+    .btn-submit-answer {
+      padding: var(--space-2) var(--space-4);
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .btn-submit-answer:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-next-question {
+      padding: var(--space-2) var(--space-4);
+      background: var(--success);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .btn-next-question:hover {
+      opacity: 0.9;
+    }
+
+    /* Session summary */
+    .summary-container {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      border-top: 3px solid var(--success);
+    }
+
+    .summary-title {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-3);
+    }
+
+    .summary-score {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+      padding: var(--space-3);
+      background: var(--bg-elevated);
+      border-radius: var(--radius-md);
+    }
+
+    .summary-score-label {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+
+    .summary-score-value {
+      font-size: var(--text-3xl);
+      font-weight: 700;
+      color: var(--success);
+    }
+
+    .summary-grid {
+      display: grid;
+      gap: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+
+    .summary-item {
+      padding: var(--space-3);
+      background: var(--bg-elevated);
+      border-radius: var(--radius-md);
+    }
+
+    .summary-item-title {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-2);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .summary-item-content {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    /* Tab navigation */
+    .tab-nav {
+      display: flex;
+      gap: var(--space-1);
+      background: var(--bg-surface);
+      padding: var(--space-2);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-4);
+    }
+
+    .tab-button {
+      padding: var(--space-2) var(--space-3);
+      background: transparent;
+      color: var(--text-secondary);
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: var(--text-sm);
+      font-weight: 500;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .tab-button:hover {
+      color: var(--text-primary);
+      background: var(--bg-elevated);
+    }
+
+    .tab-button.active {
+      color: white;
+      background: var(--accent);
+    }
+
+    /* TMAY mode specific */
+    .tmay-container {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      flex: 1;
+    }
+
+    .timer-ring {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: conic-gradient(
+        var(--accent) 0deg,
+        var(--accent) var(--timer-percent, 0deg),
+        var(--bg-elevated) var(--timer-percent, 0deg),
+        var(--bg-elevated) 360deg
+      );
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      margin: var(--space-4) auto;
+    }
+
+    .timer-inner {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: var(--bg-surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .timer-value {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .timer-label {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+    }
+
+    /* Story bank */
+    .story-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .story-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      border-left: 3px solid var(--accent);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .story-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateX(4px);
+    }
+
+    .story-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-1);
+    }
+
+    .story-meta {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      margin-bottom: var(--space-2);
+    }
+
+    .story-tags {
+      display: flex;
+      gap: var(--space-1);
+      flex-wrap: wrap;
+    }
+
+    .story-tag {
+      padding: 2px 8px;
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      border-radius: var(--radius-pill);
+      font-size: var(--text-xs);
+    }
+
+    /* History/Sessions */
+    .session-item {
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      border-left: 3px solid var(--stage-interviewing);
+    }
+
+    .session-item:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .session-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-2);
+    }
+
+    .session-company {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .session-score {
+      display: flex;
+      gap: var(--space-1);
+      color: var(--warning);
+    }
+
+    .session-meta {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-subtle);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--bg-subtle);
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation bar -->
+  <nav class="nav">
+    <div class="nav-brand"><span>P</span>athfinder</div>
+    <div class="nav-links">
+      <a href="../dashboard/index.html">Dashboard</a>
+      <a href="../pipeline/index.html">Pipeline</a>
+      <a href="../research-brief/index.html">Research</a>
+      <a href="../resume-tailor/index.html">Resume</a>
+      <a href="../job-feed-listener/index.html">Feed</a>
+      <a href="../outreach/index.html">Outreach</a>
+      <a href="index.html" class="active">Mock</a>
+      <a href="../debrief/index.html">Debrief</a>
+      <a href="../comp-intel/index.html">Comp</a>
+      <a href="../calendar/index.html">Calendar</a>
+    </div>
+    <div class="nav-right">
+      <span class="nav-kbd">⌘K</span>
+    </div>
+  </nav>
+
+  <!-- Main page container -->
+  <div class="page">
+    <div class="mock-interview-container">
+      <!-- LEFT SIDEBAR: Setup and Context -->
+      <aside class="interview-sidebar">
+        <!-- Tab navigation -->
+        <div class="tab-nav">
+          <button class="tab-button active" data-tab="interview">Interview</button>
+          <button class="tab-button" data-tab="tmay">TMAY</button>
+          <button class="tab-button" data-tab="stories">Stories</button>
+          <button class="tab-button" data-tab="history">History</button>
+        </div>
+
+        <!-- INTERVIEW TAB CONTENT -->
+        <div class="tab-content" id="interview-tab" style="display: flex; flex-direction: column; gap: var(--space-4);">
+          <!-- Role selector -->
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Role</div>
+            <select id="roleSelect" class="sidebar-select">
+              <option value="">Select a role...</option>
+              <option value="pm">Product Manager</option>
+              <option value="design">Product Designer</option>
+              <option value="eng">Software Engineer</option>
+            </select>
+          </div>
+
+          <!-- Company selector -->
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Company</div>
+            <select id="companySelect" class="sidebar-select">
+              <option value="">Select a company...</option>
+              <option value="google">Google</option>
+              <option value="meta">Meta</option>
+              <option value="amazon">Amazon</option>
+            </select>
+          </div>
+
+          <!-- Interview type selector -->
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Interview Type</div>
+            <select id="interviewTypeSelect" class="sidebar-select">
+              <option value="">Select type...</option>
+              <option value="product-execution">Product Execution</option>
+              <option value="product-strategy">Product Strategy</option>
+              <option value="product-design">Product Design</option>
+              <option value="product-sense">Product Sense</option>
+              <option value="behavioral">Behavioral</option>
+              <option value="technical">Technical</option>
+              <option value="homework">Homework/Case Study</option>
+            </select>
+          </div>
+
+          <!-- Difficulty level -->
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Difficulty</div>
+            <select id="difficultySelect" class="sidebar-select">
+              <option value="standard">Standard</option>
+              <option value="hard">Hard</option>
+              <option value="curveball">Curveball</option>
+            </select>
+          </div>
+
+          <!-- Duration -->
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Duration</div>
+            <select id="durationSelect" class="sidebar-select">
+              <option value="quick">Quick (2 questions)</option>
+              <option value="standard">Standard (4 questions)</option>
+              <option value="full">Full (6 questions)</option>
+            </select>
+          </div>
+
+          <!-- Company context card -->
+          <div id="companyCard" class="company-card" style="display: none;">
+            <div class="company-logo" id="companyLogo">G</div>
+            <div class="company-name" id="companyName">Google</div>
+            <div class="company-meta" id="companyMeta">
+              <div>Domain: Cloud, Search, AI</div>
+              <div style="margin-top: var(--space-1);">Key: Assistant, Analytics, Workspace</div>
+            </div>
+          </div>
+
+          <!-- Framework reference card -->
+          <div id="frameworkCard" class="framework-card" style="display: none;">
+            <div class="framework-title">Recommended Framework</div>
+            <div class="framework-steps" id="frameworkSteps">
+              <div class="framework-step">
+                <div class="framework-step-num">1</div>
+                <div>Clarify the problem</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Start session button -->
+          <button id="startSessionBtn" class="btn-start-session">Start Session</button>
+        </div>
+
+        <!-- TMAY TAB CONTENT -->
+        <div class="tab-content" id="tmay-tab" style="display: none; flex-direction: column; gap: var(--space-4);">
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Role</div>
+            <select id="tmayRoleSelect" class="sidebar-select">
+              <option value="">Select a role...</option>
+              <option value="pm">Product Manager</option>
+              <option value="design">Product Designer</option>
+              <option value="eng">Software Engineer</option>
+            </select>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Focus Area</div>
+            <select id="focusAreaSelect" class="sidebar-select">
+              <option value="">Default</option>
+              <option value="ai-ml">AI/ML</option>
+              <option value="scale">Scale & Systems</option>
+              <option value="leadership">Leadership</option>
+            </select>
+          </div>
+
+          <button id="generateTmayBtn" class="btn-start-session" style="margin-top: var(--space-4);">Generate Script</button>
+        </div>
+
+        <!-- STORIES TAB CONTENT -->
+        <div class="tab-content" id="stories-tab" style="display: none; flex-direction: column; gap: var(--space-3); overflow-y: auto;">
+          <div class="sidebar-section">
+            <button id="addStoryBtn" class="btn-start-session">+ Add Story</button>
+          </div>
+          <div id="storiesList" class="story-list"></div>
+        </div>
+
+        <!-- HISTORY TAB CONTENT -->
+        <div class="tab-content" id="history-tab" style="display: none; flex-direction: column; gap: var(--space-3); overflow-y: auto;">
+          <div id="sessionsList" class="story-list"></div>
+        </div>
+      </aside>
+
+      <!-- RIGHT PANEL: Interview Thread -->
+      <main class="interview-thread">
+        <!-- Idle state (before session starts) -->
+        <div id="idleState" style="display: flex;">
+          <div class="thread-idle">
+            <div class="idle-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a10 10 0 1 0 10 10H12V2z"></path>
+                <path d="M4 12a8 8 0 0 1 8-8"></path>
+              </svg>
+            </div>
+            <h2 style="color: var(--text-primary);">Ready to Practice</h2>
+            <p class="idle-text">
+              Select a role, company, and interview type from the sidebar to start a mock interview session.
+              Real questions tailored to the company, scoring with rubrics, and coaching feedback.
+            </p>
+          </div>
+        </div>
+
+        <!-- Thread container (shown during session) -->
+        <div id="threadContainer" style="display: none;">
+          <div class="thread-header">
+            <div>
+              <div class="thread-title" id="threadTitle">Interview Session</div>
+              <div class="thread-progress" id="threadProgress">Question 1 of 4</div>
+            </div>
+            <button id="endSessionBtn" class="btn-ghost">End Session</button>
+          </div>
+
+          <!-- Messages will be inserted here -->
+          <div id="messagesContainer"></div>
+
+          <!-- Answer input (shown during interview) -->
+          <div id="answerSection" style="display: none;">
+            <div class="answer-input-section">
+              <textarea id="answerTextarea" class="answer-textarea" placeholder="Type your answer here..."></textarea>
+              <div class="answer-actions">
+                <button id="submitAnswerBtn" class="btn-submit-answer">Submit Answer</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Next question button (shown after evaluation) -->
+          <div id="nextQuestionSection" style="display: none;">
+            <button id="nextQuestionBtn" class="btn-next-question">Next Question</button>
+          </div>
+
+          <!-- Summary (shown at end) -->
+          <div id="summarySection" style="display: none;"></div>
+        </div>
+
+        <!-- TMAY Mode -->
+        <div id="tmayMode" style="display: none;">
+          <div class="tmay-container">
+            <div class="thread-header">
+              <div class="thread-title">Tell Me About Yourself</div>
+              <button id="endTmayBtn" class="btn-ghost">Close</button>
+            </div>
+
+            <!-- Timer -->
+            <div class="timer-ring" style="--timer-percent: 0deg;">
+              <div class="timer-inner">
+                <div class="timer-value" id="timerValue">120s</div>
+                <div class="timer-label">Target: 90-120s</div>
+              </div>
+            </div>
+
+            <!-- Script display -->
+            <div id="tmayScriptContainer" style="
+              background: var(--bg-surface);
+              border-radius: var(--radius-md);
+              padding: var(--space-4);
+              flex: 1;
+              overflow-y: auto;
+            ">
+              <div id="tmayScript" style="font-size: var(--text-sm); line-height: 1.8; color: var(--text-primary);"></div>
+            </div>
+
+            <!-- Controls -->
+            <div style="display: flex; gap: var(--space-2); margin-top: var(--space-3);">
+              <button id="startTmayTimerBtn" class="btn-primary" style="flex: 1;">Start Timer</button>
+              <button id="tryAgainTmayBtn" class="btn-secondary" style="flex: 1;">Try Again</button>
+            </div>
+
+            <!-- Word count -->
+            <div style="
+              text-align: center;
+              font-size: var(--text-sm);
+              color: var(--text-secondary);
+              margin-top: var(--space-2);
+            ">
+              Word count: <span id="wordCount">0</span> / 300
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    /* ================================================================
+       MOCK INTERVIEW AGENT — Architecture Overview
+
+       This module implements an AI-powered mock interview practice system
+       with company-calibrated questions, real-time evaluation, and coaching.
+
+       Key Classes:
+       - MockInterviewApp: Main controller managing session state
+       - SessionManager: Handles question generation and session tracking
+       - EvaluationEngine: Scores answers using rubrics and frameworks
+       - DataStore: localStorage-based persistence (pf_companies, pf_stories, pf_sessions)
+
+       Data Flow:
+       1. User selects role/company/type/difficulty
+       2. SessionManager generates 2-6 questions from templates
+       3. Interview thread displays Q&A in chat-like format
+       4. User submits answer
+       5. EvaluationEngine scores across rubric dimensions
+       6. Thread shows stars, framework adherence, coaching hints
+       7. User proceeds to next question
+       8. At end, SessionManager saves to pf_mock_sessions
+
+       ================================================================ */
+
+    class MockInterviewApp {
+      constructor() {
+        this.state = {
+          currentTab: 'interview',
+          sessionActive: false,
+          currentQuestion: 0,
+          totalQuestions: 0,
+          questions: [],
+          responses: [],
+          scores: [],
+          company: null,
+          role: null,
+          interviewType: null,
+          difficulty: 'standard',
+          duration: 'standard'
+        };
+
+        this.sessionManager = new SessionManager();
+        this.evaluationEngine = new EvaluationEngine();
+        this.dataStore = new DataStore();
+
+        this.initializeUI();
+        this.attachEventListeners();
+        this.loadInitialData();
+      }
+
+      initializeUI() {
+        this.idleState = document.getElementById('idleState');
+        this.threadContainer = document.getElementById('threadContainer');
+        this.messagesContainer = document.getElementById('messagesContainer');
+        this.answerSection = document.getElementById('answerSection');
+        this.answerTextarea = document.getElementById('answerTextarea');
+        this.submitAnswerBtn = document.getElementById('submitAnswerBtn');
+        this.nextQuestionSection = document.getElementById('nextQuestionSection');
+        this.nextQuestionBtn = document.getElementById('nextQuestionBtn');
+        this.summarySection = document.getElementById('summarySection');
+        this.threadTitle = document.getElementById('threadTitle');
+        this.threadProgress = document.getElementById('threadProgress');
+        this.endSessionBtn = document.getElementById('endSessionBtn');
+
+        this.roleSelect = document.getElementById('roleSelect');
+        this.companySelect = document.getElementById('companySelect');
+        this.interviewTypeSelect = document.getElementById('interviewTypeSelect');
+        this.difficultySelect = document.getElementById('difficultySelect');
+        this.durationSelect = document.getElementById('durationSelect');
+        this.startSessionBtn = document.getElementById('startSessionBtn');
+        this.companyCard = document.getElementById('companyCard');
+        this.frameworkCard = document.getElementById('frameworkCard');
+
+        this.tmayMode = document.getElementById('tmayMode');
+        this.tmayScript = document.getElementById('tmayScript');
+        this.timerValue = document.getElementById('timerValue');
+        this.startTmayTimerBtn = document.getElementById('startTmayTimerBtn');
+        this.tryAgainTmayBtn = document.getElementById('tryAgainTmayBtn');
+        this.wordCount = document.getElementById('wordCount');
+      }
+
+      attachEventListeners() {
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(btn => {
+          btn.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
+        });
+
+        // Company selection updates context card
+        this.companySelect.addEventListener('change', () => this.updateCompanyContext());
+
+        // Interview type updates framework
+        this.interviewTypeSelect.addEventListener('change', () => this.updateFrameworkCard());
+
+        // Start session
+        this.startSessionBtn.addEventListener('click', () => this.startSession());
+        this.endSessionBtn.addEventListener('click', () => this.endSession());
+
+        // Answer submission
+        this.submitAnswerBtn.addEventListener('click', () => this.submitAnswer());
+        this.nextQuestionBtn.addEventListener('click', () => this.nextQuestion());
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && e.metaKey && this.state.sessionActive) {
+            this.submitAnswer();
+          }
+          if (e.key === 'n' && this.state.sessionActive) {
+            this.nextQuestion();
+          }
+        });
+
+        // TMAY controls
+        this.startTmayTimerBtn.addEventListener('click', () => this.startTmayTimer());
+        this.tryAgainTmayBtn.addEventListener('click', () => this.generateTmay());
+      }
+
+      loadInitialData() {
+        // Load demo companies and roles
+        this.companies = this.dataStore.getCompanies();
+        this.roles = this.dataStore.getRoles();
+        this.stories = this.dataStore.getStories();
+        this.sessions = this.dataStore.getSessions();
+        this.renderStoriesList();
+        this.renderSessionHistory();
+      }
+
+      switchTab(tabName) {
+        this.state.currentTab = tabName;
+
+        // Hide all tabs
+        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+
+        // Show selected tab
+        document.getElementById(`${tabName}-tab`).style.display = 'flex';
+        event.target.classList.add('active');
+
+        // Reset thread views
+        if (tabName === 'interview') {
+          this.idleState.style.display = 'flex';
+          this.threadContainer.style.display = 'none';
+          this.tmayMode.style.display = 'none';
+        } else if (tabName === 'tmay') {
+          this.idleState.style.display = 'none';
+          this.threadContainer.style.display = 'none';
+          this.tmayMode.style.display = 'flex';
+        } else {
+          this.idleState.style.display = 'none';
+          this.threadContainer.style.display = 'none';
+          this.tmayMode.style.display = 'none';
+        }
+      }
+
+      updateCompanyContext() {
+        const companyId = this.companySelect.value;
+        if (!companyId) {
+          this.companyCard.style.display = 'none';
+          return;
+        }
+
+        const company = this.companies.find(c => c.id === companyId);
+        if (company) {
+          this.state.company = company;
+          document.getElementById('companyLogo').textContent = company.logo;
+          document.getElementById('companyName').textContent = company.name;
+          document.getElementById('companyMeta').innerHTML = `
+            <div>Domain: ${company.domain}</div>
+            <div style="margin-top: var(--space-1);">Key: ${company.keyProducts.join(', ')}</div>
+          `;
+          this.companyCard.style.display = 'block';
+        }
+      }
+
+      updateFrameworkCard() {
+        const type = this.interviewTypeSelect.value;
+        if (!type) {
+          this.frameworkCard.style.display = 'none';
+          return;
+        }
+
+        const framework = this.sessionManager.getFrameworkForType(type);
+        if (framework) {
+          document.getElementById('frameworkSteps').innerHTML = framework.steps
+            .map((step, i) => `
+              <div class="framework-step">
+                <div class="framework-step-num">${i + 1}</div>
+                <div>${step}</div>
+              </div>
+            `).join('');
+          this.frameworkCard.style.display = 'block';
+        }
+      }
+
+      startSession() {
+        // Validate selections
+        if (!this.roleSelect.value || !this.companySelect.value || !this.interviewTypeSelect.value) {
+          alert('Please select role, company, and interview type');
+          return;
+        }
+
+        this.state.sessionActive = true;
+        this.state.role = this.roleSelect.value;
+        this.state.company = this.companies.find(c => c.id === this.companySelect.value);
+        this.state.interviewType = this.interviewTypeSelect.value;
+        this.state.difficulty = this.difficultySelect.value;
+        this.state.duration = this.durationSelect.value;
+
+        // Generate questions
+        const numQuestions = {
+          quick: 2,
+          standard: 4,
+          full: 6
+        }[this.state.duration];
+
+        this.state.questions = this.sessionManager.generateQuestions(
+          this.state.interviewType,
+          this.state.company,
+          this.state.difficulty,
+          numQuestions
+        );
+        this.state.totalQuestions = numQuestions;
+        this.state.currentQuestion = 0;
+        this.state.responses = [];
+        this.state.scores = [];
+
+        // Show interview thread
+        this.idleState.style.display = 'none';
+        this.threadContainer.style.display = 'flex';
+
+        // Display first question
+        this.displayQuestion();
+      }
+
+      displayQuestion() {
+        this.messagesContainer.innerHTML = '';
+        const question = this.state.questions[this.state.currentQuestion];
+
+        // Update progress
+        this.threadTitle.textContent = this.state.company.name;
+        this.threadProgress.textContent = `Question ${this.state.currentQuestion + 1} of ${this.state.totalQuestions}`;
+
+        // Show interviewer question
+        const questionEl = document.createElement('div');
+        questionEl.className = 'thread-message interviewer';
+        questionEl.innerHTML = `
+          <div class="message-content">
+            <p>${question.text}</p>
+          </div>
+        `;
+        this.messagesContainer.appendChild(questionEl);
+
+        // Show input
+        this.answerSection.style.display = 'block';
+        this.nextQuestionSection.style.display = 'none';
+        this.answerTextarea.value = '';
+        this.answerTextarea.focus();
+      }
+
+      submitAnswer() {
+        const answer = this.answerTextarea.value.trim();
+        if (!answer) {
+          alert('Please enter an answer');
+          return;
+        }
+
+        // Store response
+        this.state.responses.push(answer);
+
+        // Hide input, show answer
+        this.answerSection.style.display = 'none';
+
+        // Display user answer
+        const userAnswerEl = document.createElement('div');
+        userAnswerEl.className = 'thread-message user';
+        userAnswerEl.innerHTML = `<div class="message-content"><p>${answer}</p></div>`;
+        this.messagesContainer.appendChild(userAnswerEl);
+
+        // Evaluate
+        const question = this.state.questions[this.state.currentQuestion];
+        const evaluation = this.evaluationEngine.evaluate(answer, question, this.state.interviewType);
+        this.state.scores.push(evaluation.score);
+
+        // Show evaluation
+        this.displayEvaluation(evaluation, question);
+
+        // Show next question button
+        if (this.state.currentQuestion < this.state.totalQuestions - 1) {
+          this.nextQuestionSection.style.display = 'block';
+        } else {
+          this.displaySummary();
+        }
+      }
+
+      displayEvaluation(evaluation, question) {
+        const evalEl = document.createElement('div');
+        evalEl.className = 'thread-message interviewer';
+        evalEl.innerHTML = `
+          <div class="evaluation-card">
+            <div class="evaluation-header">
+              <div class="evaluation-title">Your Answer</div>
+              <div class="star-rating">
+                ${Array(5).fill(0).map((_, i) => `
+                  <svg class="star ${i >= evaluation.score ? 'empty' : ''}" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                `).join('')}
+              </div>
+            </div>
+
+            ${evaluation.rubric ? `
+              <div class="rubric-section">
+                ${evaluation.rubric.map(item => `
+                  <div class="rubric-item">
+                    <div class="rubric-label">${item.label}</div>
+                    <div class="rubric-bar">
+                      <div class="rubric-bar-fill" style="width: ${(item.score / 5) * 100}%"></div>
+                    </div>
+                    <div style="width: 20px; text-align: right; color: var(--text-secondary); font-size: var(--text-xs);">${item.score}/5</div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+
+            ${evaluation.whatWorked ? `
+              <div class="eval-section">
+                <div class="eval-section-title">What Worked</div>
+                <div class="eval-content">${evaluation.whatWorked}</div>
+              </div>
+            ` : ''}
+
+            ${evaluation.toImprove ? `
+              <div class="eval-section">
+                <div class="eval-section-title">What to Improve</div>
+                <div class="eval-content warning">${evaluation.toImprove}</div>
+              </div>
+            ` : ''}
+
+            ${evaluation.suggestedReframe ? `
+              <div class="eval-section">
+                <div class="eval-section-title">Suggested Reframe</div>
+                <div class="eval-content info">${evaluation.suggestedReframe}</div>
+              </div>
+            ` : ''}
+
+            ${evaluation.frameworkCheck ? `
+              <div class="framework-check">
+                <div style="font-size: var(--text-xs); font-weight: 700; color: var(--text-secondary); margin-bottom: var(--space-1); text-transform: uppercase; letter-spacing: 0.08em;">Framework Adherence</div>
+                ${evaluation.frameworkCheck.map(item => `
+                  <div class="framework-check-item">
+                    <div class="check-mark ${item.covered ? '' : 'x'}">
+                      ${item.covered ? '✓' : '✗'}
+                    </div>
+                    <div>${item.step}</div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+
+            ${evaluation.followUp ? `
+              <div style="margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--bg-elevated);">
+                <div style="font-size: var(--text-sm); color: var(--text-secondary); font-style: italic; color: var(--info);">Follow-up: ${evaluation.followUp}</div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+        this.messagesContainer.appendChild(evalEl);
+        this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+      }
+
+      nextQuestion() {
+        this.state.currentQuestion++;
+        this.displayQuestion();
+      }
+
+      displaySummary() {
+        this.nextQuestionSection.style.display = 'none';
+
+        const avgScore = (this.state.scores.reduce((a, b) => a + b, 0) / this.state.scores.length).toFixed(1);
+        const highestIdx = this.state.scores.indexOf(Math.max(...this.state.scores));
+        const lowestIdx = this.state.scores.indexOf(Math.min(...this.state.scores));
+
+        const summaryEl = document.createElement('div');
+        summaryEl.className = 'thread-message interviewer';
+        summaryEl.innerHTML = `
+          <div class="summary-container">
+            <h2 class="summary-title">Session Summary</h2>
+
+            <div class="summary-score">
+              <div class="summary-score-label">Overall Score</div>
+              <div class="summary-score-value">${avgScore}/5.0</div>
+            </div>
+
+            <div class="summary-grid">
+              <div class="summary-item">
+                <div class="summary-item-title">Strongest Answer</div>
+                <div class="summary-item-content">Question ${highestIdx + 1}: ${this.state.questions[highestIdx].text.substring(0, 80)}...</div>
+              </div>
+
+              <div class="summary-item">
+                <div class="summary-item-title">Needs Work</div>
+                <div class="summary-item-content">Question ${lowestIdx + 1}: Focus on being more structured and framework-driven</div>
+              </div>
+
+              <div class="summary-item">
+                <div class="summary-item-title">Next Steps</div>
+                <div class="summary-item-content">
+                  <ul style="margin-left: var(--space-3); line-height: 1.8;">
+                    <li>Review the CUPS framework for design questions</li>
+                    <li>Practice more on trade-off analysis</li>
+                    <li>Add AI/ML case studies to your story bank</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <button id="saveSessionBtn" class="btn-start-session" style="margin-top: var(--space-4); width: 100%;">Save Session</button>
+          </div>
+        `;
+        this.messagesContainer.appendChild(summaryEl);
+
+        document.getElementById('saveSessionBtn').addEventListener('click', () => this.saveSession());
+      }
+
+      saveSession() {
+        const sessionData = {
+          id: Date.now().toString(),
+          date: new Date().toLocaleDateString(),
+          company: this.state.company.name,
+          companyId: this.state.company.id,
+          role: this.state.role,
+          interviewType: this.state.interviewType,
+          difficulty: this.state.difficulty,
+          overallScore: (this.state.scores.reduce((a, b) => a + b, 0) / this.state.scores.length).toFixed(1),
+          scores: this.state.scores,
+          responses: this.state.responses,
+          questions: this.state.questions
+        };
+
+        this.dataStore.saveSession(sessionData);
+        this.sessions = this.dataStore.getSessions();
+        this.renderSessionHistory();
+
+        alert('Session saved! View it in the History tab.');
+      }
+
+      endSession() {
+        if (confirm('End this session? Progress will not be saved.')) {
+          this.state.sessionActive = false;
+          this.idleState.style.display = 'flex';
+          this.threadContainer.style.display = 'none';
+          this.messagesContainer.innerHTML = '';
+        }
+      }
+
+      generateTmay() {
+        const role = document.getElementById('tmayRoleSelect').value;
+        const focusArea = document.getElementById('focusAreaSelect').value;
+
+        if (!role) {
+          alert('Please select a role');
+          return;
+        }
+
+        const script = this.sessionManager.generateTmayScript(role, focusArea);
+        this.tmayScript.innerHTML = `<p>${script}</p>`;
+
+        const wordCount = script.split(/\s+/).length;
+        this.wordCount.textContent = wordCount;
+
+        this.startTmayTimerBtn.textContent = 'Start Timer';
+        this.startTmayTimerBtn.disabled = false;
+      }
+
+      startTmayTimer() {
+        let timeRemaining = 120;
+        const startTime = Date.now();
+        const targetDuration = 120000; // 120 seconds in ms
+
+        const timerInterval = setInterval(() => {
+          const elapsed = Date.now() - startTime;
+          timeRemaining = Math.max(0, 120 - Math.floor(elapsed / 1000));
+
+          this.timerValue.textContent = `${timeRemaining}s`;
+
+          const percent = (elapsed / targetDuration) * 360;
+          document.querySelector('.timer-ring').style.setProperty('--timer-percent', `${percent}deg`);
+
+          if (timeRemaining === 0) {
+            clearInterval(timerInterval);
+            this.startTmayTimerBtn.textContent = 'Time\'s Up!';
+            this.startTmayTimerBtn.disabled = true;
+          }
+        }, 100);
+
+        this.startTmayTimerBtn.disabled = true;
+      }
+
+      renderStoriesList() {
+        const container = document.getElementById('storiesList');
+        container.innerHTML = this.stories.map(story => `
+          <div class="story-card">
+            <div class="story-title">${story.title}</div>
+            <div class="story-meta">Used ${story.timesUsed} times • ${story.mockRating}/5 stars</div>
+            <div class="story-tags">
+              ${story.themes.map(theme => `<div class="story-tag">${theme}</div>`).join('')}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      renderSessionHistory() {
+        const container = document.getElementById('sessionsList');
+        container.innerHTML = this.sessions
+          .sort((a, b) => new Date(b.date) - new Date(a.date))
+          .map(session => `
+            <div class="session-item">
+              <div class="session-header">
+                <div class="session-company">${session.company}</div>
+                <div class="session-score">
+                  ${Array(5).fill(0).map((_, i) => `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="opacity: ${i < Math.round(session.overallScore) ? 1 : 0.3};">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                  `).join('')}
+                </div>
+              </div>
+              <div class="session-meta">
+                <span>${session.interviewType}</span>
+                <span>${session.date}</span>
+              </div>
+            </div>
+          `).join('');
+      }
+    }
+
+    class SessionManager {
+      getFrameworkForType(type) {
+        const frameworks = {
+          'product-execution': {
+            steps: [
+              'Clarify the problem and metrics',
+              'Diagnose root cause',
+              'Propose solution with trade-offs',
+              'Measure impact'
+            ]
+          },
+          'product-strategy': {
+            steps: [
+              'Understand market and user needs',
+              'Define vision and OKRs',
+              'Prioritize features and roadmap',
+              'Measure success metrics'
+            ]
+          },
+          'product-design': {
+            steps: [
+              'Clarify (constraints, users, goals)',
+              'Understand (user research, pain points)',
+              'Propose (multiple solutions)',
+              'Summarize (trade-offs, next steps)'
+            ]
+          },
+          'behavioral': {
+            steps: [
+              'Situation (context and setup)',
+              'Task (your specific responsibility)',
+              'Action (what you did)',
+              'Result (outcome and impact)'
+            ]
+          }
+        };
+        return frameworks[type] || { steps: [] };
+      }
+
+      generateQuestions(type, company, difficulty, count) {
+        const templates = {
+          'product-execution': [
+            `You're the PM for ${company.name}'s ${company.keyProducts[0]}. Engagement dropped 15% last week. Walk me through your debugging process.`,
+            `A major metric for ${company.keyProducts[0]} shifted unexpectedly. How do you determine if it's a real issue?`,
+            `${company.name} noticed ${company.keyProducts[0]} has 20% lower retention in Asia. Why might that be?`,
+            `Revenue for ${company.keyProducts[0]} is flat YoY. What's your hypothesis, and how do you test it?`
+          ],
+          'product-strategy': [
+            `Design a 2-year product strategy for ${company.name}'s ${company.keyProducts[0]} to compete in ${company.domain}.`,
+            `How would you expand ${company.keyProducts[0]} into a new market? What are the key risks?`,
+            `${company.name} wants to enter AI/ML. How would you position it against competitors?`,
+            `If you had to sunset one feature of ${company.keyProducts[0]}, what would it be and why?`
+          ],
+          'product-design': [
+            `Design a way for ${company.name} users to manage their settings for ${company.keyProducts[0]}.`,
+            `${company.keyProducts[0]} has poor discoverability. How would you redesign the onboarding?`,
+            `Design a feature that helps ${company.name} users collaborate on ${company.keyProducts[0]}.`,
+            `How would you redesign ${company.keyProducts[0]} for users with low internet bandwidth?`
+          ],
+          'behavioral': [
+            `Tell me about a time you had to make a difficult trade-off as a PM. What did you choose and why?`,
+            `Describe a situation where you disagreed with your engineering lead. How did you handle it?`,
+            `Tell me about a feature you shipped that initially failed. What did you learn?`,
+            `Give an example of a time you influenced a team without direct authority.`
+          ]
+        };
+
+        const baseQuestions = templates[type] || [];
+        const selected = baseQuestions.slice(0, count);
+
+        return selected.map((text, i) => ({
+          id: `q${i + 1}`,
+          text: text,
+          type: type,
+          difficulty: difficulty
+        }));
+      }
+
+      generateTmayScript(role, focusArea) {
+        const scripts = {
+          pm: `I'm a Product Manager with 5 years of experience building products at scale. I got my start in data analytics, which taught me to think deeply about metrics and user behavior. In my current role, I've led three major products from concept to launch, managing cross-functional teams of engineers, designers, and data scientists. I'm particularly passionate about AI/ML and how to apply it thoughtfully to solve real user problems. I'm excited about this opportunity because ${focusArea ? focusArea + ' ' : ''}is where I see the most impact, and I believe ${role} at your company would let me continue doing meaningful work.`,
+          design: `I'm a Product Designer with 6 years of experience designing user experiences across mobile and web. I started in visual design but quickly realized the power of research and strategy. I've led end-to-end design projects, from user interviews to pixel-perfect implementation. What drives me is understanding user needs deeply and creating elegant solutions. I've been particularly focused on ${focusArea ? focusArea : 'accessibility and inclusive design'}, which I believe is essential. I'm excited about this role because your company's commitment to user-centered design aligns with my values.`,
+          eng: `I'm a Software Engineer with 4 years of experience building scalable, user-facing products. I started as a frontend engineer but grew to appreciate the full stack. I've built systems that serve millions of users and learned the importance of shipping quickly while maintaining quality. I'm passionate about solving hard technical problems and mentoring junior engineers. Recently, I've been diving deep into ${focusArea ? focusArea : 'distributed systems and performance optimization'}, which has given me new perspectives on building great products. I'm excited about this opportunity because I think the engineering challenges here would stretch me and let me contribute meaningfully.`
+        };
+
+        return scripts[role] || 'Tell me about your background and what excites you about this role.';
+      }
+    }
+
+    class EvaluationEngine {
+      evaluate(answer, question, type) {
+        const wordCount = answer.split(/\s+/).length;
+        const hasFramework = this.checkFrameworkAdherence(answer, type);
+        const clarity = this.scoreClarity(answer);
+        const structure = this.scoreStructure(answer, type);
+        const relevance = this.scoreRelevance(answer, question);
+
+        const overallScore = Math.round((clarity + structure + relevance) / 3);
+
+        return {
+          score: Math.min(5, Math.max(1, overallScore)),
+          wordCount: wordCount,
+          rubric: [
+            { label: 'Clarity', score: clarity },
+            { label: 'Structure', score: structure },
+            { label: 'Relevance', score: relevance }
+          ],
+          whatWorked: this.getWhatWorked(answer, clarity, structure),
+          toImprove: this.getToImprove(answer, clarity, structure),
+          suggestedReframe: this.getSuggestedReframe(answer, type),
+          followUp: this.getFollowUp(answer, question),
+          frameworkCheck: hasFramework
+        };
+      }
+
+      checkFrameworkAdherence(answer, type) {
+        const frameworks = {
+          'behavioral': ['Situation', 'Task', 'Action', 'Result'],
+          'product-design': ['Clarify', 'Understand', 'Propose', 'Summarize'],
+          'product-execution': ['Problem', 'Root Cause', 'Solution', 'Impact']
+        };
+
+        const framework = frameworks[type] || [];
+        return framework.map(step => ({
+          step: step,
+          covered: answer.toLowerCase().includes(step.toLowerCase())
+        }));
+      }
+
+      scoreClarity(answer) {
+        // Simple heuristic: longer, well-structured answers score higher
+        const sentences = answer.split('.').filter(s => s.trim().length > 10).length;
+        return Math.min(5, Math.max(1, Math.ceil(sentences / 2)));
+      }
+
+      scoreStructure(answer, type) {
+        // Check for logical flow and organization
+        const hasNumbers = /\b\d+\b/.test(answer);
+        const hasTransitions = /first|second|third|then|however|as a result|therefore/i.test(answer);
+        const hasConcrete = /specific|example|data|metric|user/i.test(answer);
+
+        let score = 2;
+        if (hasNumbers) score += 1;
+        if (hasTransitions) score += 1;
+        if (hasConcrete) score += 1;
+
+        return Math.min(5, score);
+      }
+
+      scoreRelevance(answer, question) {
+        // Check if answer is on-topic (simplified)
+        const questionKeywords = question.text.toLowerCase().split(/\s+/).slice(0, 10);
+        const answerWords = answer.toLowerCase().split(/\s+/);
+        const matches = answerWords.filter(w => questionKeywords.some(kw => kw.includes(w))).length;
+
+        return Math.min(5, Math.max(1, Math.ceil(matches / 3)));
+      }
+
+      getWhatWorked(answer, clarity, structure) {
+        if (clarity >= 4) {
+          return 'Your explanation was clear and easy to follow. You explained your thinking step-by-step.';
+        } else if (structure >= 4) {
+          return 'Good structure! You organized your answer logically and provided concrete examples.';
+        }
+        return 'You provided a thoughtful answer with specific details.';
+      }
+
+      getToImprove(answer, clarity, structure) {
+        if (clarity < 3) {
+          return 'Try to be more concise and structured. Break your answer into clear steps.';
+        } else if (structure < 3) {
+          return 'Consider adding more concrete examples and data to support your points.';
+        }
+        return 'Think about how to connect your answer to the broader strategy and impact.';
+      }
+
+      getSuggestedReframe(answer, type) {
+        if (type === 'behavioral') {
+          return 'Start with the situation first, then describe your actions. This keeps the story cohesive.';
+        } else if (type === 'product-design') {
+          return 'Frame your answer around user needs first, then the design solution. Why does your design solve their problem?';
+        }
+        return 'Consider starting with your hypothesis, then explaining how you validate it with data.';
+      }
+
+      getFollowUp(answer, question) {
+        return 'Can you walk me through a specific example of how you\'d approach this?';
+      }
+    }
+
+    class DataStore {
+      getCompanies() {
+        const defaults = [
+          {
+            id: 'google',
+            name: 'Google',
+            logo: 'G',
+            domain: 'Cloud, Search, AI',
+            keyProducts: ['Gmail', 'Analytics', 'Workspace']
+          },
+          {
+            id: 'meta',
+            name: 'Meta',
+            logo: 'M',
+            domain: 'Social, VR/AR, AI',
+            keyProducts: ['Instagram', 'WhatsApp', 'Reels']
+          },
+          {
+            id: 'amazon',
+            name: 'Amazon',
+            logo: 'A',
+            domain: 'E-commerce, Cloud, Ads',
+            keyProducts: ['AWS', 'Alexa', 'Prime']
+          }
+        ];
+
+        return JSON.parse(localStorage.getItem('pf_companies')) || defaults;
+      }
+
+      getRoles() {
+        return [
+          { id: 'pm', name: 'Product Manager' },
+          { id: 'design', name: 'Product Designer' },
+          { id: 'eng', name: 'Software Engineer' }
+        ];
+      }
+
+      getStories() {
+        const defaults = [
+          {
+            id: 's1',
+            title: 'AI Platform Build (LLM/RAG)',
+            situation: 'Led the architecture for a RAG-based AI platform',
+            task: 'Owned technical execution and product strategy',
+            action: 'Coordinated ML and backend engineers, iterated on embeddings',
+            result: 'Launched in 3 months, 500K+ users',
+            themes: ['Technical', 'AI/ML', '0-to-1'],
+            interviewTypes: ['product-execution', 'technical'],
+            mockRating: 5,
+            timesUsed: 3
+          },
+          {
+            id: 's2',
+            title: 'Scaling from 10M to 100M Users',
+            situation: 'Product had product-market fit but infrastructure was maxed out',
+            task: 'Led cross-functional effort to scale the platform',
+            action: 'Planned phased rollout, monitored metrics, managed stakeholder expectations',
+            result: '10x scale without major outages',
+            themes: ['Scale', 'Systems', 'Leadership'],
+            interviewTypes: ['product-strategy', 'behavioral'],
+            mockRating: 4,
+            timesUsed: 2
+          }
+        ];
+
+        return JSON.parse(localStorage.getItem('pf_story_bank')) || defaults;
+      }
+
+      getSessions() {
+        return JSON.parse(localStorage.getItem('pf_mock_sessions')) || [];
+      }
+
+      saveSession(sessionData) {
+        const sessions = this.getSessions();
+        sessions.push(sessionData);
+        localStorage.setItem('pf_mock_sessions', JSON.stringify(sessions));
+      }
+    }
+
+    // Initialize app
+    const app = new MockInterviewApp();
+  </script>
+  <script src="../shared/data-switcher.js"></script>
+</body>
+</html>

@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pathfinder — Dashboard</title>
+  <meta name="description" content="Daily job search dashboard with action queue and pipeline summary">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>D</text></svg>">
+
+  <link rel="stylesheet" href="../shared/pathfinder.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* ================================================================
+       DASHBOARD-SPECIFIC STYLES
+       Styles for the dashboard layout, zones, cards, and animations.
+       ================================================================ */
+
+    /* Main container: single-column, max 720px, centered on page */
+    .dashboard-container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0;
+      animation: fadeIn 200ms var(--ease-default) forwards;
+    }
+
+    /* Fade-in animation when page loads */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Navigation bar at the top: consistent across all modules */
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-6);
+      border-bottom: 1px solid var(--bg-subtle);
+      background: var(--bg-base);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    /* Logo/app title in nav */
+    .nav-brand {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* Navigation links container */
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      list-style: none;
+    }
+
+    /* Individual nav link */
+    .nav-links a {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      transition: color var(--duration-fast) var(--ease-default);
+      cursor: pointer;
+    }
+
+    /* Nav link hover and active states */
+    .nav-links a:hover {
+      color: var(--text-primary);
+    }
+
+    .nav-links a.active {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Right side of nav: theme toggle */
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    /* Theme toggle button */
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .theme-toggle:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .theme-toggle svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* ================================================================
+       ZONE 1: GREETING + STREAK
+       ================================================================ */
+
+    /* Container for greeting and streak info */
+    .zone-greeting {
+      padding: var(--space-8) var(--space-6) var(--space-6) var(--space-6);
+      border-bottom: 1px solid var(--bg-subtle);
+    }
+
+    /* Main greeting text */
+    .greeting-text {
+      font-size: var(--text-3xl);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-4);
+      line-height: 1.2;
+    }
+
+    /* Greeting time-of-day indicator (morning/afternoon/evening) */
+    .greeting-time {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* Streak section: the counter and flame emoji */
+    .streak-section {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-4);
+      background: var(--accent-subtle);
+      border-radius: var(--radius-md);
+      border-left: 3px solid var(--accent);
+    }
+
+    /* Flame emoji with size scaling based on streak length */
+    .streak-flame {
+      font-size: 2rem;
+      display: inline-block;
+    }
+
+    /* Text container for streak info */
+    .streak-content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    /* "Days in a row" label */
+    .streak-label {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    /* Large number showing current streak */
+    .streak-counter {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--accent);
+      font-family: var(--font-mono);
+      animation: countUp 600ms var(--ease-bounce) forwards;
+    }
+
+    /* Animation: counter counts from 0 to final value */
+    @keyframes countUp {
+      from {
+        content: '0';
+      }
+    }
+
+    /* Longest streak record */
+    .streak-record {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+    }
+
+    /* ================================================================
+       ZONE 2: ACTION QUEUE
+       The main content area with nudge cards (things to do today)
+       ================================================================ */
+
+    .zone-action-queue {
+      padding: var(--space-6);
+      min-height: 300px;
+    }
+
+    /* Title for action queue section */
+    .zone-title {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-4);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+
+    /* Container for all nudge cards */
+    .nudge-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    /* Individual nudge card */
+    .nudge-card {
+      display: flex;
+      gap: var(--space-3);
+      padding: var(--space-4);
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      border-left: 4px solid var(--accent);
+      box-shadow: var(--shadow-sm);
+      animation: slideIn 300ms var(--ease-default) forwards;
+      animation-fill-mode: both;
+    }
+
+    /* Stagger animation: each card enters slightly delayed */
+    .nudge-card:nth-child(1) { animation-delay: 0ms; }
+    .nudge-card:nth-child(2) { animation-delay: 50ms; }
+    .nudge-card:nth-child(3) { animation-delay: 100ms; }
+    .nudge-card:nth-child(4) { animation-delay: 150ms; }
+    .nudge-card:nth-child(5) { animation-delay: 200ms; }
+
+    /* Slide-in animation from left */
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Critical priority: red left border */
+    .nudge-card.critical {
+      border-left-color: var(--danger);
+    }
+
+    /* Important priority: amber/yellow left border */
+    .nudge-card.important {
+      border-left-color: var(--warning);
+    }
+
+    /* Informational priority: blue left border */
+    .nudge-card.informational {
+      border-left-color: var(--info);
+    }
+
+    /* Nudge card content area (left side) */
+    .nudge-content {
+      flex: 1;
+    }
+
+    /* Priority badge at top of card */
+    .nudge-badge {
+      display: inline-block;
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-2);
+    }
+
+    .nudge-badge.critical {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+    }
+
+    .nudge-badge.important {
+      background: rgba(234, 179, 8, 0.15);
+      color: var(--warning);
+    }
+
+    .nudge-badge.informational {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--info);
+    }
+
+    /* Main nudge text */
+    .nudge-text {
+      font-size: var(--text-base);
+      color: var(--text-primary);
+      line-height: 1.5;
+      margin-bottom: var(--space-2);
+    }
+
+    /* Company or relevant entity name highlighted */
+    .nudge-highlight {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    /* Action button container (right side of card) */
+    .nudge-actions {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+
+    /* Primary action button on nudge card */
+    .nudge-action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      background: var(--accent);
+      color: white;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      white-space: nowrap;
+    }
+
+    .nudge-action-btn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+    }
+
+    .nudge-action-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Dismiss button (X icon) */
+    .nudge-dismiss-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .nudge-dismiss-btn:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border-color: var(--text-secondary);
+    }
+
+    .nudge-dismiss-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Empty state when no nudges */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-12) var(--space-6);
+      text-align: center;
+    }
+
+    .empty-state-emoji {
+      font-size: 3rem;
+      margin-bottom: var(--space-4);
+    }
+
+    .empty-state-text {
+      font-size: var(--text-lg);
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+      font-weight: 600;
+    }
+
+    .empty-state-subtext {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      margin-bottom: var(--space-4);
+    }
+
+    .empty-state-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-3) var(--space-4);
+      background: var(--accent);
+      color: white;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .empty-state-cta:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+    }
+
+    /* ================================================================
+       ZONE 3: PIPELINE SUMMARY
+       Compact stats and visualization of pipeline health
+       ================================================================ */
+
+    .zone-summary {
+      padding: var(--space-6);
+      border-top: 1px solid var(--bg-subtle);
+    }
+
+    .summary-title {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-4);
+    }
+
+    /* Stage distribution chart */
+    .chart-section {
+      margin-bottom: var(--space-6);
+    }
+
+    .chart-row {
+      display: flex;
+      gap: var(--space-2);
+      align-items: center;
+      margin-bottom: var(--space-3);
+    }
+
+    .chart-label {
+      width: 100px;
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      font-weight: 500;
+    }
+
+    .chart-bar-container {
+      flex: 1;
+      height: 24px;
+      background: var(--bg-elevated);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .chart-bar {
+      height: 100%;
+      border-radius: var(--radius-sm);
+      animation: growBar 500ms var(--ease-default) forwards;
+      animation-fill-mode: both;
+    }
+
+    @keyframes growBar {
+      from {
+        width: 0%;
+      }
+    }
+
+    /* Stagger chart bar animations */
+    .chart-bar:nth-child(1) { animation-delay: 0ms; }
+    .chart-bar:nth-child(2) { animation-delay: 80ms; }
+    .chart-bar:nth-child(3) { animation-delay: 160ms; }
+    .chart-bar:nth-child(4) { animation-delay: 240ms; }
+    .chart-bar:nth-child(5) { animation-delay: 320ms; }
+    .chart-bar:nth-child(6) { animation-delay: 400ms; }
+    .chart-bar:nth-child(7) { animation-delay: 480ms; }
+    .chart-bar:nth-child(8) { animation-delay: 560ms; }
+
+    .chart-count {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-weight: 600;
+      min-width: 30px;
+      text-align: right;
+    }
+
+    /* Total roles count */
+    .total-roles {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-4);
+    }
+
+    /* Conversion funnel section */
+    .funnel-section {
+      margin-bottom: var(--space-6);
+    }
+
+    .funnel-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-3);
+      background: var(--bg-elevated);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-2);
+    }
+
+    .funnel-label {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .funnel-percentage {
+      font-size: var(--text-sm);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* Activity metrics section */
+    .activity-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-4);
+    }
+
+    .activity-metric {
+      padding: var(--space-4);
+      background: var(--bg-elevated);
+      border-radius: var(--radius-md);
+    }
+
+    .metric-label {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      margin-bottom: var(--space-2);
+    }
+
+    .metric-value {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--accent);
+      font-family: var(--font-mono);
+      animation: countUp 500ms var(--ease-bounce) forwards;
+    }
+
+    /* ================================================================
+       QUICK ACTIONS BAR
+       Fixed at bottom or prominent section with main actions
+       ================================================================ */
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-3);
+      padding: var(--space-6);
+      border-top: 1px solid var(--bg-subtle);
+    }
+
+    .quick-action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      padding: var(--space-4);
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: var(--text-sm);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      text-decoration: none;
+    }
+
+    .quick-action-btn:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .quick-action-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Primary action button (darker/more prominent) */
+    .quick-action-btn.primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .quick-action-btn.primary:hover {
+      background: var(--accent-hover);
+    }
+
+    /* ================================================================
+       COMMAND PALETTE
+       Searchable overlay for keyboard navigation
+       ================================================================ */
+
+    .command-palette-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      z-index: 300;
+      padding-top: 100px;
+    }
+
+    .command-palette-overlay.open {
+      display: flex;
+    }
+
+    .command-palette {
+      background: var(--bg-elevated);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 90%;
+      max-width: 500px;
+      max-height: 400px;
+      display: flex;
+      flex-direction: column;
+      animation: slideDown 200ms var(--ease-default);
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .command-input {
+      padding: var(--space-4);
+      border-bottom: 1px solid var(--bg-subtle);
+      background: transparent;
+    }
+
+    .command-input input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-size: var(--text-base);
+      outline: none;
+    }
+
+    .command-input input::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .command-results {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-2);
+    }
+
+    .command-item {
+      padding: var(--space-3);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-1);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .command-item:hover,
+    .command-item.selected {
+      background: var(--accent-subtle);
+      color: var(--accent);
+    }
+
+    .command-item-label {
+      font-weight: 500;
+    }
+
+    .command-item-key {
+      display: inline-block;
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      margin-left: var(--space-2);
+    }
+
+    /* ================================================================
+       RESPONSIVE DESIGN
+       Mobile-friendly adjustments
+       ================================================================ */
+
+    @media (max-width: 640px) {
+      .nav-links {
+        display: none;
+      }
+
+      .quick-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .activity-section {
+        grid-template-columns: 1fr;
+      }
+
+      .streak-section {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .nudge-actions {
+        flex-direction: row;
+        align-items: center;
+      }
+
+      .greeting-text {
+        font-size: var(--text-2xl);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- ================================================================
+         NAVIGATION BAR
+         Top navigation with module links and theme toggle
+         ================================================================ -->
+    <nav class="nav-bar">
+      <div class="nav-brand">Pathfinder</div>
+      <ul class="nav-links">
+        <li><a href="./index.html" class="active">Dashboard</a></li>
+        <li><a href="../pipeline/index.html">Pipeline</a></li>
+        <li><a href="../research-brief/index.html">Research</a></li>
+        <li><a href="../resume-tailor/index.html">Resume</a></li>
+        <li><a href="../job-feed-listener/index.html">Feed</a></li>
+        <li><a href="../outreach/index.html">Outreach</a></li>
+        <li><a href="../mock-interview/index.html">Mock</a></li>
+        <li><a href="../debrief/index.html">Debrief</a></li>
+        <li><a href="../comp-intel/index.html">Comp</a></li>
+        <li><a href="../calendar/index.html">Calendar</a></li>
+      </ul>
+      <div class="nav-controls">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark/light theme">
+          <svg id="themeIcon" data-lucide="moon"></svg>
+        </button>
+      </div>
+    </nav>
+
+    <!-- ================================================================
+         ZONE 1: GREETING + STREAK
+         Time-of-day aware greeting and streak counter
+         ================================================================ -->
+    <div class="zone-greeting">
+      <div class="greeting-text">
+        Good <span class="greeting-time" id="timeOfDay">morning</span>, Ili
+      </div>
+
+      <div class="streak-section">
+        <div class="streak-flame" id="streakFlame">🔥</div>
+        <div class="streak-content">
+          <div class="streak-label">Days in a Row</div>
+          <div class="streak-counter" id="streakCounter">0</div>
+          <div class="streak-record">Longest: <span id="longestStreak">0</span> days</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================
+         ZONE 2: ACTION QUEUE
+         Prioritized nudge cards showing what needs attention today
+         ================================================================ -->
+    <div class="zone-action-queue">
+      <div class="zone-title">Action Queue</div>
+      <div class="nudge-list" id="nudgeList">
+        <!-- Nudge cards generated by JavaScript -->
+      </div>
+    </div>
+
+    <!-- ================================================================
+         ZONE 3: PIPELINE SUMMARY
+         Compact stats on pipeline health and activity
+         ================================================================ -->
+    <div class="zone-summary">
+      <div class="summary-title">Pipeline Summary</div>
+
+      <div class="total-roles">
+        <span id="totalRolesCount">0</span> roles in pipeline
+      </div>
+
+      <!-- Stage distribution chart -->
+      <div class="chart-section">
+        <div class="chart-row">
+          <div class="chart-label">Discovered</div>
+          <div class="chart-bar-container">
+            <div class="chart-bar" style="background: var(--stage-discovered); width: 0%;" id="bar-discovered"></div>
+          </div>
+          <div class="chart-count" id="count-discovered">0</div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-label">Researching</div>
+          <div class="chart-bar-container">
+            <div class="chart-bar" style="background: var(--stage-researching); width: 0%;" id="bar-researching"></div>
+          </div>
+          <div class="chart-count" id="count-researching">0</div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-label">Outreach</div>
+          <div class="chart-bar-container">
+            <div class="chart-bar" style="background: var(--stage-outreach); width: 0%;" id="bar-outreach"></div>
+          </div>
+          <div class="chart-count" id="count-outreach">0</div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-label">Applied</div>
+          <div class="chart-bar-container">
+            <div class="chart-bar" style="background: var(--stage-applied); width: 0%;" id="bar-applied"></div>
+          </div>
+          <div class="chart-count" id="count-applied">0</div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-label">Screen</div>
+          <div class="chart-bar-container">
+            <div class="chart-bar" style="background: var(--stage-screen); width: 0%;" id="bar-screen"></div>
+          </div>
+          <div class="chart-count" id="count-screen">0</div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-label">Interviewing</div>
+          <div class="chart-bar-container">
+            <div class="chart-bar" style="background: var(--stage-interviewing); width: 0%;" id="bar-interviewing"></div>
+          </div>
+          <div class="chart-count" id="count-interviewing">0</div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-label">Offer</div>
+          <div class="chart-bar-container">
+            <div class="chart-bar" style="background: var(--stage-offer); width: 0%;" id="bar-offer"></div>
+          </div>
+          <div class="chart-count" id="count-offer">0</div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-label">Closed</div>
+          <div class="chart-bar-container">
+            <div class="chart-bar" style="background: var(--stage-closed); width: 0%;" id="bar-closed"></div>
+          </div>
+          <div class="chart-count" id="count-closed">0</div>
+        </div>
+      </div>
+
+      <!-- Conversion funnel stats -->
+      <div class="funnel-section">
+        <div class="funnel-row">
+          <div class="funnel-label">Discovered → Screen</div>
+          <div class="funnel-percentage" id="funnel-screen">0%</div>
+        </div>
+        <div class="funnel-row">
+          <div class="funnel-label">Screen → Interview</div>
+          <div class="funnel-percentage" id="funnel-interview">0%</div>
+        </div>
+        <div class="funnel-row">
+          <div class="funnel-label">Interview → Offer</div>
+          <div class="funnel-percentage" id="funnel-offer">0%</div>
+        </div>
+      </div>
+
+      <!-- Activity metrics -->
+      <div class="activity-section">
+        <div class="activity-metric">
+          <div class="metric-label">Added This Week</div>
+          <div class="metric-value" id="metric-added">0</div>
+        </div>
+        <div class="activity-metric">
+          <div class="metric-label">Progressed This Week</div>
+          <div class="metric-value" id="metric-progressed">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================
+         QUICK ACTIONS BAR
+         Primary action buttons for common tasks
+         ================================================================ -->
+    <div class="quick-actions">
+      <a href="../pipeline/index.html?modal=add" class="quick-action-btn primary">
+        <svg data-lucide="plus-circle"></svg>
+        Add Role
+      </a>
+      <button class="quick-action-btn" id="viewPipelineBtn">
+        <svg data-lucide="briefcase"></svg>
+        View Pipeline
+      </button>
+      <button class="quick-action-btn" id="researchBtn">
+        <svg data-lucide="search"></svg>
+        Research Brief
+      </button>
+      <button class="quick-action-btn" id="resumeBtn">
+        <svg data-lucide="file-text"></svg>
+        Tailor Resume
+      </button>
+    </div>
+
+    <!-- ================================================================
+         COMMAND PALETTE OVERLAY
+         Keyboard-driven navigation (Cmd+K / Ctrl+K)
+         ================================================================ -->
+    <div class="command-palette-overlay" id="commandPaletteOverlay">
+      <div class="command-palette" id="commandPalette">
+        <div class="command-input">
+          <input
+            type="text"
+            id="commandInput"
+            placeholder="Type a command... (press ESC to close)"
+            autocomplete="off"
+          >
+        </div>
+        <div class="command-results" id="commandResults">
+          <!-- Command items populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ================================================================
+       DASHBOARD ARCHITECTURE OVERVIEW
+
+       This script manages:
+       1. Data Layer: reads pf_companies/pf_roles, owns streak + nudges
+       2. Streak Engine: tracks consecutive days with meaningful actions
+       3. Nudge Engine: scans roles/companies against time-based rules
+       4. Pipeline Stats: computes stage distribution and conversion rates
+       5. UI Rendering: displays everything with animations
+       6. Keyboard Shortcuts: command palette and navigation shortcuts
+
+       Data is read from localStorage using pf_ prefixed keys:
+       - pf_companies: array of company objects
+       - pf_roles: array of role objects
+       - pf_streak: object with streak tracking
+       - pf_dismissed_nudges: array of dismissed nudge IDs
+
+       The dashboard does NOT write to pf_companies or pf_roles.
+       It only reads from them to generate nudges and stats.
+       ================================================================ */
+
+    // ================================================================
+    // HELPER UTILITIES
+    // ================================================================
+
+    /**
+     * Generate a stable unique ID for a nudge based on trigger type and entity
+     * This ensures dismissed nudges stay dismissed even if data changes
+     */
+    function generateNudgeId(trigger, entityId) {
+      return `nudge_${trigger}_${entityId}`;
+    }
+
+    /**
+     * Calculate days between two dates
+     * Returns negative number if date2 is in future, positive if in past
+     */
+    function daysSince(date) {
+      if (!date) return 0;
+      const dateObj = new Date(date);
+      const now = new Date();
+      const diffMs = now - dateObj;
+      return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    }
+
+    /**
+     * Get time of day for greeting (morning, afternoon, evening)
+     */
+    function getTimeOfDay() {
+      const hour = new Date().getHours();
+      if (hour < 12) return 'morning';
+      if (hour < 17) return 'afternoon';
+      return 'evening';
+    }
+
+    /**
+     * Format a date as a readable string (e.g., "3 days ago")
+     */
+    function formatRelativeDate(date) {
+      const days = daysSince(date);
+      if (days === 0) return 'today';
+      if (days === 1) return 'yesterday';
+      if (days < 7) return `${days} days ago`;
+      return new Date(date).toLocaleDateString();
+    }
+
+    /**
+     * Get today's date as YYYY-MM-DD string
+     */
+    function getTodayDateString() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // ================================================================
+    // DATA LAYER
+    // ================================================================
+
+    /**
+     * Load all data from localStorage
+     * Returns object with companies, roles, streak, and dismissed nudges
+     */
+    function loadData() {
+      const companies = JSON.parse(localStorage.getItem('pf_companies') || '[]');
+      const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+      const streak = JSON.parse(localStorage.getItem('pf_streak') || null);
+      const dismissedNudges = JSON.parse(localStorage.getItem('pf_dismissed_nudges') || '[]');
+
+      return { companies, roles, streak, dismissedNudges };
+    }
+
+    /**
+     * Save streak data to localStorage
+     */
+    function saveStreak(streakData) {
+      localStorage.setItem('pf_streak', JSON.stringify(streakData));
+    }
+
+    /**
+     * Save dismissed nudges to localStorage
+     */
+    function saveDismissedNudges(dismissedNudges) {
+      localStorage.setItem('pf_dismissed_nudges', JSON.stringify(dismissedNudges));
+    }
+
+    // ================================================================
+    // DEMO DATA GENERATOR
+    // ================================================================
+
+    /**
+     * Create demo data if none exists
+     * Generates 15-20 realistic roles across all stages
+     */
+    function initializeDemoData() {
+      const { companies, roles } = loadData();
+
+      if (roles.length > 0) {
+        return; // Use existing data
+      }
+
+      // Create demo companies
+      const demoCompanies = [
+        { id: 'google', name: 'Google', tier: 'hot', industry: 'Tech', founded: 1998 },
+        { id: 'microsoft', name: 'Microsoft', tier: 'hot', industry: 'Tech', founded: 1975 },
+        { id: 'openai', name: 'OpenAI', tier: 'active', industry: 'AI', founded: 2015 },
+        { id: 'anthropic', name: 'Anthropic', tier: 'active', industry: 'AI', founded: 2021 },
+        { id: 'stripe', name: 'Stripe', tier: 'active', industry: 'FinTech', founded: 2010 },
+        { id: 'figma', name: 'Figma', tier: 'watching', industry: 'Design', founded: 2012 },
+        { id: 'notion', name: 'Notion', tier: 'watching', industry: 'Productivity', founded: 2016 },
+        { id: 'databricks', name: 'Databricks', tier: 'active', industry: 'Data', founded: 2013 },
+        { id: 'replit', name: 'Replit', tier: 'watching', industry: 'Dev Tools', founded: 2016 },
+        { id: 'huggingface', name: 'Hugging Face', tier: 'active', industry: 'AI', founded: 2016 },
+      ];
+
+      // Create demo roles across all stages with varied dates
+      // IMPORTANT: role.company must be a string (company name), matching Pipeline Tracker format
+      const now = new Date();
+      const d = (days) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
+      const f = (days) => new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
+      const demoRoles = [
+        // Discovered (just found)
+        { id: 'role_1', company: 'Google', title: 'Senior Software Engineer', stage: 'discovered', tier: 'hot', positioning: 'ic', dateAdded: d(2), lastActivity: d(2), stageHistory: [] },
+        { id: 'role_2', company: 'Figma', title: 'Product Manager', stage: 'discovered', tier: 'watching', positioning: 'ic', dateAdded: d(5), lastActivity: d(5), stageHistory: [] },
+
+        // Researching
+        { id: 'role_3', company: 'Stripe', title: 'Staff Product Manager, Payments', stage: 'researching', tier: 'active', positioning: 'ic', dateAdded: d(8), lastActivity: d(3), stageHistory: [] },
+        { id: 'role_4', company: 'Anthropic', title: 'Product Manager, Claude Platform', stage: 'researching', tier: 'hot', positioning: 'ic', dateAdded: d(10), lastActivity: d(4), stageHistory: [] },
+
+        // Outreach
+        { id: 'role_5', company: 'OpenAI', title: 'ML Engineer', stage: 'outreach', tier: 'active', positioning: 'ic', dateAdded: d(12), lastActivity: d(6), stageHistory: [] },
+        { id: 'role_6', company: 'Databricks', title: 'Data Engineer', stage: 'outreach', tier: 'active', positioning: 'ic', dateAdded: d(15), lastActivity: d(8), stageHistory: [] },
+
+        // Applied
+        { id: 'role_7', company: 'Microsoft', title: 'Cloud Architect', stage: 'applied', tier: 'hot', positioning: 'ic', dateAdded: d(20), lastActivity: d(18), stageHistory: [] },
+        { id: 'role_8', company: 'Notion', title: 'Backend Engineer', stage: 'applied', tier: 'watching', positioning: 'ic', dateAdded: d(25), lastActivity: d(22), stageHistory: [] },
+        { id: 'role_9', company: 'Replit', title: 'Developer Relations', stage: 'applied', tier: 'watching', positioning: 'ic', dateAdded: d(30), lastActivity: d(28), stageHistory: [] },
+
+        // Screen
+        { id: 'role_10', company: 'Hugging Face', title: 'ML Research Engineer', stage: 'screen', tier: 'active', positioning: 'ic', dateAdded: d(35), lastActivity: d(10), stageHistory: [] },
+        { id: 'role_11', company: 'Stripe', title: 'Site Reliability Engineer', stage: 'screen', tier: 'active', positioning: 'ic', dateAdded: d(40), lastActivity: d(14), stageHistory: [] },
+
+        // Interviewing
+        { id: 'role_12', company: 'Google', title: 'Solutions Architect', stage: 'interviewing', tier: 'hot', positioning: 'ic', dateAdded: d(45), lastActivity: d(5), nextInterviewDate: f(1), stageHistory: [] },
+        { id: 'role_13', company: 'Anthropic', title: 'Systems Engineer', stage: 'interviewing', tier: 'hot', positioning: 'ic', dateAdded: d(50), lastActivity: d(3), stageHistory: [] },
+
+        // Offer
+        { id: 'role_14', company: 'OpenAI', title: 'Prompt Engineer', stage: 'offer', tier: 'active', positioning: 'ic', dateAdded: d(60), lastActivity: d(1), offerReceivedDate: d(1), stageHistory: [] },
+
+        // Closed
+        { id: 'role_15', company: 'Notion', title: 'Product Design Lead', stage: 'closed', tier: 'watching', positioning: 'ic', dateAdded: d(90), lastActivity: d(45), closedReason: 'declined', stageHistory: [] },
+      ];
+
+      localStorage.setItem('pf_companies', JSON.stringify(demoCompanies));
+      localStorage.setItem('pf_roles', JSON.stringify(demoRoles));
+      localStorage.setItem('pf_streak', JSON.stringify({ currentStreak: 7, longestStreak: 7, lastActiveDate: getTodayDateString(), history: [] }));
+    }
+
+    // ================================================================
+    // STREAK ENGINE
+    // ================================================================
+
+    /**
+     * Check if a role represents a meaningful action for streak counting
+     * Meaningful actions: added today, advanced today, interview completed, offer received
+     */
+    function isActionToday(role) {
+      const today = getTodayDateString();
+      const dateAdded = role.dateAdded ? new Date(role.dateAdded).toISOString().split('T')[0] : null;
+      const stageChanged = role.stageChangedDate ? new Date(role.stageChangedDate).toISOString().split('T')[0] : null;
+
+      return dateAdded === today || stageChanged === today;
+    }
+
+    /**
+     * Update streak based on today's actions
+     * Check if user did anything meaningful today; if so, increment streak
+     * Missing a weekend doesn't break the streak
+     */
+    function updateStreak() {
+      const { roles, streak: existingStreak } = loadData();
+      const today = getTodayDateString();
+
+      // Check if today has any meaningful actions
+      const hasActionToday = roles.some(role => isActionToday(role));
+
+      let streak = existingStreak || { currentStreak: 0, longestStreak: 0, lastActiveDate: null, history: [] };
+
+      if (hasActionToday) {
+        // If last active was yesterday, increment streak
+        if (streak.lastActiveDate) {
+          const lastDate = new Date(streak.lastActiveDate);
+          const today_ = new Date();
+          const diffDays = Math.floor((today_ - lastDate) / (1000 * 60 * 60 * 24));
+
+          if (diffDays === 1 || (diffDays === 3 && [5, 6].includes(lastDate.getDay()))) {
+            // Increment streak (or skip weekends)
+            streak.currentStreak += 1;
+          } else if (diffDays > 3) {
+            // Reset streak if gap is too large (more than weekend)
+            streak.currentStreak = 1;
+          }
+        } else {
+          // First action ever
+          streak.currentStreak = 1;
+        }
+
+        streak.lastActiveDate = today;
+
+        // Update longest streak
+        if (streak.currentStreak > streak.longestStreak) {
+          streak.longestStreak = streak.currentStreak;
+        }
+      }
+
+      saveStreak(streak);
+      return streak;
+    }
+
+    // ================================================================
+    // NUDGE ENGINE
+    // ================================================================
+
+    /**
+     * Check if a nudge is currently dismissed
+     * Dismissed nudges expire after 24 hours
+     */
+    function isDismissed(nudgeId, dismissedNudges) {
+      const dismissed = dismissedNudges.find(d => d.nudgeId === nudgeId);
+      if (!dismissed) return false;
+
+      const dismissedAt = new Date(dismissed.dismissedAt);
+      const now = new Date();
+      const hoursPassed = (now - dismissedAt) / (1000 * 60 * 60);
+
+      return hoursPassed < 24; // Still dismissed if less than 24 hours
+    }
+
+    /**
+     * Generate all nudges for today by scanning roles and companies
+     * Returns array of nudge objects sorted by priority
+     */
+    function generateNudges() {
+      const { companies, roles, dismissedNudges } = loadData();
+      const nudges = [];
+
+      // Trigger 1: Role in "applied" > 21 days without response
+      roles.forEach(role => {
+        if (role.stage === 'applied') {
+          const daysSinceApplied = daysSince(role.stageChangedDate || role.lastActivity);
+          if (daysSinceApplied > 21) {
+            const nudgeId = generateNudgeId('ghosted', role.id);
+            if (!isDismissed(nudgeId, dismissedNudges)) {
+              const companyName = role.company || 'Unknown';
+              nudges.push({
+                id: nudgeId,
+                priority: 'important',
+                trigger: 'ghosted',
+                roleId: role.id,
+                company: companyName,
+                text: `No response from <span class="nudge-highlight">${companyName}</span> in 3 weeks — mark as ghosted?`,
+                action: { label: 'View Role', href: '../pipeline/index.html' },
+              });
+            }
+          }
+        }
+      });
+
+      // Trigger 2: Offer without response > 48 hours
+      roles.forEach(role => {
+        if (role.stage === 'offer') {
+          const daysSinceOffer = daysSince(role.stageChangedDate || role.lastActivity);
+          if (daysSinceOffer > 2) {
+            const nudgeId = generateNudgeId('offer_pending', role.id);
+            if (!isDismissed(nudgeId, dismissedNudges)) {
+              const companyName = role.company || 'Unknown';
+              nudges.push({
+                id: nudgeId,
+                priority: 'critical',
+                trigger: 'offer_pending',
+                roleId: role.id,
+                company: companyName,
+                text: `Offer from <span class="nudge-highlight">${companyName}</span> needs a response`,
+                action: { label: 'Respond', href: '../pipeline/index.html' },
+              });
+            }
+          }
+        }
+      });
+
+      // Trigger 3: Hot-tier company with no active roles
+      // Build unique companies from roles data
+      const companyNames = [...new Set(roles.map(r => r.company).filter(Boolean))];
+      companyNames.forEach(companyName => {
+        const companyRoles = roles.filter(r => r.company === companyName);
+        const isHot = companyRoles.some(r => r.tier === 'hot') || companies.some(c => c.name === companyName && c.tier === 'hot');
+        if (isHot) {
+          const activeRoles = companyRoles.filter(r => !['closed'].includes(r.stage));
+          if (activeRoles.length === 0) {
+            const nudgeId = generateNudgeId('hot_no_roles', companyName);
+            if (!isDismissed(nudgeId, dismissedNudges)) {
+              nudges.push({
+                id: nudgeId,
+                priority: 'informational',
+                trigger: 'hot_no_roles',
+                company: companyName,
+                text: `<span class="nudge-highlight">${companyName}</span> is Hot with no active roles — check for openings?`,
+                action: { label: 'Check Careers', href: '../research-brief/index.html' },
+              });
+            }
+          }
+        }
+      });
+
+      // Trigger 4: Interview in < 48h with no brief
+      roles.forEach(role => {
+        if (role.stage === 'interviewing' && role.nextInterviewDate) {
+          const hoursUntilInterview = (new Date(role.nextInterviewDate) - new Date()) / (1000 * 60 * 60);
+          if (hoursUntilInterview > 0 && hoursUntilInterview < 48) {
+            const nudgeId = generateNudgeId('interview_brief', role.id);
+            if (!isDismissed(nudgeId, dismissedNudges)) {
+              const companyName = role.company || 'Unknown';
+              nudges.push({
+                id: nudgeId,
+                priority: 'critical',
+                trigger: 'interview_brief',
+                roleId: role.id,
+                company: companyName,
+                text: `Interview at <span class="nudge-highlight">${companyName}</span> in ${Math.ceil(hoursUntilInterview / 24)} days — generate research brief?`,
+                action: { label: 'Generate Brief', href: '../research-brief/index.html' },
+              });
+            }
+          }
+        }
+      });
+
+      // Trigger 5: Company profile < 50% complete
+      companies.forEach(company => {
+        const profileCompleteness = (
+          (company.name ? 20 : 0) +
+          (company.tier ? 20 : 0) +
+          (company.industry ? 20 : 0) +
+          (company.founded ? 20 : 0) +
+          (company.websiteUrl ? 20 : 0)
+        ) / 5;
+
+        if (profileCompleteness < 50) {
+          const nudgeId = generateNudgeId('incomplete_profile', company.id);
+          if (!isDismissed(nudgeId, dismissedNudges)) {
+            nudges.push({
+              id: nudgeId,
+              priority: 'informational',
+              trigger: 'incomplete_profile',
+              companyId: company.id,
+              company: company.name,
+              text: `<span class="nudge-highlight">${company.name}</span> profile is sparse — fill in before advancing`,
+              action: { label: 'Edit Profile', href: '../pipeline/index.html' },
+            });
+          }
+        }
+      });
+
+      // Sort by priority: critical > important > informational
+      const priorityOrder = { critical: 0, important: 1, informational: 2 };
+      nudges.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+
+      return nudges;
+    }
+
+    // ================================================================
+    // PIPELINE STATS ENGINE
+    // ================================================================
+
+    /**
+     * Compute pipeline statistics: stage counts, conversions, activity
+     */
+    function computePipelineStats() {
+      const { roles } = loadData();
+      const now = new Date();
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      // Count roles per stage
+      const stageCounts = {
+        discovered: 0, researching: 0, outreach: 0, applied: 0,
+        screen: 0, interviewing: 0, offer: 0, closed: 0,
+      };
+
+      roles.forEach(role => {
+        if (stageCounts.hasOwnProperty(role.stage)) {
+          stageCounts[role.stage]++;
+        }
+      });
+
+      // Calculate conversion rates
+      const totalDiscovered = stageCounts.discovered + stageCounts.researching + stageCounts.outreach + stageCounts.applied + stageCounts.screen + stageCounts.interviewing + stageCounts.offer;
+      const screenConversion = totalDiscovered > 0 ? Math.round((stageCounts.screen / totalDiscovered) * 100) : 0;
+      const interviewConversion = stageCounts.screen > 0 ? Math.round((stageCounts.interviewing / stageCounts.screen) * 100) : 0;
+      const offerConversion = stageCounts.interviewing > 0 ? Math.round((stageCounts.offer / stageCounts.interviewing) * 100) : 0;
+
+      // Count weekly activity
+      const rolesAddedThisWeek = roles.filter(r => {
+        const dateAdded = new Date(r.dateAdded);
+        return dateAdded > weekAgo;
+      }).length;
+
+      const rolesProgressedThisWeek = roles.filter(r => {
+        const stageChanged = new Date(r.stageChangedDate || r.dateAdded);
+        return stageChanged > weekAgo && r.stage !== 'discovered';
+      }).length;
+
+      return {
+        stageCounts,
+        total: roles.length,
+        conversions: {
+          screen: screenConversion,
+          interview: interviewConversion,
+          offer: offerConversion,
+        },
+        activity: {
+          addedThisWeek: rolesAddedThisWeek,
+          progressedThisWeek: rolesProgressedThisWeek,
+        },
+      };
+    }
+
+    // ================================================================
+    // UI RENDERING
+    // ================================================================
+
+    /**
+     * Update greeting text with time-of-day
+     */
+    function renderGreeting() {
+      const timeOfDay = getTimeOfDay();
+      document.getElementById('timeOfDay').textContent = timeOfDay;
+    }
+
+    /**
+     * Render and animate streak counter
+     */
+    function renderStreak() {
+      const streak = updateStreak();
+
+      const counterEl = document.getElementById('streakCounter');
+      const flameEl = document.getElementById('streakFlame');
+      const recordEl = document.getElementById('longestStreak');
+
+      // Animate counter from 0 to current streak
+      animateCounter(counterEl, 0, streak.currentStreak, 600);
+      recordEl.textContent = streak.longestStreak;
+
+      // Scale flame based on streak length
+      const scale = 1 + (streak.currentStreak / 10) * 0.5; // Grows with streak
+      flameEl.style.transform = `scale(${scale})`;
+    }
+
+    /**
+     * Animate a counter from one number to another
+     */
+    function animateCounter(element, from, to, duration) {
+      const startTime = Date.now();
+      const increment = (to - from) / (duration / 16);
+
+      function update() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const current = Math.floor(from + increment * (duration / 16) * (elapsed / 16));
+
+        element.textContent = Math.min(current, to);
+
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        } else {
+          element.textContent = to;
+        }
+      }
+
+      update();
+    }
+
+    /**
+     * Render nudge cards in the action queue
+     */
+    function renderNudges() {
+      const nudges = generateNudges();
+      const nudgeList = document.getElementById('nudgeList');
+
+      nudgeList.innerHTML = '';
+
+      if (nudges.length === 0) {
+        nudgeList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-emoji">🎯</div>
+            <div class="empty-state-text">You're all caught up!</div>
+            <div class="empty-state-subtext">No action items today. Great job!</div>
+            <a href="../pipeline/index.html?modal=add" class="empty-state-cta">
+              <svg data-lucide="plus-circle"></svg>
+              Add a new role
+            </a>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      nudges.forEach(nudge => {
+        const card = document.createElement('div');
+        card.className = `nudge-card ${nudge.priority}`;
+        card.dataset.nudgeId = nudge.id;
+
+        card.innerHTML = `
+          <div class="nudge-content">
+            <div class="nudge-badge ${nudge.priority}">${nudge.priority}</div>
+            <div class="nudge-text">${nudge.text}</div>
+          </div>
+          <div class="nudge-actions">
+            <a href="${nudge.action.href}" class="nudge-action-btn">
+              ${nudge.action.label}
+              <svg data-lucide="arrow-right"></svg>
+            </a>
+            <button class="nudge-dismiss-btn" aria-label="Dismiss nudge">
+              <svg data-lucide="x"></svg>
+            </button>
+          </div>
+        `;
+
+        // Dismiss button functionality
+        const dismissBtn = card.querySelector('.nudge-dismiss-btn');
+        dismissBtn.addEventListener('click', () => {
+          dismissNudge(nudge.id);
+          card.remove();
+        });
+
+        nudgeList.appendChild(card);
+      });
+
+      lucide.createIcons();
+    }
+
+    /**
+     * Dismiss a nudge (mark as dismissed, expires in 24 hours)
+     */
+    function dismissNudge(nudgeId) {
+      const data = loadData();
+      const dismissed = data.dismissedNudges.find(d => d.nudgeId === nudgeId);
+
+      if (!dismissed) {
+        data.dismissedNudges.push({
+          nudgeId: nudgeId,
+          dismissedAt: new Date().toISOString(),
+        });
+      }
+
+      saveDismissedNudges(data.dismissedNudges);
+    }
+
+    /**
+     * Render pipeline summary stats and charts
+     */
+    function renderPipelineStats() {
+      const stats = computePipelineStats();
+
+      // Total roles
+      document.getElementById('totalRolesCount').textContent = stats.total;
+
+      // Stage distribution bars
+      const stageOrder = ['discovered', 'researching', 'outreach', 'applied', 'screen', 'interviewing', 'offer', 'closed'];
+      const maxCount = Math.max(...Object.values(stats.stageCounts), 1);
+
+      stageOrder.forEach(stage => {
+        const count = stats.stageCounts[stage];
+        const percentage = (count / maxCount) * 100;
+
+        document.getElementById(`bar-${stage}`).style.width = `${percentage}%`;
+        document.getElementById(`count-${stage}`).textContent = count;
+      });
+
+      // Conversion rates
+      document.getElementById('funnel-screen').textContent = `${stats.conversions.screen}%`;
+      document.getElementById('funnel-interview').textContent = `${stats.conversions.interview}%`;
+      document.getElementById('funnel-offer').textContent = `${stats.conversions.offer}%`;
+
+      // Activity metrics
+      document.getElementById('metric-added').textContent = stats.activity.addedThisWeek;
+      document.getElementById('metric-progressed').textContent = stats.activity.progressedThisWeek;
+    }
+
+    // ================================================================
+    // KEYBOARD SHORTCUTS & COMMAND PALETTE
+    // ================================================================
+
+    /**
+     * Initialize command palette (Cmd+K / Ctrl+K to open)
+     */
+    function initCommandPalette() {
+      const overlay = document.getElementById('commandPaletteOverlay');
+      const input = document.getElementById('commandInput');
+      const results = document.getElementById('commandResults');
+
+      const commands = [
+        { label: 'Add Role', key: 'N', action: () => window.location.href = '../pipeline/index.html?modal=add' },
+        { label: 'View Pipeline', key: 'P', action: () => window.location.href = '../pipeline/index.html' },
+        { label: 'Research Brief', key: 'R', action: () => window.location.href = '../research-brief/index.html' },
+        { label: 'Tailor Resume', key: 'T', action: () => window.location.href = '../resume-tailor/index.html' },
+        { label: 'Toggle Theme', key: 'Shift+T', action: toggleTheme },
+      ];
+
+      // Open palette on Cmd+K or Ctrl+K
+      document.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+          e.preventDefault();
+          overlay.classList.add('open');
+          input.focus();
+        }
+
+        // Close on Escape
+        if (e.key === 'Escape' && overlay.classList.contains('open')) {
+          overlay.classList.remove('open');
+          input.value = '';
+        }
+      });
+
+      // Search and filter commands
+      input.addEventListener('input', () => {
+        const query = input.value.toLowerCase();
+        results.innerHTML = '';
+
+        const filtered = commands.filter(cmd => cmd.label.toLowerCase().includes(query));
+
+        filtered.forEach(cmd => {
+          const item = document.createElement('div');
+          item.className = 'command-item';
+          item.innerHTML = `
+            <span class="command-item-label">${cmd.label}</span>
+            <span class="command-item-key">${cmd.key}</span>
+          `;
+          item.addEventListener('click', () => {
+            cmd.action();
+            overlay.classList.remove('open');
+          });
+          results.appendChild(item);
+        });
+      });
+
+      // Quick keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey || e.metaKey) return; // Skip if modifier key
+
+        const actions = {
+          'n': () => window.location.href = '../pipeline/index.html?modal=add',
+          'p': () => window.location.href = '../pipeline/index.html',
+          'r': () => window.location.href = '../research-brief/index.html',
+          't': () => window.location.href = '../resume-tailor/index.html',
+        };
+
+        if (actions[e.key.toLowerCase()]) {
+          actions[e.key.toLowerCase()]();
+        }
+      });
+    }
+
+    // ================================================================
+    // THEME MANAGEMENT
+    // ================================================================
+
+    /**
+     * Toggle between dark and light theme
+     */
+    function toggleTheme() {
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme') || 'dark';
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('pf_theme', newTheme);
+
+      updateThemeIcon();
+    }
+
+    /**
+     * Update theme toggle icon to match current theme
+     */
+    function updateThemeIcon() {
+      const html = document.documentElement;
+      const theme = html.getAttribute('data-theme') || 'dark';
+      const icon = document.getElementById('themeIcon');
+
+      if (theme === 'dark') {
+        icon.setAttribute('data-lucide', 'sun');
+      } else {
+        icon.setAttribute('data-lucide', 'moon');
+      }
+
+      lucide.createIcons();
+    }
+
+    /**
+     * Load and apply saved theme preference
+     */
+    function initTheme() {
+      const savedTheme = localStorage.getItem('pf_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateThemeIcon();
+    }
+
+    // ================================================================
+    // BUTTON ACTIONS
+    // ================================================================
+
+    /**
+     * Wire up quick action buttons
+     */
+    function initQuickActions() {
+      document.getElementById('viewPipelineBtn').addEventListener('click', () => {
+        window.location.href = '../pipeline/index.html';
+      });
+
+      document.getElementById('researchBtn').addEventListener('click', () => {
+        window.location.href = '../research-brief/index.html';
+      });
+
+      document.getElementById('resumeBtn').addEventListener('click', () => {
+        window.location.href = '../resume-tailor/index.html';
+      });
+
+      document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+    }
+
+    // ================================================================
+    // INITIALIZATION
+    // ================================================================
+
+    /**
+     * Initialize the entire dashboard on page load
+     */
+    function init() {
+      // Load theme first
+      initTheme();
+
+      // Initialize demo data if needed
+      initializeDemoData();
+
+      // Render all UI elements
+      renderGreeting();
+      renderStreak();
+      renderNudges();
+      renderPipelineStats();
+
+      // Initialize interactions
+      initQuickActions();
+      initCommandPalette();
+
+      // Re-render nudges every minute (in case things change)
+      setInterval(renderNudges, 60000);
+
+      // Re-render streak at midnight
+      const now = new Date();
+      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      const msUntilMidnight = tomorrow - now;
+      setTimeout(() => {
+        renderStreak();
+        setInterval(renderStreak, 24 * 60 * 60 * 1000);
+      }, msUntilMidnight);
+    }
+
+    // Start the dashboard when page loads
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+  <script src="../shared/data-switcher.js"></script>
+</body>
+</html>

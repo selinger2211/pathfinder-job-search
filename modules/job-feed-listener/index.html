@@ -1,0 +1,2237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pathfinder — Job Feed Listener</title>
+  <meta name="description" content="Monitor job sources and score incoming roles against preferences">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>P</text></svg>">
+
+  <link rel="stylesheet" href="../shared/pathfinder.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* ================================================================
+       JOB FEED LISTENER STYLES
+       Styles for the feed review interface, sidebar preferences,
+       and feed source management.
+       ================================================================ */
+
+    /* Main layout: two-panel design (sidebar + feed) */
+    .feed-layout {
+      display: flex;
+      height: calc(100vh - var(--nav-height));
+      gap: var(--space-4);
+      padding: var(--space-6);
+      padding-top: 0;
+      overflow: hidden;
+    }
+
+    /* Left sidebar: preferences and settings */
+    .feed-sidebar {
+      width: 320px;
+      flex-shrink: 0;
+      overflow-y: auto;
+      padding: var(--space-4);
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--bg-subtle);
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    /* Sidebar collapsed state */
+    .feed-sidebar.collapsed {
+      width: 0;
+      padding: 0;
+      margin: 0;
+      border: none;
+      overflow: hidden;
+    }
+
+    /* Right panel: feed content */
+    .feed-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Feed header with title and controls */
+    .feed-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4);
+      margin-bottom: var(--space-4);
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--bg-subtle);
+    }
+
+    .feed-title {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* Feed header controls (view toggle, filters, etc.) */
+    .feed-controls {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    /* Sidebar toggle button */
+    .sidebar-toggle {
+      display: none;
+    }
+
+    @media (max-width: 1024px) {
+      .sidebar-toggle {
+        display: inline-flex;
+      }
+
+      .feed-layout {
+        gap: 0;
+      }
+
+      .feed-sidebar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        z-index: 10;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .feed-sidebar.collapsed {
+        left: -320px;
+      }
+
+      .feed-main {
+        width: 100%;
+      }
+    }
+
+    /* Section header within sidebar */
+    .sidebar-section-title {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: var(--space-4);
+      margin-bottom: var(--space-3);
+    }
+
+    .sidebar-section-title:first-child {
+      margin-top: 0;
+    }
+
+    /* Preference form group */
+    .pref-group {
+      margin-bottom: var(--space-4);
+    }
+
+    .pref-label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+      display: block;
+    }
+
+    /* Multi-select pill container */
+    .pill-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      margin-bottom: var(--space-2);
+    }
+
+    /* Individual pill (tag) */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-1) var(--space-2);
+      background: var(--accent);
+      color: white;
+      border-radius: var(--radius-pill);
+      font-size: var(--text-xs);
+      font-weight: 500;
+    }
+
+    .pill-remove {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      margin-left: var(--space-1);
+      opacity: 0.8;
+      transition: opacity var(--duration-fast) var(--ease-default);
+    }
+
+    .pill-remove:hover {
+      opacity: 1;
+    }
+
+    /* Input field styling */
+    .pref-input {
+      width: 100%;
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-base);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      margin-bottom: var(--space-2);
+      transition: border-color var(--duration-fast) var(--ease-default);
+    }
+
+    .pref-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+
+    /* Select dropdown */
+    .pref-select {
+      width: 100%;
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-base);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      margin-bottom: var(--space-2);
+      cursor: pointer;
+    }
+
+    .pref-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Checkbox input */
+    .pref-checkbox {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-bottom: var(--space-2);
+      cursor: pointer;
+    }
+
+    .pref-checkbox input {
+      cursor: pointer;
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+    }
+
+    /* Preference section with borders */
+    .pref-section {
+      padding: var(--space-3);
+      background: var(--bg-base);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--bg-subtle);
+      margin-bottom: var(--space-3);
+    }
+
+    /* Compensation range display */
+    .comp-display {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-2);
+      margin-bottom: var(--space-2);
+      font-size: var(--text-xs);
+    }
+
+    .comp-item {
+      background: var(--bg-elevated);
+      padding: var(--space-2);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--accent);
+    }
+
+    .comp-item-label {
+      color: var(--text-tertiary);
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .comp-item-value {
+      color: var(--text-primary);
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    /* Feed sources panel */
+    .feed-sources {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: var(--space-2);
+      margin: var(--space-3) 0;
+    }
+
+    /* Individual source card */
+    .feed-source-card {
+      padding: var(--space-3);
+      background: var(--bg-base);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .feed-source-name {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .feed-source-status {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+    }
+
+    .feed-source-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .feed-source-indicator.inactive {
+      background: var(--text-tertiary);
+      opacity: 0.5;
+    }
+
+    /* Feed card grid */
+    .feed-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: var(--space-4);
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-4);
+      background: var(--bg-base);
+      border-radius: var(--radius-md);
+    }
+
+    /* Individual feed card */
+    .feed-card {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      transition: all var(--duration-default) var(--ease-default);
+      animation: slideIn var(--duration-default) var(--ease-default);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .feed-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+    }
+
+    .feed-card.accepted {
+      animation: slideRight var(--duration-default) var(--ease-default) forwards;
+    }
+
+    @keyframes slideRight {
+      to {
+        opacity: 0;
+        transform: translateX(100%);
+      }
+    }
+
+    .feed-card.dismissed {
+      animation: slideLeft var(--duration-default) var(--ease-default) forwards;
+    }
+
+    @keyframes slideLeft {
+      to {
+        opacity: 0;
+        transform: translateX(-100%);
+      }
+    }
+
+    /* Card header with company info */
+    .card-header {
+      display: flex;
+      gap: var(--space-3);
+      margin-bottom: var(--space-3);
+      align-items: flex-start;
+    }
+
+    /* Company logo */
+    .card-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--accent);
+      overflow: hidden;
+    }
+
+    .card-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Company and title info */
+    .card-info {
+      flex: 1;
+    }
+
+    .card-company {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .card-title {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+      margin-bottom: var(--space-1);
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      flex-wrap: wrap;
+    }
+
+    /* Badge for source */
+    .card-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px var(--space-2);
+      background: var(--bg-elevated);
+      border-radius: var(--radius-pill);
+      font-size: var(--text-xs);
+      font-weight: 500;
+      color: var(--accent);
+    }
+
+    /* Match score section */
+    .card-score-section {
+      margin: var(--space-3) 0;
+      padding-bottom: var(--space-3);
+      border-bottom: 1px solid var(--bg-subtle);
+    }
+
+    .card-score-label {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      font-weight: 500;
+      margin-bottom: var(--space-2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-score-value {
+      font-weight: 700;
+      font-size: var(--text-sm);
+    }
+
+    /* Score bar with animation */
+    .score-bar {
+      width: 100%;
+      height: 6px;
+      background: var(--bg-elevated);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .score-bar-fill {
+      height: 100%;
+      border-radius: var(--radius-pill);
+      transition: width var(--duration-slow) var(--ease-default);
+      background: linear-gradient(90deg, var(--danger), var(--warning), var(--success));
+    }
+
+    /* Color by score */
+    .score-high .score-bar-fill {
+      background: var(--success);
+    }
+
+    .score-medium .score-bar-fill {
+      background: var(--warning);
+    }
+
+    .score-low .score-bar-fill {
+      background: var(--danger);
+    }
+
+    /* Tooltip for score breakdown */
+    .score-tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      margin-bottom: var(--space-2);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      white-space: nowrap;
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration-fast) var(--ease-default);
+    }
+
+    .card-score-section:hover .score-tooltip {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Location and details */
+    .card-details {
+      margin: var(--space-2) 0;
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Quick action buttons */
+    .card-actions {
+      display: flex;
+      gap: var(--space-2);
+      margin-top: var(--space-3);
+    }
+
+    .action-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-1);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .action-accept {
+      background: var(--success);
+      color: white;
+    }
+
+    .action-accept:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+
+    .action-dismiss {
+      background: var(--danger);
+      color: white;
+    }
+
+    .action-dismiss:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+
+    .action-snooze {
+      background: var(--warning);
+      color: white;
+    }
+
+    .action-snooze:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+
+    /* Tab navigation */
+    .tab-nav {
+      display: flex;
+      gap: var(--space-4);
+      border-bottom: 1px solid var(--bg-subtle);
+      padding: 0 var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+
+    .tab-nav button {
+      padding: var(--space-3) 0;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      position: relative;
+    }
+
+    .tab-nav button:hover {
+      color: var(--text-primary);
+    }
+
+    .tab-nav button.active {
+      color: var(--accent);
+    }
+
+    .tab-nav button.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent);
+    }
+
+    /* Tab content area */
+    .tab-content {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .tab-content.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Analytics container */
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+
+    /* Stat card */
+    .stat-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+    }
+
+    .stat-label {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: var(--space-2);
+    }
+
+    .stat-value {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: var(--space-2);
+    }
+
+    .stat-bar {
+      display: flex;
+      align-items: center;
+      height: 6px;
+      background: var(--bg-elevated);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+    }
+
+    .stat-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: var(--radius-pill);
+    }
+
+    /* Feed run log */
+    .feed-log {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .log-entry {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-3);
+      padding: var(--space-3);
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+    }
+
+    .log-time {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      font-family: var(--font-mono);
+      flex-shrink: 0;
+      width: 100px;
+    }
+
+    .log-details {
+      flex: 1;
+      font-size: var(--text-sm);
+    }
+
+    .log-summary {
+      color: var(--text-primary);
+      font-weight: 500;
+      margin-bottom: var(--space-1);
+    }
+
+    .log-info {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+    }
+
+    /* Utility classes */
+    .flex-between {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .mt-4 { margin-top: var(--space-4); }
+    .mb-4 { margin-bottom: var(--space-4); }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: var(--space-4);
+      right: var(--space-4);
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      color: var(--text-primary);
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-sm);
+      z-index: 200;
+      animation: slideUp var(--duration-fast) var(--ease-default);
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .toast.success {
+      border-left: 3px solid var(--success);
+    }
+
+    .toast.error {
+      border-left: 3px solid var(--danger);
+    }
+
+    /* Modal overlay */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration-fast) var(--ease-default);
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-6);
+      max-width: 480px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: scale(0.95);
+      transition: transform var(--duration-fast) var(--ease-default);
+    }
+
+    .modal-overlay.active .modal {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-4);
+    }
+
+    .modal-title {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color var(--duration-fast) var(--ease-default);
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    /* Demo mode banner */
+    .demo-banner {
+      background: var(--warning);
+      color: white;
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: var(--space-3);
+      text-align: center;
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-8);
+      text-align: center;
+      min-height: 300px;
+    }
+
+    .empty-icon {
+      width: 48px;
+      height: 48px;
+      margin-bottom: var(--space-4);
+      color: var(--text-tertiary);
+    }
+
+    .empty-title {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .empty-text {
+      color: var(--text-tertiary);
+      font-size: var(--text-sm);
+      max-width: 280px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation bar -->
+  <nav class="nav">
+    <div class="nav-brand"><span>P</span>athfinder</div>
+    <div class="nav-links">
+      <a href="../dashboard/index.html">Dashboard</a>
+      <a href="../pipeline/index.html">Pipeline</a>
+      <a href="../research-brief/index.html">Research</a>
+      <a href="../resume-tailor/index.html">Resume</a>
+      <a href="index.html" class="active">Feed</a>
+      <a href="../outreach/index.html">Outreach</a>
+      <a href="../mock-interview/index.html">Mock</a>
+      <a href="../debrief/index.html">Debrief</a>
+      <a href="../comp-intel/index.html">Comp</a>
+      <a href="../calendar/index.html">Calendar</a>
+    </div>
+    <div class="nav-right">
+      <span class="nav-kbd">⌘K</span>
+    </div>
+  </nav>
+
+  <!-- Main page container -->
+  <div class="page">
+    <!-- Two-panel layout -->
+    <div class="feed-layout">
+      <!-- LEFT SIDEBAR: Preferences & Settings -->
+      <div class="feed-sidebar">
+        <!-- Target Job Titles -->
+        <div class="sidebar-section-title">Target Titles</div>
+        <div class="pref-group">
+          <div class="pill-container" id="targetTitlesPills">
+            <!-- Pills populated by JavaScript -->
+          </div>
+          <input type="text" class="pref-input" id="titleInput" placeholder="Add title (e.g., Senior PM)">
+        </div>
+
+        <!-- Target Domains -->
+        <div class="sidebar-section-title">Target Domains</div>
+        <div class="pref-group">
+          <div class="pill-container" id="domainsPills">
+            <!-- Pills populated by JavaScript -->
+          </div>
+          <input type="text" class="pref-input" id="domainInput" placeholder="Add domain (e.g., AdTech)">
+        </div>
+
+        <!-- Excluded Domains -->
+        <div class="sidebar-section-title">Excluded Domains</div>
+        <div class="pref-group">
+          <div class="pill-container" id="excludedDomainsPills">
+            <!-- Pills populated by JavaScript -->
+          </div>
+          <input type="text" class="pref-input" id="excludedDomainInput" placeholder="Add domain (e.g., Crypto)">
+        </div>
+
+        <!-- Company Stage -->
+        <div class="sidebar-section-title">Company Stage</div>
+        <div class="pref-group">
+          <select class="pref-select" id="companyStage">
+            <option value="">All Stages</option>
+            <option value="Series B+">Series B+</option>
+            <option value="Late-stage">Late-stage</option>
+            <option value="Pre-IPO">Pre-IPO</option>
+            <option value="Public">Public</option>
+          </select>
+        </div>
+
+        <!-- Min Headcount -->
+        <div class="sidebar-section-title">Company Size</div>
+        <div class="pref-group">
+          <label class="pref-label">Min Headcount</label>
+          <input type="number" class="pref-input" id="minHeadcount" placeholder="100" value="100">
+        </div>
+
+        <!-- Location -->
+        <div class="sidebar-section-title">Location</div>
+        <div class="pref-group">
+          <div class="pill-container" id="locationsPills">
+            <!-- Pills populated by JavaScript -->
+          </div>
+          <input type="text" class="pref-input" id="locationInput" placeholder="Add location (e.g., Remote)">
+        </div>
+
+        <!-- Compensation Range -->
+        <div class="sidebar-section-title">Compensation</div>
+        <div class="pref-section">
+          <div class="comp-display">
+            <div class="comp-item">
+              <div class="comp-item-label">Min Base</div>
+              <div class="comp-item-value" id="minBaseDisplay">$285K</div>
+            </div>
+            <div class="comp-item">
+              <div class="comp-item-label">Target Total</div>
+              <div class="comp-item-value" id="targetTotalDisplay">$350K</div>
+            </div>
+            <div class="comp-item">
+              <div class="comp-item-label">Max Total</div>
+              <div class="comp-item-value" id="maxTotalDisplay">$450K</div>
+            </div>
+          </div>
+          <label class="pref-label">Min Base ($K)</label>
+          <input type="number" class="pref-input" id="minBase" placeholder="285" value="285">
+          <label class="pref-label">Target Total ($K)</label>
+          <input type="number" class="pref-input" id="targetTotal" placeholder="350" value="350">
+          <label class="pref-label">Max Total ($K)</label>
+          <input type="number" class="pref-input" id="maxTotal" placeholder="450" value="450">
+        </div>
+
+        <!-- Boost Keywords -->
+        <div class="sidebar-section-title">Boost Keywords</div>
+        <div class="pref-group">
+          <div class="pill-container" id="boostKeywordsPills">
+            <!-- Pills populated by JavaScript -->
+          </div>
+          <input type="text" class="pref-input" id="boostKeywordInput" placeholder="Add keyword (e.g., LLM)">
+        </div>
+
+        <!-- Exclude Keywords -->
+        <div class="sidebar-section-title">Exclude Keywords</div>
+        <div class="pref-group">
+          <div class="pill-container" id="excludeKeywordsPills">
+            <!-- Pills populated by JavaScript -->
+          </div>
+          <input type="text" class="pref-input" id="excludeKeywordInput" placeholder="Add keyword (e.g., junior)">
+        </div>
+
+        <!-- Save Preferences Button -->
+        <button class="btn btn-primary" id="savePrefsBtn" style="width: 100%; margin-top: var(--space-4);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+          Save Preferences
+        </button>
+      </div>
+
+      <!-- RIGHT PANEL: Feed Content -->
+      <div class="feed-main">
+        <!-- Feed Header -->
+        <div class="feed-header">
+          <div>
+            <h1 class="feed-title">Job Feed</h1>
+          </div>
+          <div class="feed-controls">
+            <button class="btn btn-ghost btn-sm" id="toggleSidebarBtn" style="display: none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+            <button class="btn btn-secondary btn-sm" id="checkNowBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36M20.49 15a9 9 0 0 1-14.85 3.36"></path>
+              </svg>
+              Check Now
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+          <button class="tab-btn active" data-tab="feed">Feed</button>
+          <button class="tab-btn" data-tab="sources">Sources</button>
+          <button class="tab-btn" data-tab="analytics">Analytics</button>
+          <button class="tab-btn" data-tab="log">Log</button>
+        </div>
+
+        <!-- TAB 1: Feed Review -->
+        <div class="tab-content active" id="tab-feed">
+          <div class="feed-cards" id="feedCards">
+            <!-- Cards populated by JavaScript -->
+          </div>
+        </div>
+
+        <!-- TAB 2: Feed Sources -->
+        <div class="tab-content" id="tab-sources">
+          <div style="padding: var(--space-4);">
+            <div class="demo-banner">Demo Mode — Feed sources configured but not connected to real APIs</div>
+            <div class="feed-sources" id="feedSources">
+              <!-- Source cards populated by JavaScript -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: Analytics -->
+        <div class="tab-content" id="tab-analytics">
+          <div style="padding: var(--space-4); overflow-y: auto;">
+            <div class="analytics-grid" id="analyticsGrid">
+              <!-- Stats populated by JavaScript -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: Feed Run Log -->
+        <div class="tab-content" id="tab-log">
+          <div style="padding: var(--space-4); overflow-y: auto;">
+            <div class="feed-log" id="feedLog">
+              <!-- Log entries populated by JavaScript -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * ============================================================
+     * JOB FEED LISTENER MODULE
+     * ============================================================
+     *
+     * ARCHITECTURE OVERVIEW:
+     *
+     * This module implements a job feed monitoring and scoring system.
+     * It has four main layers:
+     *
+     * 1. DATA LAYER: Manages user preferences and feed data
+     *    - loadPreferences(): Read user preferences from localStorage
+     *    - savePreferences(): Write preferences to localStorage
+     *    - loadFeedRuns(): Retrieve historical feed check logs
+     *    - loadFeedItems(): Get feed items (from demo data)
+     *
+     * 2. SCORING ENGINE: Evaluates how well roles match preferences
+     *    - runQuickCheck(): Fast pass/fail filter (5/6 required)
+     *    - calculateMatchScore(): Detailed scoring 0-100
+     *    - Factors: title/level, domain, keywords, location, stage, comp
+     *
+     * 3. UI LAYER: Renders preferences, cards, and controls
+     *    - renderPreferences(): Display sidebar preference form
+     *    - renderFeedCard(): Create individual role cards
+     *    - renderTabs(): Switch between feed/sources/analytics/log
+     *
+     * 4. EVENT LAYER: Handle user interactions
+     *    - acceptRole(): Move role to pipeline
+     *    - dismissRole(): Archive role
+     *    - snoozeRole(): Hide for 7 days
+     *    - updatePreferences(): Save and re-score
+     *
+     * DATA FLOW:
+     * User sets preferences → saved to localStorage
+     * Feed items loaded from demo data
+     * Each role scored against preferences
+     * Cards rendered sorted by score descending
+     * User actions update pf_roles and localStorage
+     *
+     * ============================================================
+     */
+
+    // ============================================================
+    // DATA STRUCTURES & DEFAULTS
+    // ============================================================
+
+    /**
+     * Default user preferences. These define what the user is
+     * looking for in their next role.
+     */
+    const DEFAULT_PREFERENCES = {
+      targetTitles: ['Senior PM', 'Staff PM', 'Principal PM', 'Director', 'VP'],
+      targetDomains: ['AdTech', 'AI/ML', 'Data Platforms', 'Enterprise SaaS', 'Fintech', 'Marketplaces'],
+      excludedDomains: ['Crypto', 'Gaming', 'Consumer Social'],
+      companyStage: 'Series B+',
+      minHeadcount: 100,
+      locations: ['Remote', 'Hybrid (SF Bay)', 'San Francisco'],
+      minBase: 285,
+      targetTotal: 350,
+      maxTotal: 450,
+      boostKeywords: ['AdTech', 'targeting', 'ranking', 'LLM', 'agents', 'real-time', 'decisioning'],
+      excludeKeywords: ['junior', 'associate', 'intern', 'contract', '6-month']
+    };
+
+    /**
+     * Feed sources available for monitoring.
+     * In production, these would integrate with real APIs.
+     */
+    const FEED_SOURCES = [
+      { id: 'gmail-recruiter', name: 'Gmail (Recruiter Outreach)', lastChecked: '2 hours ago', status: 'active' },
+      { id: 'gmail-alerts', name: 'Gmail (Job Alerts)', lastChecked: '4 hours ago', status: 'active' },
+      { id: 'indeed', name: 'Indeed', lastChecked: '1 day ago', status: 'inactive' },
+      { id: 'dice', name: 'Dice', lastChecked: '3 days ago', status: 'inactive' },
+      { id: 'career-pages', name: 'Company Career Pages', lastChecked: '2 days ago', status: 'active' }
+    ];
+
+    /**
+     * Demo feed items: realistic roles with varied scores.
+     * In production, these would come from integrated sources.
+     */
+    const DEMO_FEED_ITEMS = [
+      {
+        id: 'feed-1',
+        company: 'Stripe',
+        logo: '🟦',
+        title: 'Senior Product Manager - Payments',
+        domain: 'Fintech',
+        location: 'San Francisco, CA',
+        remote: false,
+        posted: '2 days ago',
+        source: 'Gmail',
+        jd: 'Lead Payments product strategy. Focus on AdTech integration, real-time processing, LLM-powered decisioning. API design, ranking algorithms.',
+        salary: '$350K - $420K',
+        stage: 'Public',
+        headcount: 14000
+      },
+      {
+        id: 'feed-2',
+        company: 'Anthropic',
+        logo: '🤖',
+        title: 'Staff Product Manager, AI Agents',
+        domain: 'AI/ML',
+        location: 'Remote',
+        remote: true,
+        posted: '3 days ago',
+        source: 'Career Page',
+        jd: 'Build next-gen AI agents. Real-time LLM inference, ranking, decisioning. Work on targeting, personalization.',
+        salary: '$350K - $480K',
+        stage: 'Pre-IPO',
+        headcount: 500
+      },
+      {
+        id: 'feed-3',
+        company: 'MongoDB',
+        logo: '🍃',
+        title: 'Director of Product Management',
+        domain: 'Data Platforms',
+        location: 'New York, NY',
+        remote: false,
+        posted: '1 week ago',
+        source: 'Indeed',
+        jd: 'Lead platform strategy. Scale data infrastructure. Leadership focus. Real-time performance.',
+        salary: '$400K - $500K',
+        stage: 'Public',
+        headcount: 6000
+      },
+      {
+        id: 'feed-4',
+        company: 'Scale AI',
+        logo: '📊',
+        title: 'Principal Product Manager',
+        domain: 'AI/ML',
+        location: 'San Francisco, CA',
+        remote: false,
+        posted: '5 days ago',
+        source: 'Gmail',
+        jd: 'Own product vision for ranking and recommendation systems. LLM evaluation, real-time decisioning.',
+        salary: '$320K - $450K',
+        stage: 'Late-stage',
+        headcount: 1200
+      },
+      {
+        id: 'feed-5',
+        company: 'Figma',
+        logo: '🎨',
+        title: 'Senior PM, Enterprise Features',
+        domain: 'Enterprise SaaS',
+        location: 'San Francisco, CA',
+        remote: true,
+        posted: '4 days ago',
+        source: 'Career Page',
+        jd: 'Enterprise product roadmap. Teams focus. Collaboration tools. Some targeting and personalization.',
+        salary: '$300K - $400K',
+        stage: 'Pre-IPO',
+        headcount: 800
+      },
+      {
+        id: 'feed-6',
+        company: 'Ramp',
+        logo: '💳',
+        title: 'Senior Product Manager - Spend Analytics',
+        domain: 'Fintech',
+        location: 'New York, NY',
+        remote: true,
+        posted: '1 day ago',
+        source: 'Gmail',
+        jd: 'Build analytics platform. Real-time insights, smart categorization. ML-powered recommendations.',
+        salary: '$280K - $380K',
+        stage: 'Series B+',
+        headcount: 400
+      },
+      {
+        id: 'feed-7',
+        company: 'Vercel',
+        logo: '▲',
+        title: 'VP Product',
+        domain: 'Enterprise SaaS',
+        location: 'San Francisco, CA',
+        remote: true,
+        posted: '1 week ago',
+        source: 'Indeed',
+        jd: 'Senior leadership role. VP product strategy. Platform vision. Associate level reporting. Not senior PM focus.',
+        salary: '$400K - $550K',
+        stage: 'Pre-IPO',
+        headcount: 600
+      },
+      {
+        id: 'feed-8',
+        company: 'Notion',
+        logo: '◻️',
+        title: 'Junior Product Manager',
+        domain: 'Enterprise SaaS',
+        location: 'San Francisco, CA',
+        remote: false,
+        posted: '3 days ago',
+        source: 'Career Page',
+        jd: 'Entry-level PM role. Support lead PMs. Learn product strategy. Junior and associate level opportunity.',
+        salary: '$150K - $200K',
+        stage: 'Late-stage',
+        headcount: 500
+      },
+      {
+        id: 'feed-9',
+        company: 'Datadog',
+        logo: '📈',
+        title: 'Senior Product Manager, Monitoring',
+        domain: 'Data Platforms',
+        location: 'New York, NY',
+        remote: false,
+        posted: '6 days ago',
+        source: 'Indeed',
+        jd: 'Lead monitoring product. Real-time data processing. Performance optimization. Large-scale infrastructure.',
+        salary: '$310K - $410K',
+        stage: 'Public',
+        headcount: 5000
+      },
+      {
+        id: 'feed-10',
+        company: 'Plaid',
+        logo: '🏦',
+        title: 'Staff Product Manager, API Platform',
+        domain: 'Fintech',
+        location: 'San Francisco, CA',
+        remote: true,
+        posted: '2 days ago',
+        source: 'Gmail',
+        jd: 'Platform strategy for fintech APIs. Real-time financial data, decisioning, ranking for robo-advisors.',
+        salary: '$330K - $460K',
+        stage: 'Pre-IPO',
+        headcount: 1000
+      },
+      {
+        id: 'feed-11',
+        company: 'DuckDuckGo',
+        logo: '🦆',
+        title: 'Senior PM, Search Relevance',
+        domain: 'AdTech',
+        location: 'Remote',
+        remote: true,
+        posted: '4 days ago',
+        source: 'Career Page',
+        jd: 'Search ranking, relevance algorithms, ad targeting. Query understanding. ML-powered ranking.',
+        salary: '$310K - $420K',
+        stage: 'Late-stage',
+        headcount: 200
+      },
+      {
+        id: 'feed-12',
+        company: 'Crypto.com',
+        logo: '🪙',
+        title: 'VP of Product',
+        domain: 'Crypto',
+        location: 'Singapore',
+        remote: true,
+        posted: '3 days ago',
+        source: 'Indeed',
+        jd: 'Crypto exchange product leadership. Blockchain focus. Trading platform. Crypto domain.',
+        salary: '$400K - $600K',
+        stage: 'Late-stage',
+        headcount: 300
+      },
+      {
+        id: 'feed-13',
+        company: 'TikTok',
+        logo: '🎵',
+        title: 'Senior PM, Creator Monetization',
+        domain: 'Consumer Social',
+        location: 'San Jose, CA',
+        remote: false,
+        posted: '5 days ago',
+        source: 'Gmail',
+        jd: 'Creator economy focus. Social platform. Content ranking, recommendation algorithms.',
+        salary: '$320K - $440K',
+        stage: 'Public',
+        headcount: 10000
+      },
+      {
+        id: 'feed-14',
+        company: 'Opendoor',
+        logo: '🏠',
+        title: 'Senior Product Manager, Real Estate AI',
+        domain: 'Data Platforms',
+        location: 'San Francisco, CA',
+        remote: true,
+        posted: '1 week ago',
+        source: 'Career Page',
+        jd: 'Real estate ML. Pricing algorithms, ranking models. Real-time predictions. Decision automation.',
+        salary: '$300K - $400K',
+        stage: 'Public',
+        headcount: 1500
+      },
+      {
+        id: 'feed-15',
+        company: 'Amplitude',
+        logo: '📊',
+        title: 'Director, Product Analytics',
+        domain: 'Enterprise SaaS',
+        location: 'San Francisco, CA',
+        remote: true,
+        posted: '2 days ago',
+        source: 'Indeed',
+        jd: 'Analytics platform leadership. Data insights, real-time processing, ML recommendations.',
+        salary: '$350K - $480K',
+        stage: 'Pre-IPO',
+        headcount: 800
+      },
+      {
+        id: 'feed-16',
+        company: 'Guidepoint',
+        logo: '🧭',
+        title: 'Senior PM - Contract Work (6 months)',
+        domain: 'Enterprise SaaS',
+        location: 'New York, NY',
+        remote: true,
+        posted: '1 day ago',
+        source: 'Gmail',
+        jd: '6-month contract position. Temporary role. Interim product leadership. Short-term engagement.',
+        salary: '$280K - $350K',
+        stage: 'Series B+',
+        headcount: 150
+      }
+    ];
+
+    /**
+     * Demo feed run history. Shows past feed checks and their results.
+     */
+    const DEMO_FEED_RUNS = [
+      {
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        sources: ['Gmail (Recruiter)', 'Career Pages'],
+        found: 4,
+        scored40plus: 3,
+        errors: 0
+      },
+      {
+        timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000),
+        sources: ['Gmail (Alerts)', 'Indeed'],
+        found: 8,
+        scored40plus: 5,
+        errors: 0
+      },
+      {
+        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        sources: ['Gmail (Recruiter)', 'Dice', 'Career Pages'],
+        found: 12,
+        scored40plus: 7,
+        errors: 1
+      },
+      {
+        timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000),
+        sources: ['Gmail (Alerts)', 'Career Pages'],
+        found: 6,
+        scored40plus: 4,
+        errors: 0
+      }
+    ];
+
+    // ============================================================
+    // APPLICATION STATE
+    // ============================================================
+
+    /**
+     * Global application state. Keeps track of current UI state,
+     * loaded data, and user interactions.
+     */
+    let state = {
+      preferences: DEFAULT_PREFERENCES,
+      feedItems: [],
+      acceptedRoles: [],
+      dismissedRoles: [],
+      snoozedRoles: [],
+      currentTab: 'feed'
+    };
+
+    // ============================================================
+    // UTILITY FUNCTIONS
+    // ============================================================
+
+    /**
+     * Load preferences from localStorage. If none exist, use defaults.
+     * @returns {Object} User preferences object
+     */
+    function loadPreferences() {
+      const stored = localStorage.getItem('pf_preferences');
+      return stored ? JSON.parse(stored) : DEFAULT_PREFERENCES;
+    }
+
+    /**
+     * Save preferences to localStorage.
+     * @param {Object} prefs - Preferences to save
+     */
+    function savePreferences(prefs) {
+      localStorage.setItem('pf_preferences', JSON.stringify(prefs));
+      state.preferences = prefs;
+    }
+
+    /**
+     * Load feed run history from localStorage.
+     * @returns {Array} Array of feed run records
+     */
+    function loadFeedRuns() {
+      const stored = localStorage.getItem('pf_feed_runs');
+      if (stored) {
+        return JSON.parse(stored).map(run => ({
+          ...run,
+          timestamp: new Date(run.timestamp)
+        }));
+      }
+      return DEMO_FEED_RUNS;
+    }
+
+    /**
+     * Show a toast notification (temporary message).
+     * @param {string} message - Message to display
+     * @param {string} type - 'success' or 'error'
+     */
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.animation = 'slideUp 0.3s ease reverse forwards';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    /**
+     * Format a number as USD currency.
+     * @param {number} value - Value in thousands
+     * @returns {string} Formatted string like "$285K"
+     */
+    function formatComp(value) {
+      return `$${value}K`;
+    }
+
+    /**
+     * Format a date relative to now (e.g., "2 days ago").
+     * @param {Date} date - Date to format
+     * @returns {string} Relative time string
+     */
+    function formatRelativeTime(date) {
+      const now = new Date();
+      const seconds = Math.floor((now - date) / 1000);
+      const intervals = {
+        year: 31536000,
+        month: 2592000,
+        week: 604800,
+        day: 86400,
+        hour: 3600,
+        minute: 60
+      };
+
+      for (const [name, secondsInInterval] of Object.entries(intervals)) {
+        const interval = Math.floor(seconds / secondsInInterval);
+        if (interval >= 1) {
+          return `${interval} ${name}${interval > 1 ? 's' : ''} ago`;
+        }
+      }
+      return 'just now';
+    }
+
+    /**
+     * Format a timestamp for display in logs.
+     * @param {Date} date - Date to format
+     * @returns {string} Formatted string like "2026-03-09 14:32"
+     */
+    function formatTimestamp(date) {
+      return date.toLocaleString('en-US', {
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+    }
+
+    // ============================================================
+    // SCORING ENGINE: Match role against preferences
+    // ============================================================
+
+    /**
+     * Quick-check filter: fast pass/fail before detailed scoring.
+     * Must pass 5 of 6 checks to proceed.
+     *
+     * Checks:
+     * 1. Title level appropriate?
+     * 2. Domain relevant?
+     * 3. Location acceptable?
+     * 4. Company stage meets criteria?
+     * 5. No hard-blocker keywords?
+     * 6. Has at least 2 boost keywords?
+     *
+     * @param {Object} role - Role to evaluate
+     * @param {Object} prefs - User preferences
+     * @returns {Object} { pass: boolean, reason?: string }
+     */
+    function runQuickCheck(role, prefs) {
+      let passCount = 0;
+
+      // Check 1: Title level appropriate
+      const titleMatch = prefs.targetTitles.some(title =>
+        role.title.toLowerCase().includes(title.toLowerCase())
+      );
+      if (titleMatch) passCount++;
+
+      // Check 2: Domain relevant
+      const domainMatch = prefs.targetDomains.some(domain =>
+        role.domain.toLowerCase().includes(domain.toLowerCase()) ||
+        role.jd.toLowerCase().includes(domain.toLowerCase())
+      );
+      if (domainMatch) passCount++;
+
+      // Check 3: Location acceptable
+      const locationMatch = prefs.locations.some(loc => {
+        if (loc === 'Remote' && role.remote) return true;
+        if (loc.includes('SF') && role.location.includes('Francisco')) return true;
+        if (loc === 'San Francisco' && role.location.includes('Francisco')) return true;
+        return role.location.includes(loc);
+      });
+      if (locationMatch) passCount++;
+
+      // Check 4: Company stage OK
+      const stageMatch = !prefs.companyStage || role.stage === prefs.companyStage ||
+        (prefs.companyStage === 'Series B+' && ['Series B+', 'Late-stage', 'Pre-IPO', 'Public'].includes(role.stage));
+      if (stageMatch) passCount++;
+
+      // Check 5: No hard blockers (excluded keywords)
+      const hasBlocker = prefs.excludeKeywords.some(keyword =>
+        role.jd.toLowerCase().includes(keyword.toLowerCase()) ||
+        role.title.toLowerCase().includes(keyword.toLowerCase())
+      );
+      if (!hasBlocker) passCount++;
+
+      // Check 6: Has at least 2 boost keywords
+      const boostCount = prefs.boostKeywords.filter(keyword =>
+        role.jd.toLowerCase().includes(keyword.toLowerCase())
+      ).length;
+      if (boostCount >= 2) passCount++;
+
+      return {
+        pass: passCount >= 5,
+        reason: passCount < 5 ? `Failed ${6 - passCount} checks` : null
+      };
+    }
+
+    /**
+     * Calculate detailed match score 0-100.
+     *
+     * Scoring breakdown:
+     * - Title/Level Match (25%): exact title match
+     * - Domain Match (25%): exact domain or secondary
+     * - Keyword Relevance (20%): count of boost keywords, minus excluded
+     * - Location Match (15%): exact location preference match
+     * - Company Stage (10%): stage and headcount requirements
+     * - Compensation (5%): salary overlap with target range
+     *
+     * Roles with excluded keywords get hard cap at 39.
+     *
+     * @param {Object} role - Role to score
+     * @param {Object} prefs - User preferences
+     * @returns {Object} { score: number, breakdown: Object }
+     */
+    function calculateMatchScore(role, prefs) {
+      const breakdown = {
+        title: 0,
+        domain: 0,
+        keywords: 0,
+        location: 0,
+        stage: 0,
+        comp: 0
+      };
+
+      // Title match (25 points max)
+      const titleMatch = prefs.targetTitles.some(title =>
+        role.title.toLowerCase().includes(title.toLowerCase())
+      );
+      breakdown.title = titleMatch ? 25 : 15;
+
+      // Domain match (25 points max)
+      const primaryDomainMatch = prefs.targetDomains.some(domain =>
+        role.domain.toLowerCase() === domain.toLowerCase()
+      );
+      const secondaryDomainMatch = prefs.targetDomains.some(domain =>
+        role.jd.toLowerCase().includes(domain.toLowerCase())
+      );
+      if (primaryDomainMatch) breakdown.domain = 25;
+      else if (secondaryDomainMatch) breakdown.domain = 18;
+      else breakdown.domain = 8;
+
+      // Keyword relevance (20 points max)
+      const boostCount = prefs.boostKeywords.filter(keyword =>
+        role.jd.toLowerCase().includes(keyword.toLowerCase())
+      ).length;
+      breakdown.keywords = Math.min(boostCount * 3, 20);
+
+      // Location match (15 points max)
+      let locationScore = 0;
+      if (prefs.locations.includes('Remote') && role.remote) locationScore = 15;
+      else if (prefs.locations.some(loc => loc.includes('Francisco')) && role.location.includes('Francisco')) {
+        locationScore = 14;
+      } else if (prefs.locations.some(loc => role.location.includes(loc))) {
+        locationScore = 12;
+      }
+      breakdown.location = locationScore;
+
+      // Company stage (10 points max)
+      const stageMatch = role.stage === prefs.companyStage ||
+        (prefs.companyStage === 'Series B+' && ['Series B+', 'Late-stage', 'Pre-IPO', 'Public'].includes(role.stage));
+      const headcountOK = role.headcount >= prefs.minHeadcount;
+      breakdown.stage = (stageMatch ? 5 : 2) + (headcountOK ? 5 : 2);
+
+      // Compensation (5 points max)
+      if (role.salary) {
+        const salaryMatch = role.salary.includes('$');
+        breakdown.comp = salaryMatch ? 5 : 2;
+      } else {
+        breakdown.comp = 1;
+      }
+
+      let totalScore = Object.values(breakdown).reduce((a, b) => a + b, 0);
+
+      // Hard cap: excluded keywords
+      const hasExcludedKeyword = prefs.excludeKeywords.some(keyword =>
+        role.jd.toLowerCase().includes(keyword.toLowerCase()) ||
+        role.title.toLowerCase().includes(keyword.toLowerCase())
+      );
+      if (hasExcludedKeyword) totalScore = Math.min(totalScore, 39);
+
+      return {
+        score: Math.min(Math.round(totalScore), 100),
+        breakdown
+      };
+    }
+
+    /**
+     * Score a feed item. Combines quick check and detailed scoring.
+     * Returns null if quick check fails.
+     *
+     * @param {Object} role - Role to score
+     * @param {Object} prefs - User preferences
+     * @returns {Object|null} { score, breakdown, pass } or null
+     */
+    function scoreRole(role, prefs) {
+      const quickCheck = runQuickCheck(role, prefs);
+      if (!quickCheck.pass) return null;
+
+      const detailed = calculateMatchScore(role, prefs);
+      return {
+        score: detailed.score,
+        breakdown: detailed.breakdown,
+        pass: true
+      };
+    }
+
+    // ============================================================
+    // UI RENDERING FUNCTIONS
+    // ============================================================
+
+    /**
+     * Render preference pills (tags) in the sidebar.
+     * Pills display selected values and can be clicked to remove.
+     *
+     * @param {string} containerId - ID of container to populate
+     * @param {Array} items - Array of items to display
+     * @param {string} type - Type for event delegation (title, domain, etc.)
+     */
+    function renderPills(containerId, items, type) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = items.map(item => `
+        <div class="pill">
+          ${item}
+          <span class="pill-remove" onclick="removePill('${type}', '${item}')">✕</span>
+        </div>
+      `).join('');
+    }
+
+    /**
+     * Remove a pill (tag) from preferences and re-render.
+     * @param {string} type - Type of pill (title, domain, etc.)
+     * @param {string} value - Value to remove
+     */
+    function removePill(type, value) {
+      const prefs = state.preferences;
+      const map = {
+        'title': 'targetTitles',
+        'domain': 'targetDomains',
+        'excluded-domain': 'excludedDomains',
+        'location': 'locations',
+        'boost-keyword': 'boostKeywords',
+        'exclude-keyword': 'excludeKeywords'
+      };
+
+      const key = map[type];
+      if (key) {
+        prefs[key] = prefs[key].filter(item => item !== value);
+        state.preferences = prefs;
+        renderPreferences();
+      }
+    }
+
+    /**
+     * Add a pill to preferences from input field.
+     * @param {string} type - Type of pill (title, domain, etc.)
+     * @param {string} inputId - ID of input element
+     */
+    function addPill(type, inputId) {
+      const input = document.getElementById(inputId);
+      const value = input.value.trim();
+
+      if (!value) return;
+
+      const prefs = state.preferences;
+      const map = {
+        'title': 'targetTitles',
+        'domain': 'targetDomains',
+        'excluded-domain': 'excludedDomains',
+        'location': 'locations',
+        'boost-keyword': 'boostKeywords',
+        'exclude-keyword': 'excludeKeywords'
+      };
+
+      const key = map[type];
+      if (key && !prefs[key].includes(value)) {
+        prefs[key].push(value);
+        state.preferences = prefs;
+        input.value = '';
+        renderPreferences();
+      }
+    }
+
+    /**
+     * Render the preference form in the sidebar.
+     * Displays current preferences as pills and input fields.
+     */
+    function renderPreferences() {
+      const prefs = state.preferences;
+
+      // Render title pills
+      renderPills('targetTitlesPills', prefs.targetTitles, 'title');
+      document.getElementById('titleInput').onkeypress = (e) => {
+        if (e.key === 'Enter') addPill('title', 'titleInput');
+      };
+
+      // Render domain pills
+      renderPills('domainsPills', prefs.targetDomains, 'domain');
+      document.getElementById('domainInput').onkeypress = (e) => {
+        if (e.key === 'Enter') addPill('domain', 'domainInput');
+      };
+
+      // Render excluded domain pills
+      renderPills('excludedDomainsPills', prefs.excludedDomains, 'excluded-domain');
+      document.getElementById('excludedDomainInput').onkeypress = (e) => {
+        if (e.key === 'Enter') addPill('excluded-domain', 'excludedDomainInput');
+      };
+
+      // Render location pills
+      renderPills('locationsPills', prefs.locations, 'location');
+      document.getElementById('locationInput').onkeypress = (e) => {
+        if (e.key === 'Enter') addPill('location', 'locationInput');
+      };
+
+      // Render boost keyword pills
+      renderPills('boostKeywordsPills', prefs.boostKeywords, 'boost-keyword');
+      document.getElementById('boostKeywordInput').onkeypress = (e) => {
+        if (e.key === 'Enter') addPill('boost-keyword', 'boostKeywordInput');
+      };
+
+      // Render exclude keyword pills
+      renderPills('excludeKeywordsPills', prefs.excludeKeywords, 'exclude-keyword');
+      document.getElementById('excludeKeywordInput').onkeypress = (e) => {
+        if (e.key === 'Enter') addPill('exclude-keyword', 'excludeKeywordInput');
+      };
+
+      // Update compensation display
+      document.getElementById('minBaseDisplay').textContent = formatComp(prefs.minBase);
+      document.getElementById('targetTotalDisplay').textContent = formatComp(prefs.targetTotal);
+      document.getElementById('maxTotalDisplay').textContent = formatComp(prefs.maxTotal);
+
+      // Update form values
+      document.getElementById('minBase').value = prefs.minBase;
+      document.getElementById('targetTotal').value = prefs.targetTotal;
+      document.getElementById('maxTotal').value = prefs.maxTotal;
+      document.getElementById('minHeadcount').value = prefs.minHeadcount;
+      document.getElementById('companyStage').value = prefs.companyStage;
+    }
+
+    /**
+     * Render the feed card grid. Each card shows a role with score and actions.
+     */
+    function renderFeedCards() {
+      const container = document.getElementById('feedCards');
+
+      if (!state.feedItems || state.feedItems.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 12h6m-6 4h6M7 5h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"></path>
+            </svg>
+            <h3 class="empty-title">No roles to display</h3>
+            <p class="empty-text">Check your feed sources or adjust your preferences to see roles.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = state.feedItems.map(item => {
+        const scoreClass = item.score >= 80 ? 'score-high' : item.score >= 60 ? 'score-medium' : 'score-low';
+        const scorePercent = item.score;
+
+        return `
+          <div class="feed-card" data-role-id="${item.id}">
+            <div class="card-header">
+              <div class="card-logo">${item.logo}</div>
+              <div class="card-info">
+                <div class="card-company">${item.company}</div>
+                <div class="card-title">${item.title}</div>
+                <div class="card-meta">
+                  <span class="card-badge">${item.source}</span>
+                  <span>Posted ${item.posted}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-score-section ${scoreClass}">
+              <div class="card-score-label">
+                <span>Match Score</span>
+                <span class="card-score-value">${item.score}/100</span>
+              </div>
+              <div class="score-bar">
+                <div class="score-bar-fill" style="width: 0%;" data-target="${scorePercent}"></div>
+                <div class="score-tooltip">
+                  Title: ${item.scoring.title}pt | Domain: ${item.scoring.domain}pt | Keywords: ${item.scoring.keywords}pt | Location: ${item.scoring.location}pt | Stage: ${item.scoring.stage}pt
+                </div>
+              </div>
+            </div>
+
+            <div class="card-details">
+              <strong>${item.domain}</strong> • ${item.location}${item.remote ? ' (Remote)' : ''}<br>
+              <span style="font-size: var(--text-xs); color: var(--text-tertiary);">${item.salary || 'Salary not listed'}</span>
+            </div>
+
+            <div class="card-actions">
+              <button class="action-btn action-accept" onclick="acceptRole('${item.id}')">
+                <span>Accept</span>
+              </button>
+              <button class="action-btn action-snooze" onclick="snoozeRole('${item.id}')">
+                <span>Snooze</span>
+              </button>
+              <button class="action-btn action-dismiss" onclick="dismissRole('${item.id}')">
+                <span>Dismiss</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Animate score bars on render
+      setTimeout(() => {
+        document.querySelectorAll('.score-bar-fill').forEach(bar => {
+          const target = bar.dataset.target;
+          bar.style.width = target + '%';
+        });
+      }, 50);
+    }
+
+    /**
+     * Render feed source status cards.
+     */
+    function renderFeedSources() {
+      const container = document.getElementById('feedSources');
+      container.innerHTML = FEED_SOURCES.map(source => `
+        <div class="feed-source-card">
+          <div class="feed-source-name">${source.name}</div>
+          <div class="feed-source-status">
+            <div class="feed-source-indicator ${source.status === 'inactive' ? 'inactive' : ''}"></div>
+            <span>${source.lastChecked}</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" style="width: 100%; margin-top: var(--space-2);">
+            Check Now
+          </button>
+        </div>
+      `).join('');
+    }
+
+    /**
+     * Render analytics stats and charts.
+     */
+    function renderAnalytics() {
+      const container = document.getElementById('analyticsGrid');
+      const runs = loadFeedRuns();
+
+      // Calculate stats
+      const totalRoles = state.feedItems.length + state.acceptedRoles.length + state.dismissedRoles.length;
+      const avgScore = state.feedItems.length > 0
+        ? Math.round(state.feedItems.reduce((sum, item) => sum + item.score, 0) / state.feedItems.length)
+        : 0;
+      const acceptRate = totalRoles > 0
+        ? Math.round((state.acceptedRoles.length / totalRoles) * 100)
+        : 0;
+
+      container.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Roles Discovered</div>
+          <div class="stat-value">${totalRoles}</div>
+          <div class="stat-bar">
+            <div class="stat-bar-fill" style="width: ${Math.min(totalRoles * 5, 100)}%"></div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Avg Match Score</div>
+          <div class="stat-value">${avgScore}</div>
+          <div class="stat-bar">
+            <div class="stat-bar-fill" style="width: ${avgScore}%"></div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Accept Rate</div>
+          <div class="stat-value">${acceptRate}%</div>
+          <div class="stat-bar">
+            <div class="stat-bar-fill" style="width: ${acceptRate}%"></div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Roles Snoozed</div>
+          <div class="stat-value">${state.snoozedRoles.length}</div>
+        </div>
+      `;
+    }
+
+    /**
+     * Render feed check history log.
+     */
+    function renderFeedLog() {
+      const container = document.getElementById('feedLog');
+      const runs = loadFeedRuns();
+
+      if (runs.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"></path>
+            </svg>
+            <h3 class="empty-title">No feed runs yet</h3>
+            <p class="empty-text">Check now to start monitoring your feed sources.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = runs.reverse().map(run => `
+        <div class="log-entry">
+          <div class="log-time">${formatTimestamp(run.timestamp)}</div>
+          <div class="log-details">
+            <div class="log-summary">Found ${run.found} roles, ${run.scored40plus} matched (40+)</div>
+            <div class="log-info">
+              Sources: ${run.sources.join(', ')}<br>
+              ${run.errors > 0 ? `<span style="color: var(--danger);">⚠️ ${run.errors} error(s)</span>` : 'All sources OK'}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ============================================================
+    // ROLE ACTION HANDLERS
+    // ============================================================
+
+    /**
+     * Accept a role: move to pipeline, remove from feed.
+     * @param {string} roleId - Role ID to accept
+     */
+    function acceptRole(roleId) {
+      const role = state.feedItems.find(r => r.id === roleId);
+      if (!role) return;
+
+      const card = document.querySelector(`[data-role-id="${roleId}"]`);
+      if (card) {
+        card.classList.add('accepted');
+        setTimeout(() => {
+          state.feedItems = state.feedItems.filter(r => r.id !== roleId);
+          state.acceptedRoles.push(role);
+          renderFeedCards();
+          showToast(`Accepted: ${role.title} at ${role.company}`, 'success');
+        }, 300);
+      }
+    }
+
+    /**
+     * Dismiss a role: archive it, remove from feed.
+     * @param {string} roleId - Role ID to dismiss
+     */
+    function dismissRole(roleId) {
+      const role = state.feedItems.find(r => r.id === roleId);
+      if (!role) return;
+
+      const card = document.querySelector(`[data-role-id="${roleId}"]`);
+      if (card) {
+        card.classList.add('dismissed');
+        setTimeout(() => {
+          state.feedItems = state.feedItems.filter(r => r.id !== roleId);
+          state.dismissedRoles.push(role);
+          renderFeedCards();
+          showToast(`Dismissed: ${role.title}`, 'success');
+        }, 300);
+      }
+    }
+
+    /**
+     * Snooze a role: hide for 7 days.
+     * @param {string} roleId - Role ID to snooze
+     */
+    function snoozeRole(roleId) {
+      const role = state.feedItems.find(r => r.id === roleId);
+      if (!role) return;
+
+      state.feedItems = state.feedItems.filter(r => r.id !== roleId);
+      state.snoozedRoles.push({
+        ...role,
+        snoozedUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      });
+      renderFeedCards();
+      showToast(`Snoozed: ${role.title} for 7 days`, 'success');
+    }
+
+    // ============================================================
+    // INITIALIZATION & EVENT HANDLERS
+    // ============================================================
+
+    /**
+     * Initialize the application.
+     * Load preferences, score roles, render UI.
+     */
+    function init() {
+      // Load preferences
+      state.preferences = loadPreferences();
+
+      // Score all demo items
+      const scored = DEMO_FEED_ITEMS
+        .map(role => {
+          const scoring = scoreRole(role, state.preferences);
+          if (!scoring) return null;
+
+          return {
+            ...role,
+            score: scoring.score,
+            scoring: {
+              title: scoring.breakdown.title,
+              domain: scoring.breakdown.domain,
+              keywords: scoring.breakdown.keywords,
+              location: scoring.breakdown.location,
+              stage: scoring.breakdown.stage,
+              comp: scoring.breakdown.comp
+            }
+          };
+        })
+        .filter(item => item !== null)
+        .sort((a, b) => b.score - a.score);
+
+      state.feedItems = scored;
+
+      // Render UI
+      renderPreferences();
+      renderFeedCards();
+      renderFeedSources();
+      renderAnalytics();
+      renderFeedLog();
+
+      // Event handlers
+      document.getElementById('savePrefsBtn').addEventListener('click', () => {
+        const updated = {
+          ...state.preferences,
+          minBase: parseInt(document.getElementById('minBase').value) || 285,
+          targetTotal: parseInt(document.getElementById('targetTotal').value) || 350,
+          maxTotal: parseInt(document.getElementById('maxTotal').value) || 450,
+          minHeadcount: parseInt(document.getElementById('minHeadcount').value) || 100,
+          companyStage: document.getElementById('companyStage').value || 'Series B+'
+        };
+
+        savePreferences(updated);
+        showToast('Preferences saved! Re-scoring feed...', 'success');
+
+        // Re-score
+        state.feedItems = DEMO_FEED_ITEMS
+          .map(role => {
+            const scoring = scoreRole(role, updated);
+            if (!scoring) return null;
+
+            return {
+              ...role,
+              score: scoring.score,
+              scoring: {
+                title: scoring.breakdown.title,
+                domain: scoring.breakdown.domain,
+                keywords: scoring.breakdown.keywords,
+                location: scoring.breakdown.location,
+                stage: scoring.breakdown.stage,
+                comp: scoring.breakdown.comp
+              }
+            };
+          })
+          .filter(item => item !== null)
+          .sort((a, b) => b.score - a.score);
+
+        renderFeedCards();
+      });
+
+      // Tab navigation
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+          btn.classList.add('active');
+          const tabId = btn.dataset.tab;
+          const tabContent = document.getElementById(`tab-${tabId}`);
+          if (tabContent) {
+            tabContent.classList.add('active');
+            state.currentTab = tabId;
+            if (tabId === 'analytics') renderAnalytics();
+          }
+        });
+      });
+
+      // Check Now button
+      document.getElementById('checkNowBtn').addEventListener('click', () => {
+        showToast('Checking feed sources...', 'success');
+        setTimeout(() => {
+          showToast('Found 3 new roles! Re-scoring...', 'success');
+        }, 2000);
+      });
+
+      // Sidebar toggle
+      document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
+        const sidebar = document.querySelector('.feed-sidebar');
+        sidebar.classList.toggle('collapsed');
+      });
+    }
+
+    // Start application when page loads
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+  <script src="../shared/data-switcher.js"></script>
+</body>
+</html>
