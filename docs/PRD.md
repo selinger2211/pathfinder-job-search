@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v1.4.2
+**Status:** v1.4.3
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v1.4.3 | 2026-03-10 | Complete standalone PRD suite: Pipeline Tracker, Dashboard, Outreach, Mock Interview, Debrief, Comp Intelligence, Calendar, Artifacts MCP Server |
 | v1.4.2 | 2026-03-10 | Standalone PRDs for Resume Builder and Job Feed Listener modules |
 | v1.4.1 | 2026-03-10 | Bug fixes: markdown-to-HTML sanitization in Research Brief & Resume Builder, auto-analysis on role selection in Resume Builder |
 | v1.4.0 | 2026-03-10 | Research Brief v2 engine: MCP server with Claude API integration (14 section-specific prompts), HTTP bridge (localhost:3456), browser-side 3-batch generation engine, API key settings UI, extended keyboard shortcuts |

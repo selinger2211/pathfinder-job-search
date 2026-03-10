@@ -4,6 +4,22 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v1.4.3 — 2026-03-10
+
+### What Changed
+- **Complete standalone PRD suite** — Every module and agent now has its own standalone PRD with value statement, architecture, data model, UI spec, implementation phases, and cross-module relationships. New PRDs:
+  - `pipeline-tracker-prd.md` — Data backbone: companies, roles, 8 lifecycle stages, connections, kanban UI, opaque recruiter flow
+  - `dashboard-prd.md` — Daily launcher: action queue, nudge engine, pipeline summary, streak tracking, metrics & analytics
+  - `outreach-prd.md` — Message generator: 8 message types, personalization engine, anti-template rules, workflow integration
+  - `mock-interview-prd.md` — Practice engine: 7 interview types with frameworks, company-calibrated questions, story bank, TMAY mode, question intelligence scraping
+  - `debrief-prd.md` — Post-interview capture: 8-section conversational debrief, pattern analysis after 10+ debriefs, Research Brief refresh triggers
+  - `comp-intelligence-prd.md` — Compensation data: market benchmarking, positioning-aware analysis (IC vs mgmt), negotiation support with 25-point scorecard
+  - `calendar-prd.md` — Google Calendar bridge: event detection & role matching, pre/post-interview nudges, stage auto-advance
+  - `artifacts-mcp-prd.md` — Shared file layer: 6 MCP tools, 10 artifact types, local storage architecture, HTTP bridge
+- **PRD updated** — System PRD bumped to v1.4.3
+
+---
+
 ## v1.4.2 — 2026-03-10
 
 ### What Changed
