@@ -22,8 +22,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: var(--space-6);
-      margin-bottom: var(--space-4);
+      padding: var(--space-4);
+      margin-bottom: var(--space-2);
     }
 
     /* Page title styling for the "Pipeline" heading */
@@ -39,16 +39,16 @@
       display: flex;
       align-items: center;
       gap: var(--space-3);
-      padding: var(--space-3) var(--space-6);
-      margin-bottom: var(--space-6);
+      padding: var(--space-3) var(--space-4);
+      margin-bottom: var(--space-4);
       flex-wrap: wrap;
     }
 
     /* Search box container with search icon */
     .toolbar-search {
       flex: 1;
-      min-width: 240px;
-      max-width: 320px;
+      min-width: 180px;
+      max-width: 280px;
       position: relative;
     }
 
@@ -152,11 +152,11 @@
        researching, applied, interviewing, etc.) in vertical columns.
        ================================================================ */
 
-    /* Main kanban board container: allows horizontal scrolling */
+    /* Main kanban board container: columns stretch to fill viewport */
     .kanban {
       display: flex;
-      gap: var(--space-4);
-      padding: 0 var(--space-6);
+      gap: var(--space-3);
+      padding: 0 var(--space-4);
       overflow-x: auto;
       overflow-y: hidden;
       min-height: calc(100vh - var(--nav-height) - 200px);
@@ -165,8 +165,9 @@
 
     /* Individual kanban column (e.g., "Researching" column) */
     .kanban-column {
-      flex: 0 0 280px;
-      min-width: 280px;
+      flex: 1 1 0;
+      min-width: 160px;
+      max-width: 240px;
       display: flex;
       flex-direction: column;
       height: fit-content;
@@ -214,7 +215,7 @@
     .kanban-cards {
       display: flex;
       flex-direction: column;
-      gap: var(--space-3);
+      gap: var(--space-2);
       flex: 1;
       min-height: 100px;
     }
@@ -248,7 +249,7 @@
       background: var(--bg-surface);
       border-radius: var(--radius-md);
       border-left: 3px solid transparent;
-      padding: var(--space-3);
+      padding: var(--space-2);
       cursor: grab;
       transition: all var(--duration-fast) var(--ease-default);
       box-shadow: var(--shadow-sm);
@@ -287,8 +288,8 @@
 
     /* Company logo in the card */
     .role-card-logo {
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
       border-radius: var(--radius-sm);
       background: var(--bg-elevated);
       object-fit: contain;
@@ -302,6 +303,9 @@
       color: var(--text-secondary);
       text-transform: uppercase;
       letter-spacing: 0.03em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     /* Job title text on the card */
@@ -310,7 +314,12 @@
       font-weight: 500;
       color: var(--text-primary);
       margin-bottom: var(--space-2);
-      line-height: 1.4;
+      line-height: 1.3;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
 
     /* Container for badges (e.g., "Hot", "IC") */
@@ -832,14 +841,19 @@
 <body>
   <!-- Section: Navigation -->
   <nav class="nav">
-    <div class="nav-brand">Path<span>finder</span></div>
-    <ul class="nav-links">
-      <li><a href="#dashboard">Dashboard</a></li>
-      <li><a href="#pipeline" class="active">Pipeline</a></li>
-      <li><a href="#research">Research</a></li>
-      <li><a href="#resume">Resume</a></li>
-      <li><a href="#mock-interview">Mock Interview</a></li>
-    </ul>
+    <div class="nav-brand"><span>P</span>athfinder</div>
+    <div class="nav-links">
+      <a href="../dashboard/index.html">Dashboard</a>
+      <a href="index.html" class="active">Pipeline</a>
+      <a href="../research-brief/index.html">Research</a>
+      <a href="../resume-tailor/index.html">Resume</a>
+      <a href="../job-feed-listener/index.html">Feed</a>
+      <a href="../outreach/index.html">Outreach</a>
+      <a href="../mock-interview/index.html">Mock</a>
+      <a href="../debrief/index.html">Debrief</a>
+      <a href="../comp-intel/index.html">Comp</a>
+      <a href="../calendar/index.html">Calendar</a>
+    </div>
     <div class="nav-right">
       <button id="theme-toggle" class="btn btn-icon btn-ghost" title="Toggle theme" aria-label="Toggle between dark and light theme">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
