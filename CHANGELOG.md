@@ -4,6 +4,14 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v1.4.4 — 2026-03-10
+
+### What Changed
+- **Abhijay Arora Vuyyuru credited on Job Feed PRD** — Expanded Section 13 ("Inspiration") into "Inspiration & Credits" with dedicated subsection (13.1) for Abhijay's work. Documented five specific Substack articles and n8n workflows that directly shaped the Feed module's architecture: autonomous job hunting agent (Apify + Gemini + Gmail drafting), hidden job market discovery via LLMs, career page scraping with connectors, resume auto-optimization, and the comprehensive AI job search guide. Each workflow linked to the specific PRD sections it influenced. Feed PRD bumped to v1.1.0.
+- **PRD updated** — System PRD bumped to v1.4.4
+
+---
+
 ## v1.4.3 — 2026-03-10
 
 ### What Changed

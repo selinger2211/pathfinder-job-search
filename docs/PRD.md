@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v1.4.3
+**Status:** v1.4.4
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v1.4.4 | 2026-03-10 | Job Feed PRD v1.1.0: credited Abhijay Arora Vuyyuru's AI job search automation work as primary inspiration, expanded Section 13 with specific workflow references |
 | v1.4.3 | 2026-03-10 | Complete standalone PRD suite: Pipeline Tracker, Dashboard, Outreach, Mock Interview, Debrief, Comp Intelligence, Calendar, Artifacts MCP Server |
 | v1.4.2 | 2026-03-10 | Standalone PRDs for Resume Builder and Job Feed Listener modules |
 | v1.4.1 | 2026-03-10 | Bug fixes: markdown-to-HTML sanitization in Research Brief & Resume Builder, auto-analysis on role selection in Resume Builder |

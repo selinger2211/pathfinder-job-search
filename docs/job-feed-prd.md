@@ -2,7 +2,7 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/job-feed-listener/`
-**Version:** v1.0.0
+**Version:** v1.1.0
 **Last Updated:** 2026-03-10
 **Status:** Draft — pending approval
 
@@ -536,9 +536,25 @@ What exists today:
 
 ---
 
-## 13. Inspiration: n8n Job Automation Patterns
+## 13. Inspiration & Credits
 
-This PRD draws heavily from the emerging ecosystem of n8n-based job automation workflows. Projects like [Job-Hunter](https://github.com/adarsh-ajay/Job-Hunter), [JobHuntAutomation](https://github.com/kashimkyari/JobHuntAutomation), and [Job-Search-Automation](https://github.com/rahulkumar-24/Job-Search-Automation-Using-n8n) demonstrate the pattern: scheduled scraping → AI enrichment → structured storage → notification.
+### 13.1 Abhijay Arora Vuyyuru — AI Job Search Automation Pioneer
+
+The Feed module's design is directly inspired by the work of **[Abhijay Arora Vuyyuru](https://abhijayvuyyuru.substack.com/)**, a Product Manager at Google/YouTube and author of the *AI Action Letter* newsletter. Abhijay has published extensively on using AI agents and automation to transform job searching from a manual grind into an automated pipeline. His work demonstrated the core thesis that underpins this module: job discovery should happen *for* you, not *by* you.
+
+**Key workflows from Abhijay that shaped this PRD:**
+
+- **[AI Agent That Job Hunts While You Sleep](https://abhijayvuyyuru.substack.com/p/ai-agent-that-job-hunts-while-you)** — An n8n + Apify + Gemini workflow that scrapes LinkedIn for jobs posted in the last 24 hours, pulls decision-maker data, generates personalized outreach messages (<100 words, tuned for tone), and drafts them in Gmail automatically. This workflow directly inspired our Gmail integration architecture (Section 4.4), the scheduled execution model (Section 10), and the idea that discovered roles should automatically trigger downstream actions (outreach, research).
+- **[Use LLMs in Your Job Search](https://abhijayvuyyuru.substack.com/p/use-llms-in-your-job-search)** — Demonstrated using LLMs to uncover the "hidden job market" by finding social media posts from hiring managers sourcing candidates directly, bypassing HR portals. This informed our multi-source philosophy — the best roles aren't always on job boards.
+- **[Use LLM with Connectors to Land Your Next Job](https://abhijayvuyyuru.substack.com/p/use-llm-with-connectors-to-land-your)** — Showed the Apify + Claude pattern for scraping company career pages before roles hit LinkedIn. Directly inspired our Career Page Monitoring architecture (Section 4.3) and the tiered cadence system.
+- **[AI Automation That Optimizes Your Resume for EVERY Job](https://abhijayvuyyuru.substack.com/p/this-ai-automation-optimizes-your)** — An n8n workflow using Gemini 1.5 Pro to automatically tailor resumes per job description. While this maps more directly to the Resume Builder module, the pattern of "discover → enrich → act" is the Feed's core pipeline philosophy.
+- **[AI Guide to Land a Job/Internship in 2026](https://abhijayvuyyuru.substack.com/p/abhijays-ai-guide-to-land-a-jobinternship)** — A comprehensive 10-tip guide with practical prompts and automation workflows. Validated our conviction that AI-powered job search isn't a gimmick — it's a competitive advantage.
+
+**What we took from Abhijay's approach:** The fundamental insight that job search can be decomposed into automatable stages (scrape → classify → score → act), that the AI layer should handle unstructured-to-structured conversion (emails, career pages, recruiter outreach), and that the human should focus on decision-making while the system handles discovery. Abhijay's n8n workflows proved this works in practice.
+
+### 13.2 n8n Ecosystem
+
+Beyond Abhijay's work, the broader n8n job automation community validated specific implementation patterns. Projects like [Job-Hunter](https://github.com/adarsh-ajay/Job-Hunter), [JobHuntAutomation](https://github.com/kashimkyari/JobHuntAutomation), and [Job-Search-Automation](https://github.com/rahulkumar-24/Job-Search-Automation-Using-n8n) demonstrate the pattern: scheduled scraping → AI enrichment → structured storage → notification.
 
 Key patterns adopted from these workflows:
 
@@ -548,7 +564,7 @@ Key patterns adopted from these workflows:
 - **Score-gated actions** — not every discovery deserves a pipeline entry. Scoring gates auto-creation while preserving weak matches for manual review.
 - **Provenance tracking** — every discovered role carries full metadata about where it was found and when, enabling source ROI analysis.
 
-Where Pathfinder diverges from these workflows:
+### 13.3 Where Pathfinder Diverges
 
 - **Integration with a full job search system** — n8n workflows dump results into Google Sheets or send Telegram notifications. Pathfinder's Feed writes directly to the Pipeline, triggers Research Brief generation, and feeds the Resume Builder.
 - **Preference-aware scoring** — most n8n workflows use simple keyword matching. Pathfinder's scoring model uses weighted dimensions across title, domain, keywords, location, company stage, and comp.
