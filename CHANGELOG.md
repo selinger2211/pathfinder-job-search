@@ -4,6 +4,15 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v1.3.4 — 2026-03-10
+
+### What Changed
+- **Research Brief role selector fixed** — a `</script>` tag inside the export template literal was terminating the main script block early, causing a `SyntaxError: Unexpected end of input` that prevented `initializeUI()` from ever running. Roles added via Pipeline now appear in the Research Brief dropdown
+- **Dashboard nav standardized** — replaced the old `.nav-bar` markup (different class, `<ul><li>` structure, larger font, only 4 links visible) with the shared `.nav` component used by all other modules. All 10 module links now display consistently across every page
+- **PRD updated** — bumped to v1.3.4
+
+---
+
 ## v1.3.3 — 2026-03-10
 
 ### What Changed
