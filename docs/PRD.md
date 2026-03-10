@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v1.3.9
+**Status:** v1.3.10
 
 ---
 
@@ -754,7 +754,20 @@ Functions outside Product, Engineering, Design, and Data Science (e.g., Marketin
 
 The Pipeline Tracker renders as a **kanban board** with columns for each active stage (`discovered` through `negotiation`; `closed` roles accessible via filter). Each card shows: company name, role title, tier color, positioning badge (IC/Mgmt), days-in-stage, connection count, and artifact count. Cards support drag-and-drop for stage transitions.
 
-**Per-role detail view** includes: full JD text, fit assessment, stage history timeline, linked connections with outreach status, linked artifacts (research brief, tailored resume, homework submissions, offer letters), and notes.
+**Per-role detail view** includes: full JD text, fit assessment, stage history timeline, linked connections with outreach status, linked artifacts (research brief, tailored resume, homework submissions, offer letters), comms log, and notes.
+
+**Resume Sent** — The detail panel includes a "Resume Sent" section where users can upload externally-created resumes (PDF or DOCX) via drag-and-drop or file picker. Each attachment stores: filename, file size, upload date, optional notes (e.g., "tailored for data product focus"), and a pointer to IndexedDB where the actual file blob lives. Users can preview (opens in new tab, works natively for PDFs), download, or remove attached resumes. Multiple resumes can be attached per role (e.g., initial submission + revised version). File metadata lives on the role object in localStorage (`resumesSent[]`); binary content lives in IndexedDB (`pf_resumes` database, `files` object store) to avoid hitting localStorage's ~5MB limit.
+
+| Field | Type | Location | Description |
+|-------|------|----------|-------------|
+| `resumesSent` | array | Role object (localStorage) | `[{ filename, size, type, date, notes, indexedDbKey }]` |
+| File blobs | ArrayBuffer | IndexedDB `pf_resumes.files` | Keyed by `resume-{roleId}-{index}` |
+
+**Comms Log** — A timestamped, free-form interaction log that complements Stage History. Each entry captures: a note (call summary, email exchange, recruiter update), the communication channel (Email, LinkedIn, Phone, Video Call, In Person, Other), an optional link (to the email thread, calendar invite, LinkedIn message), and an optional connection tie (selecting which contact this interaction was with). Entries display newest-first with channel icons, contact name, timestamp, note text, and clickable link. This creates a complete audit trail of every interaction with every contact for every role.
+
+| Field | Type | Location | Description |
+|-------|------|----------|-------------|
+| `commsLog` | array | Role object (localStorage) | `[{ date, note, link, channel, contactId, contactName }]` |
 
 #### 7.1.7 Opaque Recruiter Outreach (Unknown Company, Unknown Role, or Both)
 
@@ -2498,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v1.3.10 | 2026-03-10 | Pipeline: resume attachment (IndexedDB file storage, drag-and-drop upload, preview/download), comms log (timestamped notes tied to connections with channel + link tracking) |
 | v1.3.9 | 2026-03-10 | Pipeline: company logos (Google Favicons, ATS-aware domain extraction), connections section with LinkedIn links, inbound outreach tracking (optional title, contact capture, outreach context logging). Research Brief: company logos in sidebar |
 | v1.3.8 | 2026-03-10 | Research Brief v2 overhaul (13 sections, MCP generation, standalone PRD), Opaque Recruiter Outreach (unknown company/role/both with reveal flow), Research Brief degraded mode for partial-info roles |
 | v1.3.7 | 2026-03-10 | Citations & Source Tracking PRD redesign — MCP-server-centric architecture (citations as artifact type, 3 new MCP tools), Source Ledger centralized roll-up view, inline citations in context (Research Brief, Pipeline detail, Outreach) |

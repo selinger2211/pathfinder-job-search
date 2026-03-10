@@ -924,6 +924,111 @@
       justify-content: flex-end;
     }
 
+    /* Resume attachment cards in the detail panel */
+    .resume-card {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3);
+      background: var(--bg-elevated);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-2);
+    }
+
+    .resume-card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .resume-card-icon.pdf { background: #fee2e2; color: #dc2626; }
+    .resume-card-icon.docx { background: #dbeafe; color: #2563eb; }
+    .resume-card-icon.other { background: var(--bg-subtle); color: var(--text-secondary); }
+
+    .resume-card-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .resume-card-name {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .resume-card-meta {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+
+    .resume-card-notes {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      margin-top: 2px;
+      font-style: italic;
+    }
+
+    .resume-card-actions {
+      display: flex;
+      gap: var(--space-1);
+      flex-shrink: 0;
+    }
+
+    .resume-card-actions button {
+      background: none;
+      border: none;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      padding: var(--space-1);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .resume-card-actions button:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    /* Upload drop zone */
+    .resume-upload-zone {
+      border: 2px dashed var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      margin-top: var(--space-2);
+    }
+
+    .resume-upload-zone:hover, .resume-upload-zone.dragover {
+      border-color: var(--accent);
+      background: var(--accent-subtle);
+    }
+
+    .resume-upload-zone input[type="file"] {
+      display: none;
+    }
+
+    .resume-upload-zone-text {
+      font-size: var(--text-sm);
+      color: var(--text-tertiary);
+    }
+
+    .resume-upload-zone-text strong {
+      color: var(--accent);
+    }
+
     .detail-title {
       font-size: var(--text-lg);
       font-weight: 700;
@@ -2052,6 +2157,129 @@
       return getConnections().filter(c =>
         c.company && c.company.toLowerCase() === companyName.toLowerCase()
       );
+    }
+
+    // ================================================================
+    // INDEXEDDB: Resume file storage
+    // ================================================================
+    // Resumes are binary files (PDF, DOCX) that would bloat localStorage.
+    // IndexedDB handles binary blobs natively with no practical size limit.
+    // We store file metadata on the role in localStorage and the actual
+    // file content in IndexedDB under key = roleId.
+
+    const RESUME_DB_NAME = 'pf_resumes';
+    const RESUME_DB_VERSION = 1;
+    const RESUME_STORE = 'files';
+
+    /**
+     * Opens (or creates) the IndexedDB database for resume storage.
+     * RETURNS: Promise<IDBDatabase>
+     */
+    function openResumeDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(RESUME_DB_NAME, RESUME_DB_VERSION);
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(RESUME_STORE)) {
+            db.createObjectStore(RESUME_STORE, { keyPath: 'id' });
+          }
+        };
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    /**
+     * Saves a resume file blob to IndexedDB, keyed by a unique ID.
+     * INPUT: id (string), file (File object from file input)
+     * RETURNS: Promise<void>
+     */
+    async function saveResumeFile(id, file) {
+      const db = await openResumeDB();
+      const arrayBuffer = await file.arrayBuffer();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(RESUME_STORE, 'readwrite');
+        tx.objectStore(RESUME_STORE).put({
+          id,
+          data: arrayBuffer,
+          type: file.type,
+          name: file.name,
+          size: file.size,
+          savedAt: Date.now()
+        });
+        tx.oncomplete = () => resolve();
+        tx.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    /**
+     * Retrieves a resume file from IndexedDB by its ID.
+     * INPUT: id (string) — typically "resume-{roleId}" or "resume-{roleId}-{index}"
+     * RETURNS: Promise<{id, data (ArrayBuffer), type, name, size, savedAt} | null>
+     */
+    async function getResumeFile(id) {
+      const db = await openResumeDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(RESUME_STORE, 'readonly');
+        const request = tx.objectStore(RESUME_STORE).get(id);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    /**
+     * Deletes a resume file from IndexedDB.
+     * INPUT: id (string)
+     * RETURNS: Promise<void>
+     */
+    async function deleteResumeFile(id) {
+      const db = await openResumeDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(RESUME_STORE, 'readwrite');
+        tx.objectStore(RESUME_STORE).delete(id);
+        tx.oncomplete = () => resolve();
+        tx.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    /**
+     * Triggers a browser download for a stored resume file.
+     * Reads from IndexedDB and creates a temporary download link.
+     * INPUT: id (string) — the IndexedDB key for the resume
+     */
+    async function downloadResume(id) {
+      const record = await getResumeFile(id);
+      if (!record) {
+        showToast('Resume file not found', 'error');
+        return;
+      }
+      const blob = new Blob([record.data], { type: record.type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = record.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    /**
+     * Opens a resume file in a new browser tab for preview.
+     * Works for PDFs (inline viewer) and shows download prompt for DOCX.
+     * INPUT: id (string) — the IndexedDB key for the resume
+     */
+    async function previewResume(id) {
+      const record = await getResumeFile(id);
+      if (!record) {
+        showToast('Resume file not found', 'error');
+        return;
+      }
+      const blob = new Blob([record.data], { type: record.type });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      // Clean up after a delay (browser needs time to load)
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
     }
 
     function getCompanies() {
@@ -3370,6 +3598,60 @@
         </div>
         ` : ''}
 
+        <!-- Resume(s) sent section -->
+        <div class="detail-section">
+          <div class="detail-section-title">Resume Sent (${(role.resumesSent || []).length})</div>
+          <div id="detail-resumes-list">
+            ${buildResumesList(role)}
+          </div>
+          <div class="resume-upload-zone" id="resume-upload-zone"
+               ondragover="event.preventDefault(); this.classList.add('dragover');"
+               ondragleave="this.classList.remove('dragover');"
+               ondrop="event.preventDefault(); this.classList.remove('dragover'); handleResumeDrop(event, '${role.id}');">
+            <input type="file" id="resume-file-input" accept=".pdf,.docx,.doc" onchange="handleResumeSelect(event, '${role.id}')">
+            <div class="resume-upload-zone-text">
+              <strong>Drop a resume here</strong> or <a href="#" onclick="event.preventDefault(); document.getElementById('resume-file-input').click();">browse</a>
+              <div style="font-size: var(--text-xs); margin-top: var(--space-1);">PDF or DOCX — this is the resume you sent for this role</div>
+            </div>
+          </div>
+          <div id="resume-notes-form" style="display: none; margin-top: var(--space-2);">
+            <input type="text" class="form-input" id="resume-notes-input" placeholder="Notes (e.g., tailored for data product focus)" style="font-size: var(--text-xs);">
+            <div style="display: flex; gap: var(--space-2); justify-content: flex-end; margin-top: var(--space-1);">
+              <button class="btn btn-ghost" onclick="cancelResumeUpload()" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2);">Cancel</button>
+              <button class="btn btn-primary" id="resume-confirm-btn" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2);">Attach Resume</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comms log section — timestamped notes tied to connections -->
+        <div class="detail-section">
+          <div class="detail-section-title">Comms Log</div>
+          <div id="detail-comms-log">
+            ${buildCommsLog(role)}
+          </div>
+          <div style="margin-top: var(--space-2);">
+            <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-1);">
+              <select class="form-select" id="comms-connection-select" style="font-size: var(--text-xs); flex: 1;">
+                <option value="">General (no contact)</option>
+                ${getConnectionsForCompany(role.company).map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('')}
+              </select>
+              <select class="form-select" id="comms-channel-select" style="font-size: var(--text-xs); width: 120px;">
+                <option value="email">Email</option>
+                <option value="linkedin">LinkedIn</option>
+                <option value="phone">Phone</option>
+                <option value="video">Video Call</option>
+                <option value="in-person">In Person</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <textarea class="form-textarea" id="comms-note-input" placeholder="Log a note — call summary, email sent, recruiter update..." style="min-height: 60px; font-size: var(--text-sm);"></textarea>
+            <div style="display: flex; gap: var(--space-2); align-items: center; margin-top: var(--space-1);">
+              <input type="url" class="form-input" id="comms-link-input" placeholder="Link (email, calendar invite, LinkedIn thread...)" style="font-size: var(--text-xs); flex: 1;">
+              <button class="btn btn-primary" onclick="addCommsEntry('${role.id}')" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-3); white-space: nowrap;">+ Log</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Job description section -->
         <div class="detail-section">
           <div class="detail-section-title">Job Description</div>
@@ -3598,6 +3880,258 @@
       // Refresh the detail panel to show the new context
       openRoleDetail(roleId);
       showToast('Context logged', 'success');
+    }
+
+    // ================================================================
+    // RESUME UPLOAD: Attach externally-created resumes to roles
+    // ================================================================
+
+    // Temporary storage for file pending confirmation
+    let pendingResumeFile = null;
+    let pendingResumeRoleId = null;
+
+    /**
+     * Builds the HTML list of attached resumes for a role.
+     * Each resume shows file icon, name, date, notes, and action buttons.
+     * INPUT: role object
+     * RETURNS: HTML string
+     */
+    function buildResumesList(role) {
+      const resumes = role.resumesSent || [];
+      if (resumes.length === 0) {
+        return '<div style="color: var(--text-tertiary); font-size: var(--text-sm);">No resume attached yet.</div>';
+      }
+      return resumes.map((r, idx) => {
+        const ext = (r.filename || '').split('.').pop().toLowerCase();
+        const iconClass = ext === 'pdf' ? 'pdf' : (ext === 'docx' || ext === 'doc') ? 'docx' : 'other';
+        const icon = ext === 'pdf' ? '📄' : (ext === 'docx' || ext === 'doc') ? '📝' : '📎';
+        const sizeStr = r.size ? (r.size < 1024 * 1024 ? Math.round(r.size / 1024) + ' KB' : (r.size / (1024 * 1024)).toFixed(1) + ' MB') : '';
+        const dateStr = r.date ? new Date(r.date).toLocaleDateString() : '';
+        const dbKey = r.indexedDbKey || `resume-${role.id}-${idx}`;
+        return `
+          <div class="resume-card">
+            <div class="resume-card-icon ${iconClass}">${icon}</div>
+            <div class="resume-card-info">
+              <div class="resume-card-name">${escapeHtml(r.filename || 'Unknown file')}</div>
+              <div class="resume-card-meta">${dateStr}${sizeStr ? ' · ' + sizeStr : ''}</div>
+              ${r.notes ? `<div class="resume-card-notes">${escapeHtml(r.notes)}</div>` : ''}
+            </div>
+            <div class="resume-card-actions">
+              <button onclick="previewResume('${dbKey}')" title="Preview">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+              <button onclick="downloadResume('${dbKey}')" title="Download">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </button>
+              <button onclick="removeResume('${role.id}', ${idx}, '${dbKey}')" title="Remove">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /**
+     * Handles file selection from the file input.
+     * Shows the notes form for user to add context before confirming.
+     */
+    function handleResumeSelect(event, roleId) {
+      const file = event.target.files[0];
+      if (!file) return;
+      pendingResumeFile = file;
+      pendingResumeRoleId = roleId;
+      // Show notes form
+      document.getElementById('resume-notes-form').style.display = 'block';
+      document.getElementById('resume-upload-zone').style.display = 'none';
+      // Wire up confirm button
+      document.getElementById('resume-confirm-btn').onclick = () => confirmResumeUpload();
+    }
+
+    /**
+     * Handles drag-and-drop of a resume file.
+     */
+    function handleResumeDrop(event, roleId) {
+      const file = event.dataTransfer.files[0];
+      if (!file) return;
+      // Validate file type
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (!['pdf', 'docx', 'doc'].includes(ext)) {
+        showToast('Please upload a PDF or DOCX file', 'error');
+        return;
+      }
+      pendingResumeFile = file;
+      pendingResumeRoleId = roleId;
+      document.getElementById('resume-notes-form').style.display = 'block';
+      document.getElementById('resume-upload-zone').style.display = 'none';
+      document.getElementById('resume-confirm-btn').onclick = () => confirmResumeUpload();
+    }
+
+    /**
+     * Confirms the resume upload: saves to IndexedDB and updates role metadata.
+     */
+    async function confirmResumeUpload() {
+      if (!pendingResumeFile || !pendingResumeRoleId) return;
+
+      const notes = document.getElementById('resume-notes-input').value.trim();
+      const roles = getRoles();
+      const role = roles.find(r => r.id === pendingResumeRoleId);
+      if (!role) return;
+
+      // Initialize resumesSent array if it doesn't exist
+      if (!role.resumesSent) role.resumesSent = [];
+
+      const idx = role.resumesSent.length;
+      const dbKey = `resume-${role.id}-${idx}`;
+
+      // Save file to IndexedDB
+      try {
+        await saveResumeFile(dbKey, pendingResumeFile);
+      } catch (err) {
+        showToast('Failed to save resume: ' + err.message, 'error');
+        return;
+      }
+
+      // Save metadata on the role
+      role.resumesSent.push({
+        filename: pendingResumeFile.name,
+        size: pendingResumeFile.size,
+        type: pendingResumeFile.type,
+        date: Date.now(),
+        notes: notes,
+        indexedDbKey: dbKey
+      });
+      role.lastActivity = Date.now();
+      saveRoles(roles);
+
+      // Clean up and refresh
+      pendingResumeFile = null;
+      pendingResumeRoleId = null;
+      openRoleDetail(role.id);
+      showToast(`Attached "${role.resumesSent[idx].filename}"`, 'success');
+    }
+
+    /**
+     * Cancels a pending resume upload.
+     */
+    function cancelResumeUpload() {
+      pendingResumeFile = null;
+      pendingResumeRoleId = null;
+      document.getElementById('resume-notes-form').style.display = 'none';
+      document.getElementById('resume-upload-zone').style.display = '';
+      document.getElementById('resume-notes-input').value = '';
+      document.getElementById('resume-file-input').value = '';
+    }
+
+    /**
+     * Removes a resume attachment from a role and deletes from IndexedDB.
+     */
+    async function removeResume(roleId, idx, dbKey) {
+      const roles = getRoles();
+      const role = roles.find(r => r.id === roleId);
+      if (!role || !role.resumesSent) return;
+
+      role.resumesSent.splice(idx, 1);
+      saveRoles(roles);
+
+      try {
+        await deleteResumeFile(dbKey);
+      } catch (e) { /* IndexedDB cleanup best-effort */ }
+
+      openRoleDetail(roleId);
+      showToast('Resume removed', 'success');
+    }
+
+    // ================================================================
+    // COMMS LOG: Timestamped notes tied to connections
+    // ================================================================
+
+    /**
+     * Builds the HTML for the comms log — a timeline of interactions
+     * tied to specific connections (or general). Each entry has a timestamp,
+     * channel indicator, optional link, and the note text.
+     * INPUT: role object
+     * RETURNS: HTML string
+     */
+    function buildCommsLog(role) {
+      const entries = role.commsLog || [];
+      if (entries.length === 0) {
+        return '<div style="color: var(--text-tertiary); font-size: var(--text-sm);">No comms logged yet. Track your interactions below.</div>';
+      }
+      // Sort newest first
+      const sorted = [...entries].sort((a, b) => new Date(b.date) - new Date(a.date));
+      return sorted.map(entry => {
+        const dateStr = new Date(entry.date).toLocaleString();
+        const channelIcons = {
+          email: '✉️', linkedin: '💼', phone: '📞',
+          'video': '🎥', 'in-person': '🤝', other: '💬'
+        };
+        const icon = channelIcons[entry.channel] || '💬';
+        const contactName = entry.contactName || 'General';
+        return `
+          <div style="display: flex; gap: var(--space-2); padding: var(--space-2) 0; border-bottom: 1px solid var(--bg-subtle);">
+            <div style="font-size: 16px; flex-shrink: 0; margin-top: 2px;">${icon}</div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span style="font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary);">${escapeHtml(contactName)}</span>
+                <span style="font-size: var(--text-xs); color: var(--text-tertiary); flex-shrink: 0;">${dateStr}</span>
+              </div>
+              <div style="font-size: var(--text-sm); color: var(--text-primary); margin-top: 2px; white-space: pre-wrap;">${escapeHtml(entry.note)}</div>
+              ${entry.link ? `<a href="${escapeHtml(entry.link)}" target="_blank" style="font-size: var(--text-xs); color: var(--accent); display: inline-flex; align-items: center; gap: 4px; margin-top: 4px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                ${escapeHtml(entry.link.length > 40 ? entry.link.substring(0, 40) + '...' : entry.link)}
+              </a>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /**
+     * Adds a new entry to the comms log for a role.
+     * Reads from the form fields, saves to the role's commsLog array,
+     * and refreshes the detail panel.
+     * INPUT: roleId (string)
+     */
+    function addCommsEntry(roleId) {
+      const noteInput = document.getElementById('comms-note-input');
+      const linkInput = document.getElementById('comms-link-input');
+      const connSelect = document.getElementById('comms-connection-select');
+      const channelSelect = document.getElementById('comms-channel-select');
+
+      const note = noteInput.value.trim();
+      if (!note) {
+        showToast('Please enter a note', 'error');
+        return;
+      }
+
+      const roles = getRoles();
+      const role = roles.find(r => r.id === roleId);
+      if (!role) return;
+
+      if (!role.commsLog) role.commsLog = [];
+
+      // Resolve contact name from selected connection ID
+      let contactName = '';
+      const connId = connSelect.value;
+      if (connId) {
+        const conn = getConnections().find(c => c.id === connId);
+        if (conn) contactName = conn.name;
+      }
+
+      role.commsLog.push({
+        date: new Date().toISOString(),
+        note: note,
+        link: linkInput.value.trim() || '',
+        channel: channelSelect.value,
+        contactId: connId || '',
+        contactName: contactName
+      });
+      role.lastActivity = Date.now();
+      saveRoles(roles);
+
+      openRoleDetail(roleId);
+      showToast('Comms entry logged', 'success');
     }
 
     /**

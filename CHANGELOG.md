@@ -4,6 +4,15 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v1.3.10 — 2026-03-10
+
+### What Changed
+- **Resume attachment in Pipeline detail panel** — New "Resume Sent" section lets you upload externally-created resumes (PDF or DOCX) via drag-and-drop or file picker. Files stored in IndexedDB (`pf_resumes` database) to avoid localStorage size limits. Metadata (filename, size, date, notes) stored on the role's `resumesSent[]` array. Supports preview (opens in new tab), download, and remove. Multiple resumes per role supported. Upload flow includes a notes field for annotating what version this is
+- **Comms Log in Pipeline detail panel** — Timestamped interaction log tied to connections. Each entry captures: free-form note text, channel (Email, LinkedIn, Phone, Video Call, In Person, Other), optional link (email thread, calendar invite, etc.), and optional connection tie (dropdown from company connections). Newest-first timeline with channel icons, contact name, timestamp, note, and clickable link. Complements Stage History with a full audit trail of every interaction
+- **PRD updated** — Section 7.1.6 expanded with Resume Sent and Comms Log specs + data model. Bumped to v1.3.10
+
+---
+
 ## v1.3.9 — 2026-03-10
 
 ### What Changed
