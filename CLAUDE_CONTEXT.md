@@ -96,7 +96,7 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v1.7.0
+**Current Version:** v1.8.0
 **Last Updated:** 2026-03-10
 
 ### Implementation Status
@@ -107,8 +107,8 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 | Dashboard | ~90% | 12-rule nudge engine, streak, action queue, feed review, interview intelligence, pipeline funnel, activity feed, weekly stats, real-time storage listener | Google Calendar direct API sync |
 | Job Feed | ~75% | Scoring engine (6 dimensions), preference editor, manual entry, dedup engine, quick-check filter, auto-pipeline creation, analytics, snooze | Gmail/Indeed/Dice APIs, career page scraping |
 | Research Brief | ~65% | Direct Claude API, 14 section prompts, section caching | Citation system polish, MCP artifact save |
-| Resume Builder | ~85% | Phase 1 JD analysis, Phase 2 streaming generation, cover letter, bullet bank UI, keyword gap detection, version history | DOCX/PDF export |
-| Outreach | ~90% | 8 message types via Claude, copy/save, sequence scheduling, response tracking, templates, history/analytics | Real email sending |
+| Resume Builder | ~95% | Phase 1 JD analysis, Phase 2 streaming generation, cover letter, bullet bank UI, keyword gap detection, version history, **DOCX/PDF export** | Template system, ATS score preview |
+| Outreach | ~95% | 8 message types via Claude, copy/save, sequence scheduling, response tracking, templates, history/analytics, **Open in Gmail + Draft Queue** | Cowork batch send via Gmail API |
 | Mock Interview | ~85% | Multi-turn Claude, 7 types, session storage, story extraction, question bank, session playback, performance trends | Web scraping for real interview questions |
 | Debrief | ~85% | 8-section form, Claude synthesis, history, pattern analysis, timeline, export, Research Brief triggers | Auto-trigger from Calendar events |
 | Comp Intel | ~80% | Data entry, comparison table, Claude negotiation, visualization charts, aggregation stats, 25-point scorecard | Levels.fyi/Glassdoor data scraping |

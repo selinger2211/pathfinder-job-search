@@ -283,6 +283,29 @@
       cursor: not-allowed;
     }
 
+    /* ====== Gmail Integration Buttons ====== */
+    .btn.gmail-open {
+      background: #EA4335;
+      color: white;
+      border-color: #EA4335;
+    }
+
+    .btn.gmail-open:hover {
+      opacity: 0.9;
+      background: #d33426;
+    }
+
+    .btn.gmail-queue {
+      background: var(--accent-subtle);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn.gmail-queue:hover {
+      background: var(--accent);
+      color: white;
+    }
+
     /* Loading state */
     .loading {
       display: flex;
@@ -569,8 +592,22 @@
     /**
      * ============================================================
      * PATHFINDER OUTREACH MODULE — Real Claude API Integration
-     * Version: 2.0 | March 2026
+     * + Gmail Integration (March 2026)
+     * Version: 2.1
      * ============================================================
+     *
+     * GMAIL INTEGRATION FEATURES:
+     * 1. "Open in Gmail" button — Opens Gmail compose tab with message pre-filled
+     * 2. "Queue as Draft" button — Saves messages to localStorage for batch sending
+     * 3. Draft Queue Display — Shows queued drafts with their details
+     *
+     * Only email-type messages (cold-email, thank-you, recruiter-response, etc.)
+     * show these buttons. LinkedIn types keep their original behavior.
+     *
+     * Queue format: localStorage key 'pf_outreach_gmail_queue' stores array of:
+     *   { id, to, subject, body, messageType, company, role, queuedAt, status }
+     *
+     * Requirements: Connection objects MUST have an 'email' field for Gmail features.
      *
      * This module generates personalized outreach messages using
      * real Claude API calls, never templates or generics.
@@ -598,50 +635,283 @@
         name: 'LinkedIn Connection',
         description: 'Request to connect',
         charLimit: 300,
+        isEmail: false,
       },
       {
         id: 'cold-email',
         name: 'Cold Email',
         description: 'Initial outreach',
         charLimit: 800,
+        isEmail: true,
       },
       {
         id: 'cold-email-followup',
         name: 'Follow-Up Email',
         description: 'Gentle reminder after 7+ days',
         charLimit: 500,
+        isEmail: true,
       },
       {
         id: 'referral-request',
         name: 'Referral Request',
         description: 'Ask someone to refer you',
         charLimit: 600,
+        isEmail: true,
       },
       {
         id: 'thank-you-call',
         name: 'Thank You (Call)',
         description: 'After a networking call',
         charLimit: 400,
+        isEmail: true,
       },
       {
         id: 'thank-you-interview',
         name: 'Thank You (Interview)',
         description: 'Post-interview follow-up',
         charLimit: 700,
+        isEmail: true,
       },
       {
         id: 'recruiter-response',
         name: 'Recruiter Response',
         description: 'Reply to inbound recruiter',
         charLimit: 600,
+        isEmail: true,
       },
       {
         id: 'networking-intro',
         name: 'Networking Intro',
         description: 'Warm introduction request',
         charLimit: 500,
+        isEmail: true,
       },
     ];
+
+    // ════════════════════════════════════════════════════════
+    // GMAIL INTEGRATION: Helper functions
+    // ════════════════════════════════════════════════════════
+
+    /**
+     * Checks if a message type is email-based
+     * INPUT: messageType string (e.g., 'cold-email')
+     * OUTPUT: boolean, true if the message type should have Gmail buttons
+     */
+    function isEmailType(messageType) {
+      const msgType = MESSAGE_TYPES.find(t => t.id === messageType);
+      return msgType && msgType.isEmail === true;
+    }
+
+    /**
+     * Extracts email subject from the generated message
+     * Many messages start with "Subject: ..." line, this extracts that
+     * INPUT: messageBody string
+     * OUTPUT: subject string or empty string if not found
+     */
+    function extractSubjectFromMessage(messageBody) {
+      const lines = messageBody.split('\n');
+      const subjectLine = lines.find(line => line.trim().toLowerCase().startsWith('subject:'));
+      if (subjectLine) {
+        return subjectLine.replace(/^subject:\s*/i, '').trim();
+      }
+      // Fallback: use first line as subject if it's short enough
+      const firstLine = lines[0]?.trim() || '';
+      if (firstLine.length < 100) {
+        return firstLine;
+      }
+      return '';
+    }
+
+    /**
+     * Extracts clean email body (removes "Subject:" line if present)
+     * INPUT: messageBody string
+     * OUTPUT: cleaned body string
+     */
+    function extractBodyFromMessage(messageBody) {
+      const lines = messageBody.split('\n');
+      const subjectLineIndex = lines.findIndex(line => line.trim().toLowerCase().startsWith('subject:'));
+      if (subjectLineIndex !== -1) {
+        return lines.slice(subjectLineIndex + 1).join('\n').trim();
+      }
+      return messageBody.trim();
+    }
+
+    /**
+     * URL encodes a string for use in mailto/Gmail URLs
+     * INPUT: text string to encode
+     * OUTPUT: properly encoded string safe for URLs
+     */
+    function encodeForUrl(text) {
+      return encodeURIComponent(text || '');
+    }
+
+    /**
+     * Opens Gmail compose with pre-filled message
+     * This opens a new tab to Gmail with the message body, subject, and recipient pre-filled
+     * INPUT: recipient email, message body text, message type
+     * OUTPUT: opens new Gmail tab, returns undefined
+     */
+    function openInGmail() {
+      const messageType = MESSAGE_TYPES.find(t => t.id === AppState.selectedMessageType);
+      if (!messageType || !messageType.isEmail) {
+        showToast('Only email-type messages can be sent via Gmail', 'error');
+        return;
+      }
+
+      const connections = getConnections();
+      const connection = connections.find(c => c.id === AppState.selectedConnectionId);
+
+      if (!connection || !connection.email) {
+        showToast('This connection does not have an email address', 'error');
+        return;
+      }
+
+      const subject = extractSubjectFromMessage(AppState.currentMessage);
+      const body = extractBodyFromMessage(AppState.currentMessage);
+
+      // Build Gmail compose URL: https://mail.google.com/mail/?view=cm&su=SUBJECT&body=BODY&to=EMAIL
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&su=${encodeForUrl(subject)}&body=${encodeForUrl(body)}&to=${encodeForUrl(connection.email)}`;
+
+      // Open in new tab
+      window.open(gmailUrl, '_blank');
+      showToast('Opening Gmail... complete the email and send from there', 'success');
+    }
+
+    /**
+     * Gets the current Gmail draft queue from localStorage
+     * INPUT: none
+     * OUTPUT: array of draft objects, each with { id, to, subject, body, messageType, company, role, queuedAt, status }
+     */
+    function getGmailQueue() {
+      const data = localStorage.getItem('pf_outreach_gmail_queue');
+      return data ? JSON.parse(data) : [];
+    }
+
+    /**
+     * Saves the Gmail draft queue to localStorage
+     * INPUT: queue array
+     * OUTPUT: saves to localStorage, returns undefined
+     */
+    function saveGmailQueue(queue) {
+      localStorage.setItem('pf_outreach_gmail_queue', JSON.stringify(queue));
+    }
+
+    /**
+     * Adds current message to the Gmail draft queue
+     * Creates a queue item with all needed data: recipient, subject, body, context
+     * INPUT: none (uses current AppState)
+     * OUTPUT: shows toast, adds to queue, updates UI
+     */
+    function queueAsGmailDraft() {
+      const messageType = MESSAGE_TYPES.find(t => t.id === AppState.selectedMessageType);
+      if (!messageType || !messageType.isEmail) {
+        showToast('Only email-type messages can be queued', 'error');
+        return;
+      }
+
+      const connections = getConnections();
+      const connection = connections.find(c => c.id === AppState.selectedConnectionId);
+      const companies = getCompanies();
+      const company = companies.find(c => c.id === AppState.selectedCompanyId);
+      const roles = getRoles();
+      const role = roles.find(r => r.id === AppState.selectedRoleId);
+
+      if (!connection || !connection.email) {
+        showToast('This connection does not have an email address', 'error');
+        return;
+      }
+
+      const subject = extractSubjectFromMessage(AppState.currentMessage);
+      const body = extractBodyFromMessage(AppState.currentMessage);
+
+      // Get existing queue and add new item
+      const queue = getGmailQueue();
+      const draftItem = {
+        id: 'draft_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        to: connection.email,
+        subject: subject || messageType.name,
+        body: body,
+        messageType: AppState.selectedMessageType,
+        company: company?.name || 'Unknown',
+        role: role?.title || 'Unknown',
+        connectionName: connection.name,
+        queuedAt: new Date().toISOString(),
+        status: 'pending', // pending, synced, sent
+      };
+
+      queue.push(draftItem);
+      saveGmailQueue(queue);
+
+      showToast(`✓ Queued: "${draftItem.subject}" → ${connection.email}`, 'success');
+      updateGmailQueueDisplay();
+    }
+
+    /**
+     * Removes a draft from the Gmail queue
+     * INPUT: draftId string
+     * OUTPUT: removes from queue, updates UI
+     */
+    function removeGmailDraft(draftId) {
+      let queue = getGmailQueue();
+      queue = queue.filter(d => d.id !== draftId);
+      saveGmailQueue(queue);
+      updateGmailQueueDisplay();
+      showToast('Removed from queue', 'info');
+    }
+
+    /**
+     * Updates the Gmail queue display section
+     * Shows how many drafts are queued and lists them
+     * INPUT: none
+     * OUTPUT: renders the queue display HTML
+     */
+    function updateGmailQueueDisplay() {
+      const queueContainer = document.getElementById('gmail-queue-display');
+      if (!queueContainer) return;
+
+      const queue = getGmailQueue();
+
+      if (queue.length === 0) {
+        queueContainer.innerHTML = '';
+        return;
+      }
+
+      queueContainer.innerHTML = `
+        <div style="margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--bg-subtle);">
+          <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3);">
+            <span style="font-size: var(--text-sm); font-weight: 600; color: var(--text-primary);">
+              Gmail Drafts Queued
+            </span>
+            <span style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: var(--accent); color: white; border-radius: 50%; font-size: var(--text-xs); font-weight: 700;">
+              ${queue.length}
+            </span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+            ${queue.map(draft => `
+              <div style="padding: var(--space-3); background: var(--bg-elevated); border-left: 3px solid var(--accent); border-radius: var(--radius-sm);">
+                <div style="display: flex; justify-content: space-between; align-items: start; gap: var(--space-2);">
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: var(--text-sm); font-weight: 500; color: var(--text-primary); word-break: break-word; margin-bottom: var(--space-1);">
+                      ${draft.subject || '(no subject)'}
+                    </div>
+                    <div style="font-size: var(--text-xs); color: var(--text-secondary);">
+                      To: ${draft.to}
+                    </div>
+                    <div style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-1);">
+                      ${draft.company} • ${draft.role} • ${new Date(draft.queuedAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <button class="btn" style="padding: var(--space-1) var(--space-2); font-size: var(--text-xs);" onclick="removeGmailDraft('${draft.id}')">
+                    Remove
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
 
     // ────────────────────────────────────────────────────────
     // DATA ACCESS FUNCTIONS
@@ -1105,6 +1375,18 @@ Create a compelling, specific message that references at least one concrete deta
           <button class="btn" onclick="saveToOutreachLog()">
             Send & Log
           </button>
+          ${
+            isEmailType(AppState.selectedMessageType)
+              ? `
+          <button class="btn" style="background: #EA4335; color: white; border-color: #EA4335;" onclick="openInGmail()">
+            📧 Open in Gmail
+          </button>
+          <button class="btn" onclick="queueAsGmailDraft()">
+            Queue as Draft
+          </button>
+          `
+              : ''
+          }
           <button class="btn" onclick="saveAsTemplate()">
             Save as Template
           </button>
@@ -1122,6 +1404,9 @@ Create a compelling, specific message that references at least one concrete deta
           </button>
         </div>
 
+        <!-- Gmail Queue Display Section -->
+        <div id="gmail-queue-display"></div>
+
         ${AppState.currentMessage ? '<div style="margin-top: var(--space-4);"></div>' + renderTemplatesUI() : ''}
       `;
 
@@ -1135,6 +1420,9 @@ Create a compelling, specific message that references at least one concrete deta
           });
         }
       }
+
+      // Update Gmail queue display
+      setTimeout(() => updateGmailQueueDisplay(), 0);
     }
 
     /**

@@ -11,6 +11,12 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="../shared/claude-api.js"></script>
 
+  <!-- ====== EXPORT LIBRARIES ====== -->
+  <!-- docx: JavaScript library for creating Word documents in the browser -->
+  <script src="https://unpkg.com/docx@8.2.3/build/index.umd.js"></script>
+  <!-- html2pdf.js: Converts HTML to PDF using client-side rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <style>
     /* ================================================================
        RESUME TAILOR SPECIFIC STYLES
@@ -2396,6 +2402,12 @@ Generate a professional, one-page resume tailored to this role. Start the HTML w
             <button class="action-button" onclick="downloadResumeHTML()">
               Download as HTML
             </button>
+            <button class="action-button" onclick="downloadResumeAsDOCX()">
+              Download as DOCX
+            </button>
+            <button class="action-button" onclick="downloadResumeAsPDF()">
+              Download as PDF
+            </button>
             <button class="action-button" onclick="saveResumeToPipeline()">
               Save to Pipeline
             </button>
@@ -2539,6 +2551,313 @@ Generate a professional, one-page resume tailored to this role. Start the HTML w
       URL.revokeObjectURL(url);
 
       showToast('Resume downloaded', 'success');
+    }
+
+    /* ====== DOCX EXPORT ====== */
+    /**
+     * Extracts text and structure from generated resume HTML and converts to DOCX
+     * INPUT: resumeHTML = HTML string from the resume container
+     * OUTPUT: JavaScript Document object for Word format
+     */
+    function convertResumeHTMLToDocument(resumeHTML) {
+      // Create a temporary container to parse the HTML
+      const temp = document.createElement('div');
+      temp.innerHTML = resumeHTML;
+
+      // Initialize the document children array (will hold all paragraphs)
+      const children = [];
+
+      // Helper function to parse HTML nodes and convert to docx elements
+      function parseElement(element) {
+        // Skip empty text nodes
+        if (element.nodeType === 3) {
+          const text = element.textContent.trim();
+          if (text) {
+            children.push(
+              new docx.Paragraph({
+                children: [new docx.TextRun(text)]
+              })
+            );
+          }
+          return;
+        }
+
+        if (element.nodeType !== 1) return;
+
+        const tagName = element.tagName.toLowerCase();
+        const text = element.textContent.trim();
+
+        // Handle different HTML tags and convert to Word formatting
+        if (tagName === 'h1' || tagName === 'h2') {
+          // Section headings - bold and larger
+          children.push(
+            new docx.Paragraph({
+              style: 'Heading1',
+              children: [
+                new docx.TextRun({
+                  text: text,
+                  bold: true,
+                  size: 28,
+                  font: 'Arial'
+                })
+              ],
+              spacing: { before: 200, after: 100 },
+              border: {
+                bottom: {
+                  color: '000000',
+                  space: 1,
+                  style: docx.BorderStyle.single,
+                  size: 6
+                }
+              }
+            })
+          );
+        } else if (tagName === 'h3') {
+          // Subsection headings - bold, smaller than h2
+          children.push(
+            new docx.Paragraph({
+              children: [
+                new docx.TextRun({
+                  text: text,
+                  bold: true,
+                  size: 24,
+                  font: 'Arial'
+                })
+              ],
+              spacing: { before: 120, after: 80 }
+            })
+          );
+        } else if (tagName === 'h4') {
+          // Minor headings
+          children.push(
+            new docx.Paragraph({
+              children: [
+                new docx.TextRun({
+                  text: text,
+                  bold: true,
+                  size: 22,
+                  font: 'Arial'
+                })
+              ],
+              spacing: { before: 80, after: 40 }
+            })
+          );
+        } else if (tagName === 'ul' || tagName === 'ol') {
+          // Bullet or numbered lists
+          const items = element.querySelectorAll(':scope > li');
+          const isBullet = tagName === 'ul';
+
+          items.forEach((li) => {
+            children.push(
+              new docx.Paragraph({
+                numbering: {
+                  reference: isBullet ? 'bullets' : 'numbers',
+                  level: 0
+                },
+                children: [
+                  new docx.TextRun({
+                    text: li.textContent.trim(),
+                    font: 'Arial',
+                    size: 22
+                  })
+                ]
+              })
+            );
+          });
+        } else if (tagName === 'p') {
+          // Regular paragraphs
+          if (text) {
+            children.push(
+              new docx.Paragraph({
+                children: [
+                  new docx.TextRun({
+                    text: text,
+                    font: 'Arial',
+                    size: 22
+                  })
+                ],
+                spacing: { after: 80 }
+              })
+            );
+          }
+        } else if (tagName === 'strong' || tagName === 'b') {
+          // Bold text
+          if (text) {
+            children.push(
+              new docx.Paragraph({
+                children: [
+                  new docx.TextRun({
+                    text: text,
+                    bold: true,
+                    font: 'Arial',
+                    size: 22
+                  })
+                ]
+              })
+            );
+          }
+        } else {
+          // For unknown tags, recursively process children
+          Array.from(element.childNodes).forEach(parseElement);
+        }
+      }
+
+      // Parse all child nodes from the resume
+      Array.from(temp.childNodes).forEach(parseElement);
+
+      // Create and return the Word document with US Letter page size
+      const doc = new docx.Document({
+        numbering: {
+          config: [
+            {
+              reference: 'bullets',
+              levels: [
+                {
+                  level: 0,
+                  format: docx.LevelFormat.BULLET,
+                  text: '•',
+                  alignment: docx.AlignmentType.LEFT,
+                  style: {
+                    paragraph: {
+                      indent: { left: 720, hanging: 360 }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              reference: 'numbers',
+              levels: [
+                {
+                  level: 0,
+                  format: docx.LevelFormat.DECIMAL,
+                  text: '%1.',
+                  alignment: docx.AlignmentType.LEFT,
+                  style: {
+                    paragraph: {
+                      indent: { left: 720, hanging: 360 }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        styles: {
+          default: {
+            document: {
+              run: { font: 'Arial', size: 22 }
+            }
+          },
+          paragraphStyles: [
+            {
+              id: 'Heading1',
+              name: 'Heading 1',
+              basedOn: 'Normal',
+              next: 'Normal',
+              quickFormat: true,
+              run: { size: 28, bold: true, font: 'Arial' },
+              paragraph: { spacing: { before: 240, after: 120 } }
+            }
+          ]
+        },
+        sections: [
+          {
+            properties: {
+              page: {
+                size: {
+                  width: 12240,
+                  height: 15840
+                },
+                margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 }
+              }
+            },
+            children: children
+          }
+        ]
+      });
+
+      return doc;
+    }
+
+    /**
+     * Downloads the generated resume as a Word document (.docx)
+     * INPUT: none (uses currentRole for filename, reads generated-resume from DOM)
+     * OUTPUT: .docx file downloaded to user's device
+     */
+    function downloadResumeAsDOCX() {
+      const resumeContainer = document.getElementById('generated-resume');
+      if (!resumeContainer) {
+        showToast('Resume not found', 'error');
+        return;
+      }
+
+      try {
+        // Get the HTML content from the resume container
+        const resumeHTML = resumeContainer.innerHTML;
+
+        // Convert HTML to Word document
+        const doc = convertResumeHTMLToDocument(resumeHTML);
+
+        // Generate filename from company and role
+        const filename = `Resume_${currentRole.company.replace(/\s+/g, '_')}_${currentRole.title.replace(/\s+/g, '_')}.docx`;
+
+        // Use the docx library's Packer to convert document to binary
+        docx.Packer.toBlob(doc).then((blob) => {
+          // Create a temporary download link
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+
+          showToast(`Resume downloaded as ${filename}`, 'success');
+        });
+      } catch (error) {
+        console.error('Error exporting to DOCX:', error);
+        showToast('Failed to export as DOCX: ' + error.message, 'error');
+      }
+    }
+
+    /**
+     * Downloads the generated resume as a PDF file
+     * INPUT: none (uses currentRole for filename, reads generated-resume from DOM)
+     * OUTPUT: .pdf file downloaded to user's device
+     */
+    function downloadResumeAsPDF() {
+      const resumeContainer = document.getElementById('generated-resume');
+      if (!resumeContainer) {
+        showToast('Resume not found', 'error');
+        return;
+      }
+
+      try {
+        // Create a clone of the resume container for PDF conversion
+        const element = resumeContainer.cloneNode(true);
+
+        // Generate filename from company and role
+        const filename = `Resume_${currentRole.company.replace(/\s+/g, '_')}_${currentRole.title.replace(/\s+/g, '_')}.pdf`;
+
+        // Configure html2pdf options for professional formatting
+        const opt = {
+          margin: 10,
+          filename: filename,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { orientation: 'portrait', unit: 'mm', format: 'letter' }
+        };
+
+        // Generate and download the PDF
+        html2pdf().set(opt).from(element).save();
+
+        showToast(`Resume downloaded as ${filename}`, 'success');
+      } catch (error) {
+        console.error('Error exporting to PDF:', error);
+        showToast('Failed to export as PDF: ' + error.message, 'error');
+      }
     }
 
     /**

@@ -4,6 +4,25 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v1.8.0 — 2026-03-10
+
+### What Changed
+
+#### Resume Builder — DOCX/PDF Export
+- **DOCX export**: Converts generated resume HTML to a properly formatted Word document using docx.js (client-side). ATS-friendly: Arial font, US Letter, 1-inch margins, no colors, proper heading hierarchy and bullet lists
+- **PDF export**: Converts resume preview to PDF using html2pdf.js with portrait orientation, high-quality rendering (2x scale), and clean margins
+- Auto-names files as `Resume_{Company}_{Title}.docx/.pdf`
+- Both buttons appear in the Phase 2 generation-actions area
+
+#### Outreach — Gmail Integration
+- **"Open in Gmail" button**: Pre-fills Gmail compose URL with subject, body, and recipient for email-type messages (cold email, follow-up, thank-you, recruiter response, networking intro). Opens in new tab.
+- **"Queue as Gmail Draft" button**: Saves message to `pf_outreach_gmail_queue` localStorage for batch sending via Cowork's Gmail API
+- **Draft queue viewer**: Shows queued drafts with subject, recipient, company, role, date. Remove button per draft. Status tracking (pending/synced/sent)
+- Smart subject extraction from generated message body
+- LinkedIn message types excluded from Gmail buttons (keep existing behavior)
+
+---
+
 ## v1.7.0 — 2026-03-10
 
 ### What Changed
