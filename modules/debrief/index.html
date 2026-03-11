@@ -1516,7 +1516,7 @@ Additional Notes: ${formData.notes}`;
             </div>
           </div>
         `;
-      }
+      },
 
       /**
        * Debrief Timeline - visualize all debriefs for a role chronologically
@@ -1568,7 +1568,7 @@ Additional Notes: ${formData.notes}`;
 
         html += '</div></div>';
         container.innerHTML = html;
-      }
+      },
 
       /**
        * Pattern Analysis - identify recurring themes from 5+ debriefs
@@ -1631,7 +1631,7 @@ Additional Notes: ${formData.notes}`;
 
         html += '</div>';
         container.innerHTML = html;
-      }
+      },
 
       /**
        * Analyze all debriefs to extract patterns
@@ -1689,7 +1689,7 @@ Additional Notes: ${formData.notes}`;
           .sort((a, b) => b.count - a.count);
 
         return patterns;
-      }
+      },
 
       /**
        * Export debrief as text file with proper formatting
@@ -1764,7 +1764,7 @@ Additional Notes: ${formData.notes}`;
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-      }
+      },
 
       /**
        * Copy debrief to clipboard for sharing or pasting

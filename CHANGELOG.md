@@ -4,6 +4,35 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.1.2 — 2026-03-10
+
+### What Changed — Visual QA Bug Fixes
+
+First-ever browser visual QA pass across all 11 modules uncovered 4 bugs (2 critical module-breakers). All fixed and verified in browser.
+
+#### Dashboard — Match Score Display (Bug Fix)
+- Match scores showed "5000% match" instead of "50% match"
+- Root cause: `Math.round(item.score * 100)` — score is already stored as a percentage (50 = 50%), not a decimal
+- Fix: Changed to `Math.round(item.score)` on line 2627
+
+#### Research Brief — Module Completely Broken (Critical Fix)
+- Entire module failed to initialize — dropdown empty, nothing rendered
+- Root cause: `deleteBtn.aria-label = 'Delete this brief'` — can't use dot notation with hyphenated HTML attributes
+- Fix: Changed to `deleteBtn.setAttribute('aria-label', 'Delete this brief')` on line 2062
+- Introduced during the v2.1.0 accessibility polish pass
+
+#### Debrief — Module Completely Broken (Critical Fix)
+- Entire module failed to initialize — `SyntaxError: Unexpected identifier 'renderTimelineTab'`
+- Root cause: `DebriefApp` is an object literal (`const DebriefApp = {}`), all methods need comma separators between them. 5 methods were missing trailing commas.
+- Fix: Added commas at lines 1519, 1571, 1634, 1692, 1767
+
+#### Calendar — Crash on Init (Bug Fix)
+- `RangeError: Invalid time value` from `Intl.DateTimeFormat.format()` with invalid Date objects
+- Root cause: `new Date(evt.date)` produces invalid Date for some calendar event date formats
+- Fix: Added validation guard `if (!(date instanceof Date) || isNaN(date.getTime()))` to both `formatTime()` and `formatDateShort()` functions
+
+---
+
 ## v2.1.0 — 2026-03-10
 
 ### What Changed — Perfection Pass (All 8 Browser Modules → 100%)

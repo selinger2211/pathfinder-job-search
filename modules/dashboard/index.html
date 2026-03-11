@@ -2624,7 +2624,7 @@
         .slice(0, 5);
 
       container.innerHTML = topItems.map(item => {
-        const score = item.score ? Math.round(item.score * 100) : 0;
+        const score = item.score ? Math.round(item.score) : 0;
         return `
           <div class="feed-item" onclick="navigateToRole('${item.roleId}')">
             <div class="feed-item-company">${item.company || 'Unknown Company'}</div>

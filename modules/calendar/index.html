@@ -2382,6 +2382,7 @@
          * Format date as "Mon, Mar 9".
          */
         function formatDateShort(date) {
+            if (!(date instanceof Date) || isNaN(date.getTime())) return 'Unknown date';
             const options = { weekday: 'short', month: 'short', day: 'numeric' };
             return new Intl.DateTimeFormat('en-US', options).format(date);
         }
@@ -2390,6 +2391,7 @@
          * Format time as "2:30 PM".
          */
         function formatTime(date) {
+            if (!(date instanceof Date) || isNaN(date.getTime())) return 'TBD';
             const options = { hour: 'numeric', minute: '2-digit', hour12: true };
             return new Intl.DateTimeFormat('en-US', options).format(date);
         }

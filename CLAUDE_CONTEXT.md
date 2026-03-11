@@ -96,7 +96,7 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v2.1.0
+**Current Version:** v2.1.2
 **Last Updated:** 2026-03-10
 
 ### Implementation Status
@@ -120,6 +120,8 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief still attempts MCP bridge first before direct API fallback
 - Some modules still have demo/seed data for first-run experience
+- Sync Hub has duplicate localStorage keys (`pf_pf_roles`, `pf_pf_companies`) — double-prefixing bug
+- Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
 ### Git State
 - Remote: github.com/selinger2211/pathfinder-job-search
