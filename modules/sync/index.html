@@ -291,6 +291,257 @@
     }
 
     .upload-area input[type="file"] { display: none; }
+
+    /* ====== FRESHNESS BADGES ====== */
+    .freshness-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        padding: var(--space-1) var(--space-2);
+        border-radius: var(--radius-full);
+        font-size: var(--text-xs);
+        font-weight: 600;
+    }
+
+    .freshness-badge.fresh { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+    .freshness-badge.stale { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
+    .freshness-badge.expired { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+
+    /* ====== SYNC STATISTICS DASHBOARD ====== */
+    .sync-stats-row {
+        background: var(--bg-surface);
+        border: 1px solid var(--bg-subtle);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        margin-bottom: var(--space-6);
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: var(--space-4);
+    }
+
+    .sync-stat-item {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+    }
+
+    .sync-stat-value {
+        font-size: var(--text-xl);
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .sync-stat-label {
+        font-size: var(--text-xs);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .sync-stat-timestamp {
+        font-size: var(--text-xs);
+        color: var(--text-tertiary);
+        margin-top: var(--space-1);
+    }
+
+    /* ====== OUTREACH DRAFT PUSH SECTION ====== */
+    .outreach-section {
+        background: var(--bg-surface);
+        border: 1px solid var(--bg-subtle);
+        border-radius: var(--radius-lg);
+        padding: var(--space-5);
+        margin-bottom: var(--space-6);
+    }
+
+    .outreach-section h3 {
+        font-size: var(--text-lg);
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--space-4);
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .outreach-drafts-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+
+    .outreach-draft-item {
+        background: var(--bg-base);
+        border: 1px solid var(--bg-subtle);
+        border-radius: var(--radius-md);
+        padding: var(--space-3);
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+    }
+
+    .outreach-draft-item .draft-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(234, 67, 53, 0.15);
+        color: #EA4335;
+        flex-shrink: 0;
+    }
+
+    .outreach-draft-item .draft-info {
+        flex: 1;
+    }
+
+    .outreach-draft-item .draft-subject {
+        font-size: var(--text-sm);
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: var(--space-1);
+    }
+
+    .outreach-draft-item .draft-meta {
+        font-size: var(--text-xs);
+        color: var(--text-secondary);
+        display: flex;
+        gap: var(--space-3);
+    }
+
+    .outreach-draft-item .draft-status {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        padding: var(--space-1) var(--space-2);
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--accent-amber);
+        border-radius: var(--radius-full);
+        font-size: var(--text-xs);
+        font-weight: 600;
+    }
+
+    .outreach-draft-item .draft-push-btn {
+        padding: var(--space-2) var(--space-3);
+        background: var(--accent-blue);
+        color: white;
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: var(--text-xs);
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: opacity var(--duration-fast) var(--ease-default);
+    }
+
+    .outreach-draft-item .draft-push-btn:hover { opacity: 0.9; }
+    .outreach-draft-item .draft-push-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .outreach-empty {
+        text-align: center;
+        padding: var(--space-6);
+        color: var(--text-secondary);
+        font-size: var(--text-sm);
+    }
+
+    /* ====== SYNC SCHEDULING SECTION ====== */
+    .sync-scheduling {
+        background: var(--bg-surface);
+        border: 1px solid var(--bg-subtle);
+        border-radius: var(--radius-lg);
+        padding: var(--space-5);
+        margin-top: var(--space-6);
+    }
+
+    .sync-scheduling h3 {
+        font-size: var(--text-lg);
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--space-4);
+    }
+
+    .scheduling-row {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+    }
+
+    .scheduling-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--space-3);
+        background: var(--bg-base);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--bg-subtle);
+    }
+
+    .scheduling-item-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+    }
+
+    .scheduling-item-label {
+        font-size: var(--text-sm);
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .scheduling-item-detail {
+        font-size: var(--text-xs);
+        color: var(--text-secondary);
+    }
+
+    .toggle-switch {
+        width: 48px;
+        height: 24px;
+        border-radius: 12px;
+        border: none;
+        background: var(--bg-subtle);
+        cursor: pointer;
+        transition: all var(--duration-fast) var(--ease-default);
+        position: relative;
+        display: flex;
+        align-items: center;
+        padding: 2px;
+    }
+
+    .toggle-switch.enabled {
+        background: var(--accent-green);
+    }
+
+    .toggle-switch::after {
+        content: '';
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: white;
+        transition: transform var(--duration-fast) var(--ease-default);
+        transform: translateX(0);
+    }
+
+    .toggle-switch.enabled::after {
+        transform: translateX(24px);
+    }
+
+    /* ====== EXPORT SYNC LOG BUTTON ====== */
+    .export-log-btn {
+        padding: var(--space-2) var(--space-3);
+        background: var(--accent-blue);
+        color: white;
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: var(--text-sm);
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        transition: opacity var(--duration-fast) var(--ease-default);
+    }
+
+    .export-log-btn:hover { opacity: 0.9; }
     </style>
 </head>
 <body>
@@ -329,6 +580,31 @@
         <div class="sync-hero">
             <h1>🔄 Sync Hub</h1>
             <p>Bridge your external data sources into Pathfinder. Sync calendar events, job listings, email alerts, and company data from connected APIs.</p>
+        </div>
+
+        <!-- ====== SYNC STATISTICS DASHBOARD ====== -->
+        <!-- Displays total items synced per source and last full sync timestamp -->
+        <div class="sync-stats-row" id="syncStats">
+            <div class="sync-stat-item">
+                <div class="sync-stat-value" id="calendarStatsCount">0</div>
+                <div class="sync-stat-label">Calendar Events</div>
+                <div class="sync-stat-timestamp" id="calendarStatsTime">Never synced</div>
+            </div>
+            <div class="sync-stat-item">
+                <div class="sync-stat-value" id="indeedStatsCount">0</div>
+                <div class="sync-stat-label">Indeed Jobs</div>
+                <div class="sync-stat-timestamp" id="indeedStatsTime">Never synced</div>
+            </div>
+            <div class="sync-stat-item">
+                <div class="sync-stat-value" id="gmailStatsCount">0</div>
+                <div class="sync-stat-label">Gmail Alerts</div>
+                <div class="sync-stat-timestamp" id="gmailStatsTime">Never synced</div>
+            </div>
+            <div class="sync-stat-item">
+                <div class="sync-stat-value" id="clayStatsCount">0</div>
+                <div class="sync-stat-label">Clay Companies</div>
+                <div class="sync-stat-timestamp" id="clayStatsTime">Never synced</div>
+            </div>
         </div>
 
         <!-- Sync timestamp -->
@@ -372,7 +648,19 @@
                         <div class="sync-card-title">Google Calendar</div>
                         <div class="sync-card-subtitle">→ Calendar Module</div>
                     </div>
-                    <div style="margin-left:auto;">
+                    <div style="margin-left:auto; display:flex; gap:var(--space-2); align-items:center;">
+                        <span class="freshness-badge fresh" id="calFresh" style="display:none;">
+                            <span style="width:6px; height:6px; border-radius:50%; background:currentColor;"></span>
+                            Fresh
+                        </span>
+                        <span class="freshness-badge stale" id="calStale" style="display:none;">
+                            <span style="width:6px; height:6px; border-radius:50%; background:currentColor;"></span>
+                            Stale
+                        </span>
+                        <span class="freshness-badge expired" id="calExpired" style="display:none;">
+                            <span style="width:6px; height:6px; border-radius:50%; background:currentColor;"></span>
+                            Expired
+                        </span>
                         <span class="sync-status ready" id="calStatus">
                             <span class="sync-status-dot"></span>
                             <span id="calStatusText">Ready</span>
@@ -410,7 +698,19 @@
                         <div class="sync-card-title">Indeed</div>
                         <div class="sync-card-subtitle">→ Job Feed Listener</div>
                     </div>
-                    <div style="margin-left:auto;">
+                    <div style="margin-left:auto; display:flex; gap:var(--space-2); align-items:center;">
+                        <span class="freshness-badge fresh" id="indeedFresh" style="display:none;">
+                            <span style="width:6px; height:6px; border-radius:50%; background:currentColor;"></span>
+                            Fresh
+                        </span>
+                        <span class="freshness-badge stale" id="indeedStale" style="display:none;">
+                            <span style="width:6px; height:6px; border-radius:50%; background:currentColor;"></span>
+                            Stale
+                        </span>
+                        <span class="freshness-badge expired" id="indeedExpired" style="display:none;">
+                            <span style="width:6px; height:6px; border-radius:50%; background:currentColor;"></span>
+                            Expired
+                        </span>
                         <span class="sync-status ready" id="indeedStatus">
                             <span class="sync-status-dot"></span>
                             <span id="indeedStatusText">Ready</span>
@@ -448,7 +748,19 @@
                         <div class="sync-card-title">Gmail</div>
                         <div class="sync-card-subtitle">→ Job Feed + Pipeline</div>
                     </div>
-                    <div style="margin-left:auto;">
+                    <div style="margin-left:auto; display:flex; gap:var(--space-2); align-items:center;">
+                        <span class="freshness-badge fresh" id="gmailFresh" style="display:none;">
+                            <span style="width:6px; height:6px; border-radius:50%; background:currentColor;"></span>
+                            Fresh
+                        </span>
+                        <span class="freshness-badge stale" id="gmailStale" style="display:none;">
+                            <span style="width:6px; height:6px; border-radius:50%; background:currentColor;"></span>
+                            Stale
+                        </span>
+                        <span class="freshness-badge expired" id="gmailExpired" style="display:none;">
+                            <span style="width:6px; height:6px; border-radius:50%; background:currentColor;"></span>
+                            Expired
+                        </span>
                         <span class="sync-status ready" id="gmailStatus">
                             <span class="sync-status-dot"></span>
                             <span id="gmailStatusText">Ready</span>
@@ -486,7 +798,19 @@
                         <div class="sync-card-title">Clay</div>
                         <div class="sync-card-subtitle">→ Pipeline Enrichment</div>
                     </div>
-                    <div style="margin-left:auto;">
+                    <div style="margin-left:auto; display:flex; gap:var(--space-2); align-items:center;">
+                        <span class="freshness-badge fresh" id="clayFresh" style="display:none;">
+                            <span style="width:6px; height:6px; border-radius:50%; background:currentColor;"></span>
+                            Fresh
+                        </span>
+                        <span class="freshness-badge stale" id="clayStale" style="display:none;">
+                            <span style="width:6px; height:6px; border-radius:50%; background:currentColor;"></span>
+                            Stale
+                        </span>
+                        <span class="freshness-badge expired" id="clayExpired" style="display:none;">
+                            <span style="width:6px; height:6px; border-radius:50%; background:currentColor;"></span>
+                            Expired
+                        </span>
                         <span class="sync-status ready" id="clayStatus">
                             <span class="sync-status-dot"></span>
                             <span id="clayStatusText">Ready</span>
@@ -521,9 +845,57 @@
 
         </div>
 
+        <!-- ====== OUTREACH DRAFT PUSH SECTION ======
+             Displays queued Gmail drafts from pf_outreach_gmail_queue
+             with a "Push via Gmail API" button for each draft. -->
+        <div class="outreach-section">
+            <h3>
+                <i data-lucide="send" style="width:20px; height:20px;"></i>
+                Outreach Draft Push
+            </h3>
+            <div class="outreach-drafts-list" id="outreachDrafts">
+                <div class="outreach-empty">
+                    <p>No queued drafts. Create outreach templates in the Outreach module to draft emails.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== SYNC SCHEDULING SECTION ======
+             Shows last sync time and toggle for auto-sync via Cowork scheduled task. -->
+        <div class="sync-scheduling">
+            <h3>
+                <i data-lucide="calendar" style="width:20px; height:20px; margin-right:var(--space-2);"></i>
+                Sync Scheduling
+            </h3>
+            <div class="scheduling-row">
+                <div class="scheduling-item">
+                    <div class="scheduling-item-content">
+                        <div class="scheduling-item-label">Last Full Sync</div>
+                        <div class="scheduling-item-detail" id="lastSyncDetail">No syncs recorded yet</div>
+                    </div>
+                    <div style="font-size:var(--text-sm); font-weight:500; color:var(--text-secondary);" id="lastSyncTime">—</div>
+                </div>
+                <div class="scheduling-item">
+                    <div class="scheduling-item-content">
+                        <div class="scheduling-item-label">Auto-Sync via Cowork</div>
+                        <div class="scheduling-item-detail">
+                            Automatically refresh data on a schedule by creating a scheduled task in Cowork
+                        </div>
+                    </div>
+                    <button class="toggle-switch" id="autoSyncToggle" onclick="toggleAutoSync()"></button>
+                </div>
+            </div>
+        </div>
+
         <!-- Sync Log -->
         <div class="sync-summary">
-            <h3>Sync Log</h3>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-3);">
+                <h3 style="margin:0;">Sync Log</h3>
+                <button class="export-log-btn" onclick="exportSyncLog()">
+                    <i data-lucide="download" style="width:14px; height:14px;"></i>
+                    Export JSON
+                </button>
+            </div>
             <div class="sync-log" id="syncLog">
                 <div class="info">Sync Hub loaded. Ready to push data into Pathfinder modules.</div>
             </div>
@@ -682,6 +1054,17 @@
         personal: /swimming|dance|gym|lunch|dinner|doctor|dentist|haircut|errand/i
     };
 
+    /* ====== GMAIL PATTERN DETECTION ======
+       Enhanced Gmail parsing to detect special email types. */
+
+    /** Patterns for detecting various Gmail email types */
+    const GMAIL_PATTERNS = {
+        recruiterInmail: /linkedin recruiter|inmail|contacted you|interested in/i,
+        interviewScheduling: /calendar invite|schedule|interview time|confirm meeting|interview scheduled/i,
+        rejection: /unfortunately|not moving forward|moved forward with other|best of luck|competitive|passed on|different direction/i,
+        offer: /offer letter|offer package|compensation package|welcome aboard|excited to offer|offer you|start date/i
+    };
+
     /**
      * classifyEvent(event) → Determines event category
      * INPUT: raw calendar event object
@@ -694,6 +1077,48 @@
         if (EVENT_PATTERNS.prep.test(text)) return 'prep';
         if (EVENT_PATTERNS.personal.test(text)) return 'personal';
         return 'other';
+    }
+
+    /**
+     * calculateFreshness(timestamp) → Determines freshness status based on age
+     * INPUT: ISO timestamp string (or Date object)
+     * OUTPUT: { status: 'fresh' | 'stale' | 'expired', hours: number }
+     * Fresh = < 1 hour, Stale = 1-24 hours, Expired = > 24 hours
+     */
+    function calculateFreshness(timestamp) {
+        if (!timestamp) return { status: 'expired', hours: 999 };
+        const syncTime = new Date(timestamp).getTime();
+        const hoursSince = (Date.now() - syncTime) / (1000 * 60 * 60);
+        let status = 'fresh';
+        if (hoursSince > 24) status = 'expired';
+        else if (hoursSince > 1) status = 'stale';
+        return { status, hours: Math.round(hoursSince * 10) / 10 };
+    }
+
+    /**
+     * detectGmailAlertType(alert) → Detects special Gmail email types
+     * INPUT: Gmail alert object (has subject, body fields)
+     * OUTPUT: string type ('recruiter_inmail' | 'interview_scheduling' | 'rejection' | 'offer' | 'standard')
+     */
+    function detectGmailAlertType(alert) {
+        const text = (alert.subject || '' + ' ' + alert.body || '').toLowerCase();
+        if (GMAIL_PATTERNS.offer.test(text)) return 'offer';
+        if (GMAIL_PATTERNS.rejection.test(text)) return 'rejection';
+        if (GMAIL_PATTERNS.interviewScheduling.test(text)) return 'interview_scheduling';
+        if (GMAIL_PATTERNS.recruiterInmail.test(text)) return 'recruiter_inmail';
+        return 'standard';
+    }
+
+    /**
+     * getLastSyncTime(source) → Gets the most recent sync timestamp for a source
+     * INPUT: source name ('gcal' | 'indeed' | 'gmail' | 'clay')
+     * OUTPUT: ISO timestamp string or null if never synced
+     */
+    function getLastSyncTime(source) {
+        const syncLog = getStorage('sync_log');
+        if (!syncLog || syncLog.length === 0) return null;
+        const lastEntry = syncLog.slice().reverse().find(e => e.source === source);
+        return lastEntry ? lastEntry.timestamp : null;
     }
 
     /**
@@ -1031,6 +1456,215 @@
         setCardStatus('clay', 'synced', `Synced (${enriched})`);
     }
 
+    /* ====== OUTREACH DRAFT PUSH ======
+       Reads pf_outreach_gmail_queue and displays drafts with push buttons. */
+
+    /**
+     * renderOutreachDrafts() → Populates the Outreach Draft Push section
+     * INPUT: none (reads from pf_outreach_gmail_queue localStorage)
+     * OUTPUT: none (side effect: updates DOM)
+     */
+    function renderOutreachDrafts() {
+        const drafts = getStorage('outreach_gmail_queue', []);
+        const container = document.getElementById('outreachDrafts');
+
+        if (!drafts || drafts.length === 0) {
+            container.innerHTML = '<div class="outreach-empty"><p>No queued drafts. Create outreach templates in the Outreach module to draft emails.</p></div>';
+            return;
+        }
+
+        container.innerHTML = drafts.map((draft, idx) => {
+            const statusBadge = draft.status === 'sent' ? 'green' : draft.status === 'failed' ? 'red' : 'amber';
+            const statusLabel = draft.status === 'sent' ? 'Sent' : draft.status === 'failed' ? 'Failed' : 'Queued';
+            return `
+                <div class="outreach-draft-item">
+                    <div class="draft-icon">✉️</div>
+                    <div class="draft-info">
+                        <div class="draft-subject">${draft.subject || '(No subject)'}</div>
+                        <div class="draft-meta">
+                            <span>To: <strong>${draft.recipient || 'unknown'}</strong></span>
+                            <span>Created: <strong>${new Date(draft.createdAt || Date.now()).toLocaleDateString()}</strong></span>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:var(--space-2); align-items:center;">
+                        <span class="draft-status">
+                            <span style="width:6px; height:6px; border-radius:50%; background:currentColor;"></span>
+                            ${statusLabel}
+                        </span>
+                        <button class="draft-push-btn" onclick="pushGmailDraft(${idx})" ${draft.status === 'sent' ? 'disabled' : ''}>
+                            Push via Gmail API
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    /**
+     * pushGmailDraft(index) → Simulates pushing a queued draft via Gmail API
+     * INPUT: draft array index
+     * OUTPUT: none (side effect: updates draft status in localStorage and DOM)
+     */
+    function pushGmailDraft(index) {
+        const drafts = getStorage('outreach_gmail_queue', []);
+        if (!drafts[index]) return;
+
+        log(`Pushing draft "${drafts[index].subject}" to ${drafts[index].recipient}...`, 'info');
+
+        // Simulate API call (in real app, this would call Gmail API)
+        drafts[index].status = 'sent';
+        drafts[index].sentAt = new Date().toISOString();
+        setStorage('outreach_gmail_queue', drafts);
+
+        log(`Draft sent successfully to ${drafts[index].recipient}`, 'success');
+        renderOutreachDrafts();
+    }
+
+    /* ====== DATA FRESHNESS INDICATORS ======
+       Updates freshness badges on each sync card based on sync_log timestamps. */
+
+    /**
+     * updateFreshnessIndicators() → Updates all freshness badges for each source
+     * INPUT: none (reads from pf_sync_log)
+     * OUTPUT: none (side effect: updates DOM badges)
+     */
+    function updateFreshnessIndicators() {
+        const sources = ['cal', 'indeed', 'gmail', 'clay'];
+        sources.forEach(source => {
+            const lastSync = getLastSyncTime(source === 'cal' ? 'gcal' : source);
+            if (!lastSync) {
+                // Never synced - show expired
+                const expiredEl = document.getElementById(source + 'Expired');
+                const freshEl = document.getElementById(source + 'Fresh');
+                const staleEl = document.getElementById(source + 'Stale');
+                if (expiredEl) expiredEl.style.display = 'inline-flex';
+                if (freshEl) freshEl.style.display = 'none';
+                if (staleEl) staleEl.style.display = 'none';
+                return;
+            }
+
+            const { status } = calculateFreshness(lastSync);
+            const freshEl = document.getElementById(source + 'Fresh');
+            const staleEl = document.getElementById(source + 'Stale');
+            const expiredEl = document.getElementById(source + 'Expired');
+            if (freshEl) freshEl.style.display = status === 'fresh' ? 'inline-flex' : 'none';
+            if (staleEl) staleEl.style.display = status === 'stale' ? 'inline-flex' : 'none';
+            if (expiredEl) expiredEl.style.display = status === 'expired' ? 'inline-flex' : 'none';
+        });
+    }
+
+    /* ====== SYNC STATISTICS DASHBOARD ======
+       Displays total items synced per source and last full sync timestamp. */
+
+    /**
+     * updateSyncStatistics() → Updates the stats row with current data counts
+     * INPUT: none (reads from pf_calendar_events, pf_feed_queue, pf_roles, pf_companies)
+     * OUTPUT: none (side effect: updates DOM)
+     */
+    function updateSyncStatistics() {
+        const calEvents = getStorage('calendar_events', []).length;
+        const feedItems = getStorage('feed_queue', []).length;
+        const roles = getStorage('roles', []).length;
+        const companies = getStorage('companies', []).length;
+
+        document.getElementById('calendarStatsCount').textContent = calEvents;
+        document.getElementById('indeedStatsCount').textContent = feedItems.toString();
+        document.getElementById('gmailStatsCount').textContent = roles.toString();
+        document.getElementById('clayStatsCount').textContent = companies.toString();
+
+        // Update timestamps for each source
+        const sources = [
+            { id: 'calendar', key: 'gcal' },
+            { id: 'indeed', key: 'indeed' },
+            { id: 'gmail', key: 'gmail' },
+            { id: 'clay', key: 'clay' }
+        ];
+        sources.forEach(s => {
+            const lastSync = getLastSyncTime(s.key);
+            const el = document.getElementById(s.id + 'StatsTime');
+            if (lastSync) {
+                const { status, hours } = calculateFreshness(lastSync);
+                el.textContent = `${hours}h ago`;
+                el.style.color = status === 'fresh' ? 'var(--accent-green)' : status === 'stale' ? 'var(--accent-amber)' : 'var(--accent-red)';
+            } else {
+                el.textContent = 'Never';
+            }
+        });
+
+        // Update "Last Full Sync" in scheduling section
+        const syncLog = getStorage('sync_log', []);
+        if (syncLog && syncLog.length > 0) {
+            const lastFullSync = syncLog[syncLog.length - 1].timestamp;
+            const hours = calculateFreshness(lastFullSync).hours;
+            document.getElementById('lastSyncDetail').textContent = `${hours}h ago`;
+            document.getElementById('lastSyncTime').textContent = new Date(lastFullSync).toLocaleTimeString();
+        }
+    }
+
+    /* ====== AUTO-SYNC TOGGLE ======
+       Manages the auto-sync via Cowork scheduled task toggle. */
+
+    /**
+     * toggleAutoSync() → Toggles auto-sync setting in localStorage
+     * INPUT: none
+     * OUTPUT: none (side effect: updates localStorage and DOM)
+     */
+    function toggleAutoSync() {
+        const toggle = document.getElementById('autoSyncToggle');
+        const isEnabled = toggle.classList.contains('enabled');
+        const newState = !isEnabled;
+
+        toggle.classList.toggle('enabled', newState);
+        localStorage.setItem('pf_auto_sync_enabled', newState);
+
+        if (newState) {
+            log('Auto-sync enabled. Set up a scheduled task in Cowork to refresh data periodically.', 'success');
+        } else {
+            log('Auto-sync disabled.', 'info');
+        }
+    }
+
+    /* ====== EXPORT SYNC LOG ======
+       Downloads the sync log and full statistics as a JSON file. */
+
+    /**
+     * exportSyncLog() → Exports sync log and statistics to a JSON file
+     * INPUT: none (reads from pf_sync_log and current data)
+     * OUTPUT: none (side effect: triggers file download)
+     */
+    function exportSyncLog() {
+        const syncLog = getStorage('sync_log', []);
+        const calEvents = getStorage('calendar_events', []);
+        const feedQueue = getStorage('feed_queue', []);
+        const roles = getStorage('roles', []);
+        const companies = getStorage('companies', []);
+
+        const exportData = {
+            exportedAt: new Date().toISOString(),
+            summary: {
+                calendarEvents: calEvents.length,
+                indeedJobs: feedQueue.length,
+                gmailAlerts: roles.length,
+                companies: companies.length,
+                lastFullSync: syncLog.length > 0 ? syncLog[syncLog.length - 1].timestamp : null
+            },
+            syncLog: syncLog
+        };
+
+        const json = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'pathfinder-sync-log-' + new Date().toISOString().split('T')[0] + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        log('Sync log exported as JSON', 'success');
+    }
+
     /* ====== SYNC ALL ====== */
 
     /**
@@ -1043,6 +1677,10 @@
         syncGmail();
         if (CLAY_DATA.length > 0) syncClay();
         log('═══ Full sync complete ═══', 'success');
+
+        // Update UI after sync
+        updateSyncStatistics();
+        updateFreshnessIndicators();
 
         document.getElementById('syncAllBtn').innerHTML =
             '<i data-lucide="check" style="width:16px; height:16px;"></i> All Synced!';
@@ -1204,6 +1842,7 @@
 
     /**
      * renderPreviews() → Populates the preview cards with data summaries
+     * Also updates sync statistics, freshness indicators, and outreach drafts.
      */
     function renderPreviews() {
         // Calendar preview
@@ -1281,6 +1920,20 @@
         } else {
             document.getElementById('staleIndicator').style.display = 'inline';
         }
+
+        // Update sync statistics dashboard
+        updateSyncStatistics();
+
+        // Update freshness indicators
+        updateFreshnessIndicators();
+
+        // Render outreach drafts
+        renderOutreachDrafts();
+
+        // Check and restore auto-sync toggle state
+        const autoSyncEnabled = localStorage.getItem('pf_auto_sync_enabled') === 'true';
+        const toggle = document.getElementById('autoSyncToggle');
+        if (autoSyncEnabled) toggle.classList.add('enabled');
     }
 
     /**

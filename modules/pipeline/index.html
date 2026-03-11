@@ -626,6 +626,199 @@
       justify-content: space-between;
     }
 
+    /* ====== ENRICHMENT STATUS BADGE ====== */
+    /* Small indicator showing if Clay data exists for this company */
+    .enrichment-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      font-size: var(--text-xs);
+      padding: 2px 6px;
+      border-radius: var(--radius-pill);
+      margin-top: var(--space-1);
+    }
+
+    .enrichment-badge.enriched {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .enrichment-badge.pending {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    /* ====== COMPANY INTELLIGENCE SECTION ====== */
+    /* Panel showing Clay-sourced enrichment data */
+    .company-intelligence {
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin: var(--space-4) 0;
+    }
+
+    .company-intelligence-title {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-3);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .company-intelligence-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: var(--space-3);
+    }
+
+    .intelligence-field {
+      background: var(--bg-surface);
+      padding: var(--space-3);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--bg-subtle);
+    }
+
+    .intelligence-label {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+      margin-bottom: var(--space-1);
+    }
+
+    .intelligence-value {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      word-break: break-word;
+    }
+
+    .enrich-link {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      color: var(--accent);
+      text-decoration: none;
+      font-size: var(--text-sm);
+      margin-top: var(--space-3);
+      cursor: pointer;
+      transition: opacity var(--duration-fast) var(--ease-default);
+    }
+
+    .enrich-link:hover {
+      opacity: 0.8;
+      text-decoration: underline;
+    }
+
+    /* ====== STALE ROLE INDICATOR ====== */
+    /* Subtle border and badge for roles not updated in 14+ days */
+    .role-card.stale {
+      border: 1.5px solid var(--warning);
+      opacity: 0.85;
+    }
+
+    .stale-badge {
+      font-size: var(--text-xs);
+      padding: 2px 6px;
+      border-radius: var(--radius-pill);
+      background: #fef3c7;
+      color: #92400e;
+      font-weight: 500;
+    }
+
+    /* ====== ROLE STAGE ANALYTICS ====== */
+    /* Section at bottom showing conversion rates and funnel */
+    .analytics-section {
+      margin-top: var(--space-6);
+      padding: var(--space-4);
+      background: var(--bg-surface);
+      border-top: 1px solid var(--bg-subtle);
+    }
+
+    .analytics-title {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-4);
+    }
+
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+
+    .analytics-card {
+      background: var(--bg-elevated);
+      padding: var(--space-3);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--bg-subtle);
+    }
+
+    .analytics-label {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: var(--space-2);
+    }
+
+    .analytics-value {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .analytics-secondary {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      margin-top: var(--space-1);
+    }
+
+    .funnel-container {
+      margin-top: var(--space-4);
+    }
+
+    .funnel-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-2);
+    }
+
+    .funnel-bar {
+      flex: 1;
+      height: 28px;
+      background: var(--accent-subtle);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--space-2);
+      position: relative;
+    }
+
+    .funnel-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: var(--text-xs);
+      font-weight: 600;
+    }
+
+    .funnel-label {
+      font-size: var(--text-xs);
+      min-width: 80px;
+      color: var(--text-secondary);
+    }
+
     /* ================================================================
        MODAL DIALOG STYLES
        The "Add New Role" popup form appears when user clicks "New Role".
@@ -2680,8 +2873,16 @@
       const logoUrl = getCompanyLogoUrl(role.company, role.url);
       const connectionCount = getConnectionsForCompany(role.company).length || role.connections || 0;
 
+      // ====== STALE DETECTION ======
+      // Check if role hasn't been updated in 14+ days (1,209,600,000 ms)
+      const lastActivityTime = role.lastActivity || role.dateAdded || 0;
+      const daysSinceUpdate = Math.floor((Date.now() - lastActivityTime) / (1000 * 60 * 60 * 24));
+      const isStale = daysSinceUpdate >= 14;
+      const staleClass = isStale ? 'stale' : '';
+      const staleBadgeHtml = isStale ? `<span class="stale-badge" title="Last updated ${daysSinceUpdate} days ago">Stale — ${daysSinceUpdate}d</span>` : '';
+
       return `
-        <div class="role-card ${isSelected ? 'selected' : ''} ${isBulkSelected ? 'selected' : ''}" data-role-id="${role.id}" draggable="true" style="position: relative;">
+        <div class="role-card ${isSelected ? 'selected' : ''} ${isBulkSelected ? 'selected' : ''} ${staleClass}" data-role-id="${role.id}" draggable="true" style="position: relative;">
           <input type="checkbox" class="role-card-checkbox" ${isBulkSelected ? 'checked' : ''} onchange="toggleRoleSelection('${role.id}', event)">
           <div class="role-card-company">
             <img src="${logoUrl}" alt="${role.company}" class="role-card-logo" onerror="this.style.display='none'">
@@ -2691,6 +2892,7 @@
           <div class="role-card-badges">
             <span class="badge badge-filled" style="background: ${getColorForTier(role.tier)}; color: white; font-size: var(--text-xs);">${role.tier}</span>
             ${role.title === 'Exploratory' ? '<span class="badge badge-outlined" style="border-color: var(--warning); color: var(--warning);">Inbound</span>' : `<span class="badge badge-outlined" style="border-color: ${role.positioning === 'ic' ? 'var(--info)' : 'var(--stage-screen)'}; color: ${role.positioning === 'ic' ? 'var(--info)' : 'var(--stage-screen)'};">${role.positioning === 'ic' ? 'IC' : 'Mgmt'}</span>`}
+            ${staleBadgeHtml}
           </div>
           <div class="role-card-footer">
             <span class="role-card-days">${daysInStage}d</span>
@@ -2706,6 +2908,67 @@
           </div>
         </div>
       `;
+    }
+
+    /* ====== ANALYTICS HELPER ====== */
+    /**
+     * Calculates conversion rates and average days per stage
+     * INPUT: roles = array of role objects
+     * OUTPUT: object with conversion data and stage timing info
+     */
+    function calculatePipelineAnalytics(roles) {
+      const analytics = {
+        conversions: {},  // stage transitions
+        avgDaysPerStage: {},  // average time in each stage
+        stageCounts: {}  // how many roles in each stage
+      };
+
+      // Count roles per stage
+      STAGES.forEach(stage => {
+        const stageRoles = roles.filter(r => r.stage === stage);
+        analytics.stageCounts[stage] = stageRoles.length;
+
+        // Calculate average days in this stage
+        if (stageRoles.length > 0) {
+          const totalDays = stageRoles.reduce((sum, role) => {
+            return sum + getDaysInStage(role);
+          }, 0);
+          analytics.avgDaysPerStage[stage] = Math.round(totalDays / stageRoles.length);
+        }
+      });
+
+      // Calculate conversion rates between adjacent stages
+      const transitions = [
+        { from: 'discovered', to: 'researching' },
+        { from: 'researching', to: 'outreach' },
+        { from: 'outreach', to: 'applied' },
+        { from: 'applied', to: 'screen' },
+        { from: 'screen', to: 'interviewing' },
+        { from: 'interviewing', to: 'offer' }
+      ];
+
+      transitions.forEach(t => {
+        const fromCount = analytics.stageCounts[t.from] || 0;
+        const toCount = analytics.stageCounts[t.to] || 0;
+        const previousCount = roles.filter(r => {
+          const history = r.stageHistory || [];
+          return history.some(h => h.stage === t.from);
+        }).length;
+
+        // Conversion rate: roles that moved to next stage / roles that were in current stage
+        const totalTouchedByStage = (previousCount > 0 ? previousCount : 0) + fromCount;
+        const rate = totalTouchedByStage > 0
+          ? Math.round((toCount / totalTouchedByStage) * 100)
+          : 0;
+
+        analytics.conversions[`${t.from} → ${t.to}`] = {
+          rate: rate,
+          from: fromCount,
+          to: toCount
+        };
+      });
+
+      return analytics;
     }
 
     /**
@@ -2746,6 +3009,57 @@
           </div>
         `;
       });
+
+      // ====== ADD ANALYTICS SECTION ======
+      // Calculate and render analytics data at the bottom
+      const analytics = calculatePipelineAnalytics(filteredRoles);
+
+      // Build funnel chart showing conversion between stages
+      let funnelHtml = '';
+      const funnelStages = ['discovered', 'researching', 'outreach', 'applied', 'screen', 'interviewing', 'offer'];
+      const maxCount = Math.max(...funnelStages.map(s => analytics.stageCounts[s] || 0), 1);
+
+      funnelStages.forEach(stage => {
+        const count = analytics.stageCounts[stage] || 0;
+        const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
+        funnelHtml += `
+          <div class="funnel-item">
+            <span class="funnel-label">${stage.charAt(0).toUpperCase() + stage.slice(1)}</span>
+            <div class="funnel-bar">
+              <div class="funnel-bar-fill" style="width: ${percentage}%;">
+                ${count > 0 ? count : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      // Build conversion rate cards
+      let conversionCardsHtml = '';
+      Object.entries(analytics.conversions).forEach(([transition, data]) => {
+        conversionCardsHtml += `
+          <div class="analytics-card">
+            <div class="analytics-label">${transition}</div>
+            <div class="analytics-value">${data.rate}%</div>
+            <div class="analytics-secondary">${data.to} roles advanced</div>
+          </div>
+        `;
+      });
+
+      html += `
+        <div class="analytics-section">
+          <div class="analytics-title">Pipeline Analytics</div>
+
+          <div class="analytics-grid">
+            ${conversionCardsHtml}
+          </div>
+
+          <div class="funnel-container">
+            <h4 style="font-size: var(--text-xs); font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: var(--space-3);">Funnel Overview</h4>
+            ${funnelHtml}
+          </div>
+        </div>
+      `;
 
       kanban.innerHTML = html;
 
@@ -4758,6 +5072,10 @@
       grid.innerHTML = companies.map(company => {
         const roles = getRoles().filter(r => r.company === company.name);
         const lastActivity = company.lastActivity ? new Date(company.lastActivity).toLocaleDateString() : 'N/A';
+
+        // Check if Clay-sourced enrichment data exists
+        const hasClayData = !!(company.funding || company.headcount || company.techStack || company.investors || company.recentNews);
+
         return `
           <div class="company-card" onclick="openCompanyView('${company.name.replace(/'/g, "\\'")}')">
             <div class="company-card-header">
@@ -4767,6 +5085,12 @@
             <div style="margin-bottom: var(--space-2);">
               <div class="company-card-name">${company.name}</div>
               <span class="company-card-tier ${company.tier}">${company.tier}</span>
+              <div class="enrichment-badge ${hasClayData ? 'enriched' : 'pending'}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0;">
+                  ${hasClayData ? '<path d="M20 6L9 17l-5-5"></path>' : '<circle cx="12" cy="12" r="10"></circle>'}
+                </svg>
+                <span>${hasClayData ? 'Enriched' : 'Data pending'}</span>
+              </div>
             </div>
             <div class="company-card-info">
               <div class="company-card-info-row">
@@ -4786,20 +5110,134 @@
     }
 
     /**
-     * Opens company detail view showing all roles at that company
+     * Opens company detail view showing enrichment data and roles
+     * INPUT: companyName = name of the company to view
+     * OUTPUT: renders a modal with company intelligence and role list
      */
     function openCompanyView(companyName) {
       const roles = getRoles().filter(r => r.company === companyName);
       const companies = getCompanies();
       const company = companies.find(c => c.name === companyName);
 
-      // Switch to kanban view and filter by company
-      switchView('kanban');
-      if (document.getElementById('form-company')) {
-        // Filter was displayed, now filter by this company
+      if (!company) {
+        showToast('Company not found', 'error');
+        return;
       }
-      // Show a quick toast
-      showToast(`Showing ${roles.length} role(s) at ${companyName}`, 'info');
+
+      // Check if Clay-sourced enrichment data exists
+      const hasClayData = !!(company.funding || company.headcount || company.techStack || company.investors || company.recentNews);
+
+      // Build the intelligence section HTML
+      let intelligenceHtml = '';
+      if (hasClayData) {
+        const clayFields = [];
+        if (company.funding) clayFields.push({ label: 'Funding', value: company.funding });
+        if (company.headcount) clayFields.push({ label: 'Headcount', value: company.headcount });
+        if (company.techStack) clayFields.push({ label: 'Tech Stack', value: company.techStack });
+        if (company.investors) clayFields.push({ label: 'Investors', value: company.investors });
+        if (company.recentNews) clayFields.push({ label: 'Recent News', value: company.recentNews });
+
+        intelligenceHtml = `
+          <div class="company-intelligence">
+            <div class="company-intelligence-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              Company Intelligence
+            </div>
+            <div class="company-intelligence-grid">
+              ${clayFields.map(field => `
+                <div class="intelligence-field">
+                  <div class="intelligence-label">${field.label}</div>
+                  <div class="intelligence-value">${field.value}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else {
+        intelligenceHtml = `
+          <div class="company-intelligence">
+            <div class="company-intelligence-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              Company Intelligence
+            </div>
+            <p style="color: var(--text-tertiary); font-size: var(--text-sm); margin-bottom: var(--space-3);">
+              No enrichment data available yet. Use Sync Hub to fetch Clay company data.
+            </p>
+            <a href="../sync-hub/index.html" class="enrich-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              Enrich via Sync Hub
+            </a>
+          </div>
+        `;
+      }
+
+      // Create and show modal with company details
+      const modalHtml = `
+        <div class="modal-overlay open" style="display: flex;" id="company-detail-modal">
+          <div class="modal" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+              <h2 class="modal-title">${company.name}</h2>
+              <button class="modal-close" onclick="document.getElementById('company-detail-modal').remove();" aria-label="Close dialog">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div style="display: flex; gap: var(--space-4); margin-bottom: var(--space-4);">
+                <img src="${company.logoUrl || getCompanyLogoUrl(company.name, company.url)}"
+                     alt="${company.name}" style="width: 64px; height: 64px; border-radius: var(--radius-md); object-fit: contain; background: var(--bg-elevated);" onerror="this.style.display='none'">
+                <div>
+                  <div style="display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2);">
+                    <span class="company-card-tier ${company.tier}">${company.tier}</span>
+                    <span style="font-size: var(--text-xs); color: var(--text-tertiary);">${roles.length} role${roles.length !== 1 ? 's' : ''}</span>
+                  </div>
+                  <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-2);">
+                    ${company.domain ? `Domain: <strong>${company.domain}</strong>` : 'Domain: Not available'}
+                  </div>
+                  <div style="font-size: var(--text-sm); color: var(--text-secondary);">
+                    ${company.missionStatement || 'No mission statement available'}
+                  </div>
+                </div>
+              </div>
+
+              ${intelligenceHtml}
+
+              <div style="margin-top: var(--space-4);">
+                <h3 style="font-size: var(--text-sm); font-weight: 700; margin-bottom: var(--space-3);">Open Positions</h3>
+                ${roles.length > 0 ? `
+                  <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                    ${roles.map(role => `
+                      <div style="padding: var(--space-3); background: var(--bg-elevated); border-radius: var(--radius-md); border: 1px solid var(--bg-subtle); cursor: pointer;" onclick="openRoleDetail('${role.id}'); document.getElementById('company-detail-modal').remove();">
+                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-1);">${role.title}</div>
+                        <div style="font-size: var(--text-xs); color: var(--text-tertiary); display: flex; gap: var(--space-2);">
+                          <span>Stage: ${role.stage}</span>
+                          <span>Tier: ${role.tier}</span>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : `
+                  <div style="padding: var(--space-4); background: var(--bg-elevated); border-radius: var(--radius-md); text-align: center; color: var(--text-tertiary); font-size: var(--text-sm);">
+                    No open positions yet
+                  </div>
+                `}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Remove any existing company detail modal
+      const existing = document.getElementById('company-detail-modal');
+      if (existing) existing.remove();
+
+      // Insert and show the modal
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
     }
 
     /* ================================================================

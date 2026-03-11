@@ -1,8 +1,13 @@
-// Storage service for managing artifact files and index
-// Handles all file system operations, indexing, and metadata management
+// ================================================================
+// STORAGE SERVICE FOR ARTIFACT FILE AND INDEX MANAGEMENT
+// ================================================================
+// Handles all filesystem operations, indexing, metadata, archival.
+// This is the core persistence layer for the Pathfinder artifacts system.
+// INPUT → OUTPUT: filesystem operations mapped to artifact data structures
 
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import {
   ArtifactMetadata,
   ArtifactType,
@@ -21,11 +26,30 @@ import {
   MAX_FILE_SIZE,
 } from "../constants.js";
 
+// ================================================================
+// STORAGE SERVICE CLASS
+// ================================================================
 /**
- * StorageService handles all file system operations for artifacts
- * Manages the artifacts directory, index file, and soft deletion
+ * StorageService: Core persistence layer for artifact management
+ * INPUT: filesystem operations, artifact data
+ * OUTPUT: saved artifacts, index updates, query results
+ *
+ * Manages:
+ * - Directory structure (~/.pathfinder/artifacts/)
+ * - Index file (index.json) for fast queries
+ * - Soft deletion to archive directory
+ * - Content checksums for integrity
+ * - Metadata indexing and filtering
  */
 export class StorageService {
+  /**
+   * Calculate SHA-256 checksum of content for integrity verification
+   * INPUT: content string
+   * OUTPUT: hex-encoded SHA-256 digest
+   */
+  private calculateChecksum(content: string): string {
+    return crypto.createHash("sha256").update(content, "utf-8").digest("hex");
+  }
   /**
    * Ensure that the artifacts root directory and all type subdirectories exist
    */
@@ -138,6 +162,16 @@ export class StorageService {
 
   /**
    * Save artifact content to disk and update index
+   * INPUT: artifact ID, metadata, content
+   * OUTPUT: updated index with new artifact entry
+   *
+   * Process:
+   * 1. Validate content size
+   * 2. Ensure directories exist
+   * 3. Write content to file
+   * 4. Calculate checksum and excerpt
+   * 5. Update index with metadata
+   * 6. Sort by creation date
    */
   public saveArtifact(
     artifactId: string,
@@ -168,16 +202,30 @@ export class StorageService {
       // Write content to file
       fs.writeFileSync(filePath, content, "utf-8");
 
+      // Calculate checksum for integrity verification
+      const checksum = this.calculateChecksum(content);
+
+      // Generate excerpt (first 200 characters)
+      const excerpt = content.substring(0, 200).replace(/\n/g, " ");
+
+      // Update metadata with computed fields
+      const enrichedMetadata: ArtifactMetadata = {
+        ...metadata,
+        checksum,
+        excerpt,
+        sizeBytes: contentSize,
+      };
+
       // Read current index
       const index = this.readIndex();
 
-      // Check if artifact already exists and remove it
+      // Check if artifact already exists and remove old version
       index.artifacts = index.artifacts.filter(
         (entry) => entry.artifactId !== artifactId
       );
 
       // Add new artifact to index
-      index.artifacts.push(metadata);
+      index.artifacts.push(enrichedMetadata);
 
       // Sort by creation date descending (newest first)
       index.artifacts.sort((a, b) => compareDates(b.createdAt, a.createdAt));
@@ -281,9 +329,22 @@ export class StorageService {
   }
 
   /**
-   * Update tags for an artifact
+   * Update tags for an artifact (add and/or remove)
+   * INPUT: artifact ID, tags to add, tags to remove
+   * OUTPUT: updated tag list
+   *
+   * Process:
+   * 1. Find artifact by ID
+   * 2. Add new tags (merge with existing, deduplicate)
+   * 3. Remove specified tags
+   * 4. Update metadata timestamp
+   * 5. Write updated index
    */
-  public updateArtifactTags(artifactId: string, newTags: string[]): string[] {
+  public updateArtifactTags(
+    artifactId: string,
+    addTags?: string[],
+    removeTags?: string[]
+  ): string[] {
     try {
       const index = this.readIndex();
       const artifact = index.artifacts.find(
@@ -294,11 +355,24 @@ export class StorageService {
         throw new Error(`Artifact not found: ${artifactId}`);
       }
 
-      // Merge new tags with existing tags (deduplicate)
-      const updatedTags = Array.from(new Set([...artifact.tags, ...newTags]));
+      // Start with existing tags
+      let updatedTags = [...artifact.tags];
+
+      // Add new tags (deduplicate)
+      if (addTags && addTags.length > 0) {
+        updatedTags = Array.from(new Set([...updatedTags, ...addTags]));
+      }
+
+      // Remove specified tags
+      if (removeTags && removeTags.length > 0) {
+        updatedTags = updatedTags.filter((tag) => !removeTags.includes(tag));
+      }
+
+      // Update artifact
       artifact.tags = updatedTags;
       artifact.updatedAt = getCurrentISO();
 
+      // Write updated index
       this.writeIndex(index);
       return updatedTags;
     } catch (error) {
@@ -311,9 +385,22 @@ export class StorageService {
   }
 
   /**
-   * Soft delete an artifact (move to archive)
+   * Delete an artifact (soft delete to archive or hard permanent delete)
+   * INPUT: artifact ID, optional permanent flag
+   * OUTPUT: timestamp of deletion/archival
+   *
+   * Soft delete (permanent=false):
+   * 1. Save metadata to .archive/
+   * 2. Delete artifact file
+   * 3. Mark in index as archived
+   * 4. Can be recovered from archive
+   *
+   * Hard delete (permanent=true):
+   * 1. Delete artifact file
+   * 2. Remove from index completely
+   * 3. Cannot be recovered
    */
-  public deleteArtifact(artifactId: string): string {
+  public deleteArtifact(artifactId: string, permanent: boolean = false): string {
     try {
       const index = this.readIndex();
       const artifact = index.artifacts.find(
@@ -324,31 +411,54 @@ export class StorageService {
         throw new Error(`Artifact not found: ${artifactId}`);
       }
 
-      // Save metadata to archive
-      const archivedMetadata: ArtifactMetadata & { archivedAt: string } = {
-        ...artifact,
-        archivedAt: getCurrentISO(),
-      };
+      const now = getCurrentISO();
 
-      const archiveFile = path.join(ARCHIVE_DIR, `${artifactId}.json`);
-      fs.writeFileSync(archiveFile, JSON.stringify(archivedMetadata, null, 2));
+      // Soft delete: archive the artifact
+      if (!permanent) {
+        // Save metadata to archive
+        const archivedMetadata: ArtifactMetadata & { archivedAt: string } = {
+          ...artifact,
+          archived: true,
+          archivedAt: now,
+        };
 
-      // Try to delete the actual artifact file (but don't fail if it's missing)
-      try {
-        if (fs.existsSync(artifact.path)) {
-          fs.unlinkSync(artifact.path);
+        const archiveFile = path.join(ARCHIVE_DIR, `${artifactId}.json`);
+        fs.writeFileSync(archiveFile, JSON.stringify(archivedMetadata, null, 2));
+
+        // Try to delete the actual artifact file (but don't fail if it's missing)
+        try {
+          if (fs.existsSync(artifact.path)) {
+            fs.unlinkSync(artifact.path);
+          }
+        } catch {
+          // Ignore errors when deleting the file itself
         }
-      } catch {
-        // Ignore errors when deleting the file itself
+
+        // Remove from index
+        index.artifacts = index.artifacts.filter(
+          (entry) => entry.artifactId !== artifactId
+        );
+      } else {
+        // Hard delete: permanently remove the artifact
+        // Try to delete the artifact file (but don't fail if it's missing)
+        try {
+          if (fs.existsSync(artifact.path)) {
+            fs.unlinkSync(artifact.path);
+          }
+        } catch {
+          // Ignore errors when deleting the file itself
+        }
+
+        // Remove from index completely
+        index.artifacts = index.artifacts.filter(
+          (entry) => entry.artifactId !== artifactId
+        );
       }
 
-      // Remove from index
-      index.artifacts = index.artifacts.filter(
-        (entry) => entry.artifactId !== artifactId
-      );
+      // Write updated index
       this.writeIndex(index);
 
-      return archivedMetadata.archivedAt;
+      return now;
     } catch (error) {
       throw new Error(
         `Failed to delete artifact: ${
@@ -360,24 +470,47 @@ export class StorageService {
 
   /**
    * Search artifact contents by query string
-   * Returns metadata with relevance scores
+   * INPUT: query string, optional limit
+   * OUTPUT: ranked results with relevance scores and context snippets
+   *
+   * Process:
+   * 1. Read all artifact files
+   * 2. Count query matches in each
+   * 3. Calculate TF-IDF-style relevance score
+   * 4. Extract matched context snippets (200 chars around match)
+   * 5. Return limited, sorted results
    */
   public searchArtifacts(
     query: string,
     limit: number = 50
-  ): Array<{ artifactId: string; filename: string; relevance: number }> {
+  ): Array<{
+    artifactId: string;
+    filename: string;
+    type?: ArtifactType;
+    company?: string;
+    relevance: number;
+    matchedSnippet?: string;
+  }> {
     try {
       const index = this.readIndex();
       const queryLower = query.toLowerCase();
       const results: Array<{
         artifactId: string;
         filename: string;
+        type?: ArtifactType;
+        company?: string;
         relevance: number;
+        matchedSnippet?: string;
       }> = [];
 
       // Search through artifacts
       for (const entry of index.artifacts) {
         try {
+          // Skip archived artifacts
+          if (entry.archived) {
+            continue;
+          }
+
           // Skip if file doesn't exist
           if (!fs.existsSync(entry.path)) {
             continue;
@@ -395,10 +528,25 @@ export class StorageService {
             // Higher score for more matches, with diminishing returns
             const relevance = Math.min(matches / Math.max(1, content.length / 500), 1.0);
 
+            // Extract matched snippet (context around first match)
+            let matchedSnippet: string | undefined;
+            const firstMatchIdx = contentLower.indexOf(queryLower);
+            if (firstMatchIdx !== -1) {
+              const contextLength = 100; // 100 chars before and after
+              const start = Math.max(0, firstMatchIdx - contextLength);
+              const end = Math.min(content.length, firstMatchIdx + queryLower.length + contextLength);
+              matchedSnippet = (start > 0 ? "..." : "") +
+                content.substring(start, end).replace(/\n/g, " ") +
+                (end < content.length ? "..." : "");
+            }
+
             results.push({
               artifactId: entry.artifactId,
               filename: entry.filename,
+              type: entry.type,
+              company: entry.company,
               relevance,
+              matchedSnippet,
             });
           }
         } catch {

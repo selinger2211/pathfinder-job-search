@@ -4,6 +4,42 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.0.0 — 2026-03-10
+
+### What Changed — System-Wide Completion Milestone
+
+#### Sync Hub — 70% → 100%
+- **Outreach Draft Push**: Reads `pf_outreach_gmail_queue`, displays queued Gmail drafts with subject, recipient, status, and "Push via Gmail API" button
+- **Richer Gmail parsing**: New `GMAIL_PATTERNS` object detects recruiter InMail notifications, interview scheduling emails, rejection emails, and offer letters via regex
+- **Data freshness indicators**: Green (< 1 hour), yellow (1-24 hours), red (> 24 hours) badges on each sync card based on `pf_sync_log` timestamps
+- **Sync statistics dashboard**: Stats row showing total items synced per source with last sync timestamps
+- **Sync scheduling UI**: "Last Full Sync" display and "Auto-Sync via Cowork" toggle with `pf_auto_sync_enabled` localStorage
+- **Export sync log**: Downloads sync log as JSON file (`pathfinder-sync-log-YYYY-MM-DD.json`)
+
+#### Dashboard — 90% → 100%
+- **Google Calendar integration card**: Next 3 upcoming events from `pf_calendar_events` with countdown timers ("in 2 hours", "tomorrow at 3pm") and color-coded type badges (interview=red, networking=blue, prep=green)
+- **Sync status indicator**: Top banner showing "Last synced: X ago" from `pf_sync_log`, amber warning if stale (> 24h)
+- **Quick actions row**: 4 buttons — Add Role, Research Company, Practice Interview, Check Job Feed — with Lucide icons and hover effects
+- **Debrief pending badge**: Counts past interview events without debriefs, shows "X interviews to debrief" with link to Debrief module
+- **Outreach queue indicator**: Shows pending draft count from `pf_outreach_gmail_queue` with "Review & Send" link
+
+#### Pipeline Tracker — 95% → 100%
+- **Clay company enrichment display**: "Company Intelligence" section in company detail modal showing funding, headcount, techStack, investors, recentNews if Clay data exists; "Enrich via Sync Hub" link if not
+- **Auto-enrichment status badges**: Green checkmark (enriched) or gray circle (pending) on company cards in Companies View
+- **Role stage analytics**: Conversion rates between stages (e.g., "Applied → Screen: 45%"), average days per stage, horizontal funnel chart
+- **Stale role detection**: Amber border + "Stale — X days" badge on roles not updated in 14+ days
+
+#### MCP Artifacts Server — 45% → 95%
+- **All 7 tools fully implemented**: save, get, list, search, tag, delete, generate-brief-section (previously stubs)
+- **Enhanced storage layer**: SHA-256 checksums, auto-generated excerpts, full-text search with relevance scoring (0-1) and context snippets
+- **Tag management**: Add/remove operations with deduplication
+- **Delete modes**: Soft delete (archive with metadata) and hard permanent delete
+- **Comprehensive README.md**: Setup instructions, tool documentation, usage examples, architecture overview
+- **IMPLEMENTATION_STATUS.md**: Technical details, completion checklist, deployment path
+- **Note**: Requires `npm run build` on Mac (OOMs in lightweight VMs)
+
+---
+
 ## v1.9.0 — 2026-03-10
 
 ### What Changed

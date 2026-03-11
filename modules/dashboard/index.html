@@ -930,6 +930,243 @@
     }
 
     /* ================================================================
+       SYNC STATUS BANNER
+       Shows last sync time and data freshness
+       ================================================================ */
+
+    .sync-status-banner {
+      padding: var(--space-3) var(--space-6);
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--bg-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: var(--text-sm);
+      gap: var(--space-3);
+    }
+
+    .sync-status-text {
+      color: var(--text-secondary);
+    }
+
+    .sync-status-warning {
+      background: rgba(234, 179, 8, 0.1);
+      border: 1px solid var(--warning);
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-sm);
+      color: var(--warning);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .sync-status-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 200ms;
+    }
+
+    .sync-status-link:hover {
+      color: var(--accent-hover);
+    }
+
+    /* ================================================================
+       QUICK ACTIONS ROW (BELOW HEADER)
+       4 primary quick-action buttons with icons
+       ================================================================ */
+
+    .quick-actions-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-3);
+      padding: var(--space-6);
+      border-bottom: 1px solid var(--bg-subtle);
+      background: var(--bg-surface);
+    }
+
+    .quick-action-icon-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      padding: var(--space-4);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: var(--text-xs);
+      text-align: center;
+    }
+
+    .quick-action-icon-btn:hover {
+      background: var(--accent-subtle);
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .quick-action-icon-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 2;
+    }
+
+    /* ================================================================
+       CALENDAR EVENTS CARD
+       Displays next 3 upcoming calendar events with countdown timers
+       ================================================================ */
+
+    .calendar-event-item {
+      padding: var(--space-3);
+      background: var(--bg-secondary);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-2);
+    }
+
+    .calendar-event-type-badge {
+      display: inline-block;
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      margin-bottom: var(--space-2);
+    }
+
+    .calendar-event-interview {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+    }
+
+    .calendar-event-networking {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--info);
+    }
+
+    .calendar-event-prep {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+    }
+
+    .calendar-event-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-1);
+    }
+
+    .calendar-event-time {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      margin-bottom: var(--space-1);
+    }
+
+    .calendar-event-countdown {
+      font-size: var(--text-xs);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ================================================================
+       DEBRIEF PENDING CARD
+       Alerts when interviews lack debriefs
+       ================================================================ */
+
+    .debrief-alert {
+      background: rgba(59, 130, 246, 0.1);
+      border-left: 3px solid var(--info);
+      padding: var(--space-4);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-4);
+    }
+
+    .debrief-alert-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .debrief-alert-count {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--info);
+      margin-bottom: var(--space-3);
+    }
+
+    .debrief-alert-link {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      background: var(--info);
+      color: white;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: var(--text-sm);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .debrief-alert-link:hover {
+      background: var(--info-hover, #3b82f6);
+      transform: translateX(2px);
+    }
+
+    /* ================================================================
+       OUTREACH QUEUE CARD
+       Shows pending email drafts ready to send
+       ================================================================ */
+
+    .outreach-queue-alert {
+      background: rgba(251, 146, 60, 0.1);
+      border-left: 3px solid var(--warning);
+      padding: var(--space-4);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-4);
+    }
+
+    .outreach-queue-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .outreach-queue-count {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--warning);
+      margin-bottom: var(--space-3);
+    }
+
+    .outreach-queue-link {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      background: var(--warning);
+      color: white;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: var(--text-sm);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .outreach-queue-link:hover {
+      background: var(--warning-hover, #ea9c3c);
+      transform: translateX(2px);
+    }
+
+    /* ================================================================
        RESPONSIVE DESIGN
        Mobile-friendly adjustments
        ================================================================ */
@@ -941,6 +1178,10 @@
 
       .quick-actions {
         grid-template-columns: 1fr;
+      }
+
+      .quick-actions-row {
+        grid-template-columns: 1fr 1fr;
       }
 
       .activity-section {
@@ -959,6 +1200,11 @@
 
       .greeting-text {
         font-size: var(--text-2xl);
+      }
+
+      .sync-status-banner {
+        flex-direction: column;
+        align-items: flex-start;
       }
     }
   </style>
@@ -1000,6 +1246,37 @@
         </button>
       </div>
     </nav>
+
+    <!-- ================================================================
+         SYNC STATUS BANNER
+         Shows data freshness and link to Sync Hub if data is stale
+         ================================================================ -->
+    <div class="sync-status-banner" id="syncStatusBanner">
+      <!-- Content populated by JavaScript -->
+    </div>
+
+    <!-- ================================================================
+         QUICK ACTIONS ROW
+         4 primary buttons: Add Role, Research Company, Practice Interview, Check Job Feed
+         ================================================================ -->
+    <div class="quick-actions-row">
+      <a href="../pipeline/index.html?modal=add" class="quick-action-icon-btn" title="Add a new role to your pipeline">
+        <svg data-lucide="plus-circle"></svg>
+        <span>Add Role</span>
+      </a>
+      <a href="../research-brief/index.html" class="quick-action-icon-btn" title="Research a company">
+        <svg data-lucide="search"></svg>
+        <span>Research Company</span>
+      </a>
+      <a href="../mock-interview/index.html" class="quick-action-icon-btn" title="Practice interview skills">
+        <svg data-lucide="mic"></svg>
+        <span>Practice Interview</span>
+      </a>
+      <a href="../job-feed-listener/index.html" class="quick-action-icon-btn" title="Check your job feed">
+        <svg data-lucide="rss"></svg>
+        <span>Check Job Feed</span>
+      </a>
+    </div>
 
     <!-- ================================================================
          ZONE 1: GREETING + STREAK
@@ -1144,11 +1421,32 @@
         <svg data-lucide="briefcase"></svg>
         View Pipeline
       </button>
+      <!-- DEBRIEF PENDING CARD -->
+      <div id="debriefPendingCard" style="display: none;">
+        <!-- Content populated by JavaScript -->
+      </div>
+
+      <!-- OUTREACH QUEUE CARD -->
+      <div id="outreachQueueCard" style="display: none;">
+        <!-- Content populated by JavaScript -->
+      </div>
+
+      <!-- UPCOMING CALENDAR EVENTS CARD -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h3>Upcoming Calendar Events</h3>
+          <a href="../calendar/index.html" class="card-link" title="View all calendar events">View All →</a>
+        </div>
+        <div class="card-body" id="upcomingCalendarEventsBody">
+          <p class="empty-state">No upcoming calendar events</p>
+        </div>
+      </div>
+
       <!-- RECENT DISCOVERIES CARD -->
       <div class="dashboard-card">
         <div class="card-header">
           <h3>Recent Discoveries</h3>
-          <a href="../feed/index.html" class="card-link" title="View all feed items">View All →</a>
+          <a href="../job-feed-listener/index.html" class="card-link" title="View all feed items">View All →</a>
         </div>
         <div class="card-body" id="recentDiscoveriesBody">
           <p class="empty-state">No new discoveries — check your feed sources</p>
@@ -2051,6 +2349,257 @@
     // ================================================================
 
     /**
+     * Render sync status banner showing last sync time and data freshness
+     * INPUT: Reads pf_sync_log from localStorage
+     * OUTPUT: Updates HTML showing "Last synced: X ago" or amber warning if stale (>24h)
+     */
+    function renderSyncStatus() {
+      const banner = document.getElementById('syncStatusBanner');
+      let syncLog = [];
+
+      try {
+        const stored = localStorage.getItem('pf_sync_log');
+        if (stored) syncLog = JSON.parse(stored);
+      } catch (e) {
+        console.warn('Could not parse pf_sync_log:', e);
+      }
+
+      // Find the most recent sync
+      const lastSync = syncLog && syncLog.length > 0 ? syncLog[syncLog.length - 1] : null;
+
+      if (!lastSync || !lastSync.timestamp) {
+        banner.innerHTML = `
+          <span class="sync-status-text">No sync data available</span>
+          <a href="../sync/" class="sync-status-link">Open Sync Hub →</a>
+        `;
+        return;
+      }
+
+      const lastSyncTime = new Date(lastSync.timestamp);
+      const now = new Date();
+      const hoursSinceSync = Math.floor((now - lastSyncTime) / (1000 * 60 * 60));
+      const daysSinceSync = Math.floor(hoursSinceSync / 24);
+
+      let timeStr = 'just now';
+      if (hoursSinceSync > 0) {
+        if (hoursSinceSync < 24) {
+          timeStr = `${hoursSinceSync} hour${hoursSinceSync > 1 ? 's' : ''} ago`;
+        } else {
+          timeStr = `${daysSinceSync} day${daysSinceSync > 1 ? 's' : ''} ago`;
+        }
+      }
+
+      // Check if data is stale (>24 hours)
+      const isStale = hoursSinceSync > 24;
+
+      if (isStale) {
+        banner.innerHTML = `
+          <div class="sync-status-warning">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3.05h16.94a2 2 0 0 0 1.71-3.05L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            Data may be stale — last synced ${timeStr}
+          </div>
+          <a href="../sync/" class="sync-status-link">Open Sync Hub →</a>
+        `;
+      } else {
+        banner.innerHTML = `
+          <span class="sync-status-text">Last synced: ${timeStr}</span>
+          <a href="../sync/" class="sync-status-link">Sync Hub →</a>
+        `;
+      }
+    }
+
+    /**
+     * Render upcoming calendar events card with next 3 events and countdown timers
+     * INPUT: Reads pf_calendar_events from localStorage
+     * OUTPUT: Displays up to 3 events with type badges and countdown times
+     */
+    function renderUpcomingCalendarEvents() {
+      const container = document.getElementById('upcomingCalendarEventsBody');
+      let calendarEvents = [];
+
+      try {
+        const stored = localStorage.getItem('pf_calendar_events');
+        if (stored) calendarEvents = JSON.parse(stored);
+      } catch (e) {
+        console.warn('Could not parse pf_calendar_events:', e);
+      }
+
+      if (!calendarEvents || calendarEvents.length === 0) {
+        container.innerHTML = '<p class="empty-state">No upcoming calendar events</p>';
+        return;
+      }
+
+      const now = new Date();
+
+      // Filter to only future events and sort by date
+      const futureEvents = calendarEvents
+        .filter(event => new Date(event.startTime) > now)
+        .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
+        .slice(0, 3); // Take first 3
+
+      if (futureEvents.length === 0) {
+        container.innerHTML = '<p class="empty-state">No upcoming calendar events</p>';
+        return;
+      }
+
+      container.innerHTML = futureEvents.map(event => {
+        const eventTime = new Date(event.startTime);
+        const timeDiff = eventTime - now;
+        const hoursUntil = Math.ceil(timeDiff / (1000 * 60 * 60));
+        const daysUntil = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+
+        // Determine countdown text
+        let countdownText = '';
+        if (hoursUntil < 1) {
+          countdownText = 'in less than 1 hour';
+        } else if (hoursUntil < 24) {
+          countdownText = `in ${hoursUntil} hour${hoursUntil > 1 ? 's' : ''}`;
+        } else {
+          const time = eventTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', meridiem: 'short' });
+          if (daysUntil === 1) {
+            countdownText = `tomorrow at ${time}`;
+          } else {
+            const dateStr = eventTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            countdownText = `${dateStr} at ${time}`;
+          }
+        }
+
+        // Determine event type and badge color
+        const type = event.type || 'interview';
+        let badgeClass = 'calendar-event-interview';
+        let badgeLabel = 'Interview';
+
+        if (type.toLowerCase().includes('interview')) {
+          badgeClass = 'calendar-event-interview';
+          badgeLabel = 'Interview';
+        } else if (type.toLowerCase().includes('network')) {
+          badgeClass = 'calendar-event-networking';
+          badgeLabel = 'Networking';
+        } else if (type.toLowerCase().includes('prep')) {
+          badgeClass = 'calendar-event-prep';
+          badgeLabel = 'Prep';
+        }
+
+        return `
+          <div class="calendar-event-item">
+            <span class="calendar-event-type-badge ${badgeClass}">${badgeLabel}</span>
+            <div class="calendar-event-title">${event.title || 'Untitled Event'}</div>
+            <div class="calendar-event-time">${countdownText}</div>
+            ${event.company ? `<div class="calendar-event-company">${event.company}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    /**
+     * Render debrief pending badge showing interviews without debriefs
+     * INPUT: Reads pf_calendar_events to count past interviews without debrief flag
+     * OUTPUT: Shows alert card if count > 0 with link to Debrief module
+     */
+    function renderDebriefPending() {
+      const container = document.getElementById('debriefPendingCard');
+      let calendarEvents = [];
+
+      try {
+        const stored = localStorage.getItem('pf_calendar_events');
+        if (stored) calendarEvents = JSON.parse(stored);
+      } catch (e) {
+        console.warn('Could not parse pf_calendar_events:', e);
+      }
+
+      if (!calendarEvents || calendarEvents.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+
+      const now = new Date();
+
+      // Count past interviews that don't have a debrief
+      const pendingDebriefs = calendarEvents.filter(event => {
+        const eventTime = new Date(event.startTime);
+        const isPastEvent = eventTime < now;
+        const isInterview = event.type && event.type.toLowerCase().includes('interview');
+        const hasDebrief = event.debriefed === true;
+
+        return isPastEvent && isInterview && !hasDebrief;
+      });
+
+      if (pendingDebriefs.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+
+      // Show the debrief alert
+      container.style.display = 'block';
+      container.innerHTML = `
+        <div class="debrief-alert">
+          <div class="debrief-alert-title">Pending Debriefs</div>
+          <div class="debrief-alert-count">
+            ${pendingDebriefs.length} interview${pendingDebriefs.length > 1 ? 's' : ''} to debrief
+          </div>
+          <a href="../debrief/index.html" class="debrief-alert-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Start Debrief
+          </a>
+        </div>
+      `;
+    }
+
+    /**
+     * Render outreach queue indicator showing pending email drafts
+     * INPUT: Reads pf_outreach_gmail_queue from localStorage
+     * OUTPUT: Shows alert card if count > 0 with link to Outreach module
+     */
+    function renderOutreachQueue() {
+      const container = document.getElementById('outreachQueueCard');
+      let outreachQueue = [];
+
+      try {
+        const stored = localStorage.getItem('pf_outreach_gmail_queue');
+        if (stored) outreachQueue = JSON.parse(stored);
+      } catch (e) {
+        console.warn('Could not parse pf_outreach_gmail_queue:', e);
+      }
+
+      if (!outreachQueue || outreachQueue.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+
+      // Count pending (unsent) drafts
+      const pendingDrafts = outreachQueue.filter(draft => draft.status === 'draft' || !draft.sentAt);
+
+      if (pendingDrafts.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+
+      // Show the outreach queue alert
+      container.style.display = 'block';
+      container.innerHTML = `
+        <div class="outreach-queue-alert">
+          <div class="outreach-queue-title">Outreach Ready</div>
+          <div class="outreach-queue-count">
+            ${pendingDrafts.length} draft${pendingDrafts.length > 1 ? 's' : ''} ready to send
+          </div>
+          <a href="../outreach/index.html" class="outreach-queue-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+              <path d="M7 15l5-4 5 4M7 9l5-4 5 4"></path>
+            </svg>
+            Review &amp; Send
+          </a>
+        </div>
+      `;
+    }
+
+    /**
      * Render recent discoveries from pf_feed_queue (top 3-5 items)
      */
     function renderRecentDiscoveries() {
@@ -2358,11 +2907,12 @@
 
     /**
      * Listen for storage changes to update dashboard in real-time
+     * Updates relevant sections when localStorage changes from other tabs/modules
      */
     function initStorageListener() {
       window.addEventListener('storage', (event) => {
         if (event.key && event.key.startsWith('pf_')) {
-          // Re-render affected sections
+          // Re-render affected sections based on what changed
           if (event.key === 'pf_feed_queue') renderRecentDiscoveries();
           if (event.key === 'pf_roles') {
             renderPipelineFunnel();
@@ -2370,8 +2920,14 @@
             renderWeeklySummary();
             renderPipelineStats(); // From original code
           }
-          if (event.key === 'pf_calendar_events') renderUpcomingInterviews();
+          if (event.key === 'pf_calendar_events') {
+            renderUpcomingInterviews();
+            renderUpcomingCalendarEvents();
+            renderDebriefPending();
+          }
           if (event.key === 'pf_connections') renderActivityFeed();
+          if (event.key === 'pf_sync_log') renderSyncStatus();
+          if (event.key === 'pf_outreach_gmail_queue') renderOutreachQueue();
         }
       });
     }
@@ -2405,6 +2961,7 @@
 
     /**
      * Initialize the entire dashboard on page load
+     * Renders all sections and sets up event listeners and refresh intervals
      */
     function init() {
       // Load theme first
@@ -2416,7 +2973,11 @@
       renderNudges();
       renderPipelineStats();
 
-      // Render new feature sections
+      // Render new feature sections (all 5 upgrades)
+      renderSyncStatus();
+      renderUpcomingCalendarEvents();
+      renderDebriefPending();
+      renderOutreachQueue();
       renderRecentDiscoveries();
       renderUpcomingInterviews();
       renderPipelineFunnel();
@@ -2434,8 +2995,14 @@
       // Re-render pipeline stats every minute
       setInterval(renderPipelineStats, 60000);
 
-      // Re-render new sections every 5 minutes
+      // Re-render sync status every 5 minutes (checks for stale data)
+      setInterval(renderSyncStatus, 5 * 60 * 1000);
+
+      // Re-render new feature sections every 5 minutes
       setInterval(() => {
+        renderUpcomingCalendarEvents();
+        renderDebriefPending();
+        renderOutreachQueue();
         renderRecentDiscoveries();
         renderUpcomingInterviews();
         renderPipelineFunnel();
