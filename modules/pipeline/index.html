@@ -1917,7 +1917,7 @@
     </div>
 
     <!-- Section: Table View -->
-    <div class="table-view" style="display: none;">
+    <div class="table-view">
       <div class="table-wrapper">
         <table class="table" id="roles-table">
           <thead>
@@ -1937,7 +1937,7 @@
     </div>
 
     <!-- Section: Companies View -->
-    <div class="companies-view" style="display: none;">
+    <div class="companies-view">
       <div class="companies-grid" id="companies-grid">
       </div>
     </div>
@@ -2481,7 +2481,7 @@
         const companies = DEMO_COMPANIES.map(c => ({
           ...c,
           url: `https://${c.domain}`,
-          logoUrl: `https://logo.clearbit.com/${c.domain}`,
+          logoUrl: `https://www.google.com/s2/favicons?domain=${c.domain}&sz=128`,
           enrichmentStatus: 'complete',
           dateAdded: Date.now()
         }));
@@ -2760,7 +2760,7 @@
           name: role.company,
           url: role.url || `https://${role.company.toLowerCase().replace(/\s+/g, '')}.com`,
           domain: new URL(role.url || `https://${role.company.toLowerCase().replace(/\s+/g, '')}.com`).hostname,
-          logoUrl: `https://logo.clearbit.com/${new URL(role.url || `https://${role.company.toLowerCase().replace(/\s+/g, '')}.com`).hostname}`,
+          logoUrl: `https://www.google.com/s2/favicons?domain=${new URL(role.url || `https://${role.company.toLowerCase().replace(/\s+/g, '')}.com`).hostname}&sz=128`,
           tier: role.tier || 'active',
           enrichmentStatus: 'pending',
           missionStatement: '',
@@ -3233,15 +3233,16 @@
      * OUTPUT: updates DOM to show selected view and re-renders all content
      */
     function render() {
+      /* Re-renders the current view's content.
+       * Visibility of kanban vs table vs companies containers is handled
+       * entirely by CSS rules keyed off .page's class (kanban-view, table-view,
+       * companies-view) — see styles above. No inline display toggling here. */
       if (currentViewMode === 'kanban') {
-        document.querySelector('.kanban-view').style.display = '';
-        document.querySelector('.table-view').style.display = 'none';
         renderKanban();
-      } else {
-        document.querySelector('.kanban-view').style.display = 'none';
-        document.querySelector('.table-view').style.display = '';
+      } else if (currentViewMode === 'table') {
         renderTable();
       }
+      // companies-view is handled by renderCompaniesView() called from switchView()
     }
 
     /* ================================================================
@@ -3723,22 +3724,12 @@
        VIEW TOGGLE: Switch Between Kanban and Table Views
        ================================================================ */
 
-    const viewToggle = document.getElementById('view-toggle');
-
-    /**
-     * Toggles between kanban and table view when user clicks the button
+    /* View toggle buttons (Kanban/Table/Companies) are handled by
+     * switchView() with individual click handlers registered at the
+     * bottom of this script block (lines ~5444-5446).
+     * The old single-toggle handler has been removed — it was clobbering
+     * child button elements by setting textContent on the parent div.
      */
-    viewToggle.addEventListener('click', () => {
-      currentViewMode = currentViewMode === 'kanban' ? 'table' : 'kanban';
-      localStorage.setItem('pf_view_mode', currentViewMode);
-      viewToggle.textContent = currentViewMode === 'kanban' ? 'Kanban' : 'Table';
-      render();
-    });
-
-    // Set initial button text based on saved preference
-    if (currentViewMode === 'table') {
-      viewToggle.textContent = 'Table';
-    }
 
     /* ================================================================
        SEARCH & FILTER HANDLERS
@@ -5350,8 +5341,8 @@
         });
       }
 
-      // Apply filters
-      const filtered = applyFilters(sorted);
+      // Apply search and tier filters (same as kanban view)
+      const filtered = filterRoles(sorted);
 
       // Render rows
       tbody.innerHTML = filtered.map(role => {
@@ -5449,7 +5440,35 @@
     document.getElementById('export-btn').addEventListener('click', openExportMenu);
 
     initializeData();
-    render();
+
+    /* One-time migration: replace dead Clearbit logo URLs with Google Favicon API.
+     * Clearbit was acquired by HubSpot and their free logo API was shut down.
+     * This patches any existing company data that still references logo.clearbit.com.
+     */
+    try {
+      const existingCompanies = JSON.parse(localStorage.getItem('pf_companies') || '[]');
+      let migrated = false;
+      existingCompanies.forEach(c => {
+        if (c.logoUrl && c.logoUrl.includes('logo.clearbit.com')) {
+          const domain = c.domain || c.logoUrl.replace('https://logo.clearbit.com/', '');
+          c.logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+          migrated = true;
+        }
+      });
+      if (migrated) {
+        localStorage.setItem('pf_companies', JSON.stringify(existingCompanies));
+      }
+    } catch (e) {
+      console.warn('Logo URL migration failed:', e.message);
+    }
+
+    /* Initialize the view using switchView() — NOT render() — so that:
+     * 1. The correct CSS class is added to .page (controls visibility)
+     * 2. Button active states are set correctly
+     * 3. The appropriate render function is called (renderTable/renderKanban)
+     * Previously, calling render() directly caused selector conflicts because
+     * .kanban-view could match .page instead of #kanban. */
+    switchView(currentViewMode);
 
     // Render icons from Lucide icon library
     lucide.createIcons();

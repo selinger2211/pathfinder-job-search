@@ -4,6 +4,40 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.1.3 — 2026-03-11
+
+### What Changed — User-Reported Bug Fixes + Pipeline View Architecture Fix
+
+Five bugs discovered during live user testing. All fixed and verified in browser.
+
+#### Logos Broken Across 4 Modules (Bug Fix)
+- All company logos showed as broken images / blank squares
+- Root cause: Clearbit logo API (`logo.clearbit.com`) was shut down after HubSpot acquisition
+- Fix: Replaced all Clearbit URLs with Google Favicon API (`google.com/s2/favicons?domain=...&sz=128`) across 6 files: Pipeline, Calendar, Research Brief, Resume Tailor, and migrate-contacts.py
+- Added one-time localStorage migration in Pipeline to patch existing saved company data
+
+#### Pipeline View Toggle Destroying Buttons (Bug Fix)
+- Clicking Kanban/Table/Companies buttons caused them to disappear
+- Root cause: Old click handler on parent `#view-toggle` div set `textContent` which destroyed all child button elements (event bubbled up)
+- Fix: Removed old conflicting handler; proper `switchView()` handlers at bottom of script already existed
+
+#### Research Brief MCP Bridge Notice (UX Fix)
+- Scary "MCP bridge not running" warning confused users on load
+- Root cause: `checkBridgeHealth()` showed a UI notice when MCP bridge wasn't running
+- Fix: Removed UI notice entirely — direct Claude API works fine and is the expected path for most users
+
+#### Pipeline Table View Crash (Critical Fix)
+- Switching to Table view crashed with `applyFilters is not defined`
+- Root cause: `renderTable()` called `applyFilters(sorted)` but function was never defined
+- Fix: Changed to `filterRoles(sorted)` — the existing filter function used by Kanban view
+
+#### Pipeline View Init Architecture Conflict (Critical Fix)
+- Pipeline page loaded blank when `pf_view_mode` was 'table' or 'companies' in localStorage
+- Root cause: Two competing visibility mechanisms — `render()` toggled inline `display` styles on `.kanban-view` and `.table-view` selectors, while `switchView()` used CSS classes on `.page`. The `.kanban-view` selector matched `.page` (when switchView added that class) instead of `#kanban`, causing the wrong element's display to be toggled
+- Fix: (1) Changed page init from `render()` to `switchView(currentViewMode)` for proper CSS class setup. (2) Removed `render()`'s inline display toggling — CSS rules on `.page.kanban-view`, `.page.table-view`, `.page.companies-view` now handle all visibility. (3) Removed `style="display: none;"` from `.table-view` and `.companies-view` HTML containers
+
+---
+
 ## v2.1.2 — 2026-03-10
 
 ### What Changed — Visual QA Bug Fixes

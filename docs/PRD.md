@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v2.1.2
+**Status:** v2.1.3
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v2.1.3 | 2026-03-11 | **User-reported bug fixes + Pipeline view architecture fix**: Replaced dead Clearbit logo API (acquired by HubSpot) with Google Favicon API across 6 files + added one-time localStorage migration for existing data. Fixed Pipeline view toggle — removed conflicting parent-div click handler that destroyed child buttons via `textContent`. Removed scary "MCP bridge not running" notice from Research Brief (direct API works fine). Fixed `renderTable()` calling undefined `applyFilters()` → `filterRoles()`. Fixed Pipeline render/switchView architecture conflict — `render()` used CSS class selectors (`.kanban-view`) that collided with `.page` class, causing blank page. Changed init from `render()` to `switchView(currentViewMode)`, removed inline `display:none` from table-view and companies-view containers, let CSS rules handle visibility. |
 | v2.1.2 | 2026-03-10 | **Visual QA bug fixes**: Fixed 4 bugs found during first-ever browser visual QA pass. Dashboard: match score displayed as 5000% instead of 50% (score already stored as percentage, code was multiplying by 100 again). Research Brief: module completely broken — `deleteBtn.aria-label` dot notation on hyphenated attribute caused SyntaxError (introduced during a11y polish). Debrief: module completely broken — 5 missing commas between methods in `DebriefApp` object literal. Calendar: `RangeError: Invalid time value` crash on init from invalid Date objects passed to `Intl.DateTimeFormat.format()`. |
 | v2.1.0 | 2026-03-10 | **Perfection pass — all 8 browser modules polished to 100%**: Enterprise-grade error handling (try/catch on all localStorage ops), WCAG accessibility (aria-labels, aria-live, focus management, keyboard nav), visual polish (CSS transitions, hover states, loading spinners, empty states), data validation (form validation, email validation, numeric range checks, input sanitization), code quality (no console.logs, no TODOs, JSDoc on all functions). |
 | v2.0.0 | 2026-03-10 | **Batch 2 — System-wide completion milestone**: Sync Hub gains outreach draft push section, richer Gmail parsing (recruiter InMail, interview scheduling, rejections, offers), data freshness indicators (green/yellow/red), sync statistics dashboard, scheduling UI with auto-sync toggle, and sync log export. Dashboard adds Google Calendar integration card (next 3 events with countdown timers and type badges), sync status indicator with stale data warning, quick actions row (4 buttons), debrief pending badge, and outreach queue indicator. Pipeline adds Clay company enrichment display with intelligence section, auto-enrichment status badges on company cards, role stage analytics with conversion rates and funnel chart, and stale role detection (14+ day amber badges). MCP Server upgraded from stubs to full implementations: all 7 tools complete (save, get, list, search, tag, delete, generate-brief), enhanced storage layer with SHA-256 checksums and auto-excerpts, full-text search with relevance scoring, soft/hard delete, comprehensive README and implementation status docs. |

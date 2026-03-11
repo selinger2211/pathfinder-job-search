@@ -181,7 +181,7 @@ for idx, row in df.iterrows():
             'domain': domain,
             'tier': 'active',
             'missionStatement': '',
-            'logoUrl': f'https://logo.clearbit.com/{domain}',
+            'logoUrl': f'https://www.google.com/s2/favicons?domain={domain}&sz=128',
             'contactCount': 0
         }
     if company_key in companies_set:

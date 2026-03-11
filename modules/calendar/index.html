@@ -2712,7 +2712,7 @@
 
                     const logo = document.createElement('img');
                     logo.className = 'event-item-company-logo';
-                    logo.src = `https://logo.clearbit.com/${domain}`;
+                    logo.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
                     logo.onerror = function() { this.style.display = 'none'; };
                     company.appendChild(logo);
                 }
@@ -2857,7 +2857,7 @@
 
                 const logo = document.createElement('img');
                 logo.className = 'detection-logo';
-                logo.src = `https://logo.clearbit.com/${evt.companyDomain}`;
+                logo.src = `https://www.google.com/s2/favicons?domain=${evt.companyDomain}&sz=128`;
                 logo.onerror = function() { this.style.display = 'none'; };
                 header.appendChild(logo);
 
@@ -3626,7 +3626,7 @@
                     <div>
                         <label style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-tertiary); display: block; margin-bottom: 8px;">Company</label>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <img src="https://logo.clearbit.com/${event.companyDomain}" style="width: 24px; height: 24px; border-radius: 4px; background: var(--bg-tertiary);" onerror="this.style.display='none'">
+                            <img src="https://www.google.com/s2/favicons?domain=${event.companyDomain}&sz=128" style="width: 24px; height: 24px; border-radius: 4px; background: var(--bg-tertiary);" onerror="this.style.display='none'">
                             <span style="font-size: 14px; color: var(--text-primary); font-weight: 500;">${event.company}</span>
                         </div>
                     </div>
