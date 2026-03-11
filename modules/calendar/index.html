@@ -1326,6 +1326,65 @@
         .slide-in {
             animation: slideIn 0.3s ease-out;
         }
+
+        /* ============================================================================
+           DEBRIEF INTEGRATION
+           ============================================================================ */
+        .debrief-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            background: var(--warning);
+            color: var(--bg-base);
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+
+        .debrief-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            background: var(--warning);
+            color: var(--bg-base);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            margin-top: 6px;
+        }
+
+        .debrief-btn:hover {
+            background: #ffd700;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .event-has-debrief {
+            position: relative;
+        }
+
+        .event-has-debrief::after {
+            content: '✓';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            color: var(--success);
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .day-event-card.needs-debrief {
+            border-left-color: var(--warning) !important;
+        }
+
     </style>
 </head>
 <body>
@@ -1392,6 +1451,12 @@
                             <span class="filter-badge" id="badgeUnlinked">0</span>
                         </button>
                     </div>
+                </div>
+
+                <!-- Debrief Status Badge -->
+                <div style="margin-top: 20px; padding: 12px; background: var(--bg-tertiary); border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Pending Debriefs</div>
+                    <div style="font-size: 20px; font-weight: 700; color: var(--warning);" id="debriefBadgeCount">0</div>
                 </div>
 
                 <!-- Upcoming Events List -->
@@ -2197,6 +2262,94 @@
             return 'now';
         }
 
+        /* ====== DEBRIEF INTEGRATION FUNCTIONS ====== */
+
+        /**
+         * Check if an event needs a debrief.
+         * INPUT: event object, debriefs array
+         * OUTPUT: boolean - true if event is past, is interview type, and has no matching debrief
+         */
+        function eventNeedsDebrief(event, debriefs) {
+            // Event must be interview type
+            const interviewTypes = ['phone_screen', 'technical', 'behavioral', 'panel', 'hiring_manager'];
+            if (!interviewTypes.includes(event.type)) return false;
+
+            // Event end time must have passed
+            const eventEnd = new Date(event.date);
+            if (event.duration) {
+                eventEnd.setMinutes(eventEnd.getMinutes() + event.duration);
+            } else {
+                eventEnd.setHours(eventEnd.getHours() + 1); // Default 1 hour duration
+            }
+            if (eventEnd > new Date()) return false;
+
+            // No debrief should exist for this event
+            const hasDebrief = debriefs.some(d => d.eventId === event.id);
+            return !hasDebrief;
+        }
+
+        /**
+         * Count how many events need debriefs.
+         * INPUT: none (uses localStorage)
+         * OUTPUT: number of pending debriefs
+         */
+        function countPendingDebriefs() {
+            const events = getStorageData('pf_calendar_events') || [];
+            const debriefs = getStorageData('pf_debriefs') || [];
+            return events.filter(evt => eventNeedsDebrief(evt, debriefs)).length;
+        }
+
+        /**
+         * Update the debrief badge in the sidebar.
+         * INPUT: none (reads from localStorage)
+         * OUTPUT: updates DOM with count
+         */
+        function updateDebriefBadge() {
+            const count = countPendingDebriefs();
+            const badge = document.getElementById('debriefBadgeCount');
+            if (badge) {
+                badge.textContent = count;
+                badge.style.color = count > 0 ? 'var(--warning)' : 'var(--text-secondary)';
+            }
+        }
+
+        /**
+         * Trigger debrief for an event: save event context to localStorage and navigate.
+         * INPUT: event object (eventId, company, title, type, date, interviewers, roleId)
+         * OUTPUT: navigates to debrief module
+         */
+        function triggerDebrief(event) {
+            const pendingDebrief = {
+                eventId: event.id,
+                company: event.company,
+                title: event.title,
+                type: event.type,
+                date: event.date,
+                interviewers: event.interviewers || [],
+                roleId: event.roleId || null
+            };
+
+            // Save to localStorage for debrief module to pick up
+            localStorage.setItem('pf_pending_debrief', JSON.stringify(pendingDebrief));
+
+            // Navigate to debrief module
+            window.location.href = '../debrief/';
+        }
+
+        /**
+         * Mark an event as debriefed by storing the debrief ID in the calendar event.
+         * INPUT: eventId (string), debriefId (string)
+         * OUTPUT: updates pf_calendar_events in localStorage
+         */
+        function linkDebriefToEvent(eventId, debriefId) {
+            const events = getStorageData('pf_calendar_events') || [];
+            const event = events.find(e => e.id === eventId);
+            if (event) {
+                event.debriefId = debriefId;
+                saveStorageData('pf_calendar_events', events);
+            }
+        }
+
         // ============================================================================
         // WEEK VIEW RENDERING
         // ============================================================================
@@ -2330,12 +2483,14 @@
 
         /**
          * Update the upcoming events list in the sidebar based on active filter.
+         * Includes debrief buttons for past interview events.
          */
         function updateUpcomingEventList() {
             const eventList = document.getElementById('upcomingEventList');
             eventList.innerHTML = '';
 
             const allEvents = getStorageData('pf_calendar_events') || [];
+            const debriefs = getStorageData('pf_debriefs') || [];
             const now = new Date();
 
             // Filter events from next 7 days
@@ -2367,6 +2522,17 @@
             filteredEvents.forEach(evt => {
                 const item = document.createElement('div');
                 item.className = `event-item ${!evt.roleId ? 'unlinked' : ''}`;
+
+                // Add debrief class if event needs debrief
+                if (eventNeedsDebrief(evt, debriefs)) {
+                    item.classList.add('needs-debrief');
+                }
+
+                // Add debriefed class if event has debrief
+                if (evt.debriefId) {
+                    item.classList.add('event-has-debrief');
+                }
+
                 item.onclick = () => openEventDetail(evt);
 
                 const time = document.createElement('div');
@@ -2408,15 +2574,34 @@
                 meta.appendChild(metaText);
                 item.appendChild(meta);
 
+                // Add debrief button for past interview events without debriefs
+                if (eventNeedsDebrief(evt, debriefs)) {
+                    const debriefBtn = document.createElement('button');
+                    debriefBtn.className = 'debrief-btn';
+                    debriefBtn.innerHTML = '<i data-lucide="clipboard" width="14" height="14"></i> Debrief';
+                    debriefBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        triggerDebrief(evt);
+                    };
+                    item.appendChild(debriefBtn);
+                }
+
                 eventList.appendChild(item);
             });
+
+            // Update debrief badge
+            updateDebriefBadge();
+
+            // Render lucide icons for debrief buttons
+            lucide.createIcons();
         }
 
         /**
-         * Update badge counts for filters.
+         * Update badge counts for filters and debrief status.
          */
         function updateFilterBadges() {
             const allEvents = getStorageData('pf_calendar_events') || [];
+            const debriefs = getStorageData('pf_debriefs') || [];
 
             const allCount = allEvents.length;
             const interviewCount = allEvents.filter(e => ['phone_screen', 'technical', 'behavioral', 'panel', 'hiring_manager'].includes(e.type)).length;
@@ -2427,6 +2612,9 @@
             document.getElementById('badgeInterview').textContent = interviewCount;
             document.getElementById('badgeFollowup').textContent = followupCount;
             document.getElementById('badgeUnlinked').textContent = unlinkedCount;
+
+            // Update debrief badge
+            updateDebriefBadge();
         }
 
         // ============================================================================
@@ -3583,6 +3771,25 @@
                     <div>
                         <div style="font-size: 12px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 4px;">Preparation Notes</div>
                         <div style="font-size: 14px; color: var(--text-primary); white-space: pre-wrap;">${event.prepNotes}</div>
+                    </div>
+                `;
+            }
+
+            // Check if this is a past interview event that needs debrief
+            const debriefs = getStorageData('pf_debriefs') || [];
+            if (eventNeedsDebrief(event, debriefs)) {
+                html += `
+                    <div style="padding: 12px; background: var(--warning); border-radius: var(--radius-sm); color: var(--bg-base);">
+                        <div style="font-weight: 600; margin-bottom: 8px;">Debrief Pending</div>
+                        <div style="font-size: 13px; margin-bottom: 10px;">Please share your feedback from this interview to improve future performance.</div>
+                        <button onclick="triggerDebrief({id: '${event.id}', company: '${event.company}', title: '${event.title}', type: '${event.type}', date: '${event.date}', interviewers: ${JSON.stringify(event.interviewers)}, roleId: '${event.roleId || ''}'});" style="background: var(--bg-base); color: var(--warning); border: none; padding: 6px 12px; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; font-size: 12px;">Start Debrief →</button>
+                    </div>
+                `;
+            } else if (event.debriefId) {
+                html += `
+                    <div style="padding: 12px; background: var(--success); border-radius: var(--radius-sm); color: var(--bg-base); display: flex; align-items: center; gap: 8px;">
+                        <span style="font-weight: 700;">✓</span>
+                        <span>Debrief completed</span>
                     </div>
                 `;
             }

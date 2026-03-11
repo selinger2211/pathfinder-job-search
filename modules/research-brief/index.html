@@ -633,6 +633,167 @@
       text-align: center;
     }
 
+    /* ================================================================
+       CITATIONS & ARTIFACT SAVE STYLES
+       ================================================================ */
+
+    /* Citation footnotes at end of sections */
+    .section-citations {
+      margin-top: var(--space-4);
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--bg-subtle);
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+    }
+
+    .citation-item {
+      margin-bottom: var(--space-2);
+      line-height: 1.4;
+    }
+
+    .citation-num {
+      display: inline-block;
+      font-weight: 600;
+      color: var(--accent);
+      margin-right: var(--space-1);
+      min-width: 20px;
+    }
+
+    .citation-link {
+      color: var(--accent);
+      text-decoration: none;
+      word-break: break-word;
+    }
+
+    .citation-link:hover {
+      text-decoration: underline;
+    }
+
+    .citation-source {
+      color: var(--text-tertiary);
+      font-style: italic;
+    }
+
+    /* Sources aggregation section at end of brief */
+    .sources-section {
+      background: rgba(99, 102, 241, 0.05);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      padding: var(--space-6);
+      border-radius: var(--radius-md);
+      margin-top: var(--space-6);
+    }
+
+    .sources-title {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-4);
+    }
+
+    .sources-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    /* Saved briefs panel */
+    .saved-briefs-panel {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--bg-subtle);
+      padding: var(--space-4);
+      display: none;
+    }
+
+    .saved-briefs-panel.active {
+      display: block;
+    }
+
+    .saved-briefs-toggle {
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      cursor: pointer;
+      font-size: var(--text-sm);
+      transition: all var(--duration-fast) var(--ease-default);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-bottom: var(--space-3);
+    }
+
+    .saved-briefs-toggle:hover {
+      background: var(--bg-subtle);
+    }
+
+    .saved-briefs-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .saved-brief-item {
+      padding: var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .saved-brief-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .saved-brief-name {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .saved-brief-name:hover {
+      color: var(--accent);
+    }
+
+    .saved-brief-meta {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .saved-brief-actions {
+      display: flex;
+      gap: var(--space-1);
+    }
+
+    .saved-brief-actions button {
+      padding: 4px 8px;
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: var(--text-xs);
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .saved-brief-actions button:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    .saved-brief-actions button.delete:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: rgb(239, 68, 68);
+    }
+
     /* Responsive design */
     @media (max-width: 1024px) {
       .toc-sidebar {
@@ -778,6 +939,15 @@
             <button id="apiKeySaveBtn" onclick="saveApiKey()" title="Save API key" style="padding: 6px 10px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); background: var(--bg-elevated); cursor: pointer; font-size: var(--text-sm); color: var(--text-secondary);">Save</button>
           </div>
           <p id="apiKeyStatus" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;"></p>
+        </div>
+
+        <!-- Saved briefs section -->
+        <div id="savedBriefsSection" style="display: none; margin-top: var(--space-3); border-top: 1px solid var(--bg-subtle); padding-top: var(--space-3);">
+          <button class="saved-briefs-toggle" onclick="toggleSavedBriefs()">
+            <i data-lucide="inbox" style="width: 16px; height: 16px;"></i>
+            Saved Briefs
+          </button>
+          <div id="savedBriefsList" class="saved-briefs-list"></div>
         </div>
 
         <!-- Action buttons -->
@@ -1176,6 +1346,7 @@ Questions must be SPECIFIC to this role. Every question needs a "why they'd ask 
       useFallbackAPI: false,   // Whether to use direct Claude API fallback
       generatedSections: {},   // { sectionNum: htmlContent } for dependency passing
       isGenerating: false,     // Prevent duplicate generation
+      allCitations: {},        // { sectionNum: [citations] } for aggregation
     };
 
     // ================================================================
@@ -1495,6 +1666,361 @@ Questions must be SPECIFIC to this role. Every question needs a "why they'd ask 
         const key = `research_${companySlug}_${roleId}_${i}`;
         localStorage.removeItem(key);
       }
+    }
+
+    /* ====== CITATION SYSTEM ====== */
+    /**
+     * Extracts citations from API response metadata.
+     * The API returns citations with {n, claim, source, sourceType, url, date}.
+     * This function stores them indexed by section number for later aggregation.
+     * INPUT: sectionNum (number), citationsArray (array of citation objects)
+     * OUTPUT: citations are stored in state.allCitations[sectionNum]
+     */
+    function storeSectionCitations(sectionNum, citations) {
+      if (!citations || !Array.isArray(citations)) return;
+      state.allCitations[sectionNum] = citations;
+    }
+
+    /**
+     * Renders citations as a footnote block below section content.
+     * Displays as [1] source.com, [2] Company Annual Report, etc.
+     * Each citation is clickable if it has a URL.
+     * INPUT: citations (array of citation objects from API)
+     * RETURNS: HTML string for citation footnotes
+     */
+    function renderSectionCitations(citations) {
+      if (!citations || citations.length === 0) return '';
+
+      let html = '<div class="section-citations">';
+      citations.forEach(cit => {
+        const citNum = cit.n || citations.indexOf(cit) + 1;
+        let citationText = cit.source || 'Unknown source';
+
+        // Make URL clickable if available
+        if (cit.url) {
+          citationText = `<a href="${cit.url}" target="_blank" class="citation-link">${citationText}</a>`;
+        } else {
+          citationText = `<span class="citation-link">${citationText}</span>`;
+        }
+
+        const dateStr = cit.date ? ` (${cit.date})` : '';
+        html += `<div class="citation-item"><span class="citation-num">[${citNum}]</span>${citationText}${dateStr}</div>`;
+      });
+      html += '</div>';
+
+      return html;
+    }
+
+    /**
+     * Aggregates all citations from all sections into a master Sources section.
+     * Deduplicates citations and presents them in a single sorted list.
+     * INPUT: none (uses state.allCitations)
+     * RETURNS: HTML string for Sources section
+     */
+    function renderSourcesAggregation() {
+      // Flatten all citations from all sections
+      const allCitations = [];
+      Object.values(state.allCitations).forEach(sectionCitations => {
+        if (Array.isArray(sectionCitations)) {
+          allCitations.push(...sectionCitations);
+        }
+      });
+
+      if (allCitations.length === 0) return '';
+
+      // Deduplicate by URL
+      const seen = new Set();
+      const uniqueCitations = [];
+      allCitations.forEach(cit => {
+        const key = cit.url || cit.source;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueCitations.push(cit);
+        }
+      });
+
+      // Sort by source type (job_board, enrichment_web, manual_entry, ai_generated)
+      const sourceTypeOrder = ['enrichment_web', 'job_board', 'manual_entry', 'ai_generated'];
+      uniqueCitations.sort((a, b) => {
+        const aIndex = sourceTypeOrder.indexOf(a.sourceType || 'ai_generated');
+        const bIndex = sourceTypeOrder.indexOf(b.sourceType || 'ai_generated');
+        return aIndex - bIndex;
+      });
+
+      // Render as Sources section
+      let html = '<div class="section sources-section">';
+      html += '<h3 class="sources-title">Sources & References</h3>';
+      html += '<div class="sources-list">';
+
+      uniqueCitations.forEach((cit, idx) => {
+        let citationLink = cit.source || 'Unknown source';
+        if (cit.url) {
+          citationLink = `<a href="${cit.url}" target="_blank" class="citation-link">${citationLink}</a>`;
+        }
+
+        const dateStr = cit.date ? ` — ${cit.date}` : '';
+        const typeStr = cit.sourceType ? ` [${cit.sourceType.replace(/_/g, ' ')}]` : '';
+
+        html += `<div class="citation-item"><span class="citation-num">[${idx + 1}]</span>${citationLink}${dateStr}${typeStr}</div>`;
+      });
+
+      html += '</div></div>';
+      return html;
+    }
+
+    /* ====== ARTIFACT SAVE TO LOCALSTORAGE ====== */
+    /**
+     * Saves the complete generated brief to localStorage as an artifact.
+     * Stores: {id, company, role, sections: [...], generatedAt, version}
+     * Uses key format: pf_research_briefs → array of brief objects
+     * Called auto-save after generation completes.
+     * INPUT: role (object), company (object)
+     * OUTPUT: brief is stored in localStorage, saved briefs panel is updated
+     */
+    function saveBriefToStorage() {
+      const role = state.selectedRole;
+      const company = state.selectedCompany;
+      if (!role || !company) return;
+
+      // Gather all section content from the DOM
+      const sectionElements = document.querySelectorAll('#sectionsArea .section');
+      const sections = [];
+      sectionElements.forEach(el => {
+        const sectionNum = el.getAttribute('data-section-num');
+        const contentEl = el.querySelector('.section-content');
+        const titleEl = el.querySelector('.section-title');
+        if (sectionNum !== null && contentEl && titleEl) {
+          sections.push({
+            num: parseInt(sectionNum),
+            title: titleEl.textContent,
+            content: contentEl.innerHTML
+          });
+        }
+      });
+
+      // Also capture sources section if it exists
+      const sourcesEl = document.querySelector('.sources-section');
+      if (sourcesEl) {
+        sections.push({
+          num: 'sources',
+          title: 'Sources & References',
+          content: sourcesEl.innerHTML
+        });
+      }
+
+      // Create brief artifact
+      const brief = {
+        id: `${getCompanySlug(company.name)}_${role.id}_${Date.now()}`,
+        company: company.name,
+        companyDomain: company.domain,
+        role: role.title,
+        roleId: role.id,
+        roleLevel: role.targetLevel,
+        sections: sections,
+        generatedAt: new Date().toISOString(),
+        version: '2.0'
+      };
+
+      // Load existing briefs from localStorage
+      let briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
+
+      // Limit to last 20 briefs per company to prevent storage bloat
+      briefs = briefs.filter(b => b.company !== company.name);
+      briefs.push(brief);
+      if (briefs.length > 20) {
+        briefs = briefs.slice(-20);
+      }
+
+      // Save to localStorage
+      localStorage.setItem('pf_research_briefs', JSON.stringify(briefs));
+
+      // Show saved confirmation
+      const companySlug = getCompanySlug(company.name);
+      const statusEl = document.querySelector('#section-1 .section-status') || document.querySelector('.section-status');
+      if (statusEl) {
+        const original = statusEl.innerHTML;
+        statusEl.innerHTML = '<span style="color: rgb(34, 197, 94); font-weight: 600;">✓ Saved</span>';
+        setTimeout(() => { statusEl.innerHTML = original; }, 3000);
+      }
+
+      // Update the saved briefs list in sidebar
+      updateSavedBriefsList();
+      document.getElementById('savedBriefsSection').style.display = 'block';
+    }
+
+    /**
+     * Loads a previously saved brief from localStorage and renders it.
+     * INPUT: briefId (string) — the artifact ID to load
+     * OUTPUT: sections are restored to the DOM
+     */
+    function loadSavedBrief(briefId) {
+      const briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
+      const brief = briefs.find(b => b.id === briefId);
+      if (!brief) {
+        alert('Brief not found in saved artifacts.');
+        return;
+      }
+
+      // Render sections
+      const sectionsArea = document.getElementById('sectionsArea');
+      sectionsArea.innerHTML = '';
+
+      brief.sections.forEach(sectionData => {
+        let section = document.createElement('div');
+
+        // Sources section uses different styling
+        if (sectionData.num === 'sources') {
+          section.innerHTML = sectionData.content;
+          sectionsArea.appendChild(section);
+          return;
+        }
+
+        section.className = 'section';
+        section.id = `section-${sectionData.num}`;
+        section.setAttribute('data-section-num', sectionData.num);
+
+        // Header
+        const header = document.createElement('div');
+        header.className = 'section-header';
+
+        const titleGroup = document.createElement('div');
+        titleGroup.className = 'section-title-group';
+
+        const badge = document.createElement('div');
+        badge.className = 'section-badge';
+        badge.textContent = sectionData.num;
+        titleGroup.appendChild(badge);
+
+        const titleEl = document.createElement('h3');
+        titleEl.className = 'section-title';
+        titleEl.textContent = sectionData.title;
+        titleGroup.appendChild(titleEl);
+
+        header.appendChild(titleGroup);
+
+        // Status (loaded from saved)
+        const statusGroup = document.createElement('div');
+        statusGroup.style.cssText = 'display: flex; gap: var(--space-3); align-items: center;';
+        const statusEl = document.createElement('div');
+        statusEl.className = 'section-status';
+        statusEl.innerHTML = '<span class="badge" style="background: rgba(99, 102, 241, 0.15); color: var(--accent);">Loaded</span>';
+        statusGroup.appendChild(statusEl);
+
+        header.appendChild(statusGroup);
+        section.appendChild(header);
+
+        // Content
+        const content = document.createElement('div');
+        content.className = 'section-content';
+        content.innerHTML = sectionData.content;
+        section.appendChild(content);
+
+        sectionsArea.appendChild(section);
+      });
+
+      // Update TOC
+      const visibleSections = brief.sections.filter(s => s.num !== 'sources');
+      const tocList = document.getElementById('tocList');
+      tocList.innerHTML = '';
+      visibleSections.forEach(sec => {
+        const li = document.createElement('li');
+        li.className = 'toc-item';
+        li.textContent = `${sec.num}. ${sec.title}`;
+        li.onclick = () => scrollToSection(sec.num);
+        tocList.appendChild(li);
+      });
+
+      document.getElementById('tocSidebar').style.display = 'block';
+      updateProgress();
+      lucide.createIcons();
+    }
+
+    /**
+     * Deletes a saved brief from localStorage.
+     * INPUT: briefId (string)
+     * OUTPUT: brief is removed, sidebar list is updated
+     */
+    function deleteSavedBrief(briefId) {
+      if (!confirm('Delete this saved brief? This cannot be undone.')) return;
+
+      let briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
+      briefs = briefs.filter(b => b.id !== briefId);
+      localStorage.setItem('pf_research_briefs', JSON.stringify(briefs));
+
+      updateSavedBriefsList();
+    }
+
+    /**
+     * Updates the sidebar list of saved briefs.
+     * Filters to show only briefs for the currently selected company/role.
+     * INPUT: none
+     * OUTPUT: saved briefs list is rendered in sidebar
+     */
+    function updateSavedBriefsList() {
+      const role = state.selectedRole;
+      const company = state.selectedCompany;
+      if (!role || !company) return;
+
+      const briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
+      const relevantBriefs = briefs.filter(b =>
+        b.company === company.name && b.roleId === role.id
+      );
+
+      const listEl = document.getElementById('savedBriefsList');
+      if (!listEl) return;
+
+      if (relevantBriefs.length === 0) {
+        listEl.innerHTML = '<p style="font-size: var(--text-xs); color: var(--text-secondary); padding: var(--space-2);">No saved briefs yet. Generate one to get started.</p>';
+        return;
+      }
+
+      listEl.innerHTML = '';
+      relevantBriefs.forEach(brief => {
+        const item = document.createElement('div');
+        item.className = 'saved-brief-item';
+
+        const info = document.createElement('div');
+        info.className = 'saved-brief-info';
+
+        const name = document.createElement('div');
+        name.className = 'saved-brief-name';
+        const date = new Date(brief.generatedAt);
+        name.textContent = `Brief — ${date.toLocaleDateString()}`;
+        name.onclick = () => loadSavedBrief(brief.id);
+        info.appendChild(name);
+
+        const meta = document.createElement('div');
+        meta.className = 'saved-brief-meta';
+        meta.textContent = `${brief.sections.length} sections`;
+        info.appendChild(meta);
+
+        item.appendChild(info);
+
+        const actions = document.createElement('div');
+        actions.className = 'saved-brief-actions';
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete';
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          deleteSavedBrief(brief.id);
+        };
+        actions.appendChild(deleteBtn);
+
+        item.appendChild(actions);
+        listEl.appendChild(item);
+      });
+    }
+
+    /**
+     * Toggles visibility of the saved briefs panel.
+     * INPUT: none
+     * OUTPUT: saved briefs panel visibility is toggled
+     */
+    function toggleSavedBriefs() {
+      const listEl = document.getElementById('savedBriefsList');
+      listEl.style.display = listEl.style.display === 'none' ? 'flex' : 'none';
     }
 
     // ================================================================
@@ -2722,6 +3248,18 @@ The HTML content should come first, followed by the citations block. Do not incl
         `;
       }
 
+      // Update saved briefs panel and list for this role
+      const savedBriefsSection = document.getElementById('savedBriefsSection');
+      const briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
+      const hasRelevantBriefs = briefs.some(b => b.company === nc.name && b.roleId === nr.id);
+      if (hasRelevantBriefs) {
+        savedBriefsSection.style.display = 'block';
+        updateSavedBriefsList();
+        document.getElementById('savedBriefsList').style.display = 'none'; // collapsed by default
+      } else {
+        savedBriefsSection.style.display = 'none';
+      }
+
       lucide.createIcons();
     }
 
@@ -2886,13 +3424,23 @@ The HTML content should come first, followed by the citations block. Do not incl
             // Store the generated content for downstream sections
             state.generatedSections[sectionNum] = result.content;
 
+            // Store citations for this section
+            storeSectionCitations(sectionNum, result.citations);
+
             // Cache locally too
             cacheSectionContent(companySlug, role.id, sectionNum, result.content);
 
             // Update the section UI
             if (sectionEl) {
               const contentEl = sectionEl.querySelector('.section-content');
-              contentEl.innerHTML = sanitizeContent(result.content);
+              let htmlContent = sanitizeContent(result.content);
+
+              // Append citation footnotes if available
+              if (result.citations && result.citations.length > 0) {
+                htmlContent += renderSectionCitations(result.citations);
+              }
+
+              contentEl.innerHTML = htmlContent;
               sectionEl.classList.remove('pending');
 
               const statusEl = sectionEl.querySelector('.section-status');
@@ -2931,6 +3479,17 @@ The HTML content should come first, followed by the citations block. Do not incl
         // Wait for all sections in this batch to complete before moving to next batch
         await Promise.allSettled(promises);
       }
+
+      // After all sections are generated, add sources aggregation section
+      const sourcesHtml = renderSourcesAggregation();
+      if (sourcesHtml) {
+        const sourcesEl = document.createElement('div');
+        sourcesEl.innerHTML = sourcesHtml;
+        sectionsArea.appendChild(sourcesEl);
+      }
+
+      // Auto-save the complete brief to localStorage
+      saveBriefToStorage();
 
       state.isGenerating = false;
       lucide.createIcons();

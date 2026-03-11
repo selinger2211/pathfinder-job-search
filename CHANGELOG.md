@@ -4,6 +4,50 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v1.9.0 — 2026-03-10
+
+### What Changed
+
+#### Research Brief — Citation System + Saved Briefs
+- **Citation system**: Each generated section now tracks and displays source citations as footnotes with numbered references
+- **Source aggregation**: "Sources" section at the bottom of each brief rolls up all citations across all sections
+- **localStorage artifact save**: Briefs saved to `pf_research_briefs` with id, company, role, sections, timestamp, and version
+- **Saved Briefs panel**: Sidebar panel to browse, load, and delete previously saved briefs (20-brief limit per company)
+- Auto-save after generation completes
+
+#### Job Feed Listener — Career Page URL Import + Sources Tab
+- **Career page URL import**: Parses URLs from Lever, Greenhouse, Ashby, Workday, and LinkedIn ATS pages. Auto-extracts company name from domain
+- **Import URL modal**: Paste or type a career page URL with real-time URL detection and metadata feedback
+- **Sources tab**: Analytics cards per source (Sync Hub, Manual, URL Import, etc.), source filtering with checkboxes, horizontal bar chart visualization
+- New functions: `parseCareerPageUrl()`, `detectUrlMetadata()`, `renderSourceAnalytics()`, `applySourceFilters()`
+
+#### Comp Intelligence — Indeed Integration + Bulk Import + Market Positioning
+- **Indeed salary data integration**: Reads salary ranges from `pf_feed_queue` (Indeed-sourced jobs) via `extractIndeedSalaryData()`
+- **Bulk import modal**: 3-tab interface — Paste Data (CSV/JSON/plaintext), Sync Indeed Jobs, Direct Entry
+- **Market positioning chart**: Percentile visualization (25th/50th/75th/90th) with 4-color system (red/orange/yellow/green)
+- **Enhanced negotiation**: BATNA identification from pipeline, competing offers analysis, leverage points
+
+#### Calendar — Auto-Trigger Debrief
+- **Debrief button**: Appears on past interview events, navigates to Debrief module with pre-populated context
+- **Pending debrief badge**: Shows count of past interview events without debriefs
+- **Cross-module communication**: Writes to `pf_pending_debrief` localStorage key for Debrief module to pick up
+- New functions: `eventNeedsDebrief()`, `countPendingDebriefs()`, `triggerDebrief()`, `linkDebriefToEvent()`
+
+#### Debrief — Auto-Populate from Calendar
+- **Auto-populate**: Reads `pf_pending_debrief` from localStorage and pre-fills form fields (company, role, date, type)
+- **Pending events section**: "Recent Events Needing Debrief" shows past interview events from Calendar that lack debriefs
+- **Cross-module sync**: On debrief save, writes `debriefId` back to the calendar event for status tracking
+- New functions: `checkPendingDebrief()`, `renderPendingDebriefBanner()`, `getPendingCalendarEvents()`
+
+#### Mock Interview — 100+ Question Bank
+- **Question Bank**: 100+ real PM interview questions across 11 companies (Google, Meta, Amazon, Apple, Microsoft, Stripe, Airbnb, Netflix, Uber, Spotify, Coinbase), 7 types, 3 difficulty levels
+- **Question Bank tab**: Multi-level filtering by search text, company, type, and difficulty
+- **Custom questions**: Users can add their own questions via `pf_custom_questions`
+- **Practice tracking**: Tracks practiced questions via `pf_practiced_questions` with timestamps
+- **Company-calibrated sessions**: Passes 5 relevant bank questions to Claude as context for more realistic mock interviews
+
+---
+
 ## v1.8.0 — 2026-03-10
 
 ### What Changed

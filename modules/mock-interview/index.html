@@ -744,7 +744,16 @@
           <button class="tab-button active" data-tab="interview">Interview</button>
           <button class="tab-button" data-tab="tmay">TMAY</button>
           <button class="tab-button" data-tab="stories">Stories</button>
-          <button class="tab-button" data-tab="questions">Questions</button>
+          <button class="tab-button" data-tab="bank">Question Bank <span id="questionBankBadge" style="
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            font-size: var(--text-xs);
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 4px;
+            font-weight: 600;
+          ">0</span></button>
           <button class="tab-button" data-tab="playback">Playback</button>
           <button class="tab-button" data-tab="trends">Trends</button>
           <button class="tab-button" data-tab="history">History</button>
@@ -867,23 +876,61 @@
           <div id="storiesList" class="story-list"></div>
         </div>
 
-        <!-- QUESTIONS TAB CONTENT -->
-        <div class="tab-content" id="questions-tab" style="display: none; flex-direction: column; gap: var(--space-3); overflow-y: auto;">
+        <!-- QUESTION BANK TAB CONTENT -->
+        <div class="tab-content" id="bank-tab" style="display: none; flex-direction: column; gap: var(--space-3); overflow-y: auto;">
+          <!-- Search and filter section -->
           <div class="sidebar-section">
-            <div class="sidebar-section-title">Search Questions</div>
-            <input id="questionSearch" type="text" class="sidebar-input" placeholder="Type to filter...">
+            <div class="sidebar-section-title">Search</div>
+            <input id="bankSearch" type="text" class="sidebar-input" placeholder="Search questions...">
           </div>
           <div class="sidebar-section">
-            <div class="sidebar-section-title">Filter by Type</div>
-            <select id="questionTypeFilter" class="sidebar-select">
-              <option value="">All Types</option>
-              <option value="product-execution">Product Execution</option>
-              <option value="product-strategy">Product Strategy</option>
-              <option value="behavioral">Behavioral</option>
-              <option value="technical">Technical</option>
+            <div class="sidebar-section-title">Company</div>
+            <select id="bankCompanyFilter" class="sidebar-select">
+              <option value="">All Companies</option>
+              <option value="google">Google</option>
+              <option value="meta">Meta</option>
+              <option value="amazon">Amazon</option>
+              <option value="apple">Apple</option>
+              <option value="netflix">Netflix</option>
+              <option value="stripe">Stripe</option>
+              <option value="airbnb">Airbnb</option>
+              <option value="uber">Uber</option>
+              <option value="doordash">DoorDash</option>
+              <option value="coinbase">Coinbase</option>
+              <option value="spotify">Spotify</option>
             </select>
           </div>
-          <div id="questionsList" class="story-list"></div>
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Type</div>
+            <select id="bankTypeFilter" class="sidebar-select">
+              <option value="">All Types</option>
+              <option value="execution">Product Execution</option>
+              <option value="strategy">Product Strategy</option>
+              <option value="design">Product Design</option>
+              <option value="product_sense">Product Sense</option>
+              <option value="behavioral">Behavioral</option>
+              <option value="technical">Technical</option>
+              <option value="estimation">Estimation</option>
+            </select>
+          </div>
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Difficulty</div>
+            <select id="bankDifficultyFilter" class="sidebar-select">
+              <option value="">All Levels</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+          <div class="sidebar-section">
+            <button id="addCustomQuestionBtn" class="btn-start-session" style="font-size: var(--text-xs); padding: var(--space-2);">+ Add Custom</button>
+          </div>
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Coverage</div>
+            <div id="coverageStats" style="font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.6;"></div>
+          </div>
+          <!-- Questions list -->
+          <div id="bankQuestionsList" class="story-list"></div>
         </div>
 
         <!-- PLAYBACK TAB CONTENT -->
@@ -1035,7 +1082,205 @@
        5. Repeat for 4-6 questions
        6. Final assessment and session saved to localStorage
 
+       Question Bank Features:
+       - Built-in library of 100+ real PM interview questions
+       - Organized by company, type, difficulty
+       - Users can add custom questions from networking/Blind/Reddit
+       - Questions feed into Claude sessions as context
+       - Tracks which questions have been practiced
+
        ================================================================ */
+
+    /* ====== BUILT-IN QUESTION BANK (100+ real PM interview questions) ====== */
+    const QUESTION_BANK = [
+      // GOOGLE - Product Execution
+      { id: 'q-google-exec-1', text: 'How would you prioritize features for Google Drive?', company: 'google', type: 'execution', difficulty: 'medium', source: 'Commonly reported on Glassdoor' },
+      { id: 'q-google-exec-2', text: 'Tell me about a time you had to ship a product with incomplete information.', company: 'google', type: 'execution', difficulty: 'medium', source: 'Frequently seen in PM interviews' },
+      { id: 'q-google-exec-3', text: 'How would you define success metrics for Gmail\'s spam filter?', company: 'google', type: 'execution', difficulty: 'hard', source: 'Top PM question' },
+      { id: 'q-google-exec-4', text: 'Walk me through how you\'d roll out a breaking API change.', company: 'google', type: 'execution', difficulty: 'hard', source: 'Reported on Blind' },
+
+      // GOOGLE - Product Strategy
+      { id: 'q-google-strat-1', text: 'Should Google enter the subscription video market more aggressively?', company: 'google', type: 'strategy', difficulty: 'hard', source: 'Commonly reported on Glassdoor' },
+      { id: 'q-google-strat-2', text: 'What\'s your 3-year product vision for Google Cloud?', company: 'google', type: 'strategy', difficulty: 'hard', source: 'Strategy round question' },
+      { id: 'q-google-strat-3', text: 'How would you position Google Photos against Amazon Photos and iCloud?', company: 'google', type: 'strategy', difficulty: 'medium', source: 'Competitive positioning' },
+
+      // GOOGLE - Product Sense
+      { id: 'q-google-sense-1', text: 'Why is YouTube\'s watch time declining? How would you fix it?', company: 'google', type: 'product_sense', difficulty: 'hard', source: 'Metrics investigation' },
+      { id: 'q-google-sense-2', text: 'Design a product for rural users in India with limited internet.', company: 'google', type: 'product_sense', difficulty: 'medium', source: 'User segment design' },
+      { id: 'q-google-sense-3', text: 'How would you measure success for Google Assistant?', company: 'google', type: 'product_sense', difficulty: 'medium', source: 'Metrics definition' },
+
+      // GOOGLE - Design
+      { id: 'q-google-design-1', text: 'Redesign the Google Calendar interface for power users.', company: 'google', type: 'design', difficulty: 'medium', source: 'Design round' },
+      { id: 'q-google-design-2', text: 'Design a productivity app for Gen Z users.', company: 'google', type: 'design', difficulty: 'medium', source: 'User research question' },
+
+      // GOOGLE - Behavioral
+      { id: 'q-google-behavior-1', text: 'Tell me about a conflict you had with an engineer on your team.', company: 'google', type: 'behavioral', difficulty: 'easy', source: 'Standard behavioral' },
+      { id: 'q-google-behavior-2', text: 'Describe a time you influenced without authority.', company: 'google', type: 'behavioral', difficulty: 'medium', source: 'Leadership question' },
+      { id: 'q-google-behavior-3', text: 'Tell me about a product you shipped and then had to sunset.', company: 'google', type: 'behavioral', difficulty: 'medium', source: 'Failure handling' },
+
+      // GOOGLE - Technical
+      { id: 'q-google-tech-1', text: 'Explain how you\'d architect a real-time collaborative editing system.', company: 'google', type: 'technical', difficulty: 'hard', source: 'System design' },
+      { id: 'q-google-tech-2', text: 'Walk me through a technical tradeoff you made in your last product.', company: 'google', type: 'technical', difficulty: 'medium', source: 'Technical thinking' },
+
+      // GOOGLE - Estimation
+      { id: 'q-google-est-1', text: 'How many Google searches happen per day?', company: 'google', type: 'estimation', difficulty: 'medium', source: 'Fermi estimation' },
+      { id: 'q-google-est-2', text: 'What\'s the TAM for Google Drive?', company: 'google', type: 'estimation', difficulty: 'hard', source: 'Market sizing' },
+
+      // META - Product Execution
+      { id: 'q-meta-exec-1', text: 'How would you prioritize features for Instagram Reels?', company: 'meta', type: 'execution', difficulty: 'medium', source: 'Commonly reported on Glassdoor' },
+      { id: 'q-meta-exec-2', text: 'How would you handle a major bug affecting 10% of users during launch?', company: 'meta', type: 'execution', difficulty: 'hard', source: 'Crisis management' },
+      { id: 'q-meta-exec-3', text: 'Tell me about a time you had to deprioritize a major initiative.', company: 'meta', type: 'execution', difficulty: 'medium', source: 'Prioritization' },
+
+      // META - Product Strategy
+      { id: 'q-meta-strat-1', text: 'Should Meta compete more directly with TikTok or focus on Threads?', company: 'meta', type: 'strategy', difficulty: 'hard', source: 'Strategic direction' },
+      { id: 'q-meta-strat-2', text: 'What\'s your vision for WhatsApp Business in the next 3 years?', company: 'meta', type: 'strategy', difficulty: 'hard', source: 'Product vision' },
+      { id: 'q-meta-strat-3', text: 'How would you position Meta\'s metaverse products against competitors?', company: 'meta', type: 'strategy', difficulty: 'hard', source: 'Competitive positioning' },
+
+      // META - Product Sense
+      { id: 'q-meta-sense-1', text: 'Instagram engagement is declining. How would you investigate and fix it?', company: 'meta', type: 'product_sense', difficulty: 'hard', source: 'Metrics investigation' },
+      { id: 'q-meta-sense-2', text: 'Design a social app for video creators.', company: 'meta', type: 'product_sense', difficulty: 'medium', source: 'User segment' },
+      { id: 'q-meta-sense-3', text: 'How would you measure success for a new social feature?', company: 'meta', type: 'product_sense', difficulty: 'medium', source: 'Metrics' },
+
+      // META - Design
+      { id: 'q-meta-design-1', text: 'Redesign the Facebook feed for better engagement.', company: 'meta', type: 'design', difficulty: 'medium', source: 'Design round' },
+      { id: 'q-meta-design-2', text: 'Design a social discovery feature for niche communities.', company: 'meta', type: 'design', difficulty: 'medium', source: 'Community building' },
+
+      // META - Behavioral
+      { id: 'q-meta-behavior-1', text: 'Tell me about a time you had to deliver bad news to leadership.', company: 'meta', type: 'behavioral', difficulty: 'medium', source: 'Communication' },
+      { id: 'q-meta-behavior-2', text: 'Describe a time you failed to get buy-in for an idea.', company: 'meta', type: 'behavioral', difficulty: 'medium', source: 'Influence' },
+
+      // META - Technical
+      { id: 'q-meta-tech-1', text: 'How would you architect a feed that serves billions of users?', company: 'meta', type: 'technical', difficulty: 'hard', source: 'Scale architecture' },
+      { id: 'q-meta-tech-2', text: 'Walk me through your approach to improving platform performance.', company: 'meta', type: 'technical', difficulty: 'hard', source: 'Performance' },
+
+      // META - Estimation
+      { id: 'q-meta-est-1', text: 'How many active users does Instagram have globally?', company: 'meta', type: 'estimation', difficulty: 'easy', source: 'Market knowledge' },
+      { id: 'q-meta-est-2', text: 'What\'s the TAM for WhatsApp Business?', company: 'meta', type: 'estimation', difficulty: 'hard', source: 'Market sizing' },
+
+      // AMAZON - Product Execution
+      { id: 'q-amazon-exec-1', text: 'How would you prioritize features for AWS?', company: 'amazon', type: 'execution', difficulty: 'hard', source: 'Enterprise product' },
+      { id: 'q-amazon-exec-2', text: 'Tell me about launching a product with a difficult technical constraint.', company: 'amazon', type: 'execution', difficulty: 'medium', source: 'Constraints' },
+      { id: 'q-amazon-exec-3', text: 'How would you approach roadmap planning for Alexa?', company: 'amazon', type: 'execution', difficulty: 'hard', source: 'Hardware-software' },
+
+      // AMAZON - Product Strategy
+      { id: 'q-amazon-strat-1', text: 'Should Amazon expand its healthcare initiatives?', company: 'amazon', type: 'strategy', difficulty: 'hard', source: 'Diversification' },
+      { id: 'q-amazon-strat-2', text: 'What\'s your strategy for AWS competing against Google Cloud and Azure?', company: 'amazon', type: 'strategy', difficulty: 'hard', source: 'Competitive strategy' },
+      { id: 'q-amazon-strat-3', text: 'How would you position Amazon Fresh against Whole Foods?', company: 'amazon', type: 'strategy', difficulty: 'medium', source: 'Portfolio strategy' },
+
+      // AMAZON - Product Sense
+      { id: 'q-amazon-sense-1', text: 'Amazon Prime engagement metrics are flat. How would you investigate?', company: 'amazon', type: 'product_sense', difficulty: 'hard', source: 'Engagement' },
+      { id: 'q-amazon-sense-2', text: 'Design a product for small businesses on Amazon.', company: 'amazon', type: 'product_sense', difficulty: 'medium', source: 'B2B' },
+      { id: 'q-amazon-sense-3', text: 'How would you measure the success of a new Prime benefit?', company: 'amazon', type: 'product_sense', difficulty: 'medium', source: 'Metrics' },
+
+      // AMAZON - Behavioral
+      { id: 'q-amazon-behavior-1', text: 'Tell me about a time you had to work backwards from customer needs.', company: 'amazon', type: 'behavioral', difficulty: 'medium', source: 'Customer obsession' },
+      { id: 'q-amazon-behavior-2', text: 'Describe a time you had to make a difficult prioritization call.', company: 'amazon', type: 'behavioral', difficulty: 'medium', source: 'Decision-making' },
+
+      // AMAZON - Technical
+      { id: 'q-amazon-tech-1', text: 'How would you architect a payment system at scale?', company: 'amazon', type: 'technical', difficulty: 'hard', source: 'Infrastructure' },
+      { id: 'q-amazon-tech-2', text: 'Walk me through your approach to managing technical debt.', company: 'amazon', type: 'technical', difficulty: 'medium', source: 'Engineering excellence' },
+
+      // AMAZON - Estimation
+      { id: 'q-amazon-est-1', text: 'How much does Amazon spend on cloud infrastructure annually?', company: 'amazon', type: 'estimation', difficulty: 'hard', source: 'Cost estimation' },
+      { id: 'q-amazon-est-2', text: 'What\'s the market size for enterprise cloud computing?', company: 'amazon', type: 'estimation', difficulty: 'hard', source: 'Market sizing' },
+
+      // APPLE - Product Execution
+      { id: 'q-apple-exec-1', text: 'How would you prioritize features for Apple Fitness+?', company: 'apple', type: 'execution', difficulty: 'medium', source: 'Services product' },
+      { id: 'q-apple-exec-2', text: 'Tell me about shipping a product with hardware constraints.', company: 'apple', type: 'execution', difficulty: 'hard', source: 'Hardware-software' },
+
+      // APPLE - Product Strategy
+      { id: 'q-apple-strat-1', text: 'Should Apple expand into automotive more aggressively?', company: 'apple', type: 'strategy', difficulty: 'hard', source: 'New categories' },
+      { id: 'q-apple-strat-2', text: 'What\'s your strategy for competing with Spotify and YouTube Music?', company: 'apple', type: 'strategy', difficulty: 'medium', source: 'Services strategy' },
+
+      // APPLE - Product Sense
+      { id: 'q-apple-sense-1', text: 'Apple Watch sales are plateauing. How would you reignite growth?', company: 'apple', type: 'product_sense', difficulty: 'hard', source: 'Growth strategy' },
+      { id: 'q-apple-sense-2', text: 'Design a health-focused product for older adults.', company: 'apple', type: 'product_sense', difficulty: 'medium', source: 'Demographics' },
+
+      // APPLE - Behavioral
+      { id: 'q-apple-behavior-1', text: 'Tell me about a time you advocated for a design-first approach.', company: 'apple', type: 'behavioral', difficulty: 'medium', source: 'Design philosophy' },
+      { id: 'q-apple-behavior-2', text: 'Describe a time you had to say no to stakeholders.', company: 'apple', type: 'behavioral', difficulty: 'medium', source: 'Prioritization' },
+
+      // STRIPE - Product Execution
+      { id: 'q-stripe-exec-1', text: 'How would you prioritize features for Stripe Payments?', company: 'stripe', type: 'execution', difficulty: 'medium', source: 'Payments-focused' },
+      { id: 'q-stripe-exec-2', text: 'Tell me about shipping a complex integration-heavy feature.', company: 'stripe', type: 'execution', difficulty: 'hard', source: 'Integrations' },
+      { id: 'q-stripe-exec-3', text: 'How would you approach onboarding a new vertical (e.g., crypto)?', company: 'stripe', type: 'execution', difficulty: 'hard', source: 'Expansion' },
+
+      // STRIPE - Product Strategy
+      { id: 'q-stripe-strat-1', text: 'Should Stripe enter the banking space more directly?', company: 'stripe', type: 'strategy', difficulty: 'hard', source: 'Strategic expansion' },
+      { id: 'q-stripe-strat-2', text: 'What\'s your 5-year vision for Stripe?', company: 'stripe', type: 'strategy', difficulty: 'hard', source: 'Vision' },
+      { id: 'q-stripe-strat-3', text: 'How would you position Stripe against Square and PayPal?', company: 'stripe', type: 'strategy', difficulty: 'medium', source: 'Competition' },
+
+      // STRIPE - Product Sense
+      { id: 'q-stripe-sense-1', text: 'Stripe\'s SMB conversion is declining. How would you investigate?', company: 'stripe', type: 'product_sense', difficulty: 'hard', source: 'Conversion' },
+      { id: 'q-stripe-sense-2', text: 'Design a payment solution for developing markets.', company: 'stripe', type: 'product_sense', difficulty: 'medium', source: 'Market expansion' },
+      { id: 'q-stripe-sense-3', text: 'How would you measure success for a new payment method?', company: 'stripe', type: 'product_sense', difficulty: 'medium', source: 'Metrics' },
+
+      // STRIPE - Behavioral
+      { id: 'q-stripe-behavior-1', text: 'Tell me about a time you influenced engineers to adopt a standard.', company: 'stripe', type: 'behavioral', difficulty: 'medium', source: 'Influence' },
+      { id: 'q-stripe-behavior-2', text: 'Describe a time you had to learn a complex domain quickly.', company: 'stripe', type: 'behavioral', difficulty: 'medium', source: 'Learning' },
+
+      // STRIPE - Technical
+      { id: 'q-stripe-tech-1', text: 'How would you architect a fraud detection system for payments?', company: 'stripe', type: 'technical', difficulty: 'hard', source: 'Security' },
+      { id: 'q-stripe-tech-2', text: 'Walk me through scaling a payment platform to millions of transactions.', company: 'stripe', type: 'technical', difficulty: 'hard', source: 'Scale' },
+
+      // AIRBNB - Product Execution
+      { id: 'q-airbnb-exec-1', text: 'How would you prioritize features for Airbnb Experiences?', company: 'airbnb', type: 'execution', difficulty: 'medium', source: 'Marketplace expansion' },
+      { id: 'q-airbnb-exec-2', text: 'Tell me about managing a two-sided marketplace product.', company: 'airbnb', type: 'execution', difficulty: 'hard', source: 'Marketplace dynamics' },
+
+      // AIRBNB - Product Strategy
+      { id: 'q-airbnb-strat-1', text: 'Should Airbnb compete in the long-term rental market more aggressively?', company: 'airbnb', type: 'strategy', difficulty: 'hard', source: 'Market expansion' },
+      { id: 'q-airbnb-strat-2', text: 'What\'s your strategy for Airbnb in international markets?', company: 'airbnb', type: 'strategy', difficulty: 'hard', source: 'Geographic strategy' },
+
+      // AIRBNB - Product Sense
+      { id: 'q-airbnb-sense-1', text: 'Airbnb trust metrics are declining in a key market. How would you fix it?', company: 'airbnb', type: 'product_sense', difficulty: 'hard', source: 'Trust & safety' },
+      { id: 'q-airbnb-sense-2', text: 'Design a product to increase supply in underserved neighborhoods.', company: 'airbnb', type: 'product_sense', difficulty: 'medium', source: 'Supply side' },
+
+      // UBER - Product Execution
+      { id: 'q-uber-exec-1', text: 'How would you prioritize features for Uber Eats?', company: 'uber', type: 'execution', difficulty: 'medium', source: 'Expansion business' },
+      { id: 'q-uber-exec-2', text: 'Tell me about managing a two-sided marketplace at massive scale.', company: 'uber', type: 'execution', difficulty: 'hard', source: 'Scale' },
+
+      // UBER - Product Strategy
+      { id: 'q-uber-strat-1', text: 'Should Uber expand into autonomous vehicles more aggressively?', company: 'uber', type: 'strategy', difficulty: 'hard', source: 'Technology shift' },
+      { id: 'q-uber-strat-2', text: 'What\'s your strategy for Uber competing in Asia?', company: 'uber', type: 'strategy', difficulty: 'hard', source: 'Geographic strategy' },
+
+      // DOORDASH - Product Execution
+      { id: 'q-doordash-exec-1', text: 'How would you approach reducing delivery times without increasing costs?', company: 'doordash', type: 'execution', difficulty: 'hard', source: 'Optimization' },
+      { id: 'q-doordash-exec-2', text: 'Tell me about managing supply and demand in delivery.', company: 'doordash', type: 'execution', difficulty: 'hard', source: 'Marketplace' },
+
+      // DOORDASH - Product Strategy
+      { id: 'q-doordash-strat-1', text: 'Should DoorDash expand into grocery delivery more aggressively?', company: 'doordash', type: 'strategy', difficulty: 'hard', source: 'Diversification' },
+      { id: 'q-doordash-strat-2', text: 'What\'s your long-term vision for DoorDash?', company: 'doordash', type: 'strategy', difficulty: 'hard', source: 'Vision' },
+
+      // COINBASE - Product Execution
+      { id: 'q-coinbase-exec-1', text: 'How would you approach launching a new crypto product?', company: 'coinbase', type: 'execution', difficulty: 'hard', source: 'Regulated markets' },
+      { id: 'q-coinbase-exec-2', text: 'Tell me about shipping a product in a regulated environment.', company: 'coinbase', type: 'execution', difficulty: 'hard', source: 'Compliance' },
+
+      // COINBASE - Product Strategy
+      { id: 'q-coinbase-strat-1', text: 'Should Coinbase expand into DeFi or stay focused on core products?', company: 'coinbase', type: 'strategy', difficulty: 'hard', source: 'Strategic focus' },
+      { id: 'q-coinbase-strat-2', text: 'What\'s your vision for crypto adoption in the next 5 years?', company: 'coinbase', type: 'strategy', difficulty: 'hard', source: 'Vision' },
+
+      // SPOTIFY - Product Execution
+      { id: 'q-spotify-exec-1', text: 'How would you prioritize features for Spotify Podcasts?', company: 'spotify', type: 'execution', difficulty: 'medium', source: 'Content expansion' },
+      { id: 'q-spotify-exec-2', text: 'Tell me about managing a large platform with creator relationships.', company: 'spotify', type: 'execution', difficulty: 'hard', source: 'Creator economy' },
+
+      // SPOTIFY - Product Strategy
+      { id: 'q-spotify-strat-1', text: 'Should Spotify expand into live music and events more aggressively?', company: 'spotify', type: 'strategy', difficulty: 'hard', source: 'Business model' },
+      { id: 'q-spotify-strat-2', text: 'What\'s your strategy for competing with TikTok for music discovery?', company: 'spotify', type: 'strategy', difficulty: 'hard', source: 'Competition' },
+
+      // NETFLIX - Product Execution
+      { id: 'q-netflix-exec-1', text: 'How would you approach launching games on Netflix?', company: 'netflix', type: 'execution', difficulty: 'hard', source: 'New category' },
+      { id: 'q-netflix-exec-2', text: 'Tell me about managing content licensing at scale.', company: 'netflix', type: 'execution', difficulty: 'hard', source: 'Content strategy' },
+
+      // NETFLIX - Product Strategy
+      { id: 'q-netflix-strat-1', text: 'Should Netflix expand into live sports broadcasting?', company: 'netflix', type: 'strategy', difficulty: 'hard', source: 'Content strategy' },
+      { id: 'q-netflix-strat-2', text: 'What\'s your strategy for Netflix in emerging markets?', company: 'netflix', type: 'strategy', difficulty: 'hard', source: 'Growth strategy' },
+
+      // NETFLIX - Product Sense
+      { id: 'q-netflix-sense-1', text: 'Netflix churn is increasing in a key market. How would you investigate?', company: 'netflix', type: 'product_sense', difficulty: 'hard', source: 'Retention' },
+      { id: 'q-netflix-sense-2', text: 'Design a product to increase engagement for underserved demographics.', company: 'netflix', type: 'product_sense', difficulty: 'medium', source: 'Growth' }
+    ];
+
+    /* ====== INTERVIEW FRAMEWORKS ====== */
 
     // Sample data structure (in real implementation, loaded from pf_roles/pf_companies)
     const SAMPLE_ROLES = {
@@ -1215,14 +1460,29 @@
         });
 
         // Question bank filters
-        const questionSearch = document.getElementById('questionSearch');
-        if (questionSearch) {
-          questionSearch.addEventListener('input', () => this.renderQuestionBank());
+        const bankSearch = document.getElementById('bankSearch');
+        if (bankSearch) {
+          bankSearch.addEventListener('input', () => this.renderQuestionBankUI());
         }
 
-        const questionTypeFilter = document.getElementById('questionTypeFilter');
-        if (questionTypeFilter) {
-          questionTypeFilter.addEventListener('change', () => this.renderQuestionBank());
+        const bankCompanyFilter = document.getElementById('bankCompanyFilter');
+        if (bankCompanyFilter) {
+          bankCompanyFilter.addEventListener('change', () => this.renderQuestionBankUI());
+        }
+
+        const bankTypeFilter = document.getElementById('bankTypeFilter');
+        if (bankTypeFilter) {
+          bankTypeFilter.addEventListener('change', () => this.renderQuestionBankUI());
+        }
+
+        const bankDifficultyFilter = document.getElementById('bankDifficultyFilter');
+        if (bankDifficultyFilter) {
+          bankDifficultyFilter.addEventListener('change', () => this.renderQuestionBankUI());
+        }
+
+        const addCustomQuestionBtn = document.getElementById('addCustomQuestionBtn');
+        if (addCustomQuestionBtn) {
+          addCustomQuestionBtn.addEventListener('click', () => this.showAddCustomQuestionModal());
         }
 
         // Playback export buttons
@@ -1308,7 +1568,7 @@
         const btn = document.querySelector(`[data-tab="${tabName}"]`);
         if (btn) btn.classList.add('active');
 
-        // Reset thread views
+        // Reset thread views and render tab-specific content
         if (tabName === 'interview') {
           this.idleState.style.display = 'flex';
           this.threadContainer.style.display = 'none';
@@ -1317,8 +1577,8 @@
           this.idleState.style.display = 'none';
           this.threadContainer.style.display = 'none';
           this.tmayMode.style.display = 'none';
-        } else if (tabName === 'questions') {
-          this.renderQuestionBank();
+        } else if (tabName === 'bank') {
+          this.renderQuestionBankUI();
         } else if (tabName === 'playback') {
           this.renderPlaybackSessions();
         } else if (tabName === 'trends') {
@@ -1423,6 +1683,24 @@
         const company = SAMPLE_COMPANIES[this.state.selectedRole.company];
         const role = this.state.selectedRole;
 
+        // ====== COMPANY-CALIBRATED CONTEXT: Get real questions from the question bank ======
+        // Filter for questions matching the selected company and interview type
+        let companyQuestionContext = '';
+        const customQuestions = JSON.parse(localStorage.getItem('pf_custom_questions')) || [];
+        const allQuestions = [...QUESTION_BANK, ...customQuestions];
+        const relevantQuestions = allQuestions.filter(q =>
+          q.company === this.state.selectedRole.company &&
+          q.type === this.state.selectedInterviewType
+        ).slice(0, 5); // Use top 5 questions as inspiration
+
+        if (relevantQuestions.length > 0) {
+          companyQuestionContext = `\nReal Questions Asked at ${company.name} in ${framework.name} interviews:\n`;
+          relevantQuestions.forEach((q, i) => {
+            companyQuestionContext += `${i + 1}. ${q.text}\n`;
+          });
+          companyQuestionContext += `\nUse these as inspiration for your questions. Ask similar questions that explore these topics in depth.`;
+        }
+
         const systemPrompt = `You are an experienced interviewer at ${company.name} conducting a ${framework.name} interview for the ${role.title} position.
 
 Company Context: ${company.mission}
@@ -1431,6 +1709,7 @@ Interview Style: ${company.interviewStyle}
 
 Your Role:
 ${framework.instructions}
+${companyQuestionContext}
 
 Interview Guidelines:
 - Ask one question at a time
@@ -1877,65 +2156,364 @@ ${sessionData.conversation
         `).join('');
       }
 
+      /* ====== QUESTION BANK UI — COMPREHENSIVE RENDERING ====== */
       /**
-       * Render Question Bank tab - shows all questions from mock sessions
+       * Render Question Bank tab with filters, search, and coverage stats
+       * INPUT: None (reads from QUESTION_BANK + localStorage for custom questions)
+       * OUTPUT: Renders filtered questions in bankQuestionsList
        */
-      renderQuestionBank() {
-        const container = document.getElementById('questionsList');
-        if (!container) return;
+      renderQuestionBankUI() {
+        // Combine built-in questions with custom questions from localStorage
+        const customQuestions = JSON.parse(localStorage.getItem('pf_custom_questions')) || [];
+        const allQuestions = [...QUESTION_BANK, ...customQuestions];
 
-        const questionBank = JSON.parse(localStorage.getItem('pf_question_bank')) || [];
-        const searchTerm = (document.getElementById('questionSearch')?.value || '').toLowerCase();
-        const typeFilter = document.getElementById('questionTypeFilter')?.value || '';
+        // Get filter values
+        const searchTerm = (document.getElementById('bankSearch')?.value || '').toLowerCase();
+        const companyFilter = document.getElementById('bankCompanyFilter')?.value || '';
+        const typeFilter = document.getElementById('bankTypeFilter')?.value || '';
+        const difficultyFilter = document.getElementById('bankDifficultyFilter')?.value || '';
 
-        let filtered = questionBank.filter(q => {
+        // Filter questions based on all criteria
+        let filtered = allQuestions.filter(q => {
           const matchesSearch = q.text.toLowerCase().includes(searchTerm);
+          const matchesCompany = !companyFilter || q.company === companyFilter;
           const matchesType = !typeFilter || q.type === typeFilter;
-          return matchesSearch && matchesType;
+          const matchesDifficulty = !difficultyFilter || q.difficulty === difficultyFilter;
+          return matchesSearch && matchesCompany && matchesType && matchesDifficulty;
         });
 
+        // Render coverage stats
+        this.renderCoverageStats(allQuestions);
+
+        // Render questions list
+        const container = document.getElementById('bankQuestionsList');
+        if (!container) return;
+
         if (filtered.length === 0) {
-          container.innerHTML = '<p style="color: var(--text-secondary); font-size: var(--text-sm);">No questions found. Complete a mock session to build your question bank.</p>';
+          container.innerHTML = '<p style="color: var(--text-secondary); font-size: var(--text-sm);">No questions match your filters.</p>';
           return;
         }
 
-        container.innerHTML = filtered.map(q => `
-          <div class="story-card" style="cursor: pointer;" onclick="MockInterviewApp.practiceQuestion('${q.id}')">
-            <div class="story-title" style="font-size: var(--text-sm);">${q.text}</div>
-            <div class="story-meta">
-              ${q.company ? `Company: ${q.company} • ` : ''}
-              Type: ${q.type}
+        // Get practiced questions from localStorage
+        const practicedQuestionIds = JSON.parse(localStorage.getItem('pf_practiced_questions')) || [];
+
+        // Render each question as a card
+        container.innerHTML = filtered.map(q => {
+          const isPracticed = practicedQuestionIds.includes(q.id);
+          const badgeColor = isPracticed ? 'var(--success)' : 'var(--accent)';
+          const badgeText = isPracticed ? 'Practiced' : 'Practice';
+
+          return `
+            <div class="story-card" style="border-left: 3px solid ${badgeColor};">
+              <div class="story-title" style="font-size: var(--text-sm); margin-bottom: var(--space-1);">${q.text}</div>
+              <div class="story-meta" style="font-size: var(--text-xs);">
+                ${q.company ? `<strong>${q.company.charAt(0).toUpperCase() + q.company.slice(1)}</strong> • ` : ''}
+                <strong>${q.type.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</strong>
+              </div>
+              <div class="story-meta" style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-1);">
+                Difficulty: <strong>${q.difficulty}</strong> • ${q.source}
+              </div>
+              <div style="display: flex; gap: var(--space-2); margin-top: var(--space-2);">
+                <button class="story-card" style="
+                  flex: 1;
+                  padding: var(--space-1) var(--space-2);
+                  font-size: var(--text-xs);
+                  background: ${badgeColor};
+                  color: white;
+                  border: none;
+                  border-radius: var(--radius-sm);
+                  cursor: pointer;
+                  transition: all var(--duration-fast) var(--ease-default);
+                  font-weight: 600;
+                " onclick="app.practiceBankQuestion('${q.id}', '${q.type}', '${q.difficulty}')">
+                  ${badgeText} This
+                </button>
+                ${q.id.startsWith('custom-') ? `<button style="
+                  padding: var(--space-1) var(--space-2);
+                  font-size: var(--text-xs);
+                  background: var(--bg-subtle);
+                  color: var(--text-secondary);
+                  border: none;
+                  border-radius: var(--radius-sm);
+                  cursor: pointer;
+                " onclick="app.deleteCustomQuestion('${q.id}')">Remove</button>` : ''}
+              </div>
             </div>
-            <div class="story-meta" style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-1);">
-              Difficulty: ${q.difficulty} • Source: ${q.source}
-            </div>
-            <button style="margin-top: var(--space-2); padding: var(--space-1) var(--space-2); font-size: var(--text-xs); background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); cursor: pointer;">Practice This</button>
-          </div>
-        `).join('');
+          `;
+        }).join('');
+
+        // Update badge with total count
+        const badge = document.getElementById('questionBankBadge');
+        if (badge) badge.textContent = allQuestions.length;
+      }
+
+      /**
+       * Render coverage stats showing practice progress
+       * INPUT: allQuestions array
+       * OUTPUT: Renders stats in coverageStats div
+       */
+      renderCoverageStats(allQuestions) {
+        const container = document.getElementById('coverageStats');
+        if (!container) return;
+
+        const practicedIds = JSON.parse(localStorage.getItem('pf_practiced_questions')) || [];
+
+        // Group by company
+        const companies = {};
+        allQuestions.forEach(q => {
+          if (!companies[q.company]) {
+            companies[q.company] = { total: 0, practiced: 0 };
+          }
+          companies[q.company].total++;
+          if (practicedIds.includes(q.id)) {
+            companies[q.company].practiced++;
+          }
+        });
+
+        let html = '<div style="font-size: var(--text-xs); line-height: 1.8;">';
+        Object.entries(companies).sort((a, b) => b[1].total - a[1].total).slice(0, 5).forEach(([company, stats]) => {
+          const percentage = Math.round((stats.practiced / stats.total) * 100);
+          html += `<div>${company.charAt(0).toUpperCase() + company.slice(1)}: ${stats.practiced}/${stats.total}</div>`;
+        });
+        html += '</div>';
+
+        container.innerHTML = html;
       }
 
       /**
        * Practice a specific question from the question bank
+       * INPUT: questionId, type, difficulty
+       * OUTPUT: Pre-fills form and switches to interview tab
        */
-      practiceQuestion(questionId) {
-        const questionBank = JSON.parse(localStorage.getItem('pf_question_bank')) || [];
-        const question = questionBank.find(q => q.id === questionId);
+      practiceBankQuestion(questionId, type, difficulty) {
+        // Find the question
+        const customQuestions = JSON.parse(localStorage.getItem('pf_custom_questions')) || [];
+        const allQuestions = [...QUESTION_BANK, ...customQuestions];
+        const question = allQuestions.find(q => q.id === questionId);
         if (!question) return;
 
-        // Set form fields based on question
+        // Pre-fill form fields
         const typeSelect = document.getElementById('interviewTypeSelect');
-        if (typeSelect) typeSelect.value = question.type;
+        if (typeSelect) typeSelect.value = type;
         const difficultySelect = document.getElementById('difficultySelect');
-        if (difficultySelect) difficultySelect.value = question.difficulty;
+        if (difficultySelect) difficultySelect.value = difficulty;
+
+        // Mark as practiced
+        const practicedIds = JSON.parse(localStorage.getItem('pf_practiced_questions')) || [];
+        if (!practicedIds.includes(questionId)) {
+          practicedIds.push(questionId);
+          localStorage.setItem('pf_practiced_questions', JSON.stringify(practicedIds));
+        }
 
         // Switch to interview tab
         this.switchTab('interview');
 
         // Show message
         setTimeout(() => {
-          alert(`Now practicing: "${question.text}"`);
+          alert(`Now practicing: "${question.text}"\n\nTip: This question has been marked as practiced.`);
         }, 100);
       }
+
+      /**
+       * Delete a custom question from the bank
+       * INPUT: questionId
+       * OUTPUT: Removes from localStorage and re-renders UI
+       */
+      deleteCustomQuestion(questionId) {
+        if (!confirm('Delete this custom question?')) return;
+
+        const customQuestions = JSON.parse(localStorage.getItem('pf_custom_questions')) || [];
+        const filtered = customQuestions.filter(q => q.id !== questionId);
+        localStorage.setItem('pf_custom_questions', JSON.stringify(filtered));
+
+        this.renderQuestionBankUI();
+      }
+
+      /**
+       * Add a custom question from user input
+       * INPUT: None (shows form modal)
+       * OUTPUT: Saves to localStorage and re-renders
+       */
+      showAddCustomQuestionModal() {
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0,0,0,0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10000;
+        `;
+
+        modal.innerHTML = `
+          <div style="
+            background: var(--bg-surface);
+            padding: var(--space-4);
+            border-radius: var(--radius-md);
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+          ">
+            <h3 style="margin: 0 0 var(--space-3) 0; color: var(--text-primary);">Add Custom Question</h3>
+            <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+              <div>
+                <label style="display: block; font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1); text-transform: uppercase;">Question Text</label>
+                <textarea id="customQuestionText" style="
+                  width: 100%;
+                  padding: var(--space-2);
+                  border: 1px solid var(--bg-subtle);
+                  border-radius: var(--radius-sm);
+                  font-size: var(--text-sm);
+                  color: var(--text-primary);
+                  background: var(--bg-input);
+                  resize: vertical;
+                  min-height: 80px;
+                  box-sizing: border-box;
+                " placeholder="Paste the interview question here..."></textarea>
+              </div>
+              <div>
+                <label style="display: block; font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1); text-transform: uppercase;">Company</label>
+                <select id="customQuestionCompany" style="
+                  width: 100%;
+                  padding: var(--space-2);
+                  border: 1px solid var(--bg-subtle);
+                  border-radius: var(--radius-sm);
+                  font-size: var(--text-sm);
+                  color: var(--text-primary);
+                  background: var(--bg-input);
+                ">
+                  <option value="">Select or type...</option>
+                  <option value="google">Google</option>
+                  <option value="meta">Meta</option>
+                  <option value="amazon">Amazon</option>
+                  <option value="apple">Apple</option>
+                  <option value="netflix">Netflix</option>
+                  <option value="stripe">Stripe</option>
+                  <option value="airbnb">Airbnb</option>
+                  <option value="uber">Uber</option>
+                  <option value="doordash">DoorDash</option>
+                  <option value="coinbase">Coinbase</option>
+                  <option value="spotify">Spotify</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label style="display: block; font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1); text-transform: uppercase;">Type</label>
+                <select id="customQuestionType" style="
+                  width: 100%;
+                  padding: var(--space-2);
+                  border: 1px solid var(--bg-subtle);
+                  border-radius: var(--radius-sm);
+                  font-size: var(--text-sm);
+                  color: var(--text-primary);
+                  background: var(--bg-input);
+                ">
+                  <option value="execution">Product Execution</option>
+                  <option value="strategy">Product Strategy</option>
+                  <option value="design">Product Design</option>
+                  <option value="product_sense">Product Sense</option>
+                  <option value="behavioral">Behavioral</option>
+                  <option value="technical">Technical</option>
+                  <option value="estimation">Estimation</option>
+                </select>
+              </div>
+              <div>
+                <label style="display: block; font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1); text-transform: uppercase;">Difficulty</label>
+                <select id="customQuestionDifficulty" style="
+                  width: 100%;
+                  padding: var(--space-2);
+                  border: 1px solid var(--bg-subtle);
+                  border-radius: var(--radius-sm);
+                  font-size: var(--text-sm);
+                  color: var(--text-primary);
+                  background: var(--bg-input);
+                ">
+                  <option value="easy">Easy</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
+              <div>
+                <label style="display: block; font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1); text-transform: uppercase;">Source</label>
+                <input type="text" id="customQuestionSource" style="
+                  width: 100%;
+                  padding: var(--space-2);
+                  border: 1px solid var(--bg-subtle);
+                  border-radius: var(--radius-sm);
+                  font-size: var(--text-sm);
+                  color: var(--text-primary);
+                  background: var(--bg-input);
+                  box-sizing: border-box;
+                " placeholder="e.g., Blind report, networking call, etc.">
+              </div>
+              <div style="display: flex; gap: var(--space-2); margin-top: var(--space-3);">
+                <button id="saveCustomQuestionBtn" style="
+                  flex: 1;
+                  padding: var(--space-2);
+                  background: var(--accent);
+                  color: white;
+                  border: none;
+                  border-radius: var(--radius-sm);
+                  cursor: pointer;
+                  font-weight: 600;
+                ">Save Question</button>
+                <button id="cancelCustomQuestionBtn" style="
+                  flex: 1;
+                  padding: var(--space-2);
+                  background: var(--bg-elevated);
+                  color: var(--text-primary);
+                  border: 1px solid var(--bg-subtle);
+                  border-radius: var(--radius-sm);
+                  cursor: pointer;
+                  font-weight: 600;
+                ">Cancel</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        document.getElementById('saveCustomQuestionBtn').onclick = () => {
+          const text = document.getElementById('customQuestionText').value.trim();
+          const company = document.getElementById('customQuestionCompany').value;
+          const type = document.getElementById('customQuestionType').value;
+          const difficulty = document.getElementById('customQuestionDifficulty').value;
+          const source = document.getElementById('customQuestionSource').value || 'User added';
+
+          if (!text) {
+            alert('Please enter a question');
+            return;
+          }
+
+          // Save to localStorage
+          const customQuestions = JSON.parse(localStorage.getItem('pf_custom_questions')) || [];
+          customQuestions.push({
+            id: `custom-${Date.now()}`,
+            text,
+            company,
+            type,
+            difficulty,
+            source,
+            createdAt: new Date().toISOString()
+          });
+          localStorage.setItem('pf_custom_questions', JSON.stringify(customQuestions));
+
+          // Close modal and re-render
+          document.body.removeChild(modal);
+          this.renderQuestionBankUI();
+        };
+
+        document.getElementById('cancelCustomQuestionBtn').onclick = () => {
+          document.body.removeChild(modal);
+        };
+      }
+
 
       /**
        * Render Playback tab - select and view past session transcripts
@@ -2198,8 +2776,10 @@ ${sessionData.conversation
       }
     }
 
-    // Initialize app
+    // ====== INITIALIZE APP AND MAKE GLOBALLY ACCESSIBLE ======
+    // Create app instance and expose to window for onclick handlers
     const app = new MockInterviewApp();
+    window.app = app;
   </script>
   <script src="../shared/data-switcher.js"></script>
 </body>

@@ -96,7 +96,7 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v1.8.0
+**Current Version:** v1.9.0
 **Last Updated:** 2026-03-10
 
 ### Implementation Status
@@ -105,14 +105,14 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 |--------|-----------|------------|-------------------------------|
 | Pipeline | ~95% | Kanban, CRUD, drag-drop, IndexedDB resume, comms log, URL import, bulk actions, CSV export, company view, fit assessment, keyboard shortcuts | Company auto-enrichment (Clearbit/LinkedIn APIs) |
 | Dashboard | ~90% | 12-rule nudge engine, streak, action queue, feed review, interview intelligence, pipeline funnel, activity feed, weekly stats, real-time storage listener | Google Calendar direct API sync |
-| Job Feed | ~75% | Scoring engine (6 dimensions), preference editor, manual entry, dedup engine, quick-check filter, auto-pipeline creation, analytics, snooze | Gmail/Indeed/Dice APIs, career page scraping |
-| Research Brief | ~65% | Direct Claude API, 14 section prompts, section caching | Citation system polish, MCP artifact save |
+| Job Feed | ~90% | Scoring engine (6 dimensions), preference editor, manual entry, dedup engine, quick-check filter, auto-pipeline creation, analytics, snooze, **career page URL import (Lever/Greenhouse/Ashby/Workday/LinkedIn)**, **Sources tab with analytics** | Gmail/Indeed/Dice direct APIs |
+| Research Brief | ~90% | Direct Claude API, 14 section prompts, section caching, **citation system (footnotes + source aggregation)**, **localStorage artifact save (pf_research_briefs)**, saved briefs panel | MCP artifact save (optional) |
 | Resume Builder | ~95% | Phase 1 JD analysis, Phase 2 streaming generation, cover letter, bullet bank UI, keyword gap detection, version history, **DOCX/PDF export** | Template system, ATS score preview |
 | Outreach | ~95% | 8 message types via Claude, copy/save, sequence scheduling, response tracking, templates, history/analytics, **Open in Gmail + Draft Queue** | Cowork batch send via Gmail API |
-| Mock Interview | ~85% | Multi-turn Claude, 7 types, session storage, story extraction, question bank, session playback, performance trends | Web scraping for real interview questions |
-| Debrief | ~85% | 8-section form, Claude synthesis, history, pattern analysis, timeline, export, Research Brief triggers | Auto-trigger from Calendar events |
-| Comp Intel | ~80% | Data entry, comparison table, Claude negotiation, visualization charts, aggregation stats, 25-point scorecard | Levels.fyi/Glassdoor data scraping |
-| Calendar | ~80% | Manual events, week/month/day views, nudges, smart event-role linking, post-event automation | Google Calendar API |
+| Mock Interview | ~95% | Multi-turn Claude, 7 types, session storage, story extraction, **100+ real question bank (11 companies, 7 types, 3 difficulties)**, session playback, performance trends, **Question Bank tab with filtering**, **custom questions**, **practice tracking**, **company-calibrated Claude sessions** | Community question submissions |
+| Debrief | ~95% | 8-section form, Claude synthesis, history, pattern analysis, timeline, export, Research Brief triggers, **auto-populate from Calendar (pf_pending_debrief)**, **pending events section**, **cross-module debrief status sync** | Auto-trigger scheduling |
+| Comp Intel | ~95% | Data entry, comparison table, Claude negotiation, visualization charts, aggregation stats, 25-point scorecard, **Indeed salary integration**, **bulk import (CSV/JSON/plaintext)**, **market positioning chart with percentiles**, **BATNA negotiation** | Levels.fyi data (manual entry) |
+| Calendar | ~90% | Manual events, week/month/day views, nudges, smart event-role linking, post-event automation, **auto-trigger debrief on past interviews**, **pending debrief badge**, **cross-module pf_pending_debrief** | Google Calendar direct API sync |
 | Sync Hub | ~70% | GCal sync, Indeed sync, Gmail sync (leads + applications), Clay placeholder, file upload, dedup, sync log | Auto-refresh from Cowork scheduled tasks, richer Gmail parsing |
 | MCP Server | ~45% | Tool stubs, storage layer, HTTP bridge skeleton, bug fixes | Build on Mac (`npm run build`), end-to-end testing |
 

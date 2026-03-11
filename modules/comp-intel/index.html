@@ -524,6 +524,140 @@
       color: var(--text-secondary);
       font-size: var(--text-sm);
     }
+
+    /* ================================================================
+       MARKET POSITIONING & IMPORT STYLES
+       ================================================================ */
+
+    .market-position-chart {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+
+    .market-position-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      margin-bottom: var(--space-1);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .market-position-bar {
+      position: relative;
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      height: 40px;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      border: 1px solid var(--bg-subtle);
+    }
+
+    .market-position-range {
+      position: absolute;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: var(--text-xs);
+      font-weight: 600;
+    }
+
+    .market-position-range.market {
+      background: rgba(107, 114, 128, 0.3);
+    }
+
+    .market-position-range.below {
+      background: rgba(239, 68, 68, 0.6);
+    }
+
+    .market-position-range.above {
+      background: rgba(34, 197, 94, 0.6);
+    }
+
+    .market-position-indicator {
+      position: absolute;
+      width: 3px;
+      height: 100%;
+      background: var(--accent);
+      z-index: 10;
+    }
+
+    .market-position-percentile {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-surface);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      margin-left: var(--space-2);
+    }
+
+    .percentile-badge {
+      display: inline-block;
+      padding: var(--space-1) var(--space-2);
+      background: var(--accent);
+      color: white;
+      border-radius: 3px;
+      font-size: var(--text-xs);
+      font-weight: 700;
+    }
+
+    .import-tab-content {
+      display: none;
+    }
+
+    .import-tab-content.active {
+      display: block;
+    }
+
+    .import-preview-item {
+      padding: var(--space-2);
+      background: var(--bg-base);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-2);
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+    }
+
+    .import-preview-item strong {
+      color: var(--text-primary);
+    }
+
+    .data-source-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-1) var(--space-2);
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--accent);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      font-weight: 600;
+    }
+
+    .data-source-badge.indeed {
+      background: rgba(59, 130, 246, 0.1);
+      color: #3b82f6;
+    }
+
+    .data-source-badge.levels-fyi {
+      background: rgba(168, 85, 247, 0.1);
+      color: #a855f7;
+    }
+
+    .data-source-badge.glassdoor {
+      background: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+    }
   </style>
 </head>
 <body>
@@ -550,6 +684,9 @@
       <div class="comp-toolbar">
         <h1 class="comp-toolbar-title">Compensation Intelligence</h1>
         <div class="comp-toolbar-actions">
+          <button class="action-button" id="importCompDataBtn">
+            <span>↓</span> Import Data
+          </button>
           <button class="action-button" id="addCompDataBtn">
             <span>+</span> Add Comp Data
           </button>
@@ -635,6 +772,122 @@
     </div>
   </div>
 
+  <!-- Import Comp Data Modal -->
+  <div class="modal-overlay" id="importCompDataModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Import Compensation Data</h3>
+        <button class="modal-close" data-modal-close="importCompDataModal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Data Format</label>
+          <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-4);">
+            <button class="action-button" style="background: var(--accent);" data-import-tab="paste" onclick="switchImportTab('paste')">Paste Data</button>
+            <button class="action-button" style="background: var(--bg-subtle); color: var(--text-primary);" data-import-tab="indeed" onclick="switchImportTab('indeed')">Sync Indeed Jobs</button>
+            <button class="action-button" style="background: var(--bg-subtle); color: var(--text-primary);" data-import-tab="direct" onclick="switchImportTab('direct')">Direct Entry</button>
+          </div>
+        </div>
+
+        <!-- Paste Data Tab -->
+        <div id="pasteTab" class="import-tab-content active">
+          <div class="form-group">
+            <label class="form-label">Supported Formats</label>
+            <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-3); line-height: 1.6;">
+              <strong>CSV:</strong> Company,Title,Base,Bonus,Equity,Total,Source<br>
+              <strong>JSON:</strong> [{"company":"Google","title":"PM L6","base":250000,...}]<br>
+              <strong>Plain text:</strong> Google PM L6: $250K base, $50K bonus, $300K equity
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Paste Comp Data</label>
+            <textarea id="importPasteData" class="form-input" style="font-family: monospace; min-height: 200px; padding: var(--space-3); font-size: var(--text-sm);" placeholder="Paste CSV, JSON, or plain text here..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Data Source (optional)</label>
+            <select id="importPasteSource" class="form-input">
+              <option value="">Auto-detect</option>
+              <option value="levels.fyi">Levels.fyi</option>
+              <option value="glassdoor">Glassdoor</option>
+              <option value="linkedin">LinkedIn</option>
+              <option value="internal">Internal Data</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Sync Indeed Jobs Tab -->
+        <div id="indeedTab" class="import-tab-content" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">Sync Salary Data from Indeed Feed</label>
+            <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-3);">
+              This will extract salary information from jobs in your Pathfinder feed queue and populate the comp table. Data is automatically attributed to "Indeed".
+            </p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Filter by Job Title (optional)</label>
+            <input type="text" id="indeedFilterTitle" class="form-input" placeholder="e.g. Product Manager">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Filter by Company (optional)</label>
+            <input type="text" id="indeedFilterCompany" class="form-input" placeholder="e.g. Google">
+          </div>
+          <div id="indeedPreview" style="margin-top: var(--space-4); padding: var(--space-3); background: var(--bg-surface); border-radius: var(--radius-md); max-height: 250px; overflow-y: auto; display: none;">
+            <p style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-2);">Preview of jobs to import:</p>
+            <div id="indeedPreviewList"></div>
+          </div>
+        </div>
+
+        <!-- Direct Entry Tab -->
+        <div id="directTab" class="import-tab-content" style="display: none;">
+          <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-4);">
+            Add a single compensation entry for a specific company and role.
+          </p>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Company *</label>
+              <input type="text" id="importDirectCompany" class="form-input" placeholder="e.g. Google">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Job Title *</label>
+              <input type="text" id="importDirectTitle" class="form-input" placeholder="e.g. Senior PM">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Base Salary ($)</label>
+              <input type="number" id="importDirectBase" class="form-input" placeholder="250000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Bonus ($)</label>
+              <input type="number" id="importDirectBonus" class="form-input" placeholder="50000">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Equity ($)</label>
+              <input type="number" id="importDirectEquity" class="form-input" placeholder="200000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Source</label>
+              <select id="importDirectSource" class="form-input">
+                <option value="levels.fyi">Levels.fyi</option>
+                <option value="glassdoor">Glassdoor</option>
+                <option value="linkedin">LinkedIn</option>
+                <option value="indeed">Indeed</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="action-button" style="background: var(--bg-subtle); color: var(--text-primary);" data-modal-close="importCompDataModal">Cancel</button>
+        <button class="action-button" id="importCompDataSubmitBtn">Import Data</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Add Benchmark Modal -->
   <div class="modal-overlay" id="addBenchmarkModal">
     <div class="modal">
@@ -702,6 +955,273 @@
   </div>
 
   <script>
+    /* ====== INDEED SALARY DATA EXTRACTION ====== */
+    /**
+     * Extract salary data from Indeed job listings in the feed queue
+     * INPUT: filter object with optional title and company filters
+     * OUTPUT: array of comp data objects {company, title, base, bonus, equity, total, source}
+     */
+    function extractIndeedSalaryData(filters = {}) {
+      try {
+        const feedQueue = JSON.parse(localStorage.getItem('pf_feed_queue') || '[]');
+        const compExtracted = [];
+
+        feedQueue.forEach(job => {
+          // Apply filters: skip if title or company doesn't match
+          if (filters.title && !job.title?.toLowerCase().includes(filters.title.toLowerCase())) return;
+          if (filters.company && !job.company?.toLowerCase().includes(filters.company.toLowerCase())) return;
+
+          // Extract salary data from Indeed job listing
+          const salaryData = {
+            company: job.company || 'Unknown',
+            title: job.title || 'Untitled Role',
+            base: job.salary?.min || 0,
+            bonus: job.salary?.bonus || 0,
+            equity: job.salary?.equity || 0,
+            total: (job.salary?.min || 0) + (job.salary?.bonus || 0) + (job.salary?.equity || 0),
+            source: 'indeed',
+            sourceUrl: job.url || '',
+            dateAdded: new Date().toISOString()
+          };
+
+          // Only include if it has salary data
+          if (salaryData.base > 0 || salaryData.equity > 0) {
+            compExtracted.push(salaryData);
+          }
+        });
+
+        return compExtracted;
+      } catch (error) {
+        console.error('Error extracting Indeed salary data:', error);
+        return [];
+      }
+    }
+
+    /* ====== BULK COMP DATA IMPORT PARSERS ====== */
+    /**
+     * Parse CSV format: Company,Title,Base,Bonus,Equity,Total,Source
+     * INPUT: CSV string
+     * OUTPUT: array of parsed comp objects
+     */
+    function parseCSVCompData(csvText) {
+      const lines = csvText.trim().split('\n').filter(line => line.trim());
+      const results = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',').map(c => c.trim());
+        if (cols.length >= 3) {
+          results.push({
+            company: cols[0] || 'Unknown',
+            title: cols[1] || 'Untitled',
+            base: parseInt(cols[2]) || 0,
+            bonus: parseInt(cols[3]) || 0,
+            equity: parseInt(cols[4]) || 0,
+            total: parseInt(cols[5]) || 0,
+            source: cols[6] || 'imported',
+            dateAdded: new Date().toISOString()
+          });
+        }
+      }
+
+      return results;
+    }
+
+    /**
+     * Parse JSON array format: [{company, title, base, bonus, equity, total, source}]
+     * INPUT: JSON string
+     * OUTPUT: array of comp objects
+     */
+    function parseJSONCompData(jsonText) {
+      try {
+        const data = JSON.parse(jsonText);
+        if (!Array.isArray(data)) return [];
+
+        return data.map(item => ({
+          company: item.company || item.name || 'Unknown',
+          title: item.title || item.role || 'Untitled',
+          base: parseInt(item.base) || parseInt(item.salary) || 0,
+          bonus: parseInt(item.bonus) || 0,
+          equity: parseInt(item.equity) || 0,
+          total: parseInt(item.total) || 0,
+          source: item.source || 'imported',
+          dateAdded: new Date().toISOString()
+        }));
+      } catch (error) {
+        console.error('JSON parse error:', error);
+        return [];
+      }
+    }
+
+    /**
+     * Parse plain text format: "Google PM L6: $250K base, $50K bonus, $300K equity"
+     * INPUT: plain text string
+     * OUTPUT: array of comp objects
+     */
+    function parsePlainTextCompData(text) {
+      const results = [];
+      const lines = text.trim().split('\n').filter(line => line.trim());
+
+      lines.forEach(line => {
+        // Pattern: Company Title Level: $baseK base, $bonusK bonus, $equityK equity
+        const match = line.match(/^(.+?):\s*\$?(\d+)k?\s+base(?:,\s*\$?(\d+)k?\s+bonus)?(?:,\s*\$?(\d+)k?\s+equity)?/i);
+
+        if (match) {
+          const [, roleInfo, base, bonus, equity] = match;
+          const [company, ...titleParts] = roleInfo.split(/\s+/);
+          const title = titleParts.join(' ') || 'Role';
+
+          results.push({
+            company: company.trim(),
+            title: title.trim(),
+            base: parseInt(base) * 1000,
+            bonus: (parseInt(bonus) || 0) * 1000,
+            equity: (parseInt(equity) || 0) * 1000,
+            total: (parseInt(base) * 1000) + ((parseInt(bonus) || 0) * 1000) + ((parseInt(equity) || 0) * 1000),
+            source: 'manual-text',
+            dateAdded: new Date().toISOString()
+          });
+        }
+      });
+
+      return results;
+    }
+
+    /**
+     * Smart parser: detect format and parse accordingly
+     * INPUT: raw text data
+     * OUTPUT: array of comp objects with auto-detected format
+     */
+    function smartParseCompData(text) {
+      text = text.trim();
+      if (!text) return [];
+
+      // Try JSON first
+      if (text.startsWith('[') || text.startsWith('{')) {
+        const parsed = parseJSONCompData(text);
+        if (parsed.length > 0) return parsed;
+      }
+
+      // Try CSV (check for comma-separated values in header row)
+      const lines = text.split('\n');
+      const firstLine = lines[0].toLowerCase();
+      if (firstLine.includes('company') || firstLine.includes('base') || firstLine.includes('salary')) {
+        const parsed = parseCSVCompData(text);
+        if (parsed.length > 0) return parsed;
+      }
+
+      // Try plain text
+      const plainParsed = parsePlainTextCompData(text);
+      if (plainParsed.length > 0) return plainParsed;
+
+      // Fallback: treat as CSV without header
+      if (text.includes(',')) {
+        return parseCSVCompData('Company,Title,Base,Bonus,Equity,Total\n' + text);
+      }
+
+      return [];
+    }
+
+    /* ====== MARKET POSITIONING ANALYSIS ====== */
+    /**
+     * Calculate percentiles and market positioning for a comp value
+     * INPUT: value (total comp), allValues (array of all comp values)
+     * OUTPUT: {percentile, label, color}
+     */
+    function calculatePercentile(value, allValues) {
+      if (!allValues || allValues.length === 0) {
+        return { percentile: 50, label: 'Market', color: '#6b7280' };
+      }
+
+      const sorted = [...allValues].sort((a, b) => a - b);
+      const index = sorted.findIndex(v => v >= value);
+      const percentile = Math.round((index / sorted.length) * 100);
+
+      if (percentile < 25) {
+        return { percentile, label: 'Below 25th %ile', color: '#ef4444' };
+      } else if (percentile < 50) {
+        return { percentile, label: 'Below Median', color: '#f97316' };
+      } else if (percentile < 75) {
+        return { percentile, label: 'Above Median', color: '#eab308' };
+      } else {
+        return { percentile, label: 'Above 75th %ile', color: '#22c55e' };
+      }
+    }
+
+    /**
+     * Generate market positioning HTML visualization
+     * INPUT: userCompValue (total comp), allCompValues (array of market values)
+     * OUTPUT: HTML string with visualization and percentile labels
+     */
+    function renderMarketPositioning(userCompValue, allCompValues) {
+      if (!allCompValues || allCompValues.length === 0) {
+        return '<p style="color: var(--text-secondary); font-size: var(--text-sm);">No market data available for positioning.</p>';
+      }
+
+      const sorted = [...allCompValues].sort((a, b) => a - b);
+      const p25 = sorted[Math.floor(sorted.length * 0.25)];
+      const p50 = sorted[Math.floor(sorted.length * 0.50)];
+      const p75 = sorted[Math.floor(sorted.length * 0.75)];
+      const p90 = sorted[Math.floor(sorted.length * 0.90)];
+      const min = sorted[0];
+      const max = sorted[sorted.length - 1];
+
+      const range = max - min;
+      const userPosition = Math.max(0, Math.min(100, ((userCompValue - min) / range) * 100));
+
+      const percentileData = calculatePercentile(userCompValue, allCompValues);
+
+      let html = `
+        <div class="comp-card">
+          <div class="comp-card-header">Market Positioning</div>
+          <div style="margin-bottom: var(--space-4);">
+            <div class="market-position-labels">
+              <span>Below Market</span>
+              <span style="text-align: center;">Market Average</span>
+              <span style="text-align: right;">Above Market</span>
+            </div>
+            <div class="market-position-bar" style="position: relative;">
+              <!-- Market range background shading -->
+              <div class="market-position-range market" style="left: ${((p25 - min) / range) * 100}%; width: ${((p75 - p25) / range) * 100}%;"></div>
+              <!-- User position indicator -->
+              <div class="market-position-indicator" style="left: ${userPosition}%;"></div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-3); margin-bottom: var(--space-4);">
+            <div style="text-align: center;">
+              <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1);">25th %ile</div>
+              <div style="font-size: var(--text-sm); font-weight: 600; color: var(--text-primary);">${formatCurrency(p25)}</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1);">Median</div>
+              <div style="font-size: var(--text-sm); font-weight: 600; color: var(--text-primary);">${formatCurrency(p50)}</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1);">75th %ile</div>
+              <div style="font-size: var(--text-sm); font-weight: 600; color: var(--text-primary);">${formatCurrency(p75)}</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1);">90th %ile</div>
+              <div style="font-size: var(--text-sm); font-weight: 600; color: var(--text-primary);">${formatCurrency(p90)}</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1);">Your Offer</div>
+              <div style="font-size: var(--text-sm); font-weight: 700; color: ${percentileData.color};">${formatCurrency(userCompValue)}</div>
+            </div>
+          </div>
+
+          <div style="padding: var(--space-3); background: rgba(${percentileData.color === '#22c55e' ? '34, 197, 94' : percentileData.color === '#eab308' ? '234, 179, 8' : percentileData.color === '#f97316' ? '249, 115, 22' : '239, 68, 68'}, 0.1); border-radius: var(--radius-sm); text-align: center;">
+            <span class="percentile-badge">${percentileData.percentile}th Percentile</span>
+            <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: var(--space-2); margin-bottom: 0;">
+              Your offer is <strong>${percentileData.label}</strong>
+            </p>
+          </div>
+        </div>
+      `;
+
+      return html;
+    }
+
     // ================================================================
     // DATA MANAGEMENT
     // ================================================================
@@ -863,7 +1383,7 @@
 
     /**
      * COMPARISON TABLE TAB
-     * Sortable table with all roles and comp data
+     * Sortable table with all roles and comp data, including source attribution
      */
     function renderComparisonTable(roles, compData, prefs) {
       const rolesWithComp = roles.filter(r => compData[r.id]);
@@ -886,6 +1406,7 @@
               <th style="text-align: right; padding: var(--space-3); color: var(--text-primary); font-weight: 600;">Bonus</th>
               <th style="text-align: right; padding: var(--space-3); color: var(--text-primary); font-weight: 600;">Equity</th>
               <th style="text-align: right; padding: var(--space-3); color: var(--text-primary); font-weight: 600;">Total</th>
+              <th style="text-align: center; padding: var(--space-3); color: var(--text-primary); font-weight: 600;">Source</th>
               <th style="text-align: center; padding: var(--space-3); color: var(--text-primary); font-weight: 600;">vs Target</th>
             </tr>
           </thead>
@@ -902,6 +1423,12 @@
         const vsTarget = target > 0 ? Math.round(((total - target) / target) * 100) : 0;
         const vsTargetColor = vsTarget >= 0 ? 'var(--success-color)' : 'var(--danger)';
 
+        // Determine source badge styling
+        const sourceClass = d.source ? d.source.toLowerCase().replace('.', '-') : 'other';
+        const sourceBadgeClass = sourceClass === 'indeed' ? 'indeed' :
+                                sourceClass === 'levels-fyi' || sourceClass === 'levels.fyi' ? 'levels-fyi' :
+                                sourceClass === 'glassdoor' ? 'glassdoor' : '';
+
         html += `
           <tr style="border-bottom: 1px solid var(--border-color);">
             <td style="padding: var(--space-3); color: var(--text-primary);">${role.company}</td>
@@ -910,6 +1437,9 @@
             <td style="padding: var(--space-3); text-align: right; color: var(--text-secondary);">${formatCurrency(bonus)}</td>
             <td style="padding: var(--space-3); text-align: right; color: var(--text-secondary);">${d.equity || '—'}</td>
             <td style="padding: var(--space-3); text-align: right; color: var(--text-primary); font-weight: 600;">${formatCurrency(total)}</td>
+            <td style="padding: var(--space-3); text-align: center;">
+              <span class="data-source-badge ${sourceBadgeClass}">${d.source || 'Unknown'}</span>
+            </td>
             <td style="padding: var(--space-3); text-align: center; color: ${vsTargetColor}; font-weight: 600;">${vsTarget > 0 ? '+' : ''}${vsTarget}%</td>
           </tr>
         `;
@@ -1226,6 +1756,8 @@
       const bonusAmount = (data.baseMax || 0) * (data.bonusTarget || 0) / 100;
 
       let comparisonHtml = '';
+      let marketPositioningHtml = '';
+
       if (benchmarks.length > 0) {
         const avgBase = Math.round(benchmarks.reduce((sum, b) => sum + (b.base || 0), 0) / benchmarks.length);
         const avgTotal = Math.round(benchmarks.reduce((sum, b) => sum + (b.total || 0), 0) / benchmarks.length);
@@ -1236,7 +1768,7 @@
             <div class="comp-card-header">Market Comparison</div>
             <div style="margin-bottom: var(--space-3);">
               <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-2);">
-                Based on ${benchmarks.length} benchmark${benchmarks.length !== 1 ? 's' : ''}
+                Based on ${benchmarks.length} benchmark${benchmarks.length !== 1 ? 's' : ''} from multiple sources
               </p>
             </div>
             <div class="form-row">
@@ -1251,6 +1783,10 @@
             </div>
           </div>
         `;
+
+        // Generate market positioning chart with percentile visualization
+        const allTotals = benchmarks.map(b => b.total || 0).filter(v => v > 0);
+        marketPositioningHtml = renderMarketPositioning(totalComp, allTotals);
       }
 
       return `
@@ -1276,12 +1812,13 @@
         <div class="comp-card">
           <div class="comp-card-header">Offer Details</div>
           <div style="margin-bottom: var(--space-3);">
-            <p style="font-size: var(--text-xs); color: var(--text-tertiary); margin-bottom: var(--space-2); text-transform: uppercase; letter-spacing: 0.05em;">Source: ${data.source || 'Unknown'}</p>
+            <p style="font-size: var(--text-xs); color: var(--text-tertiary); margin-bottom: var(--space-2); text-transform: uppercase; letter-spacing: 0.05em;">Source: <span class="data-source-badge ${data.source?.toLowerCase()}">${data.source || 'Unknown'}</span></p>
           </div>
           ${data.benefits ? `<p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-2);">Benefits: ${data.benefits}</p>` : ''}
           <button class="action-button" onclick="setCompEntryValues('${role.id}')">Edit Details</button>
         </div>
 
+        ${marketPositioningHtml}
         ${comparisonHtml}
 
         ${prefs.compRange ? `
@@ -1577,11 +2114,42 @@
         const baseMax = data.baseMax || 0;
         const bonus = data.bonusTarget || 0;
         const equity = data.equity || 'Not specified';
+        const totalComp = baseMax + (baseMax * bonus / 100) + (data.signingBonus || 0);
 
         const roleBenchmarks = benchmarks.filter(b => b.company === role.company);
         const marketBase = roleBenchmarks.length > 0
           ? Math.round(roleBenchmarks.reduce((sum, b) => sum + (b.base || 0), 0) / roleBenchmarks.length)
           : baseMax;
+
+        // Find competing offers (other roles with higher comp or from competing companies)
+        const allRolesWithComp = roles.filter(r => compData[r.id]);
+        const competingOffers = allRolesWithComp
+          .filter(r => r.id !== roleId)
+          .map(r => {
+            const d = compData[r.id];
+            const total = (d.baseMax || 0) + (d.bonusTarget ? (d.baseMax || 0) * d.bonusTarget / 100 : 0) + (d.signingBonus || 0);
+            return { role: r, comp: d, total };
+          })
+          .sort((a, b) => b.total - a.total)
+          .slice(0, 3); // Top 3 competing offers
+
+        let competingOffersText = '';
+        if (competingOffers.length > 0) {
+          competingOffersText = '\n\nCompeting Offers (Leverage Points):\n';
+          competingOffers.forEach((offer, idx) => {
+            competingOffersText += `${idx + 1}. ${offer.role.company} – ${offer.role.title}: ${formatCurrency(offer.total)} total comp\n`;
+          });
+        }
+
+        // Calculate BATNA (Best Alternative to Negotiated Agreement)
+        const batna = competingOffers.length > 0
+          ? Math.max(...competingOffers.map(o => o.total))
+          : totalComp;
+
+        let batnaText = '';
+        if (batna > totalComp) {
+          batnaText = `\nBATNA (Best Alternative): ${formatCurrency(batna)} – You have ${formatCurrency(batna - totalComp)} of upside potential to negotiate.`;
+        }
 
         const userPrompt = `
 Generate a negotiation strategy for the following compensation offer:
@@ -1589,29 +2157,38 @@ Generate a negotiation strategy for the following compensation offer:
 Role: ${role.title} at ${role.company}
 Company Stage: ${role.funding || 'Unknown'}
 Level: ${role.level || 'Unknown'}
+Location: ${role.location || 'Not specified'}
 
-Offer Details:
+Current Offer Details:
 - Base Salary: ${formatCurrency(baseMax)}
 - Bonus Target: ${bonus}%
 - Equity: ${equity}
-- Total Comp (estimated): ${formatCurrency(baseMax + (baseMax * bonus / 100))}
+- Signing Bonus: ${data.signingBonus ? formatCurrency(data.signingBonus) : 'None'}
+- Total Comp (estimated): ${formatCurrency(totalComp)}
 
 Market Context:
-- Market average base for similar role: ${formatCurrency(marketBase)}
-- Your target comp range: ${prefs.compRange ? formatCurrency(prefs.compRange.min) + ' – ' + formatCurrency(prefs.compRange.max) : 'Not set'}
-- Benchmarks available: ${roleBenchmarks.length}
+- Market average base for this role: ${formatCurrency(marketBase)}
+- Total benchmarks available: ${benchmarks.length}
+- Number of data points from same company: ${roleBenchmarks.length}
+${competingOffersText}${batnaText}
 
-Please provide:
-1. Strengths of this offer (what's good about it)
-2. Weaknesses / negotiation points (what's below market)
-3. Specific counter-offer suggestions with numbers
-4. Talking points for the negotiation call
-5. Risk assessment (likelihood of success for each negotiation point)
+User's Target Range: ${prefs.compRange ? formatCurrency(prefs.compRange.min) + ' – ' + formatCurrency(prefs.compRange.max) : 'Not set'}
 
-Format the response as clear, actionable HTML with headings and lists.
+Please provide an actionable negotiation strategy including:
+1. Overall Assessment - Is this offer strong, weak, or moderate compared to market?
+2. Strengths of this offer (what's already competitive or good)
+3. Negotiation Opportunities (specific areas below market or that can be improved)
+4. Specific Counter-Offer Recommendations with dollar amounts
+5. Talking Points & Justifications for the negotiation call
+6. Risk Assessment - Which asks are realistic and which are long-shots?
+7. Alternative Negotiation Paths (if direct counter is rejected)
+8. Recommended Timeline & Negotiation Sequence
+
+Be specific with numbers. Use the market data and competing offers as leverage points.
+Format as clear, actionable HTML with strong headings and bullet lists.
         `;
 
-        const systemPrompt = `You are an expert compensation negotiation advisor. Provide specific, data-driven advice for negotiating job offers. Be direct and actionable. Focus on what can realistically be negotiated at this stage.`;
+        const systemPrompt = `You are an expert compensation negotiation advisor with 10+ years of experience helping professionals negotiate tech job offers. Provide specific, data-driven advice that is direct and actionable. Focus on realistic negotiation strategies based on market data and competing alternatives. Include specific dollar amounts and timing recommendations.`;
 
         const result = await PF.claude.generateHTML(systemPrompt, userPrompt);
 
@@ -1629,11 +2206,217 @@ Format the response as clear, actionable HTML with headings and lists.
       }
     }
 
+    /* ====== IMPORT UI MANAGEMENT ====== */
+    /**
+     * Switch between import modal tabs
+     * INPUT: tabName (paste, indeed, direct)
+     * OUTPUT: updates visible tab in modal
+     */
+    function switchImportTab(tabName) {
+      // Hide all tabs
+      document.getElementById('pasteTab').classList.remove('active');
+      document.getElementById('indeedTab').classList.remove('active');
+      document.getElementById('directTab').classList.remove('active');
+
+      // Update buttons
+      document.querySelectorAll('[data-import-tab]').forEach(btn => {
+        btn.style.background = 'var(--bg-subtle)';
+        btn.style.color = 'var(--text-primary)';
+      });
+
+      // Show selected tab and highlight button
+      if (tabName === 'paste') {
+        document.getElementById('pasteTab').classList.add('active');
+        document.querySelector('[data-import-tab="paste"]').style.background = 'var(--accent)';
+        document.querySelector('[data-import-tab="paste"]').style.color = 'white';
+      } else if (tabName === 'indeed') {
+        document.getElementById('indeedTab').classList.add('active');
+        document.querySelector('[data-import-tab="indeed"]').style.background = 'var(--accent)';
+        document.querySelector('[data-import-tab="indeed"]').style.color = 'white';
+        previewIndeedJobs();
+      } else if (tabName === 'direct') {
+        document.getElementById('directTab').classList.add('active');
+        document.querySelector('[data-import-tab="direct"]').style.background = 'var(--accent)';
+        document.querySelector('[data-import-tab="direct"]').style.color = 'white';
+      }
+    }
+
+    /**
+     * Preview Indeed jobs that will be imported
+     * INPUT: none (reads from filter inputs)
+     * OUTPUT: updates preview list in modal
+     */
+    function previewIndeedJobs() {
+      const titleFilter = document.getElementById('indeedFilterTitle')?.value || '';
+      const companyFilter = document.getElementById('indeedFilterCompany')?.value || '';
+
+      const jobs = extractIndeedSalaryData({
+        title: titleFilter,
+        company: companyFilter
+      });
+
+      const previewDiv = document.getElementById('indeedPreview');
+      const listDiv = document.getElementById('indeedPreviewList');
+
+      if (jobs.length === 0) {
+        previewDiv.style.display = 'none';
+        return;
+      }
+
+      previewDiv.style.display = 'block';
+      listDiv.innerHTML = jobs.map(job => `
+        <div class="import-preview-item">
+          <strong>${job.company}</strong> – ${job.title}<br>
+          Base: ${formatCurrency(job.base)} | Bonus: ${formatCurrency(job.bonus)} | Equity: ${formatCurrency(job.equity)}<br>
+          Total: ${formatCurrency(job.total)}
+        </div>
+      `).join('');
+    }
+
+    /**
+     * Execute bulk import of comp data from selected source
+     * INPUT: none (reads from modal form values)
+     * OUTPUT: saves imported data to localStorage, refreshes UI
+     */
+    async function executeCompDataImport() {
+      const activeTab = document.querySelector('.import-tab-content.active');
+      if (!activeTab) return;
+
+      let compDataToImport = [];
+      let source = 'imported';
+
+      try {
+        if (activeTab === document.getElementById('pasteTab')) {
+          // Paste tab: parse the data
+          const pasteData = document.getElementById('importPasteData').value;
+          if (!pasteData.trim()) {
+            alert('Please paste compensation data.');
+            return;
+          }
+
+          const selectedSource = document.getElementById('importPasteSource').value;
+          compDataToImport = smartParseCompData(pasteData);
+          source = selectedSource || 'imported';
+
+          if (compDataToImport.length === 0) {
+            alert('Could not parse the data. Make sure it\'s in CSV, JSON, or plain text format.');
+            return;
+          }
+
+          // Set source for all entries if user selected a source
+          if (selectedSource) {
+            compDataToImport = compDataToImport.map(item => ({ ...item, source: selectedSource }));
+          }
+
+        } else if (activeTab === document.getElementById('indeedTab')) {
+          // Indeed tab: extract from feed
+          const titleFilter = document.getElementById('indeedFilterTitle')?.value || '';
+          const companyFilter = document.getElementById('indeedFilterCompany')?.value || '';
+
+          compDataToImport = extractIndeedSalaryData({
+            title: titleFilter,
+            company: companyFilter
+          });
+
+          if (compDataToImport.length === 0) {
+            alert('No Indeed jobs with salary data found. Check your filters.');
+            return;
+          }
+
+        } else if (activeTab === document.getElementById('directTab')) {
+          // Direct tab: create single entry
+          const company = document.getElementById('importDirectCompany').value;
+          const title = document.getElementById('importDirectTitle').value;
+          const base = parseInt(document.getElementById('importDirectBase').value) || 0;
+          const bonus = parseInt(document.getElementById('importDirectBonus').value) || 0;
+          const equity = parseInt(document.getElementById('importDirectEquity').value) || 0;
+          const sourceValue = document.getElementById('importDirectSource').value;
+
+          if (!company || !title) {
+            alert('Company and Title are required.');
+            return;
+          }
+
+          compDataToImport = [{
+            company,
+            title,
+            base,
+            bonus,
+            equity,
+            total: base + bonus + equity,
+            source: sourceValue || 'other',
+            dateAdded: new Date().toISOString()
+          }];
+        }
+
+        // Save imported comp data to localStorage as benchmarks (market data)
+        let benchmarks = getCompBenchmarks();
+        compDataToImport.forEach(item => {
+          benchmarks.push({
+            company: item.company,
+            title: item.title,
+            base: item.base,
+            equity: item.equity,
+            bonus: item.bonus,
+            total: item.total,
+            source: item.source,
+            sourceUrl: item.sourceUrl || '',
+            dateAdded: item.dateAdded || new Date().toISOString()
+          });
+        });
+
+        saveCompBenchmarks(benchmarks);
+
+        alert(`Successfully imported ${compDataToImport.length} compensation data point(s)!`);
+        closeModal('importCompDataModal');
+
+        // Clear form
+        document.getElementById('importPasteData').value = '';
+        document.getElementById('importPasteSource').value = '';
+        document.getElementById('indeedFilterTitle').value = '';
+        document.getElementById('indeedFilterCompany').value = '';
+        document.getElementById('importDirectCompany').value = '';
+        document.getElementById('importDirectTitle').value = '';
+        document.getElementById('importDirectBase').value = '';
+        document.getElementById('importDirectBonus').value = '';
+        document.getElementById('importDirectEquity').value = '';
+
+        // Refresh the UI
+        renderRolesList();
+        const selectedId = sessionStorage.getItem('pf_selectedRoleId');
+        if (selectedId) {
+          selectRole(selectedId);
+        }
+
+      } catch (error) {
+        alert('Error importing data: ' + error.message);
+        console.error(error);
+      }
+    }
+
     // ================================================================
     // EVENT LISTENERS & INITIALIZATION
     // ================================================================
 
     document.addEventListener('DOMContentLoaded', () => {
+      // Import comp data button
+      document.getElementById('importCompDataBtn').addEventListener('click', () => {
+        openModal('importCompDataModal');
+        switchImportTab('paste'); // Default to paste tab
+      });
+
+      // Import comp data submission
+      document.getElementById('importCompDataSubmitBtn').addEventListener('click', executeCompDataImport);
+
+      // Indeed filters with live preview
+      const indeedFilterInputs = ['indeedFilterTitle', 'indeedFilterCompany'];
+      indeedFilterInputs.forEach(inputId => {
+        const elem = document.getElementById(inputId);
+        if (elem) {
+          elem.addEventListener('input', previewIndeedJobs);
+        }
+      });
+
       // Add comp data button
       document.getElementById('addCompDataBtn').addEventListener('click', () => {
         openModal('addCompDataModal');

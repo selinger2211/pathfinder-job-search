@@ -1163,6 +1163,182 @@
       font-size: var(--text-sm);
       max-width: 280px;
     }
+
+    /* ====== SOURCE ANALYTICS STYLES ====== */
+    .source-analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+
+    .source-stat-card {
+      padding: var(--space-4);
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      border-left: 3px solid var(--accent);
+    }
+
+    .source-stat-label {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-2);
+      font-weight: 600;
+    }
+
+    .source-stat-value {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .source-stat-sub {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+    }
+
+    /* Source filter toggles */
+    .source-filters {
+      display: grid;
+      gap: var(--space-3);
+    }
+
+    .source-filter-item {
+      display: flex;
+      align-items: center;
+      padding: var(--space-3);
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .source-filter-item:hover {
+      border-color: var(--accent);
+      background: var(--bg-elevated);
+    }
+
+    .source-filter-checkbox {
+      width: 18px;
+      height: 18px;
+      margin-right: var(--space-3);
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+
+    .source-filter-info {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .source-filter-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+    }
+
+    .source-filter-count {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      background: var(--bg-base);
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+    }
+
+    /* Source visualization / bar chart */
+    .source-visualization {
+      padding: var(--space-4);
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+    }
+
+    .source-chart-title {
+      font-weight: 700;
+      margin-bottom: var(--space-3);
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+    }
+
+    .source-chart-item {
+      margin-bottom: var(--space-4);
+    }
+
+    .source-chart-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: var(--text-xs);
+      margin-bottom: var(--space-2);
+      color: var(--text-secondary);
+    }
+
+    .source-chart-bar-container {
+      width: 100%;
+      height: 20px;
+      background: var(--bg-base);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+    }
+
+    .source-chart-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+      border-radius: var(--radius-pill);
+      transition: width var(--duration-default) var(--ease-default);
+      position: relative;
+    }
+
+    .source-chart-bar::after {
+      content: attr(data-percent);
+      position: absolute;
+      right: var(--space-2);
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+    }
+
+    /* Form styles for import modal */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-3);
+    }
+
+    /* URL detection success/error message */
+    .url-detection-success {
+      padding: var(--space-3);
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: var(--text-xs);
+      margin-bottom: var(--space-3);
+    }
+
+    .url-detection-error {
+      padding: var(--space-3);
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: var(--radius-sm);
+      color: var(--danger);
+      font-size: var(--text-xs);
+      margin-bottom: var(--space-3);
+    }
+
+    .url-detection-info {
+      font-size: 12px;
+      margin-top: 4px;
+      opacity: 0.8;
+    }
   </style>
 </head>
 <body>
@@ -1340,6 +1516,12 @@
                 <line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line>
               </svg>
             </button>
+            <button class="btn btn-ghost btn-sm" id="importFromUrlBtn" title="Import from career page URL">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+              Import URL
+            </button>
             <button class="btn btn-primary btn-sm" id="addRoleManuallyBtn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
@@ -1381,12 +1563,27 @@
           </div>
         </div>
 
-        <!-- TAB 3: Feed Sources -->
+        <!-- TAB 3: Feed Sources & Management -->
         <div class="tab-content" id="tab-sources">
-          <div style="padding: var(--space-4);">
-            <div class="demo-banner" id="sourcesBanner">Sample Data — Feed sources configured but not connected to real APIs</div>
-            <div class="feed-sources" id="feedSources">
-              <!-- Source cards populated by JavaScript -->
+          <div style="padding: var(--space-4); overflow-y: auto; height: 100%;">
+            <div style="margin-bottom: var(--space-6);">
+              <h3 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-3);">Source Analytics</h3>
+              <div class="source-analytics-grid" id="sourceAnalytics">
+                <!-- Source stats populated by JavaScript -->
+              </div>
+            </div>
+
+            <div>
+              <h3 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-3);">Source Management</h3>
+              <div class="source-filters" id="sourceFilters">
+                <!-- Source toggle filters populated by JavaScript -->
+              </div>
+            </div>
+
+            <div style="margin-top: var(--space-6);">
+              <div class="source-visualization" id="sourceChart">
+                <!-- Bar chart for source breakdown populated by JavaScript -->
+              </div>
             </div>
           </div>
         </div>
@@ -1507,6 +1704,88 @@
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeScoreResultModal()">Back</button>
         <button class="btn btn-primary" id="addToPipelineBtn" onclick="confirmAddToPipeline()">Add to Pipeline</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Import from Career Page URL -->
+  <div class="modal-overlay" id="importUrlModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Import from Career Page URL</h2>
+        <button class="modal-close" onclick="closeImportUrlModal()">✕</button>
+      </div>
+
+      <div id="urlImportInfo" style="padding: var(--space-3); background: var(--bg-base); border-radius: var(--radius-sm); margin-bottom: var(--space-4); font-size: var(--text-xs); color: var(--text-secondary);">
+        Paste a job posting URL from Lever, Greenhouse, Ashby, LinkedIn, Workday or another career page. We'll extract the company and basic details automatically.
+      </div>
+
+      <form id="importUrlForm" onsubmit="handleImportUrlSubmit(event)">
+        <!-- URL Input -->
+        <div class="form-group">
+          <label class="form-label">Job Posting URL *</label>
+          <div style="display: flex; gap: var(--space-2);">
+            <input type="url" class="form-input" id="importUrlInput" placeholder="https://jobs.lever.co/company/posting-id" required style="flex: 1;">
+            <button type="button" class="btn btn-ghost" onclick="pasteFromClipboard()" title="Paste from clipboard">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- URL Detection Result -->
+        <div id="urlDetectionResult" style="margin-bottom: var(--space-4);"></div>
+
+        <!-- Pre-filled Company Name -->
+        <div class="form-group">
+          <label class="form-label">Company Name</label>
+          <input type="text" class="form-input" id="importCompany" placeholder="Auto-detected from URL" readonly>
+        </div>
+
+        <!-- Pre-filled ATS Source -->
+        <div class="form-group">
+          <label class="form-label">Job Source</label>
+          <input type="text" class="form-input" id="importSource" placeholder="Auto-detected from URL" readonly>
+        </div>
+
+        <!-- User can fill in remaining fields -->
+        <div class="form-group">
+          <label class="form-label">Role Title *</label>
+          <input type="text" class="form-input" id="importTitle" placeholder="e.g., Senior Product Manager" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Job Description (JD Text) *</label>
+          <textarea class="form-textarea" id="importJD" placeholder="Paste job description here for scoring" required></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Location</label>
+            <input type="text" class="form-input" id="importLocation" placeholder="e.g., San Francisco, CA">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Domain</label>
+            <input type="text" class="form-input" id="importDomain" placeholder="e.g., AI/ML, Fintech">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Salary Min ($K)</label>
+            <input type="number" class="form-input" id="importSalaryMin" placeholder="320">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Salary Max ($K)</label>
+            <input type="number" class="form-input" id="importSalaryMax" placeholder="450">
+          </div>
+        </div>
+      </form>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeImportUrlModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitImportUrl()">Extract & Score</button>
       </div>
     </div>
   </div>
@@ -3129,6 +3408,15 @@
       // Score the role
       const scoring = scoreRole(manualRole, state.preferences);
 
+      // Log to feed runs
+      logFeedRun({
+        timestamp: new Date(),
+        sources: ['Manual'],
+        found: 1,
+        scored40plus: scoring.score >= 40 ? 1 : 0,
+        errors: 0
+      });
+
       // Store for confirmation
       state.pendingRole = manualRole;
       state.pendingRoleScore = scoring;
@@ -3296,6 +3584,359 @@
       submitAddRole();
     }
 
+    /* ====== CAREER PAGE URL IMPORT ====== */
+
+    /**
+     * Parse career page URL to extract company name and ATS platform.
+     * INPUT: URL string from various job boards (Lever, Greenhouse, Ashby, LinkedIn, Workday)
+     * OUTPUT: { company, source, success: boolean }
+     */
+    function parseCareerPageUrl(url) {
+      try {
+        const urlObj = new URL(url);
+        const hostname = urlObj.hostname.toLowerCase();
+        const pathname = urlObj.pathname.toLowerCase();
+
+        // Lever format: jobs.lever.co/{company}/{posting-id}
+        if (hostname.includes('lever.co')) {
+          const parts = pathname.split('/').filter(p => p);
+          if (parts.length >= 1) {
+            const company = parts[0].split('-').map(word =>
+              word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+            return { company, source: 'Lever', success: true };
+          }
+        }
+
+        // Greenhouse format: boards.greenhouse.io/{company}/jobs/{id}
+        if (hostname.includes('greenhouse.io')) {
+          const parts = pathname.split('/').filter(p => p);
+          if (parts.length >= 1) {
+            const company = parts[0].split('-').map(word =>
+              word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+            return { company, source: 'Greenhouse', success: true };
+          }
+        }
+
+        // Ashby format: jobs.ashbyhq.com/{company}/{posting-id}
+        if (hostname.includes('ashbyhq.com')) {
+          const parts = pathname.split('/').filter(p => p);
+          if (parts.length >= 1) {
+            const company = parts[0].split('-').map(word =>
+              word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+            return { company, source: 'Ashby', success: true };
+          }
+        }
+
+        // Workday format: {company}.wd5.myworkdayjobs.com/
+        if (hostname.includes('myworkdayjobs.com')) {
+          const subdomain = hostname.split('.')[0];
+          const company = subdomain.split('-').map(word =>
+            word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' ');
+          return { company, source: 'Workday', success: true };
+        }
+
+        // LinkedIn format: linkedin.com/jobs/view/{id}
+        if (hostname.includes('linkedin.com')) {
+          return { company: '', source: 'LinkedIn', success: true };
+        }
+
+        // Generic career page (fallback)
+        return { company: '', source: 'Career Page', success: true };
+      } catch (e) {
+        return { company: '', source: '', success: false, error: 'Invalid URL format' };
+      }
+    }
+
+    /**
+     * Open the URL import modal
+     */
+    function openImportUrlModal() {
+      const modal = document.getElementById('importUrlModal');
+      if (modal) {
+        modal.classList.add('active');
+        document.getElementById('importUrlForm').reset();
+        document.getElementById('urlDetectionResult').innerHTML = '';
+      }
+    }
+
+    /**
+     * Close the URL import modal
+     */
+    function closeImportUrlModal() {
+      const modal = document.getElementById('importUrlModal');
+      if (modal) {
+        modal.classList.remove('active');
+      }
+    }
+
+    /**
+     * Handle paste from clipboard button
+     */
+    function pasteFromClipboard() {
+      navigator.clipboard.readText().then(text => {
+        document.getElementById('importUrlInput').value = text;
+        detectUrlMetadata();
+      }).catch(err => {
+        showToast('Clipboard access not available', 'error');
+      });
+    }
+
+    /**
+     * Detect URL metadata (company, source) as user types/pastes
+     */
+    function detectUrlMetadata() {
+      const url = document.getElementById('importUrlInput').value.trim();
+      const resultContainer = document.getElementById('urlDetectionResult');
+
+      if (!url) {
+        resultContainer.innerHTML = '';
+        document.getElementById('importCompany').value = '';
+        document.getElementById('importSource').value = '';
+        return;
+      }
+
+      const parsed = parseCareerPageUrl(url);
+
+      if (parsed.success && parsed.company) {
+        resultContainer.innerHTML = `
+          <div class="url-detection-success">
+            ✓ Detected: <strong>${parsed.company}</strong> on <strong>${parsed.source}</strong>
+          </div>
+        `;
+        document.getElementById('importCompany').value = parsed.company;
+        document.getElementById('importSource').value = parsed.source;
+      } else if (parsed.success && !parsed.company) {
+        resultContainer.innerHTML = `
+          <div class="url-detection-success">
+            ✓ Recognized: <strong>${parsed.source}</strong> platform
+            <div class="url-detection-info">Please fill in the company name manually</div>
+          </div>
+        `;
+        document.getElementById('importSource').value = parsed.source;
+      } else {
+        resultContainer.innerHTML = `
+          <div class="url-detection-error">
+            ⚠️ Could not automatically detect company from URL<br>
+            <div class="url-detection-info">Supported: Lever, Greenhouse, Ashby, Workday, LinkedIn. Please fill in manually.</div>
+          </div>
+        `;
+      }
+    }
+
+    /**
+     * Handle form submission for URL import
+     */
+    function handleImportUrlSubmit(event) {
+      event.preventDefault();
+      submitImportUrl();
+    }
+
+    /**
+     * Submit URL import for scoring
+     */
+    function submitImportUrl() {
+      const url = document.getElementById('importUrlInput').value.trim();
+      const company = document.getElementById('importCompany').value.trim();
+      const source = document.getElementById('importSource').value.trim() || 'Career Page';
+      const title = document.getElementById('importTitle').value.trim();
+      const jd = document.getElementById('importJD').value.trim();
+      const location = document.getElementById('importLocation').value.trim() || 'Not specified';
+      const domain = document.getElementById('importDomain').value.trim() || 'General';
+      const salaryMin = document.getElementById('importSalaryMin').value;
+      const salaryMax = document.getElementById('importSalaryMax').value;
+
+      if (!company || !title || !jd) {
+        showToast('Company, title, and JD are required', 'error');
+        return;
+      }
+
+      // Check for duplicates
+      const dedup = checkDedup(company, title);
+      if (dedup.type === 'exact') {
+        showToast('This role already exists in your pipeline', 'error');
+        return;
+      }
+
+      // Create role object from URL import
+      const salary = salaryMin && salaryMax ? `$${salaryMin}K - $${salaryMax}K` : 'Salary not listed';
+
+      const importedRole = {
+        id: `url-import-${Date.now()}`,
+        company,
+        title,
+        jd,
+        url,
+        location,
+        remote: location.toLowerCase().includes('remote'),
+        salary,
+        stage: 'Series B+',
+        domain,
+        posted: 'just now',
+        source: source,
+        logo: company.charAt(0).toUpperCase(),
+        feedMetadata: {
+          sourceType: 'career_page_import',
+          sourceId: `url-import-${Date.now()}`,
+          sourceUrl: url,
+          extractedAt: new Date().toISOString()
+        }
+      };
+
+      // Score the role
+      const scoring = scoreRole(importedRole, state.preferences);
+
+      // Log to feed runs
+      logFeedRun({
+        timestamp: new Date(),
+        sources: [source],
+        found: 1,
+        scored40plus: scoring.score >= 40 ? 1 : 0,
+        errors: 0
+      });
+
+      // Store for confirmation
+      state.pendingRole = importedRole;
+      state.pendingRoleScore = scoring;
+
+      // Show score result modal
+      closeImportUrlModal();
+      showScoreResult(importedRole, scoring);
+    }
+
+    /* ====== SOURCE ANALYTICS & MANAGEMENT ====== */
+
+    /**
+     * Render source analytics tab with stats per source.
+     * INPUT: None (uses state.feedItems)
+     * OUTPUT: Renders HTML to #sourceAnalytics and #sourceFilters
+     */
+    function renderSourceAnalytics() {
+      // Calculate stats per source
+      const allRoles = [...state.feedItems, ...state.acceptedRoles, ...state.dismissedRoles, ...state.snoozedRoles];
+      const sourceStats = {};
+
+      allRoles.forEach(role => {
+        const source = role.source || 'Manual';
+        if (!sourceStats[source]) {
+          sourceStats[source] = {
+            count: 0,
+            accepted: 0,
+            dismissed: 0,
+            totalScore: 0,
+            highScore: 0 // 60+
+          };
+        }
+        sourceStats[source].count++;
+        sourceStats[source].totalScore += role.score || 0;
+        if (role.score >= 60) sourceStats[source].highScore++;
+
+        // Track where role is
+        if (state.acceptedRoles.includes(role)) sourceStats[source].accepted++;
+        if (state.dismissedRoles.includes(role)) sourceStats[source].dismissed++;
+      });
+
+      // Render source stats cards
+      const analyticsContainer = document.getElementById('sourceAnalytics');
+      if (analyticsContainer && Object.keys(sourceStats).length > 0) {
+        analyticsContainer.innerHTML = Object.entries(sourceStats).map(([source, stats]) => {
+          const acceptRate = stats.count > 0 ? Math.round((stats.accepted / stats.count) * 100) : 0;
+          const avgScore = stats.count > 0 ? Math.round(stats.totalScore / stats.count) : 0;
+
+          return `
+            <div class="source-stat-card">
+              <div class="source-stat-label">${source}</div>
+              <div class="source-stat-value">${stats.count}</div>
+              <div class="source-stat-sub">
+                Accept Rate: ${acceptRate}%<br>
+                Avg Score: ${avgScore}/100<br>
+                High Score: ${stats.highScore} (60+)
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Render source filter toggles
+      const filterContainer = document.getElementById('sourceFilters');
+      if (filterContainer && Object.keys(sourceStats).length > 0) {
+        filterContainer.innerHTML = Object.entries(sourceStats).map(([source, stats]) => `
+          <label class="source-filter-item">
+            <input type="checkbox" class="source-filter-checkbox" checked data-source="${source}">
+            <div class="source-filter-info">
+              <span class="source-filter-name">${source}</span>
+              <span class="source-filter-count">${stats.count} roles</span>
+            </div>
+          </label>
+        `).join('');
+
+        // Add event listeners to filter checkboxes
+        filterContainer.querySelectorAll('.source-filter-checkbox').forEach(checkbox => {
+          checkbox.addEventListener('change', () => {
+            applySourceFilters();
+          });
+        });
+      }
+
+      // Render source breakdown bar chart
+      const chartContainer = document.getElementById('sourceChart');
+      if (chartContainer && Object.keys(sourceStats).length > 0) {
+        const sortedSources = Object.entries(sourceStats)
+          .sort((a, b) => b[1].count - a[1].count);
+        const maxCount = Math.max(...sortedSources.map(([, stats]) => stats.count), 1);
+
+        let chartHTML = '<div class="source-chart-title">Jobs per Source</div>';
+        sortedSources.forEach(([source, stats]) => {
+          const percent = Math.round((stats.count / maxCount) * 100);
+          chartHTML += `
+            <div class="source-chart-item">
+              <div class="source-chart-label">
+                <span>${source}</span>
+                <span>${stats.count}</span>
+              </div>
+              <div class="source-chart-bar-container">
+                <div class="source-chart-bar" style="width: ${percent}%; color: white;" data-percent="${percent}%"></div>
+              </div>
+            </div>
+          `;
+        });
+
+        chartContainer.innerHTML = chartHTML;
+      }
+    }
+
+    /**
+     * Apply source filters to feed display
+     */
+    function applySourceFilters() {
+      const activeCheckboxes = document.querySelectorAll('.source-filter-checkbox:checked');
+      const activeSources = Array.from(activeCheckboxes).map(cb => cb.dataset.source);
+
+      // Filter feed items
+      const allRoles = DEMO_FEED_ITEMS.map(role => {
+        const scoring = scoreRole(role, state.preferences);
+        return scoring ? { ...role, score: scoring.score, scoring: scoring.breakdown } : null;
+      }).filter(item => item !== null);
+
+      state.feedItems = allRoles.filter(role => activeSources.includes(role.source));
+      state.feedItems.sort((a, b) => b.score - a.score);
+
+      renderFeedCards();
+    }
+
+    /**
+     * Log a feed run to localStorage
+     */
+    function logFeedRun(run) {
+      let runs = loadFeedRuns();
+      if (!Array.isArray(runs)) runs = [];
+      runs.push(run);
+      localStorage.setItem('pf_feed_runs', JSON.stringify(runs));
+    }
+
     // ============================================================
     // INITIALIZATION & EVENT HANDLERS
     // ============================================================
@@ -3342,6 +3983,7 @@
       renderFeedCards();
       renderSnoozedCards();
       renderFeedSources();
+      renderSourceAnalytics();
       renderAnalytics();
       renderFeedLog();
       updateSnoozedBadge();
@@ -3386,6 +4028,12 @@
       // Add Role Manually button
       document.getElementById('addRoleManuallyBtn').addEventListener('click', openAddRoleModal);
 
+      // Import from URL button
+      document.getElementById('importFromUrlBtn').addEventListener('click', openImportUrlModal);
+
+      // URL input listener for real-time detection
+      document.getElementById('importUrlInput').addEventListener('input', detectUrlMetadata);
+
       // Tab navigation
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -3399,6 +4047,7 @@
             tabContent.classList.add('active');
             state.currentTab = tabId;
             if (tabId === 'analytics') renderAnalytics();
+            if (tabId === 'sources') renderSourceAnalytics();
             if (tabId === 'snoozed') renderSnoozedCards();
           }
         });
@@ -3428,6 +4077,12 @@
       document.getElementById('scoreResultModal').addEventListener('click', (e) => {
         if (e.target.id === 'scoreResultModal') {
           closeScoreResultModal();
+        }
+      });
+
+      document.getElementById('importUrlModal').addEventListener('click', (e) => {
+        if (e.target.id === 'importUrlModal') {
+          closeImportUrlModal();
         }
       });
     }

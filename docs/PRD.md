@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v1.8.0
+**Status:** v1.9.0
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v1.9.0 | 2026-03-10 | **Batch 1 — Six-module feature completion**: Research Brief gains citation system (footnotes, source aggregation) and localStorage artifact save (pf_research_briefs) with saved briefs panel. Job Feed adds career page URL import (Lever/Greenhouse/Ashby/Workday/LinkedIn parsing) and Sources tab with per-source analytics and filtering. Comp Intel adds Indeed salary data integration, bulk import (CSV/JSON/plaintext), market positioning chart with percentile visualization, and enhanced negotiation with BATNA identification. Calendar adds auto-trigger debrief button on past interview events with pending debrief badge count. Debrief auto-populates from Calendar via pf_pending_debrief and shows "Recent Events Needing Debrief" section with cross-module status sync. Mock Interview adds 100+ real question bank across 11 companies/7 types/3 difficulties, Question Bank tab with multi-level filtering, custom questions, practice tracking, and company-calibrated Claude sessions. |
 | v1.8.0 | 2026-03-10 | **Resume export + Gmail integration**: Resume Builder now exports to DOCX (via docx.js) and PDF (via html2pdf.js) with ATS-friendly formatting, proper headings/bullets, and auto-naming by company/title. Outreach module gains "Open in Gmail" button (pre-fills Gmail compose URL with subject/body/recipient), "Queue as Draft" button (saves to pf_outreach_gmail_queue for Cowork batch sending), and draft queue viewer with status tracking. |
 | v1.7.0 | 2026-03-10 | **Sync Hub — External API integration**: New Sync Hub module (modules/sync/) bridges Google Calendar, Indeed, Gmail, and Clay into Pathfinder. Google Calendar events auto-classify (interview/networking/prep/personal) and sync to Calendar module. Indeed job listings sync to Job Feed with full scoring. Gmail job alerts (Built In, LinkedIn, referrals) extract leads to Job Feed and application confirmations to Pipeline. Clay enrichment placeholder for company data. File upload for fresh sync payloads from Cowork. Dedup engine prevents duplicate syncs. Sync Hub added to all module navbars. |
 | v1.6.0 | 2026-03-10 | **Feature completion pass**: 50+ features added across all 9 browser modules. Pipeline: URL import, bulk actions, CSV export, company view, fit assessment, keyboard shortcuts. Dashboard: feed review, interview intelligence, pipeline funnel, activity feed, weekly stats, real-time storage listener. Job Feed: manual entry form, dedup engine, 6-point quick-check filter, auto-pipeline creation, analytics, snooze. Resume Builder: cover letter generation, bullet bank UI, keyword gap detection, version history. Outreach: sequence scheduling, response tracking, message templates, history/analytics. Mock Interview: story bank extraction, question bank, session playback, performance trends. Debrief: pattern analysis, timeline, export, Research Brief triggers. Comp Intel: visualization charts, comparison table, aggregation stats, 25-point negotiation scorecard. Calendar: month view, day view, smart event-role linking. |

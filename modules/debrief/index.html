@@ -476,6 +476,116 @@
       display: none !important;
     }
 
+    /* ================================================================
+       CALENDAR DEBRIEF INTEGRATION
+       ================================================================ */
+    .pending-debrief-banner {
+      background: linear-gradient(135deg, var(--accent-primary), #7c3aed);
+      color: white;
+      padding: var(--space-4) var(--space-5);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-4);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .pending-debrief-banner .banner-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .pending-debrief-banner .banner-content {
+      flex: 1;
+    }
+
+    .pending-debrief-banner .banner-title {
+      font-weight: 700;
+      font-size: var(--text-sm);
+      margin-bottom: 4px;
+    }
+
+    .pending-debrief-banner .banner-text {
+      font-size: var(--text-xs);
+      opacity: 0.95;
+    }
+
+    .pending-debrief-close {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 16px;
+      transition: background 200ms;
+      flex-shrink: 0;
+    }
+
+    .pending-debrief-close:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .pending-events-section {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+
+    .pending-events-title {
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-3);
+      font-size: var(--text-sm);
+    }
+
+    .pending-event-item {
+      padding: var(--space-3);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+    }
+
+    .pending-event-info {
+      flex: 1;
+    }
+
+    .pending-event-company {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+    }
+
+    .pending-event-details {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .quick-start-btn {
+      background: var(--accent-primary);
+      color: white;
+      border: none;
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: var(--text-xs);
+      font-weight: 600;
+      white-space: nowrap;
+      transition: background 200ms;
+    }
+
+    .quick-start-btn:hover {
+      background: var(--accent-hover, #7c3aed);
+    }
+
     @media (max-width: 768px) {
       .debrief-container {
         flex-direction: column;
@@ -586,6 +696,10 @@
         this.loadData();
         this.renderRoleSelector();
         this.attachTabListeners();
+
+        // Check for pending debrief from Calendar module
+        this.checkPendingDebrief();
+
         this.renderNewDebriefForm();
         this.renderHistoryTab();
       },
@@ -596,6 +710,153 @@
         this.state.roles = JSON.parse(localStorage.getItem('pf_roles')) || [];
         this.state.companies = JSON.parse(localStorage.getItem('pf_companies')) || [];
         this.state.storyBank = JSON.parse(localStorage.getItem('pf_story_bank')) || [];
+      },
+
+      /* ====== CALENDAR INTEGRATION: PENDING DEBRIEF ====== */
+
+      /**
+       * Check if there's a pending debrief from Calendar module.
+       * INPUT: none (checks localStorage)
+       * OUTPUT: auto-populates form if found, clears pending data
+       */
+      checkPendingDebrief() {
+        const pendingDebrief = JSON.parse(localStorage.getItem('pf_pending_debrief'));
+        if (!pendingDebrief) return;
+
+        // Store for later use when saving
+        this.state.pendingDebriefEvent = pendingDebrief;
+
+        // Auto-select the role if available
+        if (pendingDebrief.roleId) {
+          this.state.currentRoleId = pendingDebrief.roleId;
+          document.getElementById('roleSelect').value = pendingDebrief.roleId;
+          this.updateSidebar();
+        }
+      },
+
+      /**
+       * Render the pending debrief banner at the top of the form.
+       * INPUT: pending debrief event data
+       * OUTPUT: renders banner HTML in form container
+       */
+      renderPendingDebriefBanner() {
+        if (!this.state.pendingDebriefEvent) return;
+
+        const evt = this.state.pendingDebriefEvent;
+        const eventDate = new Date(evt.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+        return `
+          <div class="pending-debrief-banner">
+            <div class="banner-icon">📋</div>
+            <div class="banner-content">
+              <div class="banner-title">Debriefing: ${evt.company} ${evt.type.replace(/_/g, ' ')}</div>
+              <div class="banner-text">Interview on ${eventDate}</div>
+            </div>
+            <button class="pending-debrief-close" onclick="DebriefApp.clearPendingDebrief()" title="Dismiss">×</button>
+          </div>
+        `;
+      },
+
+      /**
+       * Clear pending debrief from localStorage and state.
+       * INPUT: none
+       * OUTPUT: clears pf_pending_debrief and re-renders form
+       */
+      clearPendingDebrief() {
+        localStorage.removeItem('pf_pending_debrief');
+        this.state.pendingDebriefEvent = null;
+        this.renderNewDebriefForm();
+      },
+
+      /**
+       * Get pending calendar events that need debriefs.
+       * INPUT: none (reads from localStorage)
+       * OUTPUT: array of past interview events without debriefs
+       */
+      getPendingCalendarEvents() {
+        const calendarEvents = JSON.parse(localStorage.getItem('pf_calendar_events')) || [];
+        const debriefs = this.state.debriefs;
+        const now = new Date();
+
+        return calendarEvents.filter(evt => {
+          // Must be interview type
+          const interviewTypes = ['phone_screen', 'technical', 'behavioral', 'panel', 'hiring_manager'];
+          if (!interviewTypes.includes(evt.type)) return false;
+
+          // Must be in the past
+          const eventEnd = new Date(evt.date);
+          if (evt.duration) {
+            eventEnd.setMinutes(eventEnd.getMinutes() + evt.duration);
+          } else {
+            eventEnd.setHours(eventEnd.getHours() + 1);
+          }
+          if (eventEnd > now) return false;
+
+          // Must not have a debrief yet
+          const hasDebrief = debriefs.some(d => d.eventId === evt.id);
+          return !hasDebrief;
+        });
+      },
+
+      /**
+       * Render "Recent Events Needing Debrief" section above the form.
+       * INPUT: none
+       * OUTPUT: renders section with quick-start buttons
+       */
+      renderPendingEventsSection() {
+        const pendingEvents = this.getPendingCalendarEvents();
+        if (pendingEvents.length === 0) return '';
+
+        let html = '<div class="pending-events-section"><div class="pending-events-title">Recent Events Needing Debrief</div>';
+
+        pendingEvents.slice(0, 3).forEach(evt => {
+          const eventDate = new Date(evt.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const eventTime = new Date(evt.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+          html += `
+            <div class="pending-event-item">
+              <div class="pending-event-info">
+                <div class="pending-event-company">${evt.company}</div>
+                <div class="pending-event-details">${evt.type.replace(/_/g, ' ')} • ${eventDate} at ${eventTime}</div>
+              </div>
+              <button class="quick-start-btn" onclick="DebriefApp.startDebriefForEvent('${evt.id}')">Debrief</button>
+            </div>
+          `;
+        });
+
+        html += '</div>';
+        return html;
+      },
+
+      /**
+       * Start a debrief for a specific calendar event.
+       * INPUT: eventId (string)
+       * OUTPUT: auto-populates form from event data
+       */
+      startDebriefForEvent(eventId) {
+        const calendarEvents = JSON.parse(localStorage.getItem('pf_calendar_events')) || [];
+        const evt = calendarEvents.find(e => e.id === eventId);
+        if (!evt) return;
+
+        // Set pending debrief and reload
+        this.state.pendingDebriefEvent = {
+          eventId: evt.id,
+          company: evt.company,
+          title: evt.title,
+          type: evt.type,
+          date: evt.date,
+          interviewers: evt.interviewers || [],
+          roleId: evt.roleId || null
+        };
+
+        // Auto-select role if available
+        if (evt.roleId) {
+          this.state.currentRoleId = evt.roleId;
+          document.getElementById('roleSelect').value = evt.roleId;
+          this.updateSidebar();
+        }
+
+        this.renderNewDebriefForm();
       },
 
       saveData() {
@@ -741,14 +1002,28 @@
         const container = document.getElementById('formContainer');
 
         if (!this.state.currentRoleId) {
-          container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>Select a role to start a debrief</p></div>';
+          // Show pending events section even without role selected
+          let html = this.renderPendingEventsSection();
+
+          // Show pending debrief banner if any
+          const bannerHtml = this.renderPendingDebriefBanner();
+          if (bannerHtml) {
+            html = bannerHtml + html;
+          }
+
+          if (html) {
+            container.innerHTML = html;
+          } else {
+            container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>Select a role to start a debrief</p></div>';
+          }
           return;
         }
 
         const role = this.state.roles.find(r => r.id === this.state.currentRoleId);
         const company = this.getCompanyName(role);
 
-        container.innerHTML = `
+        // Build the form HTML
+        let formHtml = `
           <form id="debriefForm" style="max-width: 800px;">
             <div class="wizard-progress">
               ${Array.from({ length: 8 }, (_, i) => `<div class="progress-step" id="step${i+1}"></div>`).join('')}
@@ -772,6 +1047,20 @@
 
           <div id="synthesisContainer"></div>
         `;
+
+        // Add pending debrief banner if any
+        const bannerHtml = this.renderPendingDebriefBanner();
+        if (bannerHtml) {
+          formHtml = bannerHtml + formHtml;
+        }
+
+        // Add pending events section
+        const pendingHtml = this.renderPendingEventsSection();
+        if (pendingHtml) {
+          formHtml = pendingHtml + formHtml;
+        }
+
+        container.innerHTML = formHtml;
 
         this.attachFormListeners();
       },
@@ -979,6 +1268,24 @@ Additional Notes: ${formData.notes}`;
           nextStepsDate: formData.nextStepsDate
         };
 
+        /* ====== CALENDAR INTEGRATION: Link debrief to event ====== */
+        // If this debrief came from a calendar event, link them together
+        if (this.state.pendingDebriefEvent && this.state.pendingDebriefEvent.eventId) {
+          debrief.eventId = this.state.pendingDebriefEvent.eventId;
+
+          // Update the calendar event with this debrief ID
+          const calendarEvents = JSON.parse(localStorage.getItem('pf_calendar_events')) || [];
+          const eventIndex = calendarEvents.findIndex(e => e.id === this.state.pendingDebriefEvent.eventId);
+          if (eventIndex !== -1) {
+            calendarEvents[eventIndex].debriefId = debrief.id;
+            localStorage.setItem('pf_calendar_events', JSON.stringify(calendarEvents));
+          }
+
+          // Clear the pending debrief flag
+          localStorage.removeItem('pf_pending_debrief');
+          this.state.pendingDebriefEvent = null;
+        }
+
         this.state.debriefs.push(debrief);
         this.saveData();
 
@@ -1031,6 +1338,13 @@ Additional Notes: ${formData.notes}`;
           <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--space-6);">
             <h2 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-2);">${debrief.company} - ${debrief.title}</h2>
             <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">${new Date(debrief.date).toLocaleDateString()}</p>
+
+            ${debrief.eventId ? `
+              <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); display: flex; align-items: center; gap: var(--space-2);">
+                <span style="color: var(--success-color); font-weight: 700;">✓</span>
+                <span style="font-size: var(--text-xs); color: var(--text-secondary);">Linked to Calendar Event</span>
+              </div>
+            ` : ''}
 
             <h3 style="font-weight: 600; margin-top: var(--space-6); margin-bottom: var(--space-2);">Overall Impression</h3>
             <p>${debrief.sections.overall}</p>
