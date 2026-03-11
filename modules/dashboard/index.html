@@ -34,6 +34,271 @@
       }
     }
 
+    /* Card styles for new sections */
+    .dashboard-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+      animation: fadeIn 200ms var(--ease-default) forwards;
+    }
+
+    .dashboard-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .card-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .card-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 500;
+      transition: color 200ms;
+    }
+
+    .card-link:hover {
+      color: var(--accent-hover);
+    }
+
+    .interview-countdown {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .empty-state {
+      color: var(--text-tertiary);
+      font-size: 14px;
+      text-align: center;
+      padding: 24px 0;
+    }
+
+    /* Feed item styles */
+    .feed-item {
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 200ms;
+    }
+
+    .feed-item:hover {
+      background: var(--bg-tertiary);
+      transform: translateX(4px);
+    }
+
+    .feed-item-company {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .feed-item-title {
+      color: var(--text-secondary);
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    .feed-item-score {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* Interview item styles */
+    .interview-item {
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-left: 3px solid var(--success);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 200ms;
+    }
+
+    .interview-item:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .interview-datetime {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .interview-company {
+      color: var(--text-secondary);
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .interview-type {
+      display: inline-block;
+      background: var(--info);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-right: 8px;
+    }
+
+    .interview-actions {
+      margin-top: 8px;
+      display: flex;
+      gap: 6px;
+    }
+
+    .interview-actions a,
+    .interview-actions button {
+      font-size: 11px;
+      padding: 4px 8px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 200ms;
+    }
+
+    .interview-actions a:hover,
+    .interview-actions button:hover {
+      background: var(--accent-hover);
+    }
+
+    /* Funnel bar styles */
+    .funnel-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+    }
+
+    .funnel-bar-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      min-width: 90px;
+    }
+
+    .funnel-bar-container {
+      flex: 1;
+      height: 24px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 200ms;
+    }
+
+    .funnel-bar-container:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .funnel-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      transition: width 300ms ease-out;
+    }
+
+    .funnel-bar-count {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      min-width: 35px;
+      text-align: right;
+    }
+
+    /* Activity feed styles */
+    .activity-feed {
+      gap: 8px;
+    }
+
+    .activity-item {
+      padding: 8px 12px;
+      background: var(--bg-secondary);
+      border-left: 2px solid var(--text-tertiary);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 200ms;
+    }
+
+    .activity-item:hover {
+      border-left-color: var(--accent);
+      background: var(--bg-tertiary);
+    }
+
+    .activity-item-action {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .activity-item-time {
+      color: var(--text-tertiary);
+      font-size: 11px;
+    }
+
+    /* Stats grid styles */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 16px;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
     /* Nav overrides removed — now using shared .nav from pathfinder.css */
 
     /* Theme toggle button */
@@ -878,6 +1143,75 @@
         <svg data-lucide="briefcase"></svg>
         View Pipeline
       </button>
+      <!-- RECENT DISCOVERIES CARD -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h3>Recent Discoveries</h3>
+          <a href="../feed/index.html" class="card-link" title="View all feed items">View All →</a>
+        </div>
+        <div class="card-body" id="recentDiscoveriesBody">
+          <p class="empty-state">No new discoveries — check your feed sources</p>
+        </div>
+      </div>
+
+      <!-- UPCOMING INTERVIEWS CARD -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h3>Upcoming Interviews</h3>
+          <span class="interview-countdown" id="interviewCountdown"></span>
+        </div>
+        <div class="card-body" id="upcomingInterviewsBody">
+          <p class="empty-state">No upcoming interviews scheduled</p>
+        </div>
+      </div>
+
+      <!-- PIPELINE FUNNEL CARD -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h3>Pipeline by Stage</h3>
+        </div>
+        <div class="card-body" id="pipelineFunnelBody" style="gap: 8px;">
+          <!-- Funnel bars render here -->
+        </div>
+      </div>
+
+      <!-- ACTIVITY FEED CARD -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h3>Recent Activity</h3>
+        </div>
+        <div class="card-body activity-feed" id="activityFeedBody">
+          <p class="empty-state">No recent activity</p>
+        </div>
+      </div>
+
+      <!-- WEEKLY SUMMARY STATS CARD -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h3>This Week's Summary</h3>
+        </div>
+        <div class="card-body">
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-label">Applications</div>
+              <div class="stat-value" id="applicationsThisWeek">0</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Interviews</div>
+              <div class="stat-value" id="interviewsThisWeek">0</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Response Rate</div>
+              <div class="stat-value" id="responseRate">0%</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Pipeline Health</div>
+              <div class="stat-value" id="pipelineHealth" style="font-size: 12px;">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <button class="quick-action-btn" id="researchBtn">
         <svg data-lucide="search"></svg>
         Research Brief
@@ -1712,6 +2046,336 @@
     }
 
     // ================================================================
+    // NEW FEATURES: FEED REVIEW, INTERVIEWS, FUNNEL, ACTIVITY, STATS
+    // ================================================================
+
+    /**
+     * Render recent discoveries from pf_feed_queue (top 3-5 items)
+     */
+    function renderRecentDiscoveries() {
+      const container = document.getElementById('recentDiscoveriesBody');
+      let feedQueue = [];
+
+      try {
+        const stored = localStorage.getItem('pf_feed_queue');
+        if (stored) feedQueue = JSON.parse(stored);
+      } catch (e) {
+        console.warn('Could not parse pf_feed_queue:', e);
+      }
+
+      if (!feedQueue || feedQueue.length === 0) {
+        container.innerHTML = '<p class="empty-state">No new discoveries — check your feed sources</p>';
+        return;
+      }
+
+      // Sort by score and take top 3-5
+      const topItems = feedQueue
+        .sort((a, b) => (b.score || 0) - (a.score || 0))
+        .slice(0, 5);
+
+      container.innerHTML = topItems.map(item => {
+        const score = item.score ? Math.round(item.score * 100) : 0;
+        return `
+          <div class="feed-item" onclick="navigateToRole('${item.roleId}')">
+            <div class="feed-item-company">${item.company || 'Unknown Company'}</div>
+            <div class="feed-item-title">${item.title || 'Untitled Role'}</div>
+            <span class="feed-item-score">${score}% match</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /**
+     * Render upcoming interviews from pf_calendar_events (next 7 days)
+     */
+    async function renderUpcomingInterviews() {
+      const container = document.getElementById('upcomingInterviewsBody');
+      const countdownEl = document.getElementById('interviewCountdown');
+
+      try {
+        // Try to fetch from Google Calendar if API is available
+        const now = new Date();
+        const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+        // Format dates for API call
+        const timeMin = now.toISOString();
+        const timeMax = sevenDaysFromNow.toISOString();
+
+        // Attempt to call gcal_list_events if available
+        const events = await callGoogleCalendarAPI('gcal_list_events', {
+          timeMin,
+          timeMax,
+          maxResults: 10
+        });
+
+        if (!events || !events.events || events.events.length === 0) {
+          container.innerHTML = '<p class="empty-state">No upcoming interviews scheduled</p>';
+          countdownEl.textContent = '';
+          return;
+        }
+
+        // Get roles for company matching
+        const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+
+        // Render each event
+        container.innerHTML = events.events.map(event => {
+          const startTime = new Date(event.start.dateTime || event.start.date);
+          const dateStr = startTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const timeStr = startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', meridiem: 'short' });
+
+          // Try to match to a role
+          const matchedRole = roles.find(r =>
+            event.summary && event.summary.toLowerCase().includes(r.company?.toLowerCase?.() || '')
+          );
+
+          const type = event.summary?.includes('Phone') ? 'Phone Screen' :
+                       event.summary?.includes('Manager') ? 'Hiring Manager' :
+                       event.summary?.includes('Technical') ? 'Technical Round' :
+                       'Interview';
+
+          return `
+            <div class="interview-item">
+              <div class="interview-datetime">${dateStr} at ${timeStr}</div>
+              <div class="interview-company">${event.summary || 'Calendar Event'}</div>
+              <span class="interview-type">${type}</span>
+              <div class="interview-actions">
+                ${matchedRole ? `<a href="../research-brief/index.html?roleId=${matchedRole.id}" class="btn-sm">Prep</a>` : ''}
+                <a href="../mock-interview/index.html" class="btn-sm">Practice</a>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Show countdown to next interview
+        const nextEvent = events.events[0];
+        if (nextEvent) {
+          const nextTime = new Date(nextEvent.start.dateTime || nextEvent.start.date);
+          const hoursUntil = Math.ceil((nextTime - now) / (1000 * 60 * 60));
+          countdownEl.textContent = hoursUntil < 24 ? `${hoursUntil}h away` : `${Math.ceil(hoursUntil / 24)}d away`;
+        }
+      } catch (error) {
+        console.warn('Could not fetch calendar events:', error);
+        container.innerHTML = '<p class="empty-state">No upcoming interviews scheduled</p>';
+      }
+    }
+
+    /**
+     * Render pipeline funnel visualization (horizontal bars by stage)
+     */
+    function renderPipelineFunnel() {
+      const container = document.getElementById('pipelineFunnelBody');
+      const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+
+      // Count roles by stage
+      const stages = ['discovered', 'researching', 'outreach', 'applied', 'screen', 'interviewing', 'offer', 'closed'];
+      const stageCounts = {};
+      const stageColors = {
+        discovered: 'var(--stage-discovered)',
+        researching: 'var(--stage-researching)',
+        outreach: 'var(--stage-outreach)',
+        applied: 'var(--stage-applied)',
+        screen: 'var(--stage-screen)',
+        interviewing: 'var(--stage-interviewing)',
+        offer: 'var(--stage-offer)',
+        closed: 'var(--stage-closed)'
+      };
+
+      stages.forEach(stage => {
+        stageCounts[stage] = roles.filter(r => r.stage === stage).length;
+      });
+
+      const total = roles.length || 1; // Avoid division by zero
+
+      const html = stages
+        .filter(stage => stageCounts[stage] > 0) // Only show stages with roles
+        .map(stage => {
+          const count = stageCounts[stage];
+          const percent = Math.round((count / total) * 100);
+          const label = stage.charAt(0).toUpperCase() + stage.slice(1);
+
+          return `
+            <div class="funnel-bar" onclick="navigateToPipelineStage('${stage}')">
+              <div class="funnel-bar-label">${label}</div>
+              <div class="funnel-bar-container">
+                <div class="funnel-bar-fill" style="width: ${percent}%; background: ${stageColors[stage]};">
+                  ${percent > 10 ? percent + '%' : ''}
+                </div>
+              </div>
+              <div class="funnel-bar-count">${count}</div>
+            </div>
+          `;
+        }).join('');
+
+      container.innerHTML = html || '<p class="empty-state">No roles in pipeline</p>';
+    }
+
+    /**
+     * Render recent activity across all modules
+     */
+    function renderActivityFeed() {
+      const container = document.getElementById('activityFeedBody');
+      const activities = [];
+
+      // Collect activities from various sources
+      const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+      const connections = JSON.parse(localStorage.getItem('pf_connections') || '[]');
+
+      // Add role activities
+      roles.forEach(role => {
+        if (role.dateAdded) {
+          activities.push({
+            timestamp: new Date(role.dateAdded),
+            text: `Added role: ${role.title} at ${role.company}`,
+            module: 'pipeline'
+          });
+        }
+        if (role.lastActivity) {
+          activities.push({
+            timestamp: new Date(role.lastActivity),
+            text: `Updated: ${role.title} at ${role.company}`,
+            module: 'pipeline'
+          });
+        }
+      });
+
+      // Add connection activities
+      connections.forEach(conn => {
+        if (conn.lastActivity) {
+          activities.push({
+            timestamp: new Date(conn.lastActivity),
+            text: `Contacted: ${conn.name} at ${conn.company}`,
+            module: 'outreach'
+          });
+        }
+      });
+
+      // Sort by timestamp descending and take last 10
+      activities.sort((a, b) => b.timestamp - a.timestamp);
+      const recent = activities.slice(0, 10);
+
+      if (recent.length === 0) {
+        container.innerHTML = '<p class="empty-state">No recent activity</p>';
+        return;
+      }
+
+      const now = new Date();
+      container.innerHTML = recent.map(activity => {
+        const timeDiff = now - activity.timestamp;
+        const hoursAgo = Math.floor(timeDiff / (1000 * 60 * 60));
+        const daysAgo = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+
+        let timeStr = 'just now';
+        if (hoursAgo < 1) timeStr = 'less than an hour ago';
+        else if (hoursAgo < 24) timeStr = `${hoursAgo} hour${hoursAgo > 1 ? 's' : ''} ago`;
+        else if (daysAgo < 7) timeStr = `${daysAgo} day${daysAgo > 1 ? 's' : ''} ago`;
+        else timeStr = activity.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+        return `
+          <div class="activity-item">
+            <span class="activity-item-action">${activity.text}</span>
+            <br>
+            <span class="activity-item-time">${timeStr}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /**
+     * Render weekly summary statistics
+     */
+    function renderWeeklySummary() {
+      const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+      // Count applications this week
+      const applicationsThisWeek = roles.filter(r => {
+        const stageHistory = r.stageHistory || [];
+        const appliedTransition = stageHistory.find(sh => sh.to === 'applied');
+        if (!appliedTransition) return false;
+        return new Date(appliedTransition.timestamp) > oneWeekAgo;
+      }).length;
+
+      // Count interviews this week
+      const interviewsThisWeek = roles.filter(r => {
+        const stageHistory = r.stageHistory || [];
+        const interviewTransition = stageHistory.find(sh => sh.to === 'interviewing');
+        if (!interviewTransition) return false;
+        return new Date(interviewTransition.timestamp) > oneWeekAgo;
+      }).length;
+
+      // Calculate response rate
+      const appliedRoles = roles.filter(r => r.stage === 'applied');
+      const responseRate = appliedRoles.length > 0
+        ? Math.round((roles.filter(r => r.stage !== 'applied').length / roles.length) * 100)
+        : 0;
+
+      // Determine pipeline health
+      const stages = ['discovered', 'researching', 'outreach', 'applied', 'screen', 'interviewing', 'offer'];
+      const activeStages = stages.filter(s => roles.some(r => r.stage === s)).length;
+      const recentActivity = roles.some(r => {
+        if (!r.lastActivity) return false;
+        return new Date(r.lastActivity) > oneWeekAgo;
+      });
+
+      let health = 'Healthy';
+      if (activeStages <= 2) health = 'Needs attention';
+      if (!recentActivity) health = 'Stale';
+
+      document.getElementById('applicationsThisWeek').textContent = applicationsThisWeek;
+      document.getElementById('interviewsThisWeek').textContent = interviewsThisWeek;
+      document.getElementById('responseRate').textContent = responseRate + '%';
+      document.getElementById('pipelineHealth').textContent = health;
+    }
+
+    /**
+     * Helper: Call Google Calendar API if available
+     */
+    async function callGoogleCalendarAPI(method, params) {
+      try {
+        if (typeof window.claudeAPI !== 'undefined' && window.claudeAPI[method]) {
+          return await window.claudeAPI[method](params);
+        }
+      } catch (error) {
+        console.warn(`Could not call ${method}:`, error);
+      }
+      return null;
+    }
+
+    /**
+     * Helper: Navigate to pipeline with specific stage filter
+     */
+    function navigateToPipelineStage(stage) {
+      window.location.href = `../pipeline/index.html?stage=${stage}`;
+    }
+
+    /**
+     * Helper: Navigate to role detail
+     */
+    function navigateToRole(roleId) {
+      window.location.href = `../pipeline/index.html?roleId=${roleId}`;
+    }
+
+    /**
+     * Listen for storage changes to update dashboard in real-time
+     */
+    function initStorageListener() {
+      window.addEventListener('storage', (event) => {
+        if (event.key && event.key.startsWith('pf_')) {
+          // Re-render affected sections
+          if (event.key === 'pf_feed_queue') renderRecentDiscoveries();
+          if (event.key === 'pf_roles') {
+            renderPipelineFunnel();
+            renderActivityFeed();
+            renderWeeklySummary();
+            renderPipelineStats(); // From original code
+          }
+          if (event.key === 'pf_calendar_events') renderUpcomingInterviews();
+          if (event.key === 'pf_connections') renderActivityFeed();
+        }
+      });
+    }
+
+    // ================================================================
     // BUTTON ACTIONS
     // ================================================================
 
@@ -1751,15 +2415,32 @@
       renderNudges();
       renderPipelineStats();
 
+      // Render new feature sections
+      renderRecentDiscoveries();
+      renderUpcomingInterviews();
+      renderPipelineFunnel();
+      renderActivityFeed();
+      renderWeeklySummary();
+
       // Initialize interactions
       initQuickActions();
       initCommandPalette();
+      initStorageListener();
 
       // Re-render nudges every minute (in case data changes from other modules)
       setInterval(renderNudges, 60000);
 
       // Re-render pipeline stats every minute
       setInterval(renderPipelineStats, 60000);
+
+      // Re-render new sections every 5 minutes
+      setInterval(() => {
+        renderRecentDiscoveries();
+        renderUpcomingInterviews();
+        renderPipelineFunnel();
+        renderActivityFeed();
+        renderWeeklySummary();
+      }, 5 * 60 * 1000);
 
       // Re-render streak at midnight
       const now = new Date();

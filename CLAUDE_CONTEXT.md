@@ -95,29 +95,29 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v1.5.0
+**Current Version:** v1.6.0
 **Last Updated:** 2026-03-10
 
 ### Implementation Status
 
-| Module | % Complete | What Works | What's Missing |
-|--------|-----------|------------|----------------|
-| Pipeline | ~90% | Kanban, CRUD, drag-drop, IndexedDB resume, comms log | Company auto-enrichment, URL import |
-| Dashboard | ~75% | 12-rule nudge engine, streak, action queue | Google Calendar sync, real-time updates |
-| Job Feed | ~50% | Scoring engine (6 dimensions), preference editor | Gmail/Indeed/Dice APIs, career page scraping |
-| Research Brief | ~60% | Direct Claude API, 14 section prompts | Citation system, MCP artifact save |
-| Resume Builder | ~60% | Phase 1 JD analysis, Phase 2 streaming generation | DOCX/PDF export, cover letter |
-| Outreach | ~70% | 8 message types via Claude, copy/save | Real email sending, sequence automation |
-| Mock Interview | ~65% | Multi-turn Claude, 7 types, session storage | Question DB scraping, story extraction |
-| Debrief | ~65% | 8-section form, Claude synthesis, history | Auto-trigger from Calendar, pattern analysis |
-| Comp Intel | ~55% | Data entry, comparison, Claude negotiation | Levels.fyi/Glassdoor scraping |
-| Calendar | ~50% | Manual events, week view, nudges | Google Calendar API |
-| MCP Server | ~45% | Tool stubs, storage layer, HTTP bridge | Build (needs `npm run build` on Mac) |
+| Module | % Complete | What Works | What's Missing (External APIs) |
+|--------|-----------|------------|-------------------------------|
+| Pipeline | ~95% | Kanban, CRUD, drag-drop, IndexedDB resume, comms log, URL import, bulk actions, CSV export, company view, fit assessment, keyboard shortcuts | Company auto-enrichment (Clearbit/LinkedIn APIs) |
+| Dashboard | ~90% | 12-rule nudge engine, streak, action queue, feed review, interview intelligence, pipeline funnel, activity feed, weekly stats, real-time storage listener | Google Calendar direct API sync |
+| Job Feed | ~75% | Scoring engine (6 dimensions), preference editor, manual entry, dedup engine, quick-check filter, auto-pipeline creation, analytics, snooze | Gmail/Indeed/Dice APIs, career page scraping |
+| Research Brief | ~65% | Direct Claude API, 14 section prompts, section caching | Citation system polish, MCP artifact save |
+| Resume Builder | ~85% | Phase 1 JD analysis, Phase 2 streaming generation, cover letter, bullet bank UI, keyword gap detection, version history | DOCX/PDF export |
+| Outreach | ~90% | 8 message types via Claude, copy/save, sequence scheduling, response tracking, templates, history/analytics | Real email sending |
+| Mock Interview | ~85% | Multi-turn Claude, 7 types, session storage, story extraction, question bank, session playback, performance trends | Web scraping for real interview questions |
+| Debrief | ~85% | 8-section form, Claude synthesis, history, pattern analysis, timeline, export, Research Brief triggers | Auto-trigger from Calendar events |
+| Comp Intel | ~80% | Data entry, comparison table, Claude negotiation, visualization charts, aggregation stats, 25-point scorecard | Levels.fyi/Glassdoor data scraping |
+| Calendar | ~80% | Manual events, week/month/day views, nudges, smart event-role linking, post-event automation | Google Calendar API |
+| MCP Server | ~45% | Tool stubs, storage layer, HTTP bridge skeleton, bug fixes | Build on Mac (`npm run build`), end-to-end testing |
 
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief still attempts MCP bridge first before direct API fallback
-- Some modules may have demo data that should be removed
+- Some modules still have demo/seed data for first-run experience
 
 ### Git State
 - Remote: github.com/selinger2211/pathfinder-job-search

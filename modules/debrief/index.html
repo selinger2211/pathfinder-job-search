@@ -535,6 +535,8 @@
       <div class="tab-nav">
         <button class="tab-btn active" data-tab="form">New Debrief</button>
         <button class="tab-btn" data-tab="history">History</button>
+        <button class="tab-btn" data-tab="timeline">Timeline</button>
+        <button class="tab-btn" data-tab="patterns">Patterns</button>
       </div>
 
       <div class="debrief-content">
@@ -546,6 +548,16 @@
         <!-- HISTORY TAB -->
         <div id="historyTab" class="tab-pane hidden">
           <div id="historyContainer"></div>
+        </div>
+
+        <!-- TIMELINE TAB -->
+        <div id="timelineTab" class="tab-pane hidden">
+          <div id="timelineContainer"></div>
+        </div>
+
+        <!-- PATTERNS TAB -->
+        <div id="patternsTab" class="tab-pane hidden">
+          <div id="patternsContainer"></div>
         </div>
       </div>
     </div>
@@ -716,6 +728,10 @@
 
         if (tab === 'history') {
           this.renderHistoryTab();
+        } else if (tab === 'timeline') {
+          this.renderTimelineTab();
+        } else if (tab === 'patterns') {
+          this.renderPatternsTab();
         }
       },
 
@@ -1045,8 +1061,281 @@ Additional Notes: ${formData.notes}`;
                 <div>${debrief.synthesis}</div>
               </div>
             ` : ''}
+
+            <div style="margin-top: var(--space-6); display: flex; gap: var(--space-3);">
+              <button class="btn-secondary" onclick="DebriefApp.exportDebrief('${debriefId}', 'text')">📥 Export as Text</button>
+              <button class="btn-secondary" onclick="DebriefApp.copyDebriefToClipboard('${debriefId}')">📋 Copy to Clipboard</button>
+            </div>
           </div>
         `;
+      }
+
+      /**
+       * Debrief Timeline - visualize all debriefs for a role chronologically
+       */
+      renderTimelineTab() {
+        const container = document.getElementById('timelineContainer');
+
+        if (!this.state.currentRoleId) {
+          container.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><p>Select a role to see debrief timeline</p></div>';
+          return;
+        }
+
+        const roleDebriefs = this.state.debriefs
+          .filter(d => d.roleId === this.state.currentRoleId)
+          .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if (roleDebriefs.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><p>No debriefs for this role yet</p></div>';
+          return;
+        }
+
+        let html = '<div style="padding: var(--space-4);">';
+        html += '<h3 style="font-weight: 600; margin-bottom: var(--space-4); color: var(--text-primary);">Interview Progression</h3>';
+        html += '<div style="border-left: 2px solid var(--border-color); padding-left: var(--space-6); position: relative;">';
+
+        roleDebriefs.forEach((debrief, idx) => {
+          const sentiment = debrief.overallRating >= 3 ? 'positive' : debrief.overallRating >= 2 ? 'neutral' : 'negative';
+          const sentimentColor = sentiment === 'positive' ? 'var(--success-color)' : sentiment === 'neutral' ? 'var(--info)' : 'var(--danger)';
+          const sentimentLabel = sentiment === 'positive' ? '✓ Positive' : sentiment === 'neutral' ? '• Neutral' : '✗ Negative';
+          const stars = '★'.repeat(Math.round(debrief.overallRating)) + '☆'.repeat(5 - Math.round(debrief.overallRating));
+
+          html += `
+            <div style="margin-bottom: var(--space-6); position: relative;">
+              <div style="position: absolute; left: -42px; width: 24px; height: 24px; background: ${sentimentColor}; border: 2px solid var(--bg-primary); border-radius: 50%; top: 0;"></div>
+              <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--space-4); cursor: pointer;" onclick="DebriefApp.viewDebrief('${debrief.id}')">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2);">
+                  <div>
+                    <div style="font-weight: 600; color: var(--text-primary);">${new Date(debrief.date).toLocaleDateString()}</div>
+                    <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-1);">${sentimentLabel}</div>
+                  </div>
+                  <div style="color: var(--accent-primary);">${stars}</div>
+                </div>
+                <div style="font-size: var(--text-sm); color: var(--text-primary);">${debrief.sections.overall.slice(0, 100)}...</div>
+              </div>
+            </div>
+          `;
+        });
+
+        html += '</div></div>';
+        container.innerHTML = html;
+      }
+
+      /**
+       * Pattern Analysis - identify recurring themes from 5+ debriefs
+       */
+      renderPatternsTab() {
+        const container = document.getElementById('patternsContainer');
+
+        if (this.state.debriefs.length < 5) {
+          container.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><p>Complete 5+ debriefs to see pattern analysis</p></div>';
+          return;
+        }
+
+        const patterns = this.analyzeDebriefPatterns();
+
+        let html = '<div style="padding: var(--space-4);">';
+        html += '<h3 style="font-weight: 600; margin-bottom: var(--space-4); color: var(--text-primary);">Interview Patterns</h3>';
+
+        // Common questions
+        if (patterns.commonQuestions.length > 0) {
+          html += `<div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-4);">
+            <h4 style="font-weight: 600; margin-bottom: var(--space-3); color: var(--text-primary);">Frequently Asked Questions</h4>
+            <ul style="margin: 0; padding-left: var(--space-4); list-style: none;">
+              ${patterns.commonQuestions.slice(0, 5).map(q => `
+                <li style="margin-bottom: var(--space-2); color: var(--text-secondary); font-size: var(--text-sm);">
+                  <strong>${q.count} times:</strong> ${q.question.slice(0, 80)}...
+                </li>
+              `).join('')}
+            </ul>
+          </div>`;
+        }
+
+        // Red flags
+        if (patterns.redFlags.length > 0) {
+          html += `<div style="background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.3); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-4);">
+            <h4 style="font-weight: 600; margin-bottom: var(--space-3); color: var(--danger);">Common Red Flags</h4>
+            <ul style="margin: 0; padding-left: var(--space-4); list-style: none;">
+              ${patterns.redFlags.slice(0, 5).map(rf => `
+                <li style="margin-bottom: var(--space-2); color: var(--text-secondary); font-size: var(--text-sm);">
+                  <strong>${rf.count} mentions:</strong> ${rf.flag.slice(0, 80)}...
+                </li>
+              `).join('')}
+            </ul>
+          </div>`;
+        }
+
+        // Skills mentioned
+        if (patterns.skillsMentioned.length > 0) {
+          html += `<div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-4);">
+            <h4 style="font-weight: 600; margin-bottom: var(--space-3); color: var(--text-primary);">Most Valued Skills</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+              ${patterns.skillsMentioned.slice(0, 8).map(s => `
+                <div style="background: var(--accent); color: white; padding: var(--space-1) var(--space-2); border-radius: var(--radius-full); font-size: var(--text-xs);">
+                  ${s.skill} (${s.count}x)
+                </div>
+              `).join('')}
+            </div>
+          </div>`;
+        }
+
+        html += '</div>';
+        container.innerHTML = html;
+      }
+
+      /**
+       * Analyze all debriefs to extract patterns
+       */
+      analyzeDebriefPatterns() {
+        const patterns = {
+          commonQuestions: [],
+          redFlags: [],
+          skillsMentioned: []
+        };
+
+        // Extract questions
+        const questionCounts = {};
+        this.state.debriefs.forEach(d => {
+          (d.sections.questions || []).forEach(q => {
+            questionCounts[q] = (questionCounts[q] || 0) + 1;
+          });
+        });
+
+        patterns.commonQuestions = Object.entries(questionCounts)
+          .filter(([q, count]) => count >= 2)
+          .map(([question, count]) => ({ question, count }))
+          .sort((a, b) => b.count - a.count);
+
+        // Extract red flags
+        const redFlagCounts = {};
+        this.state.debriefs.forEach(d => {
+          if (d.sections.redFlags) {
+            const flags = d.sections.redFlags.split(',').map(f => f.trim()).filter(f => f);
+            flags.forEach(flag => {
+              redFlagCounts[flag] = (redFlagCounts[flag] || 0) + 1;
+            });
+          }
+        });
+
+        patterns.redFlags = Object.entries(redFlagCounts)
+          .filter(([rf, count]) => count >= 2)
+          .map(([flag, count]) => ({ flag, count }))
+          .sort((a, b) => b.count - a.count);
+
+        // Extract skills mentioned in priorities
+        const skillCounts = {};
+        const skillKeywords = ['technical', 'leadership', 'strategy', 'execution', 'communication', 'cross-functional', 'analytics', 'design', 'product', 'scale', 'system', 'data'];
+        this.state.debriefs.forEach(d => {
+          const text = (d.sections.priorities + ' ' + d.sections.overall).toLowerCase();
+          skillKeywords.forEach(skill => {
+            if (text.includes(skill)) {
+              skillCounts[skill] = (skillCounts[skill] || 0) + 1;
+            }
+          });
+        });
+
+        patterns.skillsMentioned = Object.entries(skillCounts)
+          .map(([skill, count]) => ({ skill, count }))
+          .sort((a, b) => b.count - a.count);
+
+        return patterns;
+      }
+
+      /**
+       * Export debrief as text file
+       */
+      exportDebrief(debriefId, format) {
+        const debrief = this.state.debriefs.find(d => d.id === debriefId);
+        if (!debrief) return;
+
+        let text = `INTERVIEW DEBRIEF\n`;
+        text += `${'='.repeat(50)}\n\n`;
+        text += `Company: ${debrief.company}\n`;
+        text += `Position: ${debrief.title}\n`;
+        text += `Date: ${new Date(debrief.date).toLocaleDateString()}\n`;
+        text += `Overall Rating: ${'★'.repeat(Math.round(debrief.overallRating))}${'☆'.repeat(5 - Math.round(debrief.overallRating))}\n\n`;
+
+        text += `OVERALL IMPRESSION\n`;
+        text += `${'-'.repeat(50)}\n${debrief.sections.overall}\n\n`;
+
+        text += `WHAT LANDED\n`;
+        text += `${'-'.repeat(50)}\n${debrief.sections.landed}\n\n`;
+
+        text += `WHAT DIDN'T LAND\n`;
+        text += `${'-'.repeat(50)}\n${debrief.sections.didntLand || 'None noted'}\n\n`;
+
+        if (debrief.sections.questions.length > 0) {
+          text += `QUESTIONS ASKED\n`;
+          text += `${'-'.repeat(50)}\n`;
+          debrief.sections.questions.forEach(q => {
+            text += `• ${q}\n`;
+          });
+          text += '\n';
+        }
+
+        text += `THEIR PRIORITIES\n`;
+        text += `${'-'.repeat(50)}\n${debrief.sections.priorities}\n\n`;
+
+        if (debrief.sections.redFlags) {
+          text += `RED FLAGS\n`;
+          text += `${'-'.repeat(50)}\n${debrief.sections.redFlags}\n\n`;
+        }
+
+        text += `FOLLOW-UP ITEMS\n`;
+        text += `${'-'.repeat(50)}\n`;
+        debrief.sections.followUps.forEach(f => {
+          text += `• ${f}\n`;
+        });
+        text += '\n';
+
+        if (debrief.sections.notes) {
+          text += `ADDITIONAL NOTES\n`;
+          text += `${'-'.repeat(50)}\n${debrief.sections.notes}\n\n`;
+        }
+
+        if (debrief.synthesis) {
+          text += `AI SYNTHESIS\n`;
+          text += `${'-'.repeat(50)}\n`;
+          // Strip HTML tags
+          text += debrief.synthesis.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ') + '\n';
+        }
+
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `debrief-${debrief.company}-${new Date(debrief.date).toLocaleDateString().replace(/\//g, '-')}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      /**
+       * Copy debrief to clipboard
+       */
+      copyDebriefToClipboard(debriefId) {
+        const debrief = this.state.debriefs.find(d => d.id === debriefId);
+        if (!debrief) return;
+
+        let text = `INTERVIEW DEBRIEF\n`;
+        text += `${'='.repeat(50)}\n\n`;
+        text += `Company: ${debrief.company}\n`;
+        text += `Position: ${debrief.title}\n`;
+        text += `Date: ${new Date(debrief.date).toLocaleDateString()}\n\n`;
+
+        text += `OVERALL IMPRESSION\n`;
+        text += `${'-'.repeat(50)}\n${debrief.sections.overall}\n\n`;
+
+        text += `WHAT LANDED\n`;
+        text += `${'-'.repeat(50)}\n${debrief.sections.landed}\n\n`;
+
+        text += `WHAT DIDN'T LAND\n`;
+        text += `${'-'.repeat(50)}\n${debrief.sections.didntLand || 'None noted'}\n\n`;
+
+        navigator.clipboard.writeText(text).then(() => {
+          alert('Debrief copied to clipboard!');
+        });
       }
     };
 

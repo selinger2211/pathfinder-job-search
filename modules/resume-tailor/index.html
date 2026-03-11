@@ -576,6 +576,225 @@
     }
 
     /* ================================================================
+       COVER LETTER PANEL
+       ================================================================ */
+
+    .cover-letter-panel {
+      background: var(--bg-surface);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius-md);
+      padding: var(--space-6);
+      margin-top: var(--space-6);
+    }
+
+    .cover-letter-title {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-3);
+    }
+
+    .cover-letter-textarea {
+      width: 100%;
+      min-height: 200px;
+      padding: var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      font-family: 'Calibri', 'Arial', sans-serif;
+      resize: vertical;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .cover-letter-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+
+    .generate-cover-letter-btn {
+      width: 100%;
+      padding: var(--space-3);
+      margin-top: var(--space-3);
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: white;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+    }
+
+    .generate-cover-letter-btn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .generate-cover-letter-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ================================================================
+       BULLET BANK SIDEBAR ENHANCEMENTS
+       ================================================================ */
+
+    .bullet-bank-sidebar {
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+
+    .bullet-bank-header-sidebar {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .bullet-list-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .bullet-item-sidebar {
+      padding: var(--space-2);
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .bullet-item-sidebar:hover {
+      border-color: var(--accent);
+      background: var(--accent-subtle);
+    }
+
+    .bullet-item-sidebar.selected {
+      background: var(--accent-subtle);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ================================================================
+       KEYWORD GAP DETECTION
+       ================================================================ */
+
+    .keyword-gap-section {
+      background: var(--bg-surface);
+      border-left: 3px solid var(--warning);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin-top: var(--space-4);
+    }
+
+    .keyword-gap-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-3);
+    }
+
+    .keyword-covered {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-1) var(--space-2);
+      background: var(--success-subtle);
+      color: var(--success);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      margin-right: var(--space-2);
+      margin-bottom: var(--space-2);
+    }
+
+    .keyword-gap {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-1) var(--space-2);
+      background: var(--error-subtle);
+      color: var(--error);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      margin-right: var(--space-2);
+      margin-bottom: var(--space-2);
+    }
+
+    /* ================================================================
+       VERSION HISTORY SIDEBAR
+       ================================================================ */
+
+    .version-history-sidebar {
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+    }
+
+    .version-history-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .version-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .version-item {
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .version-item:hover {
+      border-color: var(--accent);
+      background: var(--accent-subtle);
+    }
+
+    .version-item-label {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .version-item-date {
+      color: var(--text-tertiary);
+      font-size: var(--text-2xs);
+      margin-top: var(--space-1);
+    }
+
+    /* ================================================================
        PHASE 2: RESUME BUILDER
        ================================================================ */
 
@@ -2341,6 +2560,579 @@ Generate a professional, one-page resume tailored to this role. Start the HTML w
     }
 
     /* ================================================================
+       FEATURE 1: COVER LETTER GENERATION
+       Generate cover letters using Claude API with streaming
+       ================================================================ */
+
+    /**
+     * Generates a cover letter using Claude API with streaming
+     * INPUT: none (uses currentRole, currentAnalysis)
+     * OUTPUT: displays streaming cover letter in panel below resume
+     */
+    async function generateCoverLetter() {
+      if (!currentRole || !currentAnalysis) {
+        showToast('Role and analysis required to generate cover letter', 'error');
+        return;
+      }
+
+      if (!PF.claude.hasApiKey()) {
+        showToast('Anthropic API key required', 'error');
+        return;
+      }
+
+      const cached = getCachedResume(
+        currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+        currentRole.id
+      ) || {};
+
+      const jdText = cached.jdText || currentRole.jdText || '';
+      const bulletBank = getBulletBank();
+
+      const systemPrompt = `You are an expert cover letter writer for product managers. Generate a persuasive, concise cover letter that complements the tailored resume.
+
+POSITIONING: ${currentRole.positioning === 'ic' ? 'Individual Contributor' : 'Management'}
+TARGET ROLE: ${currentRole.title} at ${currentRole.company}
+
+KEY REQUIREMENTS FROM JD ANALYSIS:
+- Seniority: ${currentAnalysis.seniority}
+- Keywords to emphasize: ${currentAnalysis.keywords.slice(0, 5).join(', ')}
+- Domain: ${currentAnalysis.domain}
+
+COVER LETTER RULES:
+- Output ONLY plain text (no markdown, no HTML)
+- 3-4 paragraphs maximum, no more than half a page
+- Paragraph 1: Why this role at this company specifically - reference something concrete from JD or company
+- Paragraph 2: 1-2 most relevant proof points from background in plain language
+- Paragraph 3: Short, direct close - no filler phrases
+- Tone: Confident, direct, no fluff
+- NO "I am excited to apply" or "I believe I would be a great fit"
+- NO em dashes — use spaced en dash (–) instead
+- Sign with first name only
+
+HONEST FRAMING:
+- Only reference products/features the candidate genuinely has experience with
+- Use honest alternatives for specific vendor products not directly used`;
+
+      const userPrompt = `Here is the job description:
+
+${jdText}
+
+${bulletBank && bulletBank.length > 0 ? `
+Here are the candidate's strongest achievement bullets:
+
+${bulletBank.slice(0, 5).map((b, i) => `${i + 1}. ${b.text}`).join('\n')}
+` : ''}
+
+Generate a compelling cover letter that:
+1. Opens with a specific, concrete detail about the company/role (not generic)
+2. References 1-2 of the candidate's achievements that directly apply
+3. Shows genuine interest in THIS company's work
+4. Closes with a direct call to action
+
+Keep it to 3-4 short paragraphs. No templates, no fluff.`;
+
+      // Show cover letter panel
+      const coverLetterPanel = document.querySelector('.cover-letter-panel') || createCoverLetterPanel();
+      const textarea = coverLetterPanel.querySelector('.cover-letter-textarea');
+
+      textarea.style.opacity = '0.5';
+      const btn = coverLetterPanel.querySelector('.generate-cover-letter-btn');
+      btn.disabled = true;
+
+      let fullText = '';
+
+      try {
+        await PF.claude.stream(systemPrompt, userPrompt, (chunk, text) => {
+          fullText = text;
+          textarea.value = chunk || '';
+          textarea.scrollTop = textarea.scrollHeight;
+        }, {
+          maxTokens: 1000,
+          temperature: 0.7
+        });
+
+        textarea.style.opacity = '1';
+
+        // Cache the generated cover letter
+        cached.generatedCoverLetter = fullText;
+        cached.coverLetterGeneratedAt = new Date().toISOString();
+        saveCachedResume(
+          currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+          currentRole.id,
+          cached
+        );
+
+        showToast('Cover letter generated successfully', 'success');
+      } catch (error) {
+        console.error('Cover letter generation failed:', error);
+        textarea.value = `Error generating cover letter: ${error.message}`;
+        showToast('Failed to generate cover letter: ' + error.message, 'error');
+      } finally {
+        textarea.style.opacity = '1';
+        btn.disabled = false;
+      }
+    }
+
+    /**
+     * Renders the cover letter panel HTML
+     * INPUT: none
+     * RETURNS: HTML string for cover letter panel
+     */
+    function renderCoverLetterPanel() {
+      const cached = getCachedResume(
+        currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+        currentRole.id
+      ) || {};
+
+      const existingCoverLetter = cached.generatedCoverLetter || '';
+
+      return `
+        <div class="cover-letter-panel">
+          <h3 class="cover-letter-title">Cover Letter</h3>
+          <textarea class="cover-letter-textarea" placeholder="Generate a cover letter to complement this resume...">${existingCoverLetter}</textarea>
+          <button class="generate-cover-letter-btn" onclick="generateCoverLetter()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            ${existingCoverLetter ? 'Regenerate Cover Letter' : 'Generate Cover Letter'}
+          </button>
+          <div style="display: flex; gap: var(--space-2); margin-top: var(--space-3);">
+            <button class="action-button" onclick="copyCoverLetter()">Copy</button>
+            <button class="action-button" onclick="downloadCoverLetter()">Download</button>
+            <button class="action-button" onclick="clearCoverLetter()">Clear</button>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * Creates and appends the cover letter panel below the resume
+     * INPUT: none
+     * RETURNS: DOM element of cover letter panel
+     */
+    function createCoverLetterPanel() {
+      const panel = document.querySelector('.cover-letter-panel');
+      if (panel) return panel;
+
+      const workspaceContent = document.getElementById('workspace-content');
+      if (!workspaceContent) return null;
+
+      const newPanel = document.createElement('div');
+      newPanel.className = 'cover-letter-panel';
+      newPanel.innerHTML = renderCoverLetterPanel();
+
+      workspaceContent.appendChild(newPanel);
+      return newPanel;
+    }
+
+    /**
+     * Clears the cover letter textarea
+     * INPUT: none
+     * OUTPUT: textarea cleared and cached cover letter removed
+     */
+    function clearCoverLetter() {
+      const textarea = document.querySelector('.cover-letter-textarea');
+      if (textarea) {
+        textarea.value = '';
+        textarea.placeholder = 'Generate a cover letter to complement this resume...';
+      }
+
+      // Remove from cache
+      if (currentRole) {
+        const cached = getCachedResume(
+          currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+          currentRole.id
+        ) || {};
+        delete cached.generatedCoverLetter;
+        saveCachedResume(
+          currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+          currentRole.id,
+          cached
+        );
+      }
+
+      showToast('Cover letter cleared', 'info');
+    }
+
+    /**
+     * Copies generated cover letter to clipboard
+     * INPUT: none
+     * OUTPUT: text copied to clipboard
+     */
+    function copyCoverLetter() {
+      const textarea = document.querySelector('.cover-letter-textarea');
+      if (!textarea || !textarea.value) {
+        showToast('No cover letter to copy', 'error');
+        return;
+      }
+
+      navigator.clipboard.writeText(textarea.value).then(() => {
+        showToast('Cover letter copied to clipboard', 'success');
+      }).catch(() => {
+        showToast('Failed to copy to clipboard', 'error');
+      });
+    }
+
+    /**
+     * Downloads cover letter as a text file
+     * INPUT: none
+     * OUTPUT: file downloaded to user's device
+     */
+    function downloadCoverLetter() {
+      const textarea = document.querySelector('.cover-letter-textarea');
+      if (!textarea || !textarea.value) {
+        showToast('No cover letter to download', 'error');
+        return;
+      }
+
+      const text = textarea.value;
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `CoverLetter_${currentRole.company}_${currentRole.title.replace(/\s+/g, '_')}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showToast('Cover letter downloaded', 'success');
+    }
+
+    /* ================================================================
+       FEATURE 2: BULLET BANK MANAGEMENT IN SIDEBAR
+       Display, search, and manage bullets from sidebar with categories
+       ================================================================ */
+
+    /**
+     * Renders bullet bank in sidebar with grouping by category
+     * INPUT: container = sidebar element
+     * OUTPUT: rendered bullet bank with search and management
+     */
+    function renderBulletBankSidebar(container) {
+      const bullets = getBulletBank();
+      const grouped = {};
+
+      // Group bullets by theme
+      bullets.forEach(bullet => {
+        if (!grouped[bullet.theme]) grouped[bullet.theme] = [];
+        grouped[bullet.theme].push(bullet);
+      });
+
+      let html = `
+        <div class="bullet-bank-sidebar">
+          <div class="bullet-bank-header-sidebar">Quick Bullets</div>
+          <input type="text" id="bullet-search" placeholder="Search..." style="width: 100%; padding: var(--space-2); margin-bottom: var(--space-3); font-size: var(--text-xs); border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm);">
+          <div class="bullet-list-sidebar" id="bullet-list-sidebar">
+      `;
+
+      Object.entries(grouped).forEach(([theme, bullets]) => {
+        html += `<div style="font-size: var(--text-2xs); font-weight: 600; color: var(--text-tertiary); margin-top: var(--space-2); margin-bottom: var(--space-1);">${theme}</div>`;
+        bullets.forEach(bullet => {
+          html += `
+            <div class="bullet-item-sidebar" onclick="selectBulletForResume('${bullet.id}')" title="${bullet.text}">
+              ${bullet.text.substring(0, 50)}...
+            </div>
+          `;
+        });
+      });
+
+      html += `
+          </div>
+          <button onclick="showAddBulletForm()" style="width: 100%; margin-top: var(--space-3); padding: var(--space-2); background: var(--accent-subtle); border: 1px solid var(--accent); border-radius: var(--radius-sm); color: var(--accent); font-size: var(--text-xs); font-weight: 600; cursor: pointer;">+ Add Bullet</button>
+        </div>
+      `;
+
+      return html;
+    }
+
+    /**
+     * Selects a bullet as "must include" for next resume generation
+     * INPUT: bulletId = ID of bullet to mark
+     * OUTPUT: visual feedback and storage of preference
+     */
+    function selectBulletForResume(bulletId) {
+      const items = document.querySelectorAll('.bullet-item-sidebar');
+      items.forEach(item => item.classList.remove('selected'));
+
+      const selected = document.querySelector(`[onclick*="${bulletId}"]`);
+      if (selected) selected.classList.add('selected');
+
+      // Cache preference
+      const cached = getCachedResume(
+        currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+        currentRole.id
+      ) || {};
+      cached.mustIncludeBullets = cached.mustIncludeBullets || [];
+      if (!cached.mustIncludeBullets.includes(bulletId)) {
+        cached.mustIncludeBullets.push(bulletId);
+      }
+      saveCachedResume(
+        currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+        currentRole.id,
+        cached
+      );
+
+      showToast('Bullet marked as must-include', 'info');
+    }
+
+    /**
+     * Shows form to add new bullet (placeholder for sidebar)
+     * INPUT: none
+     * OUTPUT: shows toast with info
+     */
+    function showAddBulletForm() {
+      showToast('Switch to Bullet Bank tab to add new bullets', 'info');
+    }
+
+    /* ================================================================
+       FEATURE 3: KEYWORD GAP DETECTION
+       Analyze JD keywords against bullet bank coverage
+       ================================================================ */
+
+    /**
+     * Analyzes keyword gaps between JD and bullet bank
+     * INPUT: none (uses currentAnalysis and bullet bank)
+     * RETURNS: object with covered and gap keywords
+     */
+    function analyzeKeywordGaps() {
+      if (!currentAnalysis) return { covered: [], gaps: [] };
+
+      const jdKeywords = currentAnalysis.keywords;
+      const bulletBank = getBulletBank();
+      const allBulletText = bulletBank.map(b => b.text.toLowerCase()).join(' ');
+
+      const covered = [];
+      const gaps = [];
+
+      jdKeywords.forEach(keyword => {
+        if (allBulletText.includes(keyword.toLowerCase())) {
+          covered.push(keyword);
+        } else {
+          gaps.push(keyword);
+        }
+      });
+
+      return { covered, gaps };
+    }
+
+    /**
+     * Renders keyword gap detection panel in analysis phase
+     * INPUT: none
+     * RETURNS: HTML string for gap analysis section
+     */
+    function renderKeywordGapPanel() {
+      const gaps = analyzeKeywordGaps();
+
+      let html = `
+        <div class="keyword-gap-section">
+          <div class="keyword-gap-title">Keyword Gap Analysis</div>
+          <div style="margin-bottom: var(--space-3);">
+            <div style="font-size: var(--text-xs); font-weight: 600; margin-bottom: var(--space-2); color: var(--text-secondary);">Covered Keywords (Found in Bullet Bank)</div>
+            <div>
+              ${gaps.covered.length > 0
+                ? gaps.covered.map(kw => `<span class="keyword-covered">✓ ${kw}</span>`).join('')
+                : '<span style="color: var(--text-tertiary); font-size: var(--text-xs);">No keywords covered yet</span>'
+              }
+            </div>
+          </div>
+          <div>
+            <div style="font-size: var(--text-xs); font-weight: 600; margin-bottom: var(--space-2); color: var(--text-secondary);">Gap Keywords (Add to Bullet Bank)</div>
+            <div>
+              ${gaps.gaps.length > 0
+                ? gaps.gaps.map(kw => `
+                  <span class="keyword-gap">
+                    ⚠ ${kw}
+                    <button style="background: none; border: none; color: inherit; cursor: pointer; padding: 0; margin-left: var(--space-1); font-weight: bold;" onclick="suggestBulletForKeyword('${kw}')">+</button>
+                  </span>
+                `).join('')
+                : '<span style="color: var(--text-tertiary); font-size: var(--text-xs);">All keywords are covered!</span>'
+              }
+            </div>
+          </div>
+        </div>
+      `;
+
+      return html;
+    }
+
+    /**
+     * Suggests adding a bullet for an uncovered keyword
+     * INPUT: keyword = keyword string
+     * OUTPUT: shows prompt to add bullet
+     */
+    function suggestBulletForKeyword(keyword) {
+      const bulletText = prompt(`Describe an accomplishment related to "${keyword}":`);
+      if (!bulletText) return;
+
+      const bullets = getBulletBank();
+      bullets.push({
+        id: `bullet-${Date.now()}`,
+        role: 'general',
+        theme: 'Suggested',
+        text: `**${keyword}** – ${bulletText}`,
+        keywords: [keyword],
+        metrics: '',
+        dateAdded: Date.now(),
+        usageCount: 0,
+        lastUsed: null
+      });
+
+      saveBulletBank(bullets);
+      showToast(`Bullet added for "${keyword}"`, 'success');
+    }
+
+    /* ================================================================
+       FEATURE 4: VERSION HISTORY TRACKING
+       Track and compare resume versions per role
+       ================================================================ */
+
+    /**
+     * Gets version history for the current role from localStorage
+     * INPUT: none (uses currentRole)
+     * RETURNS: array of version objects
+     */
+    function getResumeVersions() {
+      if (!currentRole) return [];
+
+      const key = `pf_resume_versions_${currentRole.id}`;
+      const data = localStorage.getItem(key);
+      return data ? JSON.parse(data) : [];
+    }
+
+    /**
+     * Saves current resume as a new version
+     * INPUT: none (uses currentRole and current resume state)
+     * OUTPUT: version stored in localStorage
+     */
+    function saveResumeVersion() {
+      if (!currentRole) return;
+
+      const versions = getResumeVersions();
+      const versionNumber = versions.length + 1;
+
+      const newVersion = {
+        id: `v${versionNumber}-${Date.now()}`,
+        versionNumber,
+        timestamp: new Date().toISOString(),
+        roleId: currentRole.id,
+        company: currentRole.company,
+        roleName: currentRole.title,
+        analysis: currentAnalysis,
+        cached: getCachedResume(
+          currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+          currentRole.id
+        )
+      };
+
+      versions.push(newVersion);
+      const key = `pf_resume_versions_${currentRole.id}`;
+      localStorage.setItem(key, JSON.stringify(versions));
+
+      showToast(`Version ${versionNumber} saved – ${new Date().toLocaleTimeString()}`, 'success');
+    }
+
+    /**
+     * Renders version history in sidebar
+     * INPUT: container = sidebar element
+     * RETURNS: HTML string for version history
+     */
+    function renderVersionHistorySidebar() {
+      const versions = getResumeVersions();
+
+      let html = `
+        <div class="version-history-sidebar">
+          <div class="version-history-title">Version History</div>
+          <div class="version-list">
+      `;
+
+      if (versions.length === 0) {
+        html += '<div style="color: var(--text-tertiary); font-size: var(--text-xs);">No versions saved yet</div>';
+      } else {
+        versions.slice().reverse().forEach((version, idx) => {
+          const date = new Date(version.timestamp);
+          const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const dateStr = date.toLocaleDateString();
+          html += `
+            <div class="version-item" onclick="loadResumeVersion('${version.id}')">
+              <div class="version-item-label">v${version.versionNumber}</div>
+              <div class="version-item-date">${dateStr} ${timeStr}</div>
+            </div>
+          `;
+        });
+      }
+
+      html += `
+          </div>
+          <button onclick="saveResumeVersion()" style="width: 100%; margin-top: var(--space-3); padding: var(--space-2); background: var(--accent-subtle); border: 1px solid var(--accent); border-radius: var(--radius-sm); color: var(--accent); font-size: var(--text-xs); font-weight: 600; cursor: pointer;">Save Current Version</button>
+        </div>
+      `;
+
+      return html;
+    }
+
+    /**
+     * Loads a saved resume version
+     * INPUT: versionId = ID of version to load
+     * OUTPUT: cached state updated, UI refreshed
+     */
+    function loadResumeVersion(versionId) {
+      if (!currentRole) return;
+
+      const versions = getResumeVersions();
+      const version = versions.find(v => v.id === versionId);
+
+      if (!version) {
+        showToast('Version not found', 'error');
+        return;
+      }
+
+      // Restore analysis and cached data
+      currentAnalysis = version.analysis;
+
+      const key = `resume_${currentRole.company.toLowerCase().replace(/\s+/g, '-')}_${currentRole.id}`;
+      localStorage.setItem(key, JSON.stringify(version.cached));
+
+      currentPhase = 'builder';
+      renderWorkspace();
+      showToast(`Loaded v${version.versionNumber} from ${new Date(version.timestamp).toLocaleTimeString()}`, 'info');
+    }
+
+    /**
+     * Compares two resume versions (side-by-side)
+     * INPUT: versionId1, versionId2 = IDs of versions to compare
+     * OUTPUT: shows comparison modal
+     */
+    function compareResumeVersions(versionId1, versionId2) {
+      const versions = getResumeVersions();
+      const v1 = versions.find(v => v.id === versionId1);
+      const v2 = versions.find(v => v.id === versionId2);
+
+      if (!v1 || !v2) {
+        showToast('One or both versions not found', 'error');
+        return;
+      }
+
+      const changes = [];
+
+      // Compare keywords
+      const kw1 = v1.analysis?.keywords || [];
+      const kw2 = v2.analysis?.keywords || [];
+      if (JSON.stringify(kw1) !== JSON.stringify(kw2)) {
+        changes.push(`Keywords changed: ${kw1.join(', ')} → ${kw2.join(', ')}`);
+      }
+
+      // Compare summary
+      const sum1 = v1.cached?.builderData?.summary || '';
+      const sum2 = v2.cached?.builderData?.summary || '';
+      if (sum1 !== sum2) {
+        changes.push('Summary was updated');
+      }
+
+      alert(`Version ${v1.versionNumber} → ${v2.versionNumber}\n\nChanges:\n${changes.join('\n') || 'No changes'}`);
+    }
+
+    /* ================================================================
        UI RENDERING FUNCTIONS
        ================================================================ */
 
@@ -2441,7 +3233,7 @@ Generate a professional, one-page resume tailored to this role. Start the HTML w
     }
 
     /**
-     * Renders the sidebar with company card and role details
+     * Renders the sidebar with company card and role details, plus new bullet bank and version history
      * INPUT: none
      * OUTPUT: updates the sidebar content area
      */
@@ -2456,6 +3248,13 @@ Generate a professional, one-page resume tailored to this role. Start the HTML w
         roleDetailsContainer.innerHTML = '';
         jdContainer.innerHTML = '';
         fitAssessmentContainer.innerHTML = '';
+
+        // Add bullet bank and version history below
+        const sidebarContent = document.getElementById('sidebar-content');
+        if (sidebarContent) {
+          const belowContainer = sidebarContent.querySelector('.sidebar-below-role');
+          if (belowContainer) belowContainer.innerHTML = '';
+        }
         return;
       }
 
@@ -2716,6 +3515,8 @@ Generate a professional, one-page resume tailored to this role. Start the HTML w
             </div>
           </div>
 
+          ${renderKeywordGapPanel()}
+
           <div style="display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-6);">
             <button class="generate-resume-btn" onclick="generateTailoredResume()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2731,6 +3532,20 @@ Generate a professional, one-page resume tailored to this role. Start the HTML w
       `;
 
       container.innerHTML = html;
+
+      // Add bullet bank sidebar after render
+      setTimeout(() => {
+        const sidebarContent = document.getElementById('sidebar-content');
+        if (sidebarContent) {
+          let belowContainer = sidebarContent.querySelector('.sidebar-below-role');
+          if (!belowContainer) {
+            belowContainer = document.createElement('div');
+            belowContainer.className = 'sidebar-below-role';
+            sidebarContent.appendChild(belowContainer);
+          }
+          belowContainer.innerHTML = renderBulletBankSidebar(belowContainer) + renderVersionHistorySidebar();
+        }
+      }, 100);
     }
 
     /**
@@ -2827,7 +3642,7 @@ Generate a professional, one-page resume tailored to this role. Start the HTML w
                 </svg>
                 Copy to Clipboard
               </button>
-              <button class="export-button secondary" onclick="saveVersion()">
+              <button class="export-button secondary" onclick="saveResumeVersion()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
                   <polyline points="17 21 17 13 7 13 7 21"></polyline>
@@ -2836,6 +3651,9 @@ Generate a professional, one-page resume tailored to this role. Start the HTML w
                 Save Version
               </button>
             </div>
+
+            <!-- Cover Letter Section -->
+            ${renderCoverLetterPanel()}
           </div>
 
           <!-- Live Preview -->

@@ -346,6 +346,143 @@
       opacity: 0.5;
     }
 
+    /* Message tracking and response status */
+    .response-status {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      margin-top: var(--space-2);
+    }
+
+    .response-status.sent {
+      background: var(--info-subtle);
+      color: var(--info);
+    }
+
+    .response-status.responded {
+      background: var(--success-subtle);
+      color: var(--success);
+    }
+
+    .response-status.no_response {
+      background: var(--warning-subtle);
+      color: var(--warning);
+    }
+
+    .response-status.opened {
+      background: var(--info-subtle);
+      color: var(--info);
+    }
+
+    /* Templates section */
+    .templates-section {
+      margin-top: var(--space-4);
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--bg-subtle);
+    }
+
+    .templates-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-3);
+    }
+
+    .template-item {
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: var(--text-xs);
+      margin-bottom: var(--space-2);
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .template-item:hover {
+      border-color: var(--accent);
+      background: var(--accent-subtle);
+    }
+
+    /* Outreach history */
+    .outreach-history-panel {
+      margin-top: var(--space-6);
+      padding-top: var(--space-6);
+      border-top: 1px solid var(--bg-subtle);
+    }
+
+    .history-entry {
+      padding: var(--space-3);
+      background: var(--bg-elevated);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-3);
+    }
+
+    .history-entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-2);
+    }
+
+    .history-entry-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .history-entry-date {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+    }
+
+    .history-entry-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      margin-top: var(--space-2);
+    }
+
+    .status-sent {
+      background: var(--info-subtle);
+      color: var(--info);
+    }
+
+    .status-responded {
+      background: var(--success-subtle);
+      color: var(--success);
+    }
+
+    .status-no-response {
+      background: var(--warning-subtle);
+      color: var(--warning);
+    }
+
+    /* Schedule follow-up dialog */
+    .schedule-dialog {
+      padding: var(--space-4);
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      margin-top: var(--space-3);
+    }
+
+    .schedule-dialog input {
+      width: 100%;
+      padding: var(--space-2);
+      margin: var(--space-2) 0;
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-sm);
+    }
+
     @media (max-width: 768px) {
       .outreach-container {
         flex-direction: column;
@@ -965,7 +1102,13 @@ Create a compelling, specific message that references at least one concrete deta
             Copy to Clipboard
           </button>
           <button class="btn" onclick="saveToOutreachLog()">
-            Save to Outreach Log
+            Send & Log
+          </button>
+          <button class="btn" onclick="saveAsTemplate()">
+            Save as Template
+          </button>
+          <button class="btn" onclick="scheduleFollowUp()">
+            Schedule Follow-Up
           </button>
           <button class="btn" onclick="clearMessage()">
             Clear
@@ -973,7 +1116,12 @@ Create a compelling, specific message that references at least one concrete deta
           `
               : ''
           }
+          <button class="btn" style="margin-top: var(--space-2); width: 100%;" onclick="showOutreachHistory()">
+            View Outreach History
+          </button>
         </div>
+
+        ${AppState.currentMessage ? '<div style="margin-top: var(--space-4);"></div>' + renderTemplatesUI() : ''}
       `;
 
       // Re-attach textarea listeners
@@ -986,6 +1134,28 @@ Create a compelling, specific message that references at least one concrete deta
           });
         }
       }
+    }
+
+    /**
+     * Renders templates UI section
+     * INPUT: none
+     * RETURNS: HTML string for templates section
+     */
+    function renderTemplatesUI() {
+      const templates = JSON.parse(localStorage.getItem('pf_outreach_templates') || '[]');
+
+      if (templates.length === 0) return '';
+
+      return `
+        <div class="templates-section" style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--bg-subtle);">
+          <div style="font-size: var(--text-sm); font-weight: 600; margin-bottom: var(--space-2);">Quick Load Template:</div>
+          ${templates.map(t => `
+            <button class="btn" style="width: 100%; margin-bottom: var(--space-2); font-size: var(--text-xs);" onclick="loadTemplate('${t.id}')">
+              ${t.name}
+            </button>
+          `).join('')}
+        </div>
+      `;
     }
 
     function updateUI() {
@@ -1028,17 +1198,426 @@ Create a compelling, specific message that references at least one concrete deta
       }
 
       const logEntry = {
+        id: `log-${Date.now()}`,
         roleId: AppState.selectedRoleId,
         messageType: AppState.selectedMessageType,
         messageSnapshot: AppState.currentMessage,
         sentDate: new Date().toISOString(),
-        status: 'draft',
+        status: 'sent',
+        responseStatus: null,
+        responseDate: null,
+        lastFollowUpDate: null,
       };
 
       selectedConn.outreachLog.push(logEntry);
       localStorage.setItem('pf_connections', JSON.stringify(connections));
 
-      showToast('Saved to outreach log!', 'success');
+      showToast('Message saved to outreach log!', 'success');
+    }
+
+    /* ================================================================
+       FEATURE 1: MESSAGE SEQUENCE SCHEDULING
+       Schedule follow-ups with automatic timing
+       ================================================================ */
+
+    /**
+     * Creates or updates an outreach sequence for a connection-role pair
+     * INPUT: connectionId, roleId, currentMessageType
+     * RETURNS: sequence object with follow-up dates
+     */
+    function createOutreachSequence(connectionId, roleId, currentMessageType) {
+      let sequences = JSON.parse(localStorage.getItem('pf_outreach_sequences') || '[]');
+
+      let sequence = sequences.find(s => s.connectionId === connectionId && s.roleId === roleId);
+      if (!sequence) {
+        sequence = {
+          id: `seq-${Date.now()}`,
+          connectionId,
+          roleId,
+          currentStep: currentMessageType,
+          completedSteps: [],
+          sentMessages: [],
+          nextFollowUpDate: null,
+          createdAt: new Date().toISOString(),
+        };
+        sequences.push(sequence);
+      }
+
+      // Mark current step as completed and set next follow-up
+      if (!sequence.completedSteps.includes(currentMessageType)) {
+        sequence.completedSteps.push(currentMessageType);
+        sequence.sentMessages.push({
+          type: currentMessageType,
+          sentDate: new Date().toISOString(),
+          messageSnapshot: AppState.currentMessage,
+        });
+
+        // Calculate follow-up dates based on message type
+        const followUpDates = {
+          'cold-email': 7, // 7 days
+          'cold-email-followup': 10, // 10 days
+          'thank-you-call': 1, // 1 day
+          'thank-you-interview': 1, // 1 day
+          'recruiter-response': 2, // 2 days
+        };
+
+        const daysUntilFollowUp = followUpDates[currentMessageType] || 7;
+        const nextDate = new Date();
+        nextDate.setDate(nextDate.getDate() + daysUntilFollowUp);
+        sequence.nextFollowUpDate = nextDate.toISOString();
+      }
+
+      localStorage.setItem('pf_outreach_sequences', JSON.stringify(sequences));
+      return sequence;
+    }
+
+    /**
+     * Shows schedule follow-up dialog
+     * INPUT: none
+     * OUTPUT: displays date picker and saves schedule
+     */
+    function scheduleFollowUp() {
+      if (!AppState.selectedConnectionId || !AppState.selectedRoleId) {
+        showToast('Select connection and role first', 'error');
+        return;
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      let scheduledDate = today;
+
+      const html = `
+        <div class="schedule-dialog">
+          <h3 style="font-size: var(--text-sm); font-weight: 600; margin-bottom: var(--space-2);">Schedule Follow-Up</h3>
+          <label style="font-size: var(--text-xs); color: var(--text-secondary);">Follow-up date:</label>
+          <input type="date" id="followup-date" value="${today}" min="${today}" onchange="scheduledDate = this.value">
+          <button class="btn primary" style="width: 100%; margin-top: var(--space-2);" onclick="confirmScheduleFollowUp('${AppState.selectedConnectionId}', '${AppState.selectedRoleId}', document.getElementById('followup-date').value)">
+            Schedule Follow-Up
+          </button>
+        </div>
+      `;
+
+      const panel = document.getElementById('editor-panel');
+      const existingDialog = panel.querySelector('.schedule-dialog');
+      if (existingDialog) existingDialog.remove();
+
+      const dialogEl = document.createElement('div');
+      dialogEl.innerHTML = html;
+      panel.appendChild(dialogEl.firstElementChild);
+    }
+
+    /**
+     * Confirms and saves the scheduled follow-up
+     * INPUT: connectionId, roleId, dateString
+     * OUTPUT: sequence updated with follow-up scheduled
+     */
+    function confirmScheduleFollowUp(connectionId, roleId, dateString) {
+      const sequence = createOutreachSequence(connectionId, roleId, AppState.selectedMessageType);
+
+      const followUpDate = new Date(dateString);
+      sequence.nextFollowUpDate = followUpDate.toISOString();
+      sequence.followUpScheduled = true;
+
+      const sequences = JSON.parse(localStorage.getItem('pf_outreach_sequences') || '[]');
+      const idx = sequences.findIndex(s => s.id === sequence.id);
+      if (idx >= 0) sequences[idx] = sequence;
+      localStorage.setItem('pf_outreach_sequences', JSON.stringify(sequences));
+
+      showToast(`Follow-up scheduled for ${followUpDate.toLocaleDateString()}`, 'success');
+
+      // Remove dialog
+      const dialog = document.querySelector('.schedule-dialog');
+      if (dialog) dialog.remove();
+    }
+
+    /* ================================================================
+       FEATURE 2: RESPONSE TRACKING
+       Track message opens, responses, and response times
+       ================================================================ */
+
+    /**
+     * Marks a message as responded and tracks response status
+     * INPUT: messageId = ID of the message to mark
+     * OUTPUT: updates connection outreach log with response status
+     */
+    function markAsResponded(messageId) {
+      const connections = getConnections();
+      let found = false;
+
+      connections.forEach(conn => {
+        if (conn.outreachLog) {
+          const entry = conn.outreachLog.find(e => e.id === messageId);
+          if (entry) {
+            entry.responseStatus = 'responded';
+            entry.responseDate = new Date().toISOString();
+            found = true;
+          }
+        }
+      });
+
+      if (found) {
+        localStorage.setItem('pf_connections', JSON.stringify(connections));
+        showToast('Message marked as responded', 'success');
+        renderOutreachHistory();
+      }
+    }
+
+    /**
+     * Marks a message as opened (tracking)
+     * INPUT: messageId = ID of message
+     * OUTPUT: updates message status
+     */
+    function markAsOpened(messageId) {
+      const connections = getConnections();
+      let found = false;
+
+      connections.forEach(conn => {
+        if (conn.outreachLog) {
+          const entry = conn.outreachLog.find(e => e.id === messageId);
+          if (entry && entry.responseStatus !== 'responded') {
+            entry.responseStatus = 'opened';
+            entry.openedDate = new Date().toISOString();
+            found = true;
+          }
+        }
+      });
+
+      if (found) {
+        localStorage.setItem('pf_connections', JSON.stringify(connections));
+        showToast('Message marked as opened', 'info');
+      }
+    }
+
+    /**
+     * Marks a message as no response received
+     * INPUT: messageId = ID of message
+     * OUTPUT: updates response status
+     */
+    function markAsNoResponse(messageId) {
+      const connections = getConnections();
+      let found = false;
+
+      connections.forEach(conn => {
+        if (conn.outreachLog) {
+          const entry = conn.outreachLog.find(e => e.id === messageId);
+          if (entry) {
+            entry.responseStatus = 'no_response';
+            entry.noResponseMarkedAt = new Date().toISOString();
+            found = true;
+          }
+        }
+      });
+
+      if (found) {
+        localStorage.setItem('pf_connections', JSON.stringify(connections));
+        showToast('Message marked as no response', 'info');
+        renderOutreachHistory();
+      }
+    }
+
+    /* ================================================================
+       FEATURE 3: MESSAGE TEMPLATES
+       Save and load message templates by type
+       ================================================================ */
+
+    /**
+     * Saves current message as a template
+     * INPUT: none
+     * OUTPUT: template stored in pf_outreach_templates
+     */
+    function saveAsTemplate() {
+      if (!AppState.currentMessage) {
+        showToast('No message to save as template', 'error');
+        return;
+      }
+
+      let templates = JSON.parse(localStorage.getItem('pf_outreach_templates') || '[]');
+
+      const template = {
+        id: `template-${Date.now()}`,
+        name: `${MESSAGE_TYPES.find(t => t.id === AppState.selectedMessageType)?.name || 'Message'} Template`,
+        messageType: AppState.selectedMessageType,
+        content: AppState.currentMessage,
+        createdAt: new Date().toISOString(),
+      };
+
+      templates.push(template);
+      localStorage.setItem('pf_outreach_templates', JSON.stringify(templates));
+
+      showToast('Template saved!', 'success');
+      renderTemplatesList();
+    }
+
+    /**
+     * Loads a template into the editor
+     * INPUT: templateId = ID of template to load
+     * OUTPUT: message textarea populated with template content
+     */
+    function loadTemplate(templateId) {
+      const templates = JSON.parse(localStorage.getItem('pf_outreach_templates') || '[]');
+      const template = templates.find(t => t.id === templateId);
+
+      if (!template) {
+        showToast('Template not found', 'error');
+        return;
+      }
+
+      AppState.currentMessage = template.content;
+      AppState.selectedMessageType = template.messageType;
+      updateUI();
+
+      showToast(`Loaded "${template.name}"`, 'success');
+    }
+
+    /**
+     * Deletes a saved template
+     * INPUT: templateId = ID of template to delete
+     * OUTPUT: template removed from storage
+     */
+    function deleteTemplate(templateId) {
+      if (!confirm('Delete this template?')) return;
+
+      let templates = JSON.parse(localStorage.getItem('pf_outreach_templates') || '[]');
+      templates = templates.filter(t => t.id !== templateId);
+      localStorage.setItem('pf_outreach_templates', JSON.stringify(templates));
+
+      showToast('Template deleted', 'success');
+      renderTemplatesList();
+    }
+
+    /**
+     * Renders the templates list in the sidebar
+     * INPUT: none
+     * OUTPUT: displays saved templates
+     */
+    function renderTemplatesList() {
+      const templates = JSON.parse(localStorage.getItem('pf_outreach_templates') || '[]');
+
+      if (templates.length === 0) return;
+
+      const html = `
+        <div class="templates-section">
+          <div class="templates-title">Saved Templates</div>
+          ${templates.map(t => `
+            <div class="template-item">
+              <div style="font-weight: 600; margin-bottom: var(--space-1);">${t.name}</div>
+              <button style="padding: var(--space-1); margin-right: var(--space-1); background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-size: var(--text-2xs); cursor: pointer;" onclick="loadTemplate('${t.id}')">Load</button>
+              <button style="padding: var(--space-1); background: var(--error); color: white; border: none; border-radius: var(--radius-sm); font-size: var(--text-2xs); cursor: pointer;" onclick="deleteTemplate('${t.id}')">Delete</button>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      const sidebar = document.querySelector('.sidebar');
+      let templatesSection = sidebar.querySelector('.templates-section');
+      if (!templatesSection) {
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        sidebar.appendChild(div.firstElementChild);
+      } else {
+        templatesSection.outerHTML = html;
+      }
+    }
+
+    /* ================================================================
+       FEATURE 4: OUTREACH HISTORY & ANALYTICS
+       View all messages, timeline, and response rates
+       ================================================================ */
+
+    /**
+     * Renders complete outreach history with timeline and stats
+     * INPUT: none
+     * OUTPUT: displays history panel in editor
+     */
+    function renderOutreachHistory() {
+      const connections = getConnections();
+      const roles = getRoles();
+
+      let allEntries = [];
+      connections.forEach(conn => {
+        if (conn.outreachLog) {
+          conn.outreachLog.forEach(entry => {
+            const role = roles.find(r => r.id === entry.roleId);
+            allEntries.push({
+              ...entry,
+              connectionName: conn.name,
+              connectionId: conn.id,
+              roleTitle: role?.title || 'Unknown Role',
+              company: role?.company || 'Unknown Company',
+            });
+          });
+        }
+      });
+
+      // Sort by date (newest first)
+      allEntries.sort((a, b) => new Date(b.sentDate) - new Date(a.sentDate));
+
+      // Calculate stats
+      const totalSent = allEntries.length;
+      const responded = allEntries.filter(e => e.responseStatus === 'responded').length;
+      const responseRate = totalSent > 0 ? Math.round((responded / totalSent) * 100) : 0;
+
+      const messageTypeStats = {};
+      MESSAGE_TYPES.forEach(type => {
+        const sent = allEntries.filter(e => e.messageType === type.id).length;
+        const resp = allEntries.filter(e => e.messageType === type.id && e.responseStatus === 'responded').length;
+        messageTypeStats[type.name] = { sent, responded: resp };
+      });
+
+      const historyHtml = `
+        <div class="outreach-history-panel">
+          <h2 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-4);">Outreach History</h2>
+
+          <!-- Stats -->
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-bottom: var(--space-6);">
+            <div style="background: var(--accent-subtle); padding: var(--space-3); border-radius: var(--radius-md); text-align: center;">
+              <div style="font-size: var(--text-xl); font-weight: 700; color: var(--accent);">${totalSent}</div>
+              <div style="font-size: var(--text-xs); color: var(--text-secondary);">Total Sent</div>
+            </div>
+            <div style="background: var(--success-subtle); padding: var(--space-3); border-radius: var(--radius-md); text-align: center;">
+              <div style="font-size: var(--text-xl); font-weight: 700; color: var(--success);">${responded}</div>
+              <div style="font-size: var(--text-xs); color: var(--text-secondary);">Responded</div>
+            </div>
+            <div style="background: var(--info-subtle); padding: var(--space-3); border-radius: var(--radius-md); text-align: center;">
+              <div style="font-size: var(--text-xl); font-weight: 700; color: var(--info);">${responseRate}%</div>
+              <div style="font-size: var(--text-xs); color: var(--text-secondary);">Response Rate</div>
+            </div>
+          </div>
+
+          <!-- Message timeline -->
+          <h3 style="font-size: var(--text-sm); font-weight: 600; margin-bottom: var(--space-3);">Timeline</h3>
+          <div style="max-height: 400px; overflow-y: auto;">
+            ${allEntries.map(entry => `
+              <div class="history-entry">
+                <div class="history-entry-header">
+                  <div>
+                    <div class="history-entry-title">${entry.connectionName} – ${entry.roleTitle}</div>
+                    <div class="history-entry-date">${entry.company}</div>
+                  </div>
+                  <div class="history-entry-date">${new Date(entry.sentDate).toLocaleDateString()}</div>
+                </div>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-2);">
+                  ${MESSAGE_TYPES.find(t => t.id === entry.messageType)?.name || entry.messageType}
+                </div>
+                ${entry.responseStatus ? `<span class="history-entry-status status-${entry.responseStatus === 'responded' ? 'responded' : entry.responseStatus === 'no_response' ? 'no-response' : 'sent'}">
+                  ${entry.responseStatus === 'responded' ? '✓ Responded' : entry.responseStatus === 'no_response' ? '✗ No Response' : '• Opened'}
+                </span>` : ''}
+              </div>
+            `).join('') || '<p style="color: var(--text-tertiary); text-align: center;">No messages sent yet</p>'}
+          </div>
+        </div>
+      `;
+
+      const panel = document.getElementById('editor-panel');
+      panel.innerHTML = historyHtml;
+    }
+
+    /**
+     * Shows outreach history view
+     * INPUT: none
+     * OUTPUT: switches to history view
+     */
+    function showOutreachHistory() {
+      renderOutreachHistory();
     }
 
     function clearMessage() {

@@ -268,6 +268,288 @@
       font-family: var(--font-mono);
     }
 
+    /* Modal and overlay */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-4);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--bg-subtle);
+    }
+
+    .modal-title {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: var(--text-lg);
+      cursor: pointer;
+      color: var(--text-tertiary);
+      transition: color var(--duration-fast) var(--ease-default);
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .form-group {
+      margin-bottom: var(--space-4);
+    }
+
+    .form-label {
+      display: block;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+      font-size: var(--text-sm);
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-base);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      font-family: inherit;
+      transition: border-color var(--duration-fast) var(--ease-default);
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+
+    .form-textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-3);
+    }
+
+    .score-breakdown {
+      background: var(--bg-base);
+      border-radius: var(--radius-sm);
+      padding: var(--space-3);
+      margin: var(--space-4) 0;
+    }
+
+    .score-breakdown-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-2) 0;
+      border-bottom: 1px solid var(--bg-subtle);
+      font-size: var(--text-sm);
+    }
+
+    .score-breakdown-item:last-child {
+      border-bottom: none;
+    }
+
+    .score-breakdown-label {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .score-breakdown-value {
+      color: var(--text-primary);
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .quick-check {
+      background: var(--bg-base);
+      border-radius: var(--radius-sm);
+      padding: var(--space-3);
+      margin: var(--space-4) 0;
+    }
+
+    .quick-check-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) 0;
+      font-size: var(--text-sm);
+    }
+
+    .quick-check-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .quick-check-icon.pass {
+      background: var(--success);
+      color: white;
+    }
+
+    .quick-check-icon.fail {
+      background: var(--danger);
+      color: white;
+    }
+
+    .quick-check-label {
+      flex: 1;
+    }
+
+    /* Dedup warning */
+    .dedup-warning {
+      background: var(--warning);
+      background-opacity: 0.1;
+      border-left: 4px solid var(--warning);
+      padding: var(--space-3);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-4);
+    }
+
+    .dedup-warning-title {
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-1);
+    }
+
+    .dedup-warning-text {
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      margin-bottom: var(--space-2);
+    }
+
+    .dedup-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    /* Modal actions */
+    .modal-actions {
+      display: flex;
+      gap: var(--space-2);
+      margin-top: var(--space-4);
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--bg-subtle);
+    }
+
+    .modal-actions .btn {
+      flex: 1;
+    }
+
+    /* Snoozed tab badge */
+    .tab-badge {
+      display: inline-block;
+      background: var(--danger);
+      color: white;
+      border-radius: var(--radius-pill);
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: var(--space-1);
+    }
+
+    /* Analytics improvements */
+    .score-distribution-chart {
+      display: flex;
+      gap: var(--space-2);
+      height: 200px;
+      align-items: flex-end;
+      margin: var(--space-3) 0;
+    }
+
+    .distribution-bar {
+      flex: 1;
+      background: var(--accent);
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      position: relative;
+      min-height: 20px;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .distribution-bar:hover {
+      background: var(--accent-hover);
+    }
+
+    .distribution-label {
+      text-align: center;
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      margin-top: var(--space-2);
+    }
+
+    .top-companies-list {
+      margin: var(--space-3) 0;
+    }
+
+    .company-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-2) 0;
+      border-bottom: 1px solid var(--bg-subtle);
+      font-size: var(--text-sm);
+    }
+
+    .company-item:last-child {
+      border-bottom: none;
+    }
+
+    .company-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .company-count {
+      background: var(--bg-elevated);
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: var(--text-xs);
+    }
+
     /* Feed sources panel */
     .feed-sources {
       display: grid;
@@ -1057,6 +1339,12 @@
                 <line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line>
               </svg>
             </button>
+            <button class="btn btn-primary btn-sm" id="addRoleManuallyBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Add Role
+            </button>
             <button class="btn btn-secondary btn-sm" id="checkNowBtn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36M20.49 15a9 9 0 0 1-14.85 3.36"></path>
@@ -1069,6 +1357,7 @@
         <!-- Tab Navigation -->
         <div class="tab-nav">
           <button class="tab-btn active" data-tab="feed">Feed</button>
+          <button class="tab-btn" data-tab="snoozed">Snoozed <span id="snoozedBadge" class="tab-badge" style="display: none;">0</span></button>
           <button class="tab-btn" data-tab="sources">Sources</button>
           <button class="tab-btn" data-tab="analytics">Analytics</button>
           <button class="tab-btn" data-tab="log">Log</button>
@@ -1084,7 +1373,14 @@
           </div>
         </div>
 
-        <!-- TAB 2: Feed Sources -->
+        <!-- TAB 2: Snoozed Roles -->
+        <div class="tab-content" id="tab-snoozed">
+          <div id="snoozedFeedCards" class="feed-cards">
+            <!-- Snoozed roles populated by JavaScript -->
+          </div>
+        </div>
+
+        <!-- TAB 3: Feed Sources -->
         <div class="tab-content" id="tab-sources">
           <div style="padding: var(--space-4);">
             <div class="demo-banner" id="sourcesBanner">Sample Data — Feed sources configured but not connected to real APIs</div>
@@ -1094,7 +1390,7 @@
           </div>
         </div>
 
-        <!-- TAB 3: Analytics -->
+        <!-- TAB 4: Analytics -->
         <div class="tab-content" id="tab-analytics">
           <div style="padding: var(--space-4); overflow-y: auto;">
             <div class="analytics-grid" id="analyticsGrid">
@@ -1103,7 +1399,7 @@
           </div>
         </div>
 
-        <!-- TAB 4: Feed Run Log -->
+        <!-- TAB 5: Feed Run Log -->
         <div class="tab-content" id="tab-log">
           <div style="padding: var(--space-4); overflow-y: auto;">
             <div class="feed-log" id="feedLog">
@@ -1111,6 +1407,105 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Add Role Manually -->
+  <div class="modal-overlay" id="addRoleModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Add Role Manually</h2>
+        <button class="modal-close" onclick="closeAddRoleModal()">✕</button>
+      </div>
+
+      <div id="dedupWarningContainer"></div>
+
+      <form id="addRoleForm" onsubmit="handleAddRoleSubmit(event)">
+        <!-- Company Name -->
+        <div class="form-group">
+          <label class="form-label">Company Name *</label>
+          <input type="text" class="form-input" id="manualCompany" placeholder="e.g., Anthropic" required>
+        </div>
+
+        <!-- Role Title -->
+        <div class="form-group">
+          <label class="form-label">Role Title *</label>
+          <input type="text" class="form-input" id="manualTitle" placeholder="e.g., Senior Product Manager" required>
+        </div>
+
+        <!-- JD Text (Most Important) -->
+        <div class="form-group">
+          <label class="form-label">Job Description (JD Text) * <span style="color: var(--danger);">CRITICAL FOR SCORING</span></label>
+          <textarea class="form-textarea" id="manualJD" placeholder="Paste the full job description here. This is the most important field for accurate scoring." required></textarea>
+        </div>
+
+        <!-- URL -->
+        <div class="form-group">
+          <label class="form-label">URL to Posting</label>
+          <input type="url" class="form-input" id="manualURL" placeholder="https://example.com/jobs/123">
+        </div>
+
+        <!-- Location -->
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          <input type="text" class="form-input" id="manualLocation" placeholder="e.g., San Francisco, CA">
+        </div>
+
+        <!-- Salary Range -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Salary Min ($K)</label>
+            <input type="number" class="form-input" id="manualSalaryMin" placeholder="320">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Salary Max ($K)</label>
+            <input type="number" class="form-input" id="manualSalaryMax" placeholder="450">
+          </div>
+        </div>
+
+        <!-- Company Stage -->
+        <div class="form-group">
+          <label class="form-label">Company Stage</label>
+          <select class="form-select" id="manualStage">
+            <option value="">Select stage...</option>
+            <option value="Series A">Series A</option>
+            <option value="Series B+">Series B+</option>
+            <option value="Late-stage">Late-stage</option>
+            <option value="Pre-IPO">Pre-IPO</option>
+            <option value="Public">Public</option>
+          </select>
+        </div>
+
+        <!-- Domain -->
+        <div class="form-group">
+          <label class="form-label">Domain</label>
+          <input type="text" class="form-input" id="manualDomain" placeholder="e.g., AI/ML, AdTech, Fintech">
+        </div>
+
+        <div id="manualScoreContainer"></div>
+      </form>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeAddRoleModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitAddRole()">Run Scoring</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Score Result & Pipeline Confirmation -->
+  <div class="modal-overlay" id="scoreResultModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Role Scored</h2>
+        <button class="modal-close" onclick="closeScoreResultModal()">✕</button>
+      </div>
+
+      <div id="scoreResultContainer"></div>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeScoreResultModal()">Back</button>
+        <button class="btn btn-primary" id="addToPipelineBtn" onclick="confirmAddToPipeline()">Add to Pipeline</button>
       </div>
     </div>
   </div>
@@ -1463,8 +1858,34 @@
       acceptedRoles: [],
       dismissedRoles: [],
       snoozedRoles: [],
-      currentTab: 'feed'
+      currentTab: 'feed',
+      companies: [], // For dedup and tracking
+      pendingRole: null, // Role awaiting pipeline confirmation
+      pendingRoleScore: null
     };
+
+    // Load companies from localStorage
+    function loadCompanies() {
+      const stored = localStorage.getItem('pf_companies');
+      return stored ? JSON.parse(stored) : [];
+    }
+
+    // Save companies to localStorage
+    function saveCompanies(companies) {
+      localStorage.setItem('pf_companies', JSON.stringify(companies));
+      state.companies = companies;
+    }
+
+    // Load roles from localStorage (pipeline)
+    function loadRoles() {
+      const stored = localStorage.getItem('pf_roles');
+      return stored ? JSON.parse(stored) : [];
+    }
+
+    // Save roles to localStorage
+    function saveRoles(roles) {
+      localStorage.setItem('pf_roles', JSON.stringify(roles));
+    }
 
     // ============================================================
     // UTILITY FUNCTIONS
@@ -1568,6 +1989,178 @@
         minute: '2-digit',
         hour12: false
       });
+    }
+
+    // ============================================================
+    // DEDUP ENGINE: Check for existing roles (PRD Section 5.3)
+    // ============================================================
+
+    /**
+     * Check if a role already exists in pipeline or feed.
+     * Returns { type: 'exact' | 'fuzzy' | 'none', existingRole?: {...}, distance?: number }
+     */
+    function checkDedup(company, title) {
+      const roles = loadRoles();
+      const feedItems = state.feedItems;
+      const allRoles = [...roles, ...feedItems];
+
+      // Helper: edit distance for fuzzy matching
+      function editDistance(a, b) {
+        a = a.toLowerCase();
+        b = b.toLowerCase();
+        const matrix = [];
+
+        for (let i = 0; i <= b.length; i++) {
+          matrix[i] = [i];
+        }
+
+        for (let j = 0; j <= a.length; j++) {
+          matrix[0][j] = j;
+        }
+
+        for (let i = 1; i <= b.length; i++) {
+          for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+              matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+              matrix[i][j] = Math.min(
+                matrix[i - 1][j - 1] + 1,
+                matrix[i][j - 1] + 1,
+                matrix[i - 1][j] + 1
+              );
+            }
+          }
+        }
+
+        return matrix[b.length][a.length];
+      }
+
+      // Check exact match
+      const exactMatch = allRoles.find(r =>
+        r.company.toLowerCase() === company.toLowerCase() &&
+        r.title.toLowerCase() === title.toLowerCase()
+      );
+
+      if (exactMatch) {
+        return {
+          type: 'exact',
+          existingRole: exactMatch
+        };
+      }
+
+      // Check fuzzy match (same company, similar title, distance < 3)
+      const fuzzyMatch = allRoles.find(r => {
+        const sameCompany = r.company.toLowerCase() === company.toLowerCase();
+        const distance = editDistance(r.title, title);
+        return sameCompany && distance < 3;
+      });
+
+      if (fuzzyMatch) {
+        return {
+          type: 'fuzzy',
+          existingRole: fuzzyMatch,
+          distance: editDistance(fuzzyMatch.title, title)
+        };
+      }
+
+      return { type: 'none' };
+    }
+
+    // ============================================================
+    // QUICK-CHECK FILTER: 6-point binary filter (PRD Section 5.5)
+    // ============================================================
+
+    /**
+     * Run quick-check filter on a role. Must pass 5/6 checks.
+     * Exception: Tier 1 companies bypass this filter.
+     *
+     * Returns { passed: boolean, checks: [...] }
+     */
+    function runQuickCheckFilter(role, prefs) {
+      const jdLower = role.jd ? role.jd.toLowerCase() : '';
+      const titleLower = role.title ? role.title.toLowerCase() : '';
+      const domainLower = role.domain ? role.domain.toLowerCase() : '';
+
+      const checks = [];
+
+      // Check 1: Level appropriate?
+      const seniorityWords = ['senior', 'staff', 'principal', 'director', 'vp', 'head'];
+      const hasTargetSeniority = seniorityWords.some(word => titleLower.includes(word));
+      checks.push({
+        name: 'Level appropriate?',
+        passed: hasTargetSeniority,
+        description: titleLower
+      });
+
+      // Check 2: Domain relevant?
+      const primaryDomainsLower = (prefs.primaryDomains || []).map(d => d.toLowerCase());
+      const secondaryDomainsLower = (prefs.secondaryDomains || []).map(d => d.toLowerCase());
+      const hasDomainMatch = primaryDomainsLower.some(d => jdLower.includes(d) || domainLower.includes(d)) ||
+                            secondaryDomainsLower.some(d => jdLower.includes(d) || domainLower.includes(d));
+      checks.push({
+        name: 'Domain relevant?',
+        passed: hasDomainMatch,
+        description: domainLower || role.domain
+      });
+
+      // Check 3: Location OK?
+      const prefsLocations = prefs.locations || [];
+      const excludedLocations = prefs.excludedLocations || [];
+      const inExcludedLocation = excludedLocations.some(loc =>
+        role.location ? role.location.toLowerCase().includes(loc.toLowerCase()) : false
+      );
+      const locationOK = !inExcludedLocation && (
+        (prefsLocations.includes('Remote') && role.remote) ||
+        (role.location && prefsLocations.some(loc =>
+          role.location.toLowerCase().includes(loc.toLowerCase())
+        ))
+      );
+      checks.push({
+        name: 'Location OK?',
+        passed: locationOK,
+        description: role.location || 'Not specified'
+      });
+
+      // Check 4: Company stage OK?
+      const preferredStages = prefs.companyStage || [];
+      const stageOK = preferredStages.length === 0 || preferredStages.includes(role.stage);
+      checks.push({
+        name: 'Company stage OK?',
+        passed: stageOK,
+        description: role.stage || 'Not specified'
+      });
+
+      // Check 5: No hard blockers?
+      const excludeKeywordsLower = (prefs.excludeKeywords || []).map(k => k.toLowerCase());
+      const hasExcludeKeyword = excludeKeywordsLower.some(k =>
+        jdLower.includes(k) || titleLower.includes(k)
+      );
+      const noBlockers = !hasExcludeKeyword;
+      checks.push({
+        name: 'No hard blockers?',
+        passed: noBlockers,
+        description: hasExcludeKeyword ? 'Found exclude keyword' : 'Clear'
+      });
+
+      // Check 6: Interesting problem?
+      const boostKeywordsLower = (prefs.boostKeywords || []).map(k => k.toLowerCase());
+      const boostCount = boostKeywordsLower.filter(k => jdLower.includes(k)).length;
+      const isInteresting = boostCount >= 2;
+      checks.push({
+        name: 'Interesting? (2+ boost keywords)',
+        passed: isInteresting,
+        description: `Found ${boostCount} boost keywords`
+      });
+
+      const passCount = checks.filter(c => c.passed).length;
+      const passed = passCount >= 5; // Must pass 5/6
+
+      return {
+        passed,
+        passCount,
+        totalChecks: checks.length,
+        checks
+      };
     }
 
     // ============================================================
@@ -1746,6 +2339,9 @@
         finalScore = Math.min(finalScore, 39);
       }
 
+      // Run quick-check filter
+      const quickCheck = runQuickCheckFilter(role, prefs);
+
       return {
         score: Math.max(0, Math.min(100, finalScore)),
         breakdown: {
@@ -1755,7 +2351,8 @@
           location: Math.round(locationScore),
           stage: Math.round(stageScore),
           comp: Math.round(compScore)
-        }
+        },
+        quickCheck: quickCheck
       };
     }
 
@@ -2033,17 +2630,93 @@
       const runs = loadFeedRuns();
 
       // Calculate stats
-      const totalRoles = state.feedItems.length + state.acceptedRoles.length + state.dismissedRoles.length;
-      const avgScore = state.feedItems.length > 0
-        ? Math.round(state.feedItems.reduce((sum, item) => sum + item.score, 0) / state.feedItems.length)
+      const totalRoles = state.feedItems.length + state.acceptedRoles.length + state.dismissedRoles.length + state.snoozedRoles.length;
+      const allRoles = [...state.feedItems, ...state.acceptedRoles, ...state.dismissedRoles, ...state.snoozedRoles];
+      const avgScore = allRoles.length > 0
+        ? Math.round(allRoles.reduce((sum, item) => sum + item.score, 0) / allRoles.length)
         : 0;
       const acceptRate = totalRoles > 0
         ? Math.round((state.acceptedRoles.length / totalRoles) * 100)
         : 0;
 
+      // Score distribution
+      const scoreRanges = {
+        '80-100': 0,
+        '60-79': 0,
+        '40-59': 0,
+        '20-39': 0,
+        '0-19': 0
+      };
+
+      allRoles.forEach(role => {
+        if (role.score >= 80) scoreRanges['80-100']++;
+        else if (role.score >= 60) scoreRanges['60-79']++;
+        else if (role.score >= 40) scoreRanges['40-59']++;
+        else if (role.score >= 20) scoreRanges['20-39']++;
+        else scoreRanges['0-19']++;
+      });
+
+      // Top companies
+      const companies = {};
+      allRoles.forEach(role => {
+        companies[role.company] = (companies[role.company] || 0) + 1;
+      });
+
+      const topCompanies = Object.entries(companies)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+      // Source breakdown
+      const sources = {};
+      allRoles.forEach(role => {
+        sources[role.source] = (sources[role.source] || 0) + 1;
+      });
+
+      // Build distribution chart HTML
+      const maxCount = Math.max(...Object.values(scoreRanges), 1);
+      let distributionHTML = '<strong>Score Distribution:</strong><div class="score-distribution-chart">';
+      Object.entries(scoreRanges).forEach(([range, count]) => {
+        const height = Math.max(20, (count / maxCount) * 180);
+        distributionHTML += `
+          <div>
+            <div class="distribution-bar" style="height: ${height}px;" title="${range}: ${count} roles"></div>
+            <div class="distribution-label">${range}</div>
+          </div>
+        `;
+      });
+      distributionHTML += '</div>';
+
+      // Build top companies HTML
+      let topCompaniesHTML = '<strong>Top Companies by Role Count:</strong><div class="top-companies-list">';
+      if (topCompanies.length > 0) {
+        topCompanies.forEach(([company, count]) => {
+          topCompaniesHTML += `
+            <div class="company-item">
+              <span class="company-name">${company}</span>
+              <span class="company-count">${count}</span>
+            </div>
+          `;
+        });
+      } else {
+        topCompaniesHTML += '<p style="color: var(--text-tertiary); font-size: var(--text-sm);">No roles discovered yet</p>';
+      }
+      topCompaniesHTML += '</div>';
+
+      // Build source breakdown HTML
+      let sourceHTML = '<strong>Source Breakdown:</strong><div class="top-companies-list">';
+      Object.entries(sources).forEach(([source, count]) => {
+        sourceHTML += `
+          <div class="company-item">
+            <span class="company-name">${source}</span>
+            <span class="company-count">${count}</span>
+          </div>
+        `;
+      });
+      sourceHTML += '</div>';
+
       container.innerHTML = `
         <div class="stat-card">
-          <div class="stat-label">Roles Discovered</div>
+          <div class="stat-label">Total Roles Discovered</div>
           <div class="stat-value">${totalRoles}</div>
           <div class="stat-bar">
             <div class="stat-bar-fill" style="width: ${Math.min(totalRoles * 5, 100)}%"></div>
@@ -2051,7 +2724,7 @@
         </div>
 
         <div class="stat-card">
-          <div class="stat-label">Avg Match Score</div>
+          <div class="stat-label">Average Match Score</div>
           <div class="stat-value">${avgScore}</div>
           <div class="stat-bar">
             <div class="stat-bar-fill" style="width: ${avgScore}%"></div>
@@ -2067,8 +2740,20 @@
         </div>
 
         <div class="stat-card">
-          <div class="stat-label">Roles Snoozed</div>
+          <div class="stat-label">Currently Snoozed</div>
           <div class="stat-value">${state.snoozedRoles.length}</div>
+        </div>
+
+        <div class="stat-card" style="grid-column: 1 / -1;">
+          ${distributionHTML}
+        </div>
+
+        <div class="stat-card" style="grid-column: 1 / -1;">
+          ${topCompaniesHTML}
+        </div>
+
+        <div class="stat-card" style="grid-column: 1 / -1;">
+          ${sourceHTML}
         </div>
       `;
     }
@@ -2160,12 +2845,454 @@
       if (!role) return;
 
       state.feedItems = state.feedItems.filter(r => r.id !== roleId);
-      state.snoozedRoles.push({
+      const snoozedRole = {
         ...role,
         snoozedUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      });
+      };
+      state.snoozedRoles.push(snoozedRole);
+      saveSnoozedRoles();
       renderFeedCards();
+      updateSnoozedBadge();
       showToast(`Snoozed: ${role.title} for 7 days`, 'success');
+    }
+
+    /**
+     * Unsnoozed a role: move back to feed.
+     * @param {string} roleId - Role ID to unsnoozed
+     */
+    function unsnoozedRole(roleId) {
+      const role = state.snoozedRoles.find(r => r.id === roleId);
+      if (!role) return;
+
+      state.snoozedRoles = state.snoozedRoles.filter(r => r.id !== roleId);
+      const { snoozedUntil, ...roleWithoutSnooze } = role;
+      state.feedItems.push(roleWithoutSnooze);
+      state.feedItems.sort((a, b) => b.score - a.score);
+      saveSnoozedRoles();
+      renderFeedCards();
+      renderSnoozedCards();
+      updateSnoozedBadge();
+      showToast(`Unsnoozed: ${role.title}`, 'success');
+    }
+
+    /**
+     * Save snoozed roles to localStorage
+     */
+    function saveSnoozedRoles() {
+      localStorage.setItem('pf_snoozed_roles', JSON.stringify(state.snoozedRoles));
+    }
+
+    /**
+     * Load snoozed roles from localStorage
+     */
+    function loadSnoozedRoles() {
+      const stored = localStorage.getItem('pf_snoozed_roles');
+      if (!stored) return [];
+
+      const snoozed = JSON.parse(stored);
+      const now = new Date();
+
+      // Filter out expired snoozes and re-add to feed
+      const stillSnoozed = snoozed.filter(r => new Date(r.snoozedUntil) > now);
+      const expired = snoozed.filter(r => new Date(r.snoozedUntil) <= now);
+
+      // Add expired back to feed
+      if (expired.length > 0) {
+        expired.forEach(role => {
+          const { snoozedUntil, ...roleWithoutSnooze } = role;
+          state.feedItems.push(roleWithoutSnooze);
+        });
+        state.feedItems.sort((a, b) => b.score - a.score);
+      }
+
+      state.snoozedRoles = stillSnoozed;
+      saveSnoozedRoles();
+      return stillSnoozed;
+    }
+
+    /**
+     * Update snoozed badge with count
+     */
+    function updateSnoozedBadge() {
+      const badge = document.getElementById('snoozedBadge');
+      if (state.snoozedRoles.length > 0) {
+        badge.textContent = state.snoozedRoles.length;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    /**
+     * Render snoozed roles cards
+     */
+    function renderSnoozedCards() {
+      const container = document.getElementById('snoozedFeedCards');
+      if (!container) return;
+
+      if (!state.snoozedRoles || state.snoozedRoles.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <h3 class="empty-title">No snoozed roles</h3>
+            <p class="empty-text">Roles you snooze will appear here for 7 days.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = state.snoozedRoles.map(item => {
+        const scoreClass = item.score >= 80 ? 'score-high' : item.score >= 60 ? 'score-medium' : 'score-low';
+        const scorePercent = item.score;
+        const snoozedUntil = new Date(item.snoozedUntil);
+        const timeLeft = formatRelativeTime(snoozedUntil);
+
+        return `
+          <div class="feed-card" data-role-id="${item.id}">
+            <div class="card-header">
+              <div class="card-logo">${item.logo}</div>
+              <div class="card-info">
+                <div class="card-company">${item.company}</div>
+                <div class="card-title">${item.title}</div>
+                <div class="card-meta">
+                  <span class="card-badge">${item.source}</span>
+                  <span>Snoozed until ${formatTimestamp(snoozedUntil)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-score-section ${scoreClass}">
+              <div class="card-score-label">
+                <span>Match Score</span>
+                <span class="card-score-value">${item.score}/100</span>
+              </div>
+              <div class="score-bar">
+                <div class="score-bar-fill" style="width: 0%;" data-target="${scorePercent}"></div>
+              </div>
+            </div>
+
+            <div class="card-details">
+              <strong>${item.domain}</strong> • ${item.location}${item.remote ? ' (Remote)' : ''}<br>
+              <span style="font-size: var(--text-xs); color: var(--text-tertiary);">${item.salary || 'Salary not listed'}</span>
+            </div>
+
+            <div class="card-actions">
+              <button class="action-btn action-accept" onclick="acceptRole('${item.id}')">
+                <span>Accept</span>
+              </button>
+              <button class="action-btn action-snooze" onclick="unsnoozedRole('${item.id}')">
+                <span>Unsnoozed</span>
+              </button>
+              <button class="action-btn action-dismiss" onclick="dismissRole('${item.id}')">
+                <span>Dismiss</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Animate score bars on render
+      setTimeout(() => {
+        document.querySelectorAll('#snoozedFeedCards .score-bar-fill').forEach(bar => {
+          const target = bar.dataset.target;
+          bar.style.width = target + '%';
+        });
+      }, 50);
+    }
+
+    // ============================================================
+    // MODAL & FORM HANDLERS
+    // ============================================================
+
+    /**
+     * Open the "Add Role Manually" modal
+     */
+    function openAddRoleModal() {
+      const modal = document.getElementById('addRoleModal');
+      if (modal) {
+        modal.classList.add('active');
+        // Clear form
+        document.getElementById('addRoleForm').reset();
+        document.getElementById('dedupWarningContainer').innerHTML = '';
+        document.getElementById('manualScoreContainer').innerHTML = '';
+      }
+    }
+
+    /**
+     * Close the "Add Role Manually" modal
+     */
+    function closeAddRoleModal() {
+      const modal = document.getElementById('addRoleModal');
+      if (modal) {
+        modal.classList.remove('active');
+      }
+    }
+
+    /**
+     * Close the score result modal
+     */
+    function closeScoreResultModal() {
+      const modal = document.getElementById('scoreResultModal');
+      if (modal) {
+        modal.classList.remove('active');
+      }
+    }
+
+    /**
+     * Handle form submission for manual role entry
+     */
+    function handleAddRoleSubmit(event) {
+      event.preventDefault();
+      submitAddRole();
+    }
+
+    /**
+     * Submit manual role for scoring
+     */
+    function submitAddRole() {
+      // Collect form data
+      const company = document.getElementById('manualCompany').value.trim();
+      const title = document.getElementById('manualTitle').value.trim();
+      const jd = document.getElementById('manualJD').value.trim();
+      const url = document.getElementById('manualURL').value.trim();
+      const location = document.getElementById('manualLocation').value.trim() || 'Not specified';
+      const salaryMin = document.getElementById('manualSalaryMin').value;
+      const salaryMax = document.getElementById('manualSalaryMax').value;
+      const stage = document.getElementById('manualStage').value || 'Series B+';
+      const domain = document.getElementById('manualDomain').value.trim() || 'General';
+
+      if (!company || !title || !jd) {
+        showToast('Company, title, and JD are required', 'error');
+        return;
+      }
+
+      // Check for duplicates
+      const dedup = checkDedup(company, title);
+
+      // Show dedup warning if needed
+      const dedupContainer = document.getElementById('dedupWarningContainer');
+      if (dedup.type === 'exact') {
+        dedupContainer.innerHTML = `
+          <div class="dedup-warning">
+            <div class="dedup-warning-title">Exact Match Found</div>
+            <div class="dedup-warning-text">
+              This role already exists in your pipeline: <strong>${dedup.existingRole.company} - ${dedup.existingRole.title}</strong>
+            </div>
+            <div class="dedup-actions">
+              <button class="btn btn-secondary btn-sm" onclick="closeAddRoleModal()">Cancel</button>
+              <button class="btn btn-primary btn-sm" onclick="document.getElementById('addRoleForm').style.display='none'; document.querySelector('.modal-actions').innerHTML='<button class=\"btn btn-secondary\" onclick=\"openAddRoleModal()\">Back</button><button class=\"btn btn-primary\" onclick=\"location.reload()\">View in Pipeline</button>'">View Existing</button>
+            </div>
+          </div>
+        `;
+      } else if (dedup.type === 'fuzzy') {
+        dedupContainer.innerHTML = `
+          <div class="dedup-warning">
+            <div class="dedup-warning-title">Similar Role Exists</div>
+            <div class="dedup-warning-text">
+              Found a similar role: <strong>${dedup.existingRole.company} - ${dedup.existingRole.title}</strong>
+            </div>
+            <div class="dedup-actions">
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('addRoleForm').reset(); document.getElementById('dedupWarningContainer').innerHTML='';">Fix Details</button>
+              <button class="btn btn-primary btn-sm" onclick="continueWithDedupWarning()">Add Anyway</button>
+            </div>
+          </div>
+        `;
+      }
+
+      // Create role object
+      const salary = salaryMin && salaryMax ? `$${salaryMin}K - $${salaryMax}K` : 'Salary not listed';
+
+      const manualRole = {
+        id: `manual-${Date.now()}`,
+        company,
+        title,
+        jd,
+        url,
+        location,
+        remote: location.toLowerCase().includes('remote'),
+        salary,
+        stage,
+        domain,
+        posted: 'just now',
+        source: 'Manual',
+        logo: company.charAt(0).toUpperCase(),
+        feedMetadata: {
+          sourceType: 'manual',
+          sourceId: `manual-${Date.now()}`,
+          extractedAt: new Date().toISOString()
+        }
+      };
+
+      // Score the role
+      const scoring = scoreRole(manualRole, state.preferences);
+
+      // Store for confirmation
+      state.pendingRole = manualRole;
+      state.pendingRoleScore = scoring;
+
+      // Show score result modal
+      showScoreResult(manualRole, scoring);
+    }
+
+    /**
+     * Show score result and quick-check breakdown
+     */
+    function showScoreResult(role, scoring) {
+      const modal = document.getElementById('scoreResultModal');
+      const container = document.getElementById('scoreResultContainer');
+
+      const scoreClass = scoring.score >= 80 ? 'score-high' : scoring.score >= 60 ? 'score-medium' : 'score-low';
+
+      // Build quick-check HTML
+      let quickCheckHTML = '<div class="quick-check"><strong>Quick-Check Filter:</strong><br>';
+      scoring.quickCheck.checks.forEach(check => {
+        const icon = check.passed ? '✓' : '✕';
+        quickCheckHTML += `
+          <div class="quick-check-item">
+            <div class="quick-check-icon ${check.passed ? 'pass' : 'fail'}">${icon}</div>
+            <div class="quick-check-label"><strong>${check.name}</strong> — ${check.description}</div>
+          </div>
+        `;
+      });
+      quickCheckHTML += `<br><strong>${scoring.quickCheck.passCount}/${scoring.quickCheck.totalChecks} checks passed</strong>`;
+      if (!scoring.quickCheck.passed) {
+        quickCheckHTML += ' <span style="color: var(--danger); font-weight: 700;">⚠️ FAILS FILTER (needs 5/6)</span>';
+      }
+      quickCheckHTML += '</div>';
+
+      container.innerHTML = `
+        <div style="text-align: center; margin-bottom: var(--space-4);">
+          <div style="font-size: 48px; font-weight: 700; color: var(--text-primary);">${scoring.score}</div>
+          <div style="font-size: 14px; color: var(--text-secondary);">/ 100 Match Score</div>
+          <div style="margin-top: var(--space-2);">
+            <div style="width: 100%; height: 8px; background: var(--bg-elevated); border-radius: var(--radius-pill); overflow: hidden;">
+              <div style="width: ${scoring.score}%; height: 100%; background: ${scoring.score >= 80 ? 'var(--success)' : scoring.score >= 60 ? 'var(--warning)' : 'var(--danger)'}; border-radius: var(--radius-pill);"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="score-breakdown">
+          <strong>Scoring Breakdown:</strong><br>
+          <div class="score-breakdown-item">
+            <span class="score-breakdown-label">Title Match (25%)</span>
+            <span class="score-breakdown-value">${scoring.breakdown.title}pts</span>
+          </div>
+          <div class="score-breakdown-item">
+            <span class="score-breakdown-label">Domain Match (25%)</span>
+            <span class="score-breakdown-value">${scoring.breakdown.domain}pts</span>
+          </div>
+          <div class="score-breakdown-item">
+            <span class="score-breakdown-label">Keyword Relevance (20%)</span>
+            <span class="score-breakdown-value">${scoring.breakdown.keywords}pts</span>
+          </div>
+          <div class="score-breakdown-item">
+            <span class="score-breakdown-label">Location Match (15%)</span>
+            <span class="score-breakdown-value">${scoring.breakdown.location}pts</span>
+          </div>
+          <div class="score-breakdown-item">
+            <span class="score-breakdown-label">Company Stage (10%)</span>
+            <span class="score-breakdown-value">${scoring.breakdown.stage}pts</span>
+          </div>
+          <div class="score-breakdown-item">
+            <span class="score-breakdown-label">Compensation (5%)</span>
+            <span class="score-breakdown-value">${scoring.breakdown.comp}pts</span>
+          </div>
+        </div>
+
+        ${quickCheckHTML}
+
+        <div style="margin-top: var(--space-4); padding: var(--space-3); background: var(--bg-base); border-radius: var(--radius-sm); border-left: 3px solid var(--accent);">
+          <strong>${role.company}</strong> — ${role.title}<br>
+          <span style="font-size: var(--text-xs); color: var(--text-secondary);">${role.location} • ${role.salary}</span>
+        </div>
+      `;
+
+      if (modal) {
+        modal.classList.add('active');
+      }
+
+      closeAddRoleModal();
+    }
+
+    /**
+     * Confirm adding role to pipeline
+     */
+    function confirmAddToPipeline() {
+      if (!state.pendingRole || !state.pendingRoleScore) return;
+
+      const role = state.pendingRole;
+      const scoring = state.pendingRoleScore;
+
+      // Create or get company
+      let companies = loadCompanies();
+      let company = companies.find(c => c.name.toLowerCase() === role.company.toLowerCase());
+
+      if (!company) {
+        // Tier based on score
+        let tier = 'Watching';
+        if (scoring.score >= 80) tier = 'Hot';
+        else if (scoring.score >= 60) tier = 'Active';
+
+        company = {
+          id: `company-${Date.now()}`,
+          name: role.company,
+          domain: role.domain,
+          stage: role.stage,
+          tier: tier,
+          roles: [],
+          dateAdded: new Date().toISOString(),
+          headcount: 0,
+          funding: 'Unknown'
+        };
+        companies.push(company);
+        saveCompanies(companies);
+      }
+
+      // Add role to pipeline
+      let roles = loadRoles();
+      const pipelineRole = {
+        id: role.id,
+        company: role.company,
+        title: role.title,
+        url: role.url || '',
+        jdText: role.jd,
+        positioning: state.preferences.positioning || 'ic',
+        source: 'job_feed',
+        stage: 'discovered',
+        dateAdded: new Date().toISOString(),
+        feedMetadata: {
+          sourceType: 'manual',
+          sourceId: role.feedMetadata.sourceId,
+          matchScore: scoring.score,
+          matchBreakdown: scoring.breakdown,
+          extractedAt: role.feedMetadata.extractedAt
+        }
+      };
+
+      roles.push(pipelineRole);
+      saveRoles(roles);
+
+      closeScoreResultModal();
+      state.pendingRole = null;
+      state.pendingRoleScore = null;
+
+      showToast(`Added to Pipeline: ${role.title} at ${role.company} (Score: ${scoring.score})`, 'success');
+
+      // Optionally reload to show updated state
+      setTimeout(() => {
+        // Don't reload, but reset form for next entry
+        openAddRoleModal();
+      }, 1500);
+    }
+
+    /**
+     * Helper: continue with dedup warning
+     */
+    function continueWithDedupWarning() {
+      document.getElementById('dedupWarningContainer').innerHTML = '';
+      submitAddRole();
     }
 
     // ============================================================
@@ -2177,8 +3304,12 @@
      * Load preferences, score roles, render UI.
      */
     function init() {
-      // Load preferences
+      // Load preferences and companies
       state.preferences = loadPreferences();
+      state.companies = loadCompanies();
+
+      // Load snoozed roles and auto-resurface expired ones
+      loadSnoozedRoles();
 
       // Show sample data banner in Personal mode so user knows
       // the feed uses curated sample postings (no real API yet)
@@ -2208,9 +3339,11 @@
       // Render UI
       renderPreferences();
       renderFeedCards();
+      renderSnoozedCards();
       renderFeedSources();
       renderAnalytics();
       renderFeedLog();
+      updateSnoozedBadge();
 
       // Event handlers
       document.getElementById('savePrefsBtn').addEventListener('click', () => {
@@ -2249,6 +3382,9 @@
         renderFeedCards();
       });
 
+      // Add Role Manually button
+      document.getElementById('addRoleManuallyBtn').addEventListener('click', openAddRoleModal);
+
       // Tab navigation
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -2262,6 +3398,7 @@
             tabContent.classList.add('active');
             state.currentTab = tabId;
             if (tabId === 'analytics') renderAnalytics();
+            if (tabId === 'snoozed') renderSnoozedCards();
           }
         });
       });
@@ -2278,6 +3415,19 @@
       document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
         const sidebar = document.querySelector('.feed-sidebar');
         sidebar.classList.toggle('collapsed');
+      });
+
+      // Close modals on overlay click
+      document.getElementById('addRoleModal').addEventListener('click', (e) => {
+        if (e.target.id === 'addRoleModal') {
+          closeAddRoleModal();
+        }
+      });
+
+      document.getElementById('scoreResultModal').addEventListener('click', (e) => {
+        if (e.target.id === 'scoreResultModal') {
+          closeScoreResultModal();
+        }
       });
     }
 

@@ -743,6 +743,9 @@
           <button class="tab-button active" data-tab="interview">Interview</button>
           <button class="tab-button" data-tab="tmay">TMAY</button>
           <button class="tab-button" data-tab="stories">Stories</button>
+          <button class="tab-button" data-tab="questions">Questions</button>
+          <button class="tab-button" data-tab="playback">Playback</button>
+          <button class="tab-button" data-tab="trends">Trends</button>
           <button class="tab-button" data-tab="history">History</button>
         </div>
 
@@ -861,6 +864,54 @@
             <button id="addStoryBtn" class="btn-start-session">+ Add Story</button>
           </div>
           <div id="storiesList" class="story-list"></div>
+        </div>
+
+        <!-- QUESTIONS TAB CONTENT -->
+        <div class="tab-content" id="questions-tab" style="display: none; flex-direction: column; gap: var(--space-3); overflow-y: auto;">
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Search Questions</div>
+            <input id="questionSearch" type="text" class="sidebar-input" placeholder="Type to filter...">
+          </div>
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Filter by Type</div>
+            <select id="questionTypeFilter" class="sidebar-select">
+              <option value="">All Types</option>
+              <option value="product-execution">Product Execution</option>
+              <option value="product-strategy">Product Strategy</option>
+              <option value="behavioral">Behavioral</option>
+              <option value="technical">Technical</option>
+            </select>
+          </div>
+          <div id="questionsList" class="story-list"></div>
+        </div>
+
+        <!-- PLAYBACK TAB CONTENT -->
+        <div class="tab-content" id="playback-tab" style="display: none; flex-direction: column; gap: var(--space-3); overflow-y: auto;">
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Select Session</div>
+            <select id="playbackSessionSelect" class="sidebar-select">
+              <option value="">Choose a session...</option>
+            </select>
+          </div>
+          <div id="playbackInfo" style="display: none;">
+            <div class="sidebar-section">
+              <div style="font-size: var(--text-xs); color: var(--text-secondary);" id="playbackDate"></div>
+              <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-1);" id="playbackStats"></div>
+            </div>
+            <div class="sidebar-section">
+              <button id="exportPlaybackBtn" class="btn-start-session" style="font-size: var(--text-xs); padding: var(--space-2);">Export as Text</button>
+            </div>
+            <div class="sidebar-section">
+              <button id="copyPlaybackBtn" class="btn-start-session" style="font-size: var(--text-xs); padding: var(--space-2);">Copy to Clipboard</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TRENDS TAB CONTENT -->
+        <div class="tab-content" id="trends-tab" style="display: none; flex-direction: column; gap: var(--space-3); overflow-y: auto;">
+          <div id="trendsContainer" style="color: var(--text-secondary); font-size: var(--text-sm);">
+            <p>Complete 3+ sessions to see performance trends.</p>
+          </div>
         </div>
 
         <!-- HISTORY TAB CONTENT -->
@@ -1155,6 +1206,58 @@
         this.submitAnswerBtn.addEventListener('click', () => this.submitAnswer());
         this.nextQuestionBtn.addEventListener('click', () => this.nextQuestion());
 
+        // Tab buttons
+        document.querySelectorAll('.tab-button').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            this.switchTab(e.target.getAttribute('data-tab'));
+          });
+        });
+
+        // Question bank filters
+        const questionSearch = document.getElementById('questionSearch');
+        if (questionSearch) {
+          questionSearch.addEventListener('input', () => this.renderQuestionBank());
+        }
+
+        const questionTypeFilter = document.getElementById('questionTypeFilter');
+        if (questionTypeFilter) {
+          questionTypeFilter.addEventListener('change', () => this.renderQuestionBank());
+        }
+
+        // Playback export buttons
+        const exportPlaybackBtn = document.getElementById('exportPlaybackBtn');
+        if (exportPlaybackBtn) {
+          exportPlaybackBtn.addEventListener('click', () => {
+            if (window.currentPlaybackSession) {
+              const text = this.exportSessionAsText(window.currentPlaybackSession);
+              const blob = new Blob([text], { type: 'text/plain' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `interview-${window.currentPlaybackSession.company}-${new Date(window.currentPlaybackSession.startedAt).toLocaleDateString().replace(/\//g, '-')}.txt`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }
+          });
+        }
+
+        const copyPlaybackBtn = document.getElementById('copyPlaybackBtn');
+        if (copyPlaybackBtn) {
+          copyPlaybackBtn.addEventListener('click', () => {
+            if (window.currentPlaybackSession) {
+              const text = this.exportSessionAsText(window.currentPlaybackSession);
+              navigator.clipboard.writeText(text).then(() => {
+                copyPlaybackBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                  copyPlaybackBtn.textContent = 'Copy to Clipboard';
+                }, 2000);
+              });
+            }
+          });
+        }
+
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
           if (e.key === 'Enter' && e.ctrlKey && this.state.sessionActive) {
@@ -1199,7 +1302,10 @@
         if (tabEl) {
           tabEl.style.display = 'flex';
         }
-        event.target.classList.add('active');
+
+        // Find and activate the corresponding button
+        const btn = document.querySelector(`[data-tab="${tabName}"]`);
+        if (btn) btn.classList.add('active');
 
         // Reset thread views
         if (tabName === 'interview') {
@@ -1210,6 +1316,12 @@
           this.idleState.style.display = 'none';
           this.threadContainer.style.display = 'none';
           this.tmayMode.style.display = 'none';
+        } else if (tabName === 'questions') {
+          this.renderQuestionBank();
+        } else if (tabName === 'playback') {
+          this.renderPlaybackSessions();
+        } else if (tabName === 'trends') {
+          this.renderPerformanceTrends();
         }
       }
 
@@ -1502,6 +1614,10 @@ ${needMoreQuestions ?
         };
 
         this.dataStore.saveSession(sessionData);
+
+        // Extract and save questions and stories from conversation
+        this.extractAndSaveSessionData(sessionData);
+
         alert('Session saved!');
 
         this.state.sessionActive = false;
@@ -1513,6 +1629,133 @@ ${needMoreQuestions ?
         // Refresh history
         this.sessions = this.dataStore.getSessions();
         this.renderSessionHistory();
+      }
+
+      /**
+       * Extract questions asked and stories used from conversation
+       * Auto-add new questions to question bank
+       * Extract STAR stories from answers
+       */
+      async extractAndSaveSessionData(sessionData) {
+        try {
+          // Extract questions from conversation
+          const questions = this.extractQuestionsFromConversation(sessionData.conversation);
+          const questionBank = JSON.parse(localStorage.getItem('pf_question_bank')) || [];
+
+          questions.forEach(q => {
+            // Check if question already exists (avoid duplicates)
+            if (!questionBank.some(existing => existing.text.toLowerCase() === q.text.toLowerCase())) {
+              questionBank.push({
+                id: `q-${Date.now()}-${Math.random()}`,
+                text: q.text,
+                type: sessionData.type,
+                difficulty: sessionData.difficulty,
+                source: 'mock-session',
+                company: sessionData.company,
+                sessionId: sessionData.id,
+                createdAt: new Date().toISOString()
+              });
+            }
+          });
+
+          localStorage.setItem('pf_question_bank', JSON.stringify(questionBank));
+
+          // Extract STAR stories from answers using Claude
+          if (questions.length > 0) {
+            await this.extractStoriesFromSession(sessionData);
+          }
+        } catch (error) {
+          console.error('Error extracting session data:', error);
+        }
+      }
+
+      /**
+       * Parse conversation to extract questions
+       * Filters for interviewer messages that end with question marks or "Question X of Y"
+       */
+      extractQuestionsFromConversation(conversation) {
+        const questions = [];
+        conversation.forEach((msg, idx) => {
+          if (msg.role === 'assistant' && msg.content) {
+            // Look for question patterns
+            const lines = msg.content.split('\n');
+            lines.forEach(line => {
+              if (line.trim().match(/^(Q\d+:|Question \d+:|•|-)?\s*[^?]*\?/) && line.length > 20) {
+                // Clean up the question
+                const q = line.trim().replace(/^(Q\d+:|Question \d+:|•|-)\s*/, '').trim();
+                if (q.length > 15 && !questions.some(existing => existing.text === q)) {
+                  questions.push({ text: q });
+                }
+              }
+            });
+          }
+        });
+        return questions.slice(0, this.state.totalQuestions);
+      }
+
+      /**
+       * Use Claude to extract STAR format stories from session answers
+       * Save stories with dedup against existing story bank
+       */
+      async extractStoriesFromSession(sessionData) {
+        try {
+          const systemPrompt = `You are a career coach analyzing interview transcripts.
+Extract STAR format stories (Situation, Task, Action, Result) from the candidate's answers.
+Return JSON array with structure: [{ situation, task, action, result, themes }]
+themes should be an array of 2-3 relevant tags like ['Leadership', 'Scale', 'Technical', etc.]
+If no clear STAR stories found, return empty array.
+ONLY return valid JSON, no markdown.`;
+
+          const userPrompt = `Analyze these interview answers and extract STAR stories:
+
+${sessionData.conversation
+  .filter(m => m.role === 'user')
+  .map(m => m.content)
+  .join('\n\n')}`;
+
+          const result = await PF.claude.generate(systemPrompt, userPrompt, { maxTokens: 1024 });
+
+          let extractedStories = [];
+          try {
+            extractedStories = JSON.parse(result.content);
+          } catch (e) {
+            console.warn('Could not parse extracted stories as JSON');
+            return;
+          }
+
+          if (!Array.isArray(extractedStories)) return;
+
+          const storyBank = JSON.parse(localStorage.getItem('pf_story_bank')) || [];
+
+          extractedStories.forEach(story => {
+            // Dedup: check if similar story already exists
+            const similarExists = storyBank.some(existing =>
+              existing.situation && story.situation &&
+              existing.situation.toLowerCase().includes(story.situation.toLowerCase().slice(0, 30))
+            );
+
+            if (!similarExists) {
+              storyBank.push({
+                id: `story-${Date.now()}-${Math.random()}`,
+                title: story.situation?.slice(0, 50) + '...' || 'Extracted Story',
+                situation: story.situation || '',
+                task: story.task || '',
+                action: story.action || '',
+                result: story.result || '',
+                themes: story.themes || [],
+                interviewTypes: [sessionData.type],
+                mockRating: 0,
+                timesUsed: 1,
+                extractedFrom: sessionData.id,
+                createdAt: new Date().toISOString()
+              });
+            }
+          });
+
+          localStorage.setItem('pf_story_bank', JSON.stringify(storyBank));
+        } catch (error) {
+          console.error('Error extracting stories:', error);
+        }
       }
 
       showApiKeyPrompt() {
@@ -1631,6 +1874,247 @@ ${needMoreQuestions ?
             </div>
           </div>
         `).join('');
+      }
+
+      /**
+       * Render Question Bank tab - shows all questions from mock sessions
+       */
+      renderQuestionBank() {
+        const container = document.getElementById('questionsList');
+        if (!container) return;
+
+        const questionBank = JSON.parse(localStorage.getItem('pf_question_bank')) || [];
+        const searchTerm = (document.getElementById('questionSearch')?.value || '').toLowerCase();
+        const typeFilter = document.getElementById('questionTypeFilter')?.value || '';
+
+        let filtered = questionBank.filter(q => {
+          const matchesSearch = q.text.toLowerCase().includes(searchTerm);
+          const matchesType = !typeFilter || q.type === typeFilter;
+          return matchesSearch && matchesType;
+        });
+
+        if (filtered.length === 0) {
+          container.innerHTML = '<p style="color: var(--text-secondary); font-size: var(--text-sm);">No questions found. Complete a mock session to build your question bank.</p>';
+          return;
+        }
+
+        container.innerHTML = filtered.map(q => `
+          <div class="story-card" style="cursor: pointer;" onclick="MockInterviewApp.practiceQuestion('${q.id}')">
+            <div class="story-title" style="font-size: var(--text-sm);">${q.text}</div>
+            <div class="story-meta">
+              ${q.company ? `Company: ${q.company} • ` : ''}
+              Type: ${q.type}
+            </div>
+            <div class="story-meta" style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-1);">
+              Difficulty: ${q.difficulty} • Source: ${q.source}
+            </div>
+            <button style="margin-top: var(--space-2); padding: var(--space-1) var(--space-2); font-size: var(--text-xs); background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); cursor: pointer;">Practice This</button>
+          </div>
+        `).join('');
+      }
+
+      /**
+       * Practice a specific question from the question bank
+       */
+      practiceQuestion(questionId) {
+        const questionBank = JSON.parse(localStorage.getItem('pf_question_bank')) || [];
+        const question = questionBank.find(q => q.id === questionId);
+        if (!question) return;
+
+        // Set form fields based on question
+        const typeSelect = document.getElementById('interviewTypeSelect');
+        if (typeSelect) typeSelect.value = question.type;
+        const difficultySelect = document.getElementById('difficultySelect');
+        if (difficultySelect) difficultySelect.value = question.difficulty;
+
+        // Switch to interview tab
+        this.switchTab('interview');
+
+        // Show message
+        setTimeout(() => {
+          alert(`Now practicing: "${question.text}"`);
+        }, 100);
+      }
+
+      /**
+       * Render Playback tab - select and view past session transcripts
+       */
+      renderPlaybackSessions() {
+        const select = document.getElementById('playbackSessionSelect');
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Choose a session...</option>';
+        this.sessions.slice().reverse().forEach(session => {
+          const option = document.createElement('option');
+          option.value = session.id;
+          option.textContent = `${session.company} • ${session.type} • ${new Date(session.startedAt).toLocaleDateString()}`;
+          select.appendChild(option);
+        });
+
+        select.addEventListener('change', () => {
+          const sessionId = select.value;
+          if (!sessionId) {
+            document.getElementById('playbackInfo').style.display = 'none';
+            return;
+          }
+          this.showSessionPlayback(sessionId);
+        });
+      }
+
+      /**
+       * Display session transcript with highlighted feedback
+       */
+      showSessionPlayback(sessionId) {
+        const session = this.sessions.find(s => s.id === sessionId);
+        if (!session) return;
+
+        const container = document.getElementById('playbackInfo');
+        document.getElementById('playbackDate').textContent = `Date: ${new Date(session.startedAt).toLocaleDateString()}`;
+        document.getElementById('playbackStats').textContent = `${session.questionsCount} questions • ${session.type} • ${session.difficulty}`;
+
+        // Store current session for export
+        window.currentPlaybackSession = session;
+
+        container.style.display = 'block';
+
+        // Show transcript in main panel
+        this.displaySessionTranscript(session);
+      }
+
+      /**
+       * Display full conversation transcript in main panel with color-coded feedback
+       */
+      displaySessionTranscript(session) {
+        const mainPanel = document.getElementById('threadContainer');
+        if (!mainPanel) return;
+
+        let html = `
+          <div class="thread-header">
+            <div>
+              <div class="thread-title">${session.company} - ${session.type}</div>
+              <div class="thread-progress">${new Date(session.startedAt).toLocaleDateString()}</div>
+            </div>
+          </div>
+          <div id="playbackTranscript" class="interview-thread" style="padding-right: var(--space-4);">
+        `;
+
+        session.conversation.forEach((msg, idx) => {
+          const isInterviewer = msg.role === 'assistant';
+          const className = isInterviewer ? 'interviewer' : 'candidate';
+          const bgColor = isInterviewer ? 'var(--bg-surface)' : 'transparent';
+          const borderColor = isInterviewer ? 'var(--info)' : 'var(--accent)';
+
+          html += `
+            <div class="thread-message ${className}" style="background: ${bgColor}; border-left: 3px solid ${borderColor};">
+              <div class="message-content">${msg.content}</div>
+            </div>
+          `;
+        });
+
+        html += `
+          </div>
+          <div style="margin-top: var(--space-4); display: flex; gap: var(--space-3);">
+            <button onclick="MockInterviewApp.backToIdle()" class="btn-ghost">← Back</button>
+          </div>
+        `;
+
+        mainPanel.innerHTML = html;
+        mainPanel.style.display = 'flex';
+        mainPanel.style.flexDirection = 'column';
+      }
+
+      /**
+       * Export session as text file
+       */
+      exportSessionAsText(session) {
+        let text = `MOCK INTERVIEW SESSION TRANSCRIPT\n`;
+        text += `================================\n\n`;
+        text += `Company: ${session.company}\n`;
+        text += `Interview Type: ${session.type}\n`;
+        text += `Difficulty: ${session.difficulty}\n`;
+        text += `Date: ${new Date(session.startedAt).toLocaleDateString()}\n`;
+        text += `Questions: ${session.questionsCount}\n\n`;
+        text += `---\n\n`;
+
+        session.conversation.forEach((msg, idx) => {
+          const speaker = msg.role === 'assistant' ? 'INTERVIEWER' : 'YOU';
+          text += `${speaker}:\n${msg.content}\n\n`;
+        });
+
+        return text;
+      }
+
+      /**
+       * Render Performance Trends tab - shows scores over time
+       * Uses pure CSS bar charts
+       */
+      renderPerformanceTrends() {
+        const container = document.getElementById('trendsContainer');
+        if (!container) return;
+
+        if (this.sessions.length < 3) {
+          container.innerHTML = '<p style="color: var(--text-secondary); font-size: var(--text-sm);">Complete 3+ sessions to see performance trends.</p>';
+          return;
+        }
+
+        // Analyze sessions by type
+        const sessionsByType = {};
+        this.sessions.forEach(session => {
+          if (!sessionsByType[session.type]) {
+            sessionsByType[session.type] = [];
+          }
+          sessionsByType[session.type].push(session);
+        });
+
+        let html = `<div style="display: flex; flex-direction: column; gap: var(--space-4);">`;
+
+        // Overall progress chart
+        html += `<div>
+          <div class="sidebar-section-title">Interview Count by Type</div>
+          <div style="display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-2);">
+        `;
+
+        Object.entries(sessionsByType).forEach(([type, sessions]) => {
+          const count = sessions.length;
+          const maxCount = Math.max(...Object.values(sessionsByType).map(s => s.length));
+          const percentage = (count / maxCount) * 100;
+
+          html += `
+            <div>
+              <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1);">
+                ${type} <strong>${count}</strong>
+              </div>
+              <div style="background: var(--bg-surface); border-radius: var(--radius-sm); height: 20px; overflow: hidden;">
+                <div style="background: var(--accent); height: 100%; width: ${percentage}%; transition: width 300ms;" title="${count} sessions"></div>
+              </div>
+            </div>
+          `;
+        });
+
+        html += `</div></div>`;
+
+        // Strongest/weakest types
+        html += `<div>
+          <div class="sidebar-section-title">Practice Focus</div>
+          <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-2);">
+        `;
+
+        const sorted = Object.entries(sessionsByType).sort((a, b) => a[1].length - b[1].length);
+        if (sorted.length > 0) {
+          html += `<div style="margin-bottom: var(--space-2);"><strong>Focus on:</strong> ${sorted[0][0]} (${sorted[0][1].length} sessions)</div>`;
+        }
+        if (sorted.length > 1) {
+          html += `<div><strong>Strength:</strong> ${sorted[sorted.length - 1][0]} (${sorted[sorted.length - 1][1].length} sessions)</div>`;
+        }
+
+        html += `</div></div></div>`;
+
+        container.innerHTML = html;
+      }
+
+      backToIdle() {
+        document.getElementById('threadContainer').style.display = 'none';
+        document.getElementById('idleState').style.display = 'flex';
       }
     }
 

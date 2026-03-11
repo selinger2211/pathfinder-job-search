@@ -4,6 +4,74 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v1.6.0 — 2026-03-10
+
+### What Changed
+- **Feature completion pass** — 50+ features added across all 9 browser modules, closing the majority of Phase 1 PRD gaps.
+
+#### Pipeline Tracker
+- URL import: parse job posting URLs (Lever, Greenhouse, Ashby, LinkedIn, Workday), auto-extract company from domain
+- Bulk actions: select multiple cards, move to stage, change tier, export selected, delete selected
+- CSV export: export all roles or companies as downloadable CSV files
+- List view sorting: sortable columns with direction toggle, persisted sort preference
+- Company view tab: card grid of all companies with logo, tier, role count, last activity
+- Fit assessment display: strong/borderline/gaps badges, close reason selector, closure notes
+- Keyboard shortcuts: `n` (new role), `f`/`/` (search), `Escape` (close panel)
+
+#### Dashboard
+- Feed review section: top 5 highest-scoring feed items with score bars and quick actions
+- Interview intelligence card: upcoming interviews from pf_calendar_events with prep/practice links
+- Pipeline funnel visualization: horizontal CSS bar chart by stage, clickable to filter
+- Activity feed: chronological list of recent events across all modules
+- Weekly summary stats: applications, interviews, response rate, pipeline health indicator
+- localStorage change listener: real-time re-render when other modules update data
+
+#### Job Feed Listener
+- Manual role entry form: full form with company, title, JD, location, salary, domain, stage
+- Dedup engine: exact + fuzzy matching (Levenshtein distance) against pipeline, warnings before add
+- Quick-check filter: 6-point binary filter (level, domain, location, stage, blockers, interest), 5/6 pass required
+- Auto-pipeline creation: creates pf_roles + pf_companies entries, tier based on score
+- Feed analytics tab: total discovered, avg score, accept rate, score distribution chart, top companies
+- Snooze functionality: 7-day snooze with auto-resurface, dedicated snoozed tab with badge
+
+#### Resume Builder
+- Cover letter generation: Claude-powered streaming with role-specific prompts, copy/download
+- Bullet bank sidebar: browse/search bullets by category, add new, mark as "must include"
+- Keyword gap detection: JD keywords vs bullet bank coverage, covered (green) vs gap (red)
+- Version history: per-role version tracking with timestamp, view previous, compare versions
+
+#### Outreach
+- Sequence scheduling: schedule follow-ups with date picker, sequence timeline view
+- Response tracking: mark as sent/opened/responded/no_response, color-coded status
+- Message templates: save/load templates by message type, stored in pf_outreach_templates
+- Outreach history: full history view with stats, response rate, timeline grouped by company
+
+#### Mock Interview
+- Story bank extraction: Claude analyzes sessions, extracts STAR stories, dedup, saves to pf_story_bank
+- Question bank: auto-add questions from sessions, search/filter, "Practice This Question" button
+- Session playback: full transcript with color-coded feedback, export as text, copy to clipboard
+- Performance trends: CSS bar charts by type, strongest/weakest identification, practice recommendations
+
+#### Debrief
+- Pattern analysis: after 5+ debriefs, shows recurring questions, red flags, valued skills
+- Research Brief refresh trigger: "Update Research Brief?" prompt after new information
+- Debrief timeline: vertical timeline visualization with impression indicators, expandable
+- Export: downloadable .txt file and copy-to-clipboard for all 8 sections
+
+#### Comp Intelligence
+- Visualization: CSS horizontal bar charts comparing base/bonus/equity across roles
+- Comparison table: sortable table with vs-target percentage, above/below highlighting
+- Multi-role aggregation: median base, average total, best/worst offers, disclosed vs unknown count
+- Negotiation scorecard: 25-point system (5 dimensions × 5 pts each), aggressiveness guidance
+
+#### Calendar
+- Month view: grid calendar with event dots, click-to-expand, previous/next navigation
+- Day view: 30-minute time slots, event blocks, add event with date pre-fill
+- Smart event-role linking: company name autocomplete, auto-link when single role match
+- Post-event automation: auto-complete status, debrief banner, stage advancement suggestions
+
+---
+
 ## v1.5.0 — 2026-03-10
 
 ### What Changed

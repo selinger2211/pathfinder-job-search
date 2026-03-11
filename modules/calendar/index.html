@@ -541,6 +541,114 @@
         }
 
         /* ============================================================================
+           MONTH VIEW
+           ============================================================================ */
+        .month-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .month-day-cell {
+            aspect-ratio: 1;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-secondary);
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .month-day-cell:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
+        }
+
+        .month-day-cell.other-month {
+            opacity: 0.4;
+        }
+
+        .month-day-cell.today {
+            border: 2px solid var(--accent);
+            background: var(--bg-base);
+        }
+
+        .month-day-number {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+
+        .month-day-events {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            overflow: hidden;
+        }
+
+        .month-day-event-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        /* ============================================================================
+           DAY VIEW
+           ============================================================================ */
+        .day-view-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .time-slot {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            border-left: 2px solid var(--border);
+            min-height: 60px;
+        }
+
+        .time-slot-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .time-slot-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .time-slot-event {
+            padding: 8px;
+            background: var(--accent);
+            color: white;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .time-slot-event:hover {
+            background: var(--accent-hover);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* ============================================================================
            EVENT MANAGER / DETECTION
            ============================================================================ */
         .detection-container {
@@ -1313,6 +1421,8 @@
             <!-- Tabs -->
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab('week')">Week View</button>
+                <button class="tab-btn" onclick="switchTab('month')">Month View</button>
+                <button class="tab-btn" onclick="switchTab('day')">Day View</button>
                 <button class="tab-btn" onclick="switchTab('detection')">Event Manager</button>
                 <button class="tab-btn" onclick="switchTab('nudges')">Nudges</button>
                 <button class="tab-btn" onclick="switchTab('log')">Sync Log</button>
@@ -1325,7 +1435,33 @@
                     <div class="week-grid" id="weekGrid"></div>
                 </div>
 
-                <!-- Tab 2: Event Manager / Detection -->
+                <!-- Tab 2: Month View -->
+                <div class="tab-content" id="tabMonth">
+                    <div style="padding: 24px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                            <button onclick="previousMonth()" style="background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-secondary); padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer;">← Prev Month</button>
+                            <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);" id="monthLabel">March 2026</div>
+                            <button onclick="nextMonth()" style="background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-secondary); padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer;">Next Month →</button>
+                        </div>
+                        <div class="month-grid" id="monthGrid"></div>
+                        <div id="selectedDayEvents" style="margin-top: 24px;"></div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Day View -->
+                <div class="tab-content" id="tabDay">
+                    <div style="padding: 24px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                            <button onclick="previousDay()" style="background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-secondary); padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer;">← Prev Day</button>
+                            <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);" id="dayLabel">Today</div>
+                            <button onclick="nextDay()" style="background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-secondary); padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer;">Next Day →</button>
+                        </div>
+                        <button onclick="openAddEventModal()" style="background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 20px;">+ Add Event</button>
+                        <div class="day-view-grid" id="dayViewGrid"></div>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Event Manager / Detection -->
                 <div class="tab-content" id="tabDetection">
                     <div class="detection-container">
                         <div class="scan-controls">
@@ -1397,6 +1533,15 @@
                         <div>
                             <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">Event Title</label>
                             <input type="text" id="eventTitle" placeholder="e.g., Phone Screen with John" required style="width: 100%; padding: 10px; background: var(--bg-base); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 13px;">
+                        </div>
+
+                        <!-- Company Field for Smart Role Suggestion -->
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">Company</label>
+                            <input type="text" id="eventCompany" placeholder="e.g., Google, Stripe" style="width: 100%; padding: 10px; background: var(--bg-base); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 13px;" oninput="suggestRoles(this.value)">
+                            <div id="roleSuggestions" style="margin-top: 8px; display: none; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-secondary); max-height: 200px; overflow-y: auto;">
+                                <!-- Suggestions render here -->
+                            </div>
                         </div>
 
                         <!-- Date -->
@@ -1546,10 +1691,72 @@
         /**
          * Handle the "Add Event" form submission
          */
+        /**
+         * Smart role suggestion based on company name match
+         */
+        function suggestRoles(companyInput) {
+            if (!companyInput || companyInput.length < 1) {
+                document.getElementById('roleSuggestions').style.display = 'none';
+                return;
+            }
+
+            const roles = getStorageData('roles') || [];
+            const companies = getStorageData('companies') || [];
+
+            const matchedCompany = companies.find(c =>
+                c.name && c.name.toLowerCase().includes(companyInput.toLowerCase())
+            );
+
+            if (!matchedCompany) {
+                document.getElementById('roleSuggestions').style.display = 'none';
+                return;
+            }
+
+            const rolesAtCompany = roles.filter(r => r.companyId === matchedCompany.id);
+
+            if (rolesAtCompany.length === 0) {
+                document.getElementById('roleSuggestions').style.display = 'none';
+                return;
+            }
+
+            // If only 1 role at company, auto-link it
+            if (rolesAtCompany.length === 1) {
+                document.getElementById('eventRoleId').value = rolesAtCompany[0].id;
+                document.getElementById('roleSuggestions').style.display = 'none';
+                return;
+            }
+
+            // Show suggestions
+            const suggestionsDiv = document.getElementById('roleSuggestions');
+            suggestionsDiv.innerHTML = '';
+            rolesAtCompany.forEach(role => {
+                const suggestion = document.createElement('div');
+                suggestion.style.padding = '8px 12px';
+                suggestion.style.cursor = 'pointer';
+                suggestion.style.borderBottom = '1px solid var(--border)';
+                suggestion.style.fontSize = '13px';
+                suggestion.textContent = `${role.title} (${role.stage})`;
+                suggestion.addEventListener('click', () => {
+                    document.getElementById('eventRoleId').value = role.id;
+                    document.getElementById('roleSuggestions').style.display = 'none';
+                });
+                suggestion.addEventListener('mouseover', () => {
+                    suggestion.style.background = 'var(--bg-tertiary)';
+                });
+                suggestion.addEventListener('mouseout', () => {
+                    suggestion.style.background = 'transparent';
+                });
+                suggestionsDiv.appendChild(suggestion);
+            });
+
+            suggestionsDiv.style.display = 'block';
+        }
+
         function handleAddEvent(event) {
             event.preventDefault();
 
             const title = document.getElementById('eventTitle').value;
+            const companyInput = document.getElementById('eventCompany').value;
             const dateStr = document.getElementById('eventDate').value;
             const timeStr = document.getElementById('eventTime').value;
             const duration = parseInt(document.getElementById('eventDuration').value);
@@ -1572,13 +1779,13 @@
             const [hours, minutes] = timeStr.split(':');
             const eventDate = new Date(year, month - 1, day, hours, minutes);
 
-            // Get company from role if linked
-            let company = 'Unknown';
+            // Get company from input or role if linked
+            let company = companyInput || 'Unknown';
             if (roleId) {
-                const roles = getStorageData('pf_roles') || [];
+                const roles = getStorageData('roles') || [];
                 const role = roles.find(r => r.id === roleId);
                 if (role) {
-                    const companies = getStorageData('pf_companies') || [];
+                    const companies = getStorageData('companies') || [];
                     const comp = companies.find(c => c.id === role.companyId);
                     if (comp) company = comp.name;
                 }
@@ -2744,6 +2951,276 @@
         }
 
         // ============================================================================
+        // MONTH VIEW
+        // ============================================================================
+
+        let currentMonthDate = new Date();
+
+        /**
+         * Render the month view calendar grid
+         */
+        function renderMonthView() {
+            const year = currentMonthDate.getFullYear();
+            const month = currentMonthDate.getMonth();
+
+            // Update month label
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+            document.getElementById('monthLabel').textContent = `${monthNames[month]} ${year}`;
+
+            // Get first day of month and number of days
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+            const grid = document.getElementById('monthGrid');
+            grid.innerHTML = '';
+
+            // Add day name headers
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            dayNames.forEach(day => {
+                const header = document.createElement('div');
+                header.style.fontWeight = '600';
+                header.style.textAlign = 'center';
+                header.style.color = 'var(--text-secondary)';
+                header.style.padding = '8px';
+                header.style.fontSize = '12px';
+                header.textContent = day;
+                grid.appendChild(header);
+            });
+
+            // Add previous month's days (grayed out)
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const cell = createMonthDayCell(daysInPrevMonth - i, true);
+                grid.appendChild(cell);
+            }
+
+            // Add current month's days
+            const today = new Date();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const cell = createMonthDayCell(day, false, year, month);
+                const cellDate = new Date(year, month, day);
+                if (cellDate.toDateString() === today.toDateString()) {
+                    cell.classList.add('today');
+                }
+                grid.appendChild(cell);
+            }
+
+            // Add next month's days (grayed out)
+            const totalCells = grid.children.length - 7; // Subtract day headers
+            for (let day = 1; totalCells + day <= 35; day++) {
+                const cell = createMonthDayCell(day, true);
+                grid.appendChild(cell);
+            }
+        }
+
+        /**
+         * Create a single day cell for month view
+         */
+        function createMonthDayCell(day, isOtherMonth = false, year = currentMonthDate.getFullYear(), month = currentMonthDate.getMonth()) {
+            const cell = document.createElement('div');
+            cell.className = 'month-day-cell';
+            if (isOtherMonth) cell.classList.add('other-month');
+
+            const number = document.createElement('div');
+            number.className = 'month-day-number';
+            number.textContent = day;
+            cell.appendChild(number);
+
+            const eventsDiv = document.createElement('div');
+            eventsDiv.className = 'month-day-events';
+
+            // Add events for this day if not from another month
+            if (!isOtherMonth) {
+                const events = getStorageData('pf_calendar_events') || [];
+                const cellDate = new Date(year, month, day);
+                const dayStart = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
+                const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+
+                const dayEvents = events.filter(e => {
+                    const eventDate = new Date(e.date || e.startTime);
+                    return eventDate >= dayStart && eventDate < dayEnd;
+                });
+
+                dayEvents.slice(0, 3).forEach(event => {
+                    const dot = document.createElement('div');
+                    dot.className = 'month-day-event-dot';
+                    dot.style.backgroundColor = event.type === 'interview' ? 'var(--accent)' : 'var(--info)';
+                    eventsDiv.appendChild(dot);
+                });
+            }
+
+            cell.appendChild(eventsDiv);
+
+            // Click to show day's events
+            if (!isOtherMonth) {
+                cell.addEventListener('click', () => {
+                    const cellDate = new Date(year, month, day);
+                    showSelectedDayEvents(cellDate);
+                });
+            }
+
+            return cell;
+        }
+
+        /**
+         * Show events for selected day in month view
+         */
+        function showSelectedDayEvents(date) {
+            const container = document.getElementById('selectedDayEvents');
+            const events = getStorageData('pf_calendar_events') || [];
+
+            const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+
+            const dayEvents = events.filter(e => {
+                const eventDate = new Date(e.date || e.startTime);
+                return eventDate >= dayStart && eventDate < dayEnd;
+            });
+
+            const dateStr = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+            if (dayEvents.length === 0) {
+                container.innerHTML = `<p style="color: var(--text-tertiary);">No events on ${dateStr}</p>`;
+                return;
+            }
+
+            container.innerHTML = `<h3 style="margin-bottom: 12px; color: var(--text-primary);">Events on ${dateStr}</h3>`;
+            const list = document.createElement('div');
+            list.style.display = 'flex';
+            list.style.flexDirection = 'column';
+            list.style.gap = '8px';
+
+            dayEvents.forEach(event => {
+                const item = document.createElement('div');
+                item.className = 'event-item';
+                item.style.padding = '12px';
+                item.style.background = 'var(--bg-secondary)';
+                item.style.borderLeft = '3px solid var(--accent)';
+                item.style.borderRadius = 'var(--radius-sm)';
+                item.style.cursor = 'pointer';
+
+                const time = event.startTime ? formatTime(new Date(event.startTime)) : 'All day';
+                item.innerHTML = `
+                    <div style="font-weight: 600; color: var(--text-primary);">${event.title || 'Untitled'}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${time}</div>
+                    ${event.company ? `<div style="font-size: 11px; color: var(--text-tertiary);">${event.company}</div>` : ''}
+                `;
+                item.addEventListener('click', () => openEventDetail(event));
+                list.appendChild(item);
+            });
+
+            container.appendChild(list);
+        }
+
+        /**
+         * Navigate to previous month
+         */
+        function previousMonth() {
+            currentMonthDate.setMonth(currentMonthDate.getMonth() - 1);
+            renderMonthView();
+        }
+
+        /**
+         * Navigate to next month
+         */
+        function nextMonth() {
+            currentMonthDate.setMonth(currentMonthDate.getMonth() + 1);
+            renderMonthView();
+        }
+
+        // ============================================================================
+        // DAY VIEW
+        // ============================================================================
+
+        let currentDayDate = new Date();
+
+        /**
+         * Render the day view with hourly time slots
+         */
+        function renderDayView() {
+            const dateStr = currentDayDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            document.getElementById('dayLabel').textContent = dateStr;
+
+            const grid = document.getElementById('dayViewGrid');
+            grid.innerHTML = '';
+
+            const events = getStorageData('pf_calendar_events') || [];
+
+            // Create 24 hourly slots (8am to 10pm)
+            for (let hour = 8; hour < 22; hour++) {
+                const slot = document.createElement('div');
+                slot.className = 'time-slot';
+
+                const label = document.createElement('div');
+                label.className = 'time-slot-label';
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+                label.textContent = `${displayHour}:00 ${ampm}`;
+                slot.appendChild(label);
+
+                const content = document.createElement('div');
+                content.className = 'time-slot-content';
+
+                // Find events for this hour
+                const dayStart = new Date(currentDayDate.getFullYear(), currentDayDate.getMonth(), currentDayDate.getDate());
+                const slotStart = new Date(dayStart.getTime() + hour * 60 * 60 * 1000);
+                const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
+
+                const slotEvents = events.filter(e => {
+                    const eventDate = new Date(e.startTime || e.date);
+                    return eventDate >= slotStart && eventDate < slotEnd;
+                });
+
+                if (slotEvents.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.style.color = 'var(--text-tertiary)';
+                    empty.style.fontSize = '11px';
+                    empty.textContent = 'No events';
+                    content.appendChild(empty);
+                } else {
+                    slotEvents.forEach(event => {
+                        const eventEl = document.createElement('div');
+                        eventEl.className = 'time-slot-event';
+                        eventEl.textContent = event.title || 'Untitled';
+                        eventEl.addEventListener('click', () => openEventDetail(event));
+                        content.appendChild(eventEl);
+                    });
+                }
+
+                slot.appendChild(content);
+                grid.appendChild(slot);
+            }
+        }
+
+        /**
+         * Navigate to previous day
+         */
+        function previousDay() {
+            currentDayDate.setDate(currentDayDate.getDate() - 1);
+            renderDayView();
+        }
+
+        /**
+         * Navigate to next day
+         */
+        function nextDay() {
+            currentDayDate.setDate(currentDayDate.getDate() + 1);
+            renderDayView();
+        }
+
+        /**
+         * Open add event modal with pre-filled date
+         */
+        function openAddEventModal(selectedDate = null) {
+            const modal = document.getElementById('addEventModal');
+            if (selectedDate) {
+                document.getElementById('eventDate').valueAsDate = selectedDate;
+            }
+            modal.style.display = 'flex';
+        }
+
+        // ============================================================================
         // TAB NAVIGATION
         // ============================================================================
 
@@ -2768,7 +3245,11 @@
                 tabEl.classList.add('active');
 
                 // Refresh data for specific tabs
-                if (tabName === 'detection') {
+                if (tabName === 'month') {
+                    renderMonthView();
+                } else if (tabName === 'day') {
+                    renderDayView();
+                } else if (tabName === 'detection') {
                     renderDetectionCards();
                 } else if (tabName === 'nudges') {
                     renderNudgeTimeline();

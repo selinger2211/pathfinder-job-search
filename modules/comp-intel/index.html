@@ -784,6 +784,344 @@
       }
     }
 
+    /**
+     * COMP VISUALIZATION TAB
+     * CSS-based bar charts comparing base, bonus, equity across roles
+     */
+    function renderCompVisualization(roles, compData, prefs) {
+      const rolesWithComp = roles.filter(r => compData[r.id]);
+
+      if (rolesWithComp.length === 0) {
+        return `
+          <div class="empty-state">
+            <p class="empty-state-text">No comp data available to visualize. Add compensation data to roles first.</p>
+          </div>
+        `;
+      }
+
+      let html = `<div style="padding: var(--space-4);">
+        <h3 style="font-weight: 600; margin-bottom: var(--space-4); color: var(--text-primary);">Compensation Comparison</h3>
+        <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+      `;
+
+      const maxComp = Math.max(...rolesWithComp.map(r => {
+        const d = compData[r.id];
+        return (d.baseMax || 0) + (d.signingBonus || 0) + (d.bonusTarget ? (d.baseMax || 0) * d.bonusTarget / 100 : 0);
+      }));
+
+      rolesWithComp.forEach(role => {
+        const d = compData[role.id];
+        const base = d.baseMax || 0;
+        const bonus = d.bonusTarget ? (d.baseMax * d.bonusTarget / 100) : 0;
+        const signing = d.signingBonus || 0;
+        const total = base + bonus + signing;
+        const percentage = (total / maxComp) * 100;
+
+        html += `
+          <div>
+            <div style="font-size: var(--text-sm); font-weight: 600; margin-bottom: var(--space-2); color: var(--text-primary);">
+              ${role.company} - ${role.title}
+            </div>
+            <div style="background: var(--bg-surface); border-radius: var(--radius-md); height: 60px; display: flex; overflow: hidden;">
+              <div style="background: #3b82f6; width: ${(base/maxComp)*100}%; display: flex; align-items: center; justify-content: center; color: white; font-size: var(--text-xs); font-weight: 600;">
+                ${base > 0 ? formatCurrency(base) : ''}
+              </div>
+              <div style="background: #10b981; width: ${(bonus/maxComp)*100}%; display: flex; align-items: center; justify-content: center; color: white; font-size: var(--text-xs); font-weight: 600;">
+                ${bonus > 0 ? '$' + Math.round(bonus/1000) + 'K' : ''}
+              </div>
+              <div style="background: #a855f7; width: ${(signing/maxComp)*100}%; display: flex; align-items: center; justify-content: center; color: white; font-size: var(--text-xs); font-weight: 600;">
+                ${signing > 0 ? '$' + Math.round(signing/1000) + 'K' : ''}
+              </div>
+            </div>
+            <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-2);">
+              Base: ${formatCurrency(base)} | Bonus: ${formatCurrency(bonus)} | Signing: ${formatCurrency(signing)} | <strong>Total: ${formatCurrency(total)}</strong>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+        </div>
+        <div style="display: flex; gap: var(--space-6); margin-top: var(--space-6); padding-top: var(--space-4); border-top: 1px solid var(--border-color);">
+          <div style="display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs);">
+            <div style="width: 16px; height: 16px; background: #3b82f6; border-radius: 2px;"></div>
+            <span>Base Salary</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs);">
+            <div style="width: 16px; height: 16px; background: #10b981; border-radius: 2px;"></div>
+            <span>Bonus</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs);">
+            <div style="width: 16px; height: 16px; background: #a855f7; border-radius: 2px;"></div>
+            <span>Signing Bonus</span>
+          </div>
+        </div>
+      </div>`;
+
+      return html;
+    }
+
+    /**
+     * COMPARISON TABLE TAB
+     * Sortable table with all roles and comp data
+     */
+    function renderComparisonTable(roles, compData, prefs) {
+      const rolesWithComp = roles.filter(r => compData[r.id]);
+
+      if (rolesWithComp.length === 0) {
+        return `
+          <div class="empty-state">
+            <p class="empty-state-text">No comp data available. Add compensation data to roles first.</p>
+          </div>
+        `;
+      }
+
+      let html = `<div style="padding: var(--space-4); overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: var(--text-sm);">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--border-color);">
+              <th style="text-align: left; padding: var(--space-3); color: var(--text-primary); font-weight: 600;">Company</th>
+              <th style="text-align: left; padding: var(--space-3); color: var(--text-primary); font-weight: 600;">Role</th>
+              <th style="text-align: right; padding: var(--space-3); color: var(--text-primary); font-weight: 600;">Base</th>
+              <th style="text-align: right; padding: var(--space-3); color: var(--text-primary); font-weight: 600;">Bonus</th>
+              <th style="text-align: right; padding: var(--space-3); color: var(--text-primary); font-weight: 600;">Equity</th>
+              <th style="text-align: right; padding: var(--space-3); color: var(--text-primary); font-weight: 600;">Total</th>
+              <th style="text-align: center; padding: var(--space-3); color: var(--text-primary); font-weight: 600;">vs Target</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      rolesWithComp.forEach(role => {
+        const d = compData[role.id];
+        const base = d.baseMax || 0;
+        const bonus = d.bonusTarget ? (d.baseMax * d.bonusTarget / 100) : 0;
+        const signing = d.signingBonus || 0;
+        const total = base + bonus + signing;
+        const target = prefs.compRange?.targetBase || 0;
+        const vsTarget = target > 0 ? Math.round(((total - target) / target) * 100) : 0;
+        const vsTargetColor = vsTarget >= 0 ? 'var(--success-color)' : 'var(--danger)';
+
+        html += `
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: var(--space-3); color: var(--text-primary);">${role.company}</td>
+            <td style="padding: var(--space-3); color: var(--text-primary);">${role.title}</td>
+            <td style="padding: var(--space-3); text-align: right; color: var(--text-secondary);">${formatCurrency(base)}</td>
+            <td style="padding: var(--space-3); text-align: right; color: var(--text-secondary);">${formatCurrency(bonus)}</td>
+            <td style="padding: var(--space-3); text-align: right; color: var(--text-secondary);">${d.equity || '—'}</td>
+            <td style="padding: var(--space-3); text-align: right; color: var(--text-primary); font-weight: 600;">${formatCurrency(total)}</td>
+            <td style="padding: var(--space-3); text-align: center; color: ${vsTargetColor}; font-weight: 600;">${vsTarget > 0 ? '+' : ''}${vsTarget}%</td>
+          </tr>
+        `;
+      });
+
+      html += `
+          </tbody>
+        </table>
+      </div>`;
+
+      return html;
+    }
+
+    /**
+     * AGGREGATE STATS TAB
+     * Summary statistics: median, average, best/worst offers
+     */
+    function renderAggregateStats(roles, compData, prefs) {
+      const rolesWithComp = roles.filter(r => compData[r.id]);
+
+      if (rolesWithComp.length === 0) {
+        return `
+          <div class="empty-state">
+            <p class="empty-state-text">No comp data available. Add compensation data to roles first.</p>
+          </div>
+        `;
+      }
+
+      const baseValues = rolesWithComp.map(r => compData[r.id].baseMax || 0).sort((a, b) => a - b);
+      const totalValues = rolesWithComp.map(r => {
+        const d = compData[r.id];
+        return (d.baseMax || 0) + (d.bonusTarget ? (d.baseMax * d.bonusTarget / 100) : 0) + (d.signingBonus || 0);
+      }).sort((a, b) => a - b);
+
+      const medianBase = baseValues[Math.floor(baseValues.length / 2)];
+      const avgBase = Math.round(baseValues.reduce((a, b) => a + b, 0) / baseValues.length);
+      const medianTotal = totalValues[Math.floor(totalValues.length / 2)];
+      const avgTotal = Math.round(totalValues.reduce((a, b) => a + b, 0) / totalValues.length);
+
+      let bestOffer = { role: null, total: 0 };
+      let worstOffer = { role: null, total: Infinity };
+
+      rolesWithComp.forEach(role => {
+        const d = compData[role.id];
+        const total = (d.baseMax || 0) + (d.bonusTarget ? (d.baseMax * d.bonusTarget / 100) : 0) + (d.signingBonus || 0);
+        if (total > bestOffer.total) bestOffer = { role: role.company + ' - ' + role.title, total };
+        if (total < worstOffer.total) worstOffer = { role: role.company + ' - ' + role.title, total };
+      });
+
+      const disclosed = rolesWithComp.filter(r => compData[r.id].baseMax > 0).length;
+      const unknown = rolesWithComp.length - disclosed;
+
+      return `
+        <div style="padding: var(--space-4);">
+          <h3 style="font-weight: 600; margin-bottom: var(--space-4); color: var(--text-primary);">Summary Statistics</h3>
+
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); margin-bottom: var(--space-6);">
+            <div class="comp-card">
+              <div class="comp-card-header">Median Base Salary</div>
+              <div style="font-size: var(--text-2xl); font-weight: 700; color: var(--accent); margin-top: var(--space-2);">${formatCurrency(medianBase)}</div>
+              <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-2);">Based on ${rolesWithComp.length} roles</div>
+            </div>
+
+            <div class="comp-card">
+              <div class="comp-card-header">Average Total Comp</div>
+              <div style="font-size: var(--text-2xl); font-weight: 700; color: var(--accent); margin-top: var(--space-2);">${formatCurrency(avgTotal)}</div>
+              <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-2);">Across all dimensions</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); margin-bottom: var(--space-6);">
+            <div class="comp-card">
+              <div class="comp-card-header">Best Offer</div>
+              <div style="font-size: var(--text-lg); font-weight: 600; color: var(--success-color); margin-top: var(--space-2);">${bestOffer.role}</div>
+              <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: var(--space-1);">${formatCurrency(bestOffer.total)} total</div>
+            </div>
+
+            <div class="comp-card">
+              <div class="comp-card-header">Worst Offer</div>
+              <div style="font-size: var(--text-lg); font-weight: 600; color: var(--danger); margin-top: var(--space-2);">${worstOffer.role}</div>
+              <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: var(--space-1);">${formatCurrency(worstOffer.total)} total</div>
+            </div>
+          </div>
+
+          <div class="comp-card">
+            <div class="comp-card-header">Disclosure Status</div>
+            <div style="display: flex; gap: var(--space-6); margin-top: var(--space-3);">
+              <div>
+                <div style="font-size: var(--text-xl); font-weight: 700; color: var(--success-color);">${disclosed}</div>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary);">Disclosed</div>
+              </div>
+              <div>
+                <div style="font-size: var(--text-xl); font-weight: 700; color: var(--text-secondary);">${unknown}</div>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary);">Unknown</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * NEGOTIATION SCORECARD TAB
+     * 25-point system scoring negotiating power for current role
+     */
+    function renderNegotiationScorecard(role, data, benchmarks, prefs) {
+      if (!data || !role) {
+        return `
+          <div class="empty-state">
+            <p class="empty-state-text">Select a role in offer stage to generate negotiation scorecard.</p>
+          </div>
+        `;
+      }
+
+      // Calculate 25-point scores for 5 dimensions
+      const baseMax = data.baseMax || 0;
+      const bonus = data.bonusTarget || 0;
+      const avgBenchmarkBase = benchmarks.length > 0 ? Math.round(benchmarks.reduce((s, b) => s + (b.base || 0), 0) / benchmarks.length) : 0;
+
+      // Comp percentile
+      const basePercentile = avgBenchmarkBase > 0 ? Math.round((baseMax - avgBenchmarkBase) / avgBenchmarkBase * 100) : 50;
+      let compScore = 5;
+      if (basePercentile >= 75) compScore = 25;
+      else if (basePercentile >= 60) compScore = 20;
+      else if (basePercentile >= 50) compScore = 15;
+      else if (basePercentile >= 40) compScore = 10;
+
+      // Scope (placeholder - assume moderate)
+      let scopeScore = 15;
+
+      // Growth potential (estimate based on company stage)
+      let growthScore = 12;
+
+      // Culture fit (neutral start)
+      let cultureScore = 10;
+
+      // Risk factors (assume moderate risk)
+      let riskScore = 12;
+
+      const totalScore = compScore + scopeScore + growthScore + cultureScore + riskScore;
+      const totalPossible = 125;
+
+      return `
+        <div style="padding: var(--space-4);">
+          <h3 style="font-weight: 600; margin-bottom: var(--space-4); color: var(--text-primary);">Negotiation Strength Scorecard</h3>
+
+          <div class="comp-card" style="margin-bottom: var(--space-6);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+              <div style="font-size: var(--text-xl); font-weight: 700; color: var(--accent);">${totalScore} / ${totalPossible} points</div>
+              <div style="font-size: var(--text-sm); color: var(--text-secondary);">
+                ${totalScore >= 100 ? 'Very Strong' : totalScore >= 75 ? 'Strong' : totalScore >= 50 ? 'Moderate' : 'Weak'}
+              </div>
+            </div>
+            <div style="background: var(--bg-surface); border-radius: var(--radius-sm); height: 12px; overflow: hidden;">
+              <div style="background: var(--accent); height: 100%; width: ${(totalScore/totalPossible)*100}%;"></div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+            <div class="comp-card">
+              <div class="comp-card-header">Compensation (${compScore}/25)</div>
+              <div style="margin-top: var(--space-3); font-size: var(--text-sm); color: var(--text-secondary);">
+                <div style="margin-bottom: var(--space-1);">Base Percentile: <strong>${basePercentile}%</strong></div>
+                <div>Market Avg: ${formatCurrency(avgBenchmarkBase)}</div>
+              </div>
+            </div>
+
+            <div class="comp-card">
+              <div class="comp-card-header">Scope (${scopeScore}/25)</div>
+              <div style="margin-top: var(--space-3); font-size: var(--text-sm); color: var(--text-secondary);">
+                <div>Team size, reporting level, org impact</div>
+              </div>
+            </div>
+
+            <div class="comp-card">
+              <div class="comp-card-header">Growth (${growthScore}/25)</div>
+              <div style="margin-top: var(--space-3); font-size: var(--text-sm); color: var(--text-secondary);">
+                <div>Career path, skill development, visibility</div>
+              </div>
+            </div>
+
+            <div class="comp-card">
+              <div class="comp-card-header">Culture (${cultureScore}/25)</div>
+              <div style="margin-top: var(--space-3); font-size: var(--text-sm); color: var(--text-secondary);">
+                <div>Team dynamics, mission alignment, work-life</div>
+              </div>
+            </div>
+
+            <div class="comp-card">
+              <div class="comp-card-header">Risk (${riskScore}/25)</div>
+              <div style="margin-top: var(--space-3); font-size: var(--text-sm); color: var(--text-secondary);">
+                <div>Stability, equity value, restructure risk</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="comp-card" style="margin-top: var(--space-6); background: rgba(99, 102, 241, 0.1);">
+            <div class="comp-card-header">Recommendation</div>
+            <div style="margin-top: var(--space-3); color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.6;">
+              ${totalScore >= 100
+                ? '✓ Strong position for aggressive negotiation. Counter on base, benefits, and timeline.'
+                : totalScore >= 75
+                ? '✓ Good position. Focus counter on 1-2 dimensions (base or equity acceleration).'
+                : totalScore >= 50
+                ? '○ Moderate position. Limited negotiating room. Accept or request timeline extension.'
+                : '✗ Weak position. Accept offer or request for specific improvements only.'}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     function selectRole(roleId) {
       sessionStorage.setItem('pf_selectedRoleId', roleId);
       document.querySelectorAll('.role-item').forEach(el => el.classList.remove('active'));
@@ -807,6 +1145,10 @@
       let html = `
         <div class="comp-tabs">
           <button class="comp-tab active" data-tab="dashboard">Dashboard</button>
+          <button class="comp-tab" data-tab="visualization">Visualization</button>
+          <button class="comp-tab" data-tab="comparison">Comparison</button>
+          <button class="comp-tab" data-tab="aggregate">Aggregate</button>
+          <button class="comp-tab" data-tab="scorecard">Scorecard</button>
           <button class="comp-tab" data-tab="entry">Edit Comp Data</button>
           <button class="comp-tab" data-tab="benchmarks">Benchmarks</button>
           <button class="comp-tab" data-tab="negotiation">Negotiation</button>
@@ -815,6 +1157,26 @@
         <!-- Dashboard Tab -->
         <div class="comp-tab-content active" data-tab="dashboard">
           ${renderDashboard(role, data, roleBenchmarks, prefs)}
+        </div>
+
+        <!-- Visualization Tab: Bar charts -->
+        <div class="comp-tab-content" data-tab="visualization">
+          ${renderCompVisualization(getPipelineRoles(), getCompData(), prefs)}
+        </div>
+
+        <!-- Comparison Tab: Table view -->
+        <div class="comp-tab-content" data-tab="comparison">
+          ${renderComparisonTable(getPipelineRoles(), getCompData(), prefs)}
+        </div>
+
+        <!-- Aggregate Tab: Stats -->
+        <div class="comp-tab-content" data-tab="aggregate">
+          ${renderAggregateStats(getPipelineRoles(), getCompData(), prefs)}
+        </div>
+
+        <!-- Scorecard Tab: Negotiation 25-point system -->
+        <div class="comp-tab-content" data-tab="scorecard">
+          ${renderNegotiationScorecard(role, data, roleBenchmarks, prefs)}
         </div>
 
         <!-- Edit Comp Data Tab -->
