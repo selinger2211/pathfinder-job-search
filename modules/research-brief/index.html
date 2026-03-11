@@ -983,7 +983,7 @@
     </div>
 
     <!-- RIGHT PANEL: Brief content and TOC -->
-    <div class="brief-area">
+    <div id="briefArea" class="brief-area">
       <!-- Brief header with actions -->
       <div class="brief-header">
         <div>
@@ -1641,7 +1641,7 @@ Questions must be SPECIFIC to this role. Every question needs a "why they'd ask 
       html = html.replace(/(?<!\*)\*([^*]+?)\*(?!\*)/g, '<em>$1</em>');
 
       // Inline code: `code` → <code>code</code>
-      html = html.replace(/`([^`]+?)`/g, '<code>$1</code>');
+      html = html.replace(new RegExp('`([^`]+?)`', 'g'), '<code>$1</code>');
 
       // --- Paragraph cleanup ---
       // Convert double newlines into paragraph breaks (for plain text blocks)
