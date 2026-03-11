@@ -1300,6 +1300,10 @@
                     <h1 class="workspace-title">Calendar Integration</h1>
                 </div>
                 <div class="workspace-controls">
+                    <button style="padding: 10px 16px; background: var(--accent); color: var(--bg-base); border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;" onclick="openModal('addEventModal')" title="Add a new interview event">
+                        <i data-lucide="plus" width="16" height="16"></i>
+                        <span>Add Event</span>
+                    </button>
                     <button style="background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 6px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm);" onclick="openCommandPalette()" title="Command Palette (Cmd+K)">
                         <i data-lucide="command" width="18" height="18"></i>
                     </button>
@@ -1377,6 +1381,99 @@
         </div>
     </div>
 
+    <!-- Add Event Modal -->
+    <div class="modal-overlay" id="addEventModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Interview Event</h2>
+                <button class="modal-close" onclick="closeModal('addEventModal')">
+                    <i data-lucide="x" width="18" height="18"></i>
+                </button>
+            </div>
+            <div class="modal-content">
+                <form id="addEventForm" onsubmit="handleAddEvent(event)">
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        <!-- Event Title -->
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">Event Title</label>
+                            <input type="text" id="eventTitle" placeholder="e.g., Phone Screen with John" required style="width: 100%; padding: 10px; background: var(--bg-base); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 13px;">
+                        </div>
+
+                        <!-- Date -->
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">Date</label>
+                            <input type="date" id="eventDate" required style="width: 100%; padding: 10px; background: var(--bg-base); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 13px;">
+                        </div>
+
+                        <!-- Time -->
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">Time</label>
+                            <input type="time" id="eventTime" required style="width: 100%; padding: 10px; background: var(--bg-base); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 13px;">
+                        </div>
+
+                        <!-- Duration -->
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">Duration</label>
+                            <select id="eventDuration" style="width: 100%; padding: 10px; background: var(--bg-base); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 13px;">
+                                <option value="30">30 minutes</option>
+                                <option value="45">45 minutes</option>
+                                <option value="60" selected>60 minutes</option>
+                                <option value="90">90 minutes</option>
+                            </select>
+                        </div>
+
+                        <!-- Event Type -->
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">Interview Type</label>
+                            <select id="eventType" style="width: 100%; padding: 10px; background: var(--bg-base); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 13px;">
+                                <option value="phone_screen">Phone Screen</option>
+                                <option value="technical">Technical</option>
+                                <option value="behavioral">Behavioral</option>
+                                <option value="panel">Panel</option>
+                                <option value="hiring_manager">Hiring Manager</option>
+                                <option value="take_home_due">Take-Home Due</option>
+                                <option value="follow_up">Follow-Up</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Role Link -->
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">Link to Role (Optional)</label>
+                            <select id="eventRoleId" style="width: 100%; padding: 10px; background: var(--bg-base); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 13px;">
+                                <option value="">-- No role --</option>
+                            </select>
+                        </div>
+
+                        <!-- Interviewer Names -->
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">Interviewer Names</label>
+                            <input type="text" id="eventInterviewers" placeholder="e.g., John Smith, Jane Doe" style="width: 100%; padding: 10px; background: var(--bg-base); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 13px;">
+                        </div>
+
+                        <!-- Meeting Link -->
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">Meeting Link (Optional)</label>
+                            <input type="url" id="eventMeetingLink" placeholder="https://zoom.us/..." style="width: 100%; padding: 10px; background: var(--bg-base); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 13px;">
+                        </div>
+
+                        <!-- Preparation Notes -->
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">Preparation Notes</label>
+                            <textarea id="eventPrepNotes" placeholder="Add notes on what to prepare..." style="width: 100%; padding: 10px; background: var(--bg-base); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 13px; resize: vertical; min-height: 80px;"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="modal-actions">
+                    <button class="modal-btn" onclick="closeModal('addEventModal')">Cancel</button>
+                    <button class="modal-btn primary" onclick="document.getElementById('addEventForm').dispatchEvent(new Event('submit'))">Add Event</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Command Palette Modal -->
     <div class="modal-overlay" id="commandModal">
         <div class="modal" style="max-width: 600px;">
@@ -1390,6 +1487,7 @@
         </div>
     </div>
 
+    <script src="../shared/claude-api.js"></script>
     <script>
         // ============================================================================
         // DATA MANAGEMENT & INITIALIZATION
@@ -1407,6 +1505,9 @@
             document.addEventListener('keydown', handleKeyboardShortcuts);
             document.addEventListener('click', handleOutsideClick);
 
+            // Populate role dropdown in add event modal
+            populateRoleDropdown();
+
             // Render initial views
             renderWeekView();
             updateUpcomingEventList();
@@ -1417,6 +1518,105 @@
 
             // Initialize Lucide icons
             lucide.createIcons();
+        }
+
+        /**
+         * Populate the role dropdown in the "Add Event" modal with current roles from pf_roles
+         */
+        function populateRoleDropdown() {
+            const roleSelect = document.getElementById('eventRoleId');
+            if (!roleSelect) return;
+
+            const roles = getStorageData('pf_roles') || [];
+            const companies = getStorageData('pf_companies') || [];
+
+            // Keep the default "-- No role --" option
+            roleSelect.innerHTML = '<option value="">-- No role --</option>';
+
+            roles.forEach(role => {
+                const company = companies.find(c => c.id === role.companyId);
+                const companyName = company ? company.name : 'Unknown';
+                const option = document.createElement('option');
+                option.value = role.id;
+                option.textContent = `${role.title} at ${companyName}`;
+                roleSelect.appendChild(option);
+            });
+        }
+
+        /**
+         * Handle the "Add Event" form submission
+         */
+        function handleAddEvent(event) {
+            event.preventDefault();
+
+            const title = document.getElementById('eventTitle').value;
+            const dateStr = document.getElementById('eventDate').value;
+            const timeStr = document.getElementById('eventTime').value;
+            const duration = parseInt(document.getElementById('eventDuration').value);
+            const type = document.getElementById('eventType').value;
+            const roleId = document.getElementById('eventRoleId').value || null;
+            const interviewers = document.getElementById('eventInterviewers').value
+                .split(',')
+                .map(n => n.trim())
+                .filter(n => n.length > 0);
+            const meetingLink = document.getElementById('eventMeetingLink').value;
+            const prepNotes = document.getElementById('eventPrepNotes').value;
+
+            // Validate and create date
+            if (!dateStr || !timeStr) {
+                showNotification('Please select date and time');
+                return;
+            }
+
+            const [year, month, day] = dateStr.split('-');
+            const [hours, minutes] = timeStr.split(':');
+            const eventDate = new Date(year, month - 1, day, hours, minutes);
+
+            // Get company from role if linked
+            let company = 'Unknown';
+            if (roleId) {
+                const roles = getStorageData('pf_roles') || [];
+                const role = roles.find(r => r.id === roleId);
+                if (role) {
+                    const companies = getStorageData('pf_companies') || [];
+                    const comp = companies.find(c => c.id === role.companyId);
+                    if (comp) company = comp.name;
+                }
+            }
+
+            // Create event object
+            const newEvent = {
+                id: `evt-${Date.now()}`,
+                title,
+                date: eventDate.toISOString(),
+                duration,
+                type,
+                roleId: roleId || null,
+                company,
+                interviewers,
+                prepNotes,
+                meetingLink,
+                status: 'upcoming',
+                createdAt: new Date().toISOString()
+            };
+
+            // Save to localStorage
+            const allEvents = getStorageData('pf_calendar_events') || [];
+            allEvents.push(newEvent);
+            saveStorageData('pf_calendar_events', allEvents);
+
+            // Clear form and close modal
+            document.getElementById('addEventForm').reset();
+            closeModal('addEventModal');
+
+            // Refresh views
+            renderWeekView();
+            updateUpcomingEventList();
+            updateFilterBadges();
+            generateNudges();
+            renderNudgeTimeline();
+
+            showNotification(`Added "${title}" to calendar`);
         }
 
         /**
@@ -1482,7 +1682,7 @@
                 const d = new Date(now);
                 d.setDate(d.getDate() + daysFromNow);
                 d.setHours(hour, minute, 0, 0);
-                return d;
+                return d.toISOString();
             }
 
             // Event 1: Stripe Phone Screen (Day 2, 10 AM) - Linked to role
@@ -1490,20 +1690,15 @@
                 id: 'evt-001',
                 title: 'Phone Screen - Stripe',
                 company: 'Stripe',
-                companyDomain: 'stripe.com',
-                description: 'Initial phone screen with recruiter',
-                start: eventDate(2, 10),
-                end: eventDate(2, 10.5),
-                attendees: ['recruiter@stripe.com', 'You'],
-                type: 'screen',
-                linkedRoleId: 'role-001',
-                calendarEventId: 'cal-001',
-                detectionConfidence: 0.95,
-                detectionSignals: [
-                    { signal: 'Title keywords', confidence: 'High' },
-                    { signal: 'Attendee domain match', confidence: 'High' },
-                    { signal: 'Recruiter name match', confidence: 'High' }
-                ]
+                date: eventDate(2, 10),
+                duration: 30,
+                type: 'phone_screen',
+                roleId: 'role-001',
+                interviewers: ['John Smith (Recruiter)'],
+                prepNotes: 'Review Stripe product features and business model',
+                meetingLink: 'https://zoom.us/j/123456789',
+                status: 'upcoming',
+                createdAt: now.toISOString()
             });
 
             // Event 2: Meta Technical Interview (Day 4, 2 PM) - Unlinked
@@ -1511,19 +1706,15 @@
                 id: 'evt-002',
                 title: 'Technical Round - Meta',
                 company: 'Meta',
-                companyDomain: 'facebook.com',
-                description: 'System design interview with senior engineer',
-                start: eventDate(4, 14),
-                end: eventDate(4, 15),
-                attendees: ['engineering@meta.com', 'You'],
-                type: 'interview',
-                linkedRoleId: null,
-                calendarEventId: 'cal-002',
-                detectionConfidence: 0.88,
-                detectionSignals: [
-                    { signal: 'Title keywords', confidence: 'High' },
-                    { signal: 'Attendee domain match', confidence: 'High' }
-                ]
+                date: eventDate(4, 14),
+                duration: 60,
+                type: 'technical',
+                roleId: null,
+                interviewers: ['Senior Engineer'],
+                prepNotes: 'System design interview. Prepare to discuss architecture and tradeoffs.',
+                meetingLink: 'https://zoom.us/j/987654321',
+                status: 'upcoming',
+                createdAt: now.toISOString()
             });
 
             // Event 3: Datadog Hiring Manager Call (Day 5, 3:30 PM) - Linked
@@ -1531,118 +1722,95 @@
                 id: 'evt-003',
                 title: 'Hiring Manager Round - Datadog',
                 company: 'Datadog',
-                companyDomain: 'datadoghq.com',
-                description: 'Final round interview with hiring manager',
-                start: eventDate(5, 15.5),
-                end: eventDate(5, 16.5),
-                attendees: ['hiring@datadog.com', 'You'],
-                type: 'interview',
-                linkedRoleId: 'role-003',
-                calendarEventId: 'cal-003',
-                detectionConfidence: 0.92,
-                detectionSignals: [
-                    { signal: 'Title keywords', confidence: 'High' },
-                    { signal: 'Attendee domain match', confidence: 'High' }
-                ]
+                date: eventDate(5, 15, 30),
+                duration: 60,
+                type: 'hiring_manager',
+                roleId: 'role-003',
+                interviewers: ['Sarah Johnson (Hiring Manager)'],
+                prepNotes: 'Final round. Focus on team fit and long-term goals.',
+                meetingLink: 'https://zoom.us/j/555666777',
+                status: 'upcoming',
+                createdAt: now.toISOString()
             });
 
             // Event 4: Figma Take-home Review (Day 7, 1 PM) - Linked
             events.push({
                 id: 'evt-004',
-                title: 'Take-home Review Session',
+                title: 'Take-Home Review Session',
                 company: 'Figma',
-                companyDomain: 'figma.com',
-                description: 'Review and discussion of take-home project',
-                start: eventDate(7, 13),
-                end: eventDate(7, 14),
-                attendees: ['engineering@figma.com', 'You'],
-                type: 'interview',
-                linkedRoleId: 'role-004',
-                calendarEventId: 'cal-004',
-                detectionConfidence: 0.80,
-                detectionSignals: [
-                    { signal: 'Duration heuristic', confidence: 'Low' },
-                    { signal: 'Description content', confidence: 'Medium' }
-                ]
+                date: eventDate(7, 13),
+                duration: 60,
+                type: 'technical',
+                roleId: 'role-004',
+                interviewers: ['Design Lead'],
+                prepNotes: 'Review your take-home project and be ready to explain decisions.',
+                meetingLink: 'https://zoom.us/j/111222333',
+                status: 'upcoming',
+                createdAt: now.toISOString()
             });
 
-            // Event 5: Notion Follow-up (Day 9, 11 AM) - Linked, potential next round
+            // Event 5: Notion Final Round (Day 9, 11 AM) - Linked
             events.push({
                 id: 'evt-005',
                 title: 'Final Round Interview - Notion',
                 company: 'Notion',
-                companyDomain: 'notion.so',
-                description: 'Final interview with co-founder',
-                start: eventDate(9, 11),
-                end: eventDate(9, 12),
-                attendees: ['recruiting@notion.so', 'You'],
-                type: 'interview',
-                linkedRoleId: 'role-005',
-                calendarEventId: 'cal-005',
-                detectionConfidence: 0.89,
-                detectionSignals: [
-                    { signal: 'Title keywords', confidence: 'High' },
-                    { signal: 'Attendee domain match', confidence: 'High' }
-                ]
+                date: eventDate(9, 11),
+                duration: 60,
+                type: 'behavioral',
+                roleId: 'role-005',
+                interviewers: ['Ivan Zhao (Founder)'],
+                prepNotes: 'Final round with founder. Discuss vision and culture fit.',
+                meetingLink: 'https://zoom.us/j/444555666',
+                status: 'upcoming',
+                createdAt: now.toISOString()
             });
 
-            // Event 6: Stripe Follow-up (Day 10, 2 PM) - Linked, second round
+            // Event 6: Stripe Technical Round (Day 10, 2 PM) - Linked, second round
             events.push({
                 id: 'evt-006',
                 title: 'Technical Interview - Stripe',
                 company: 'Stripe',
-                companyDomain: 'stripe.com',
-                description: 'Technical round with engineering team',
-                start: eventDate(10, 14),
-                end: eventDate(10, 15),
-                attendees: ['engineering@stripe.com', 'You'],
-                type: 'interview',
-                linkedRoleId: 'role-001',
-                calendarEventId: 'cal-006',
-                detectionConfidence: 0.91,
-                detectionSignals: [
-                    { signal: 'Title keywords', confidence: 'High' },
-                    { signal: 'Attendee domain match', confidence: 'High' }
-                ]
+                date: eventDate(10, 14),
+                duration: 60,
+                type: 'technical',
+                roleId: 'role-001',
+                interviewers: ['Mike Chen (Engineer)'],
+                prepNotes: 'Technical round. Review payment systems and API design.',
+                meetingLink: 'https://zoom.us/j/777888999',
+                status: 'upcoming',
+                createdAt: now.toISOString()
             });
 
-            // Event 7: Figma Offer Discussion (Day 11, 4 PM) - Linked, potential offer
+            // Event 7: Figma Offer Discussion (Day 11, 4 PM) - Linked
             events.push({
                 id: 'evt-007',
                 title: 'Offer Discussion - Figma',
                 company: 'Figma',
-                companyDomain: 'figma.com',
-                description: 'Discuss offer and compensation',
-                start: eventDate(11, 16),
-                end: eventDate(11, 16.5),
-                attendees: ['hr@figma.com', 'You'],
-                type: 'offer',
-                linkedRoleId: 'role-004',
-                calendarEventId: 'cal-007',
-                detectionConfidence: 0.85,
-                detectionSignals: [
-                    { signal: 'Title keywords', confidence: 'High' },
-                    { signal: 'Attendee domain match', confidence: 'High' }
-                ]
+                date: eventDate(11, 16),
+                duration: 30,
+                type: 'other',
+                roleId: 'role-004',
+                interviewers: ['HR Manager'],
+                prepNotes: 'Final call to discuss offer details.',
+                meetingLink: 'https://zoom.us/j/101112131',
+                status: 'upcoming',
+                createdAt: now.toISOString()
             });
 
-            // Event 8: Unlinked meeting with generic title (Day 6, 9 AM) - Unlinked
+            // Event 8: Follow-up Call (Day 6, 9 AM) - Unlinked
             events.push({
                 id: 'evt-008',
-                title: 'Coffee Chat',
+                title: 'Recruiter Follow-up',
                 company: 'Unknown',
-                companyDomain: '',
-                description: 'Meeting with external contact',
-                start: eventDate(6, 9),
-                end: eventDate(6, 9.5),
-                attendees: ['contact@company.com', 'You'],
-                type: 'followup',
-                linkedRoleId: null,
-                calendarEventId: 'cal-008',
-                detectionConfidence: 0.35,
-                detectionSignals: [
-                    { signal: 'Duration heuristic', confidence: 'Low' }
-                ]
+                date: eventDate(6, 9),
+                duration: 30,
+                type: 'follow_up',
+                roleId: null,
+                interviewers: ['Recruiter'],
+                prepNotes: 'General follow-up call.',
+                meetingLink: '',
+                status: 'upcoming',
+                createdAt: now.toISOString()
             });
 
             return events;
@@ -1848,7 +2016,9 @@
             const weekGrid = document.getElementById('weekGrid');
             weekGrid.innerHTML = '';
 
-            const calendarEvents = getStorageData('calendar_events') || [];
+            const calendarEvents = getStorageData('pf_calendar_events') || [];
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
 
             // Create 7 day columns
             for (let i = 0; i < 7; i++) {
@@ -1861,6 +2031,11 @@
                 // Day header
                 const dayHeader = document.createElement('div');
                 dayHeader.className = 'day-header';
+                if (dayDate.toDateString() === today.toDateString()) {
+                    dayHeader.style.backgroundColor = 'var(--accent)';
+                    dayHeader.style.color = 'var(--bg-base)';
+                }
+
                 const dayName = document.createElement('div');
                 dayName.className = 'day-name';
                 dayName.textContent = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayDate.getDay()];
@@ -1876,9 +2051,9 @@
                 dayContent.className = 'day-content';
 
                 // Filter events for this day
-                const allEvents = getStorageData('calendar_events') || [];
-                const dayEvents = allEvents.filter(evt => {
-                    const eventDate = new Date(evt.start);
+                const dayEvents = calendarEvents.filter(evt => {
+                    const eventDate = new Date(evt.date);
+                    eventDate.setHours(0, 0, 0, 0);
                     return eventDate.toDateString() === dayDate.toDateString();
                 });
 
@@ -1893,13 +2068,13 @@
                 } else {
                     dayEvents.forEach(evt => {
                         const eventCard = document.createElement('div');
-                        eventCard.className = `day-event-card ${evt.type} ${!evt.linkedRoleId ? 'unlinked' : ''}`;
+                        eventCard.className = `day-event-card ${evt.type} ${!evt.roleId ? 'unlinked' : ''}`;
                         eventCard.style.cursor = 'pointer';
                         eventCard.onclick = () => openEventDetail(evt);
 
                         const timeEl = document.createElement('div');
                         timeEl.className = 'day-event-time';
-                        timeEl.textContent = formatTime(new Date(evt.start));
+                        timeEl.textContent = formatTime(new Date(evt.date));
                         eventCard.appendChild(timeEl);
 
                         const titleEl = document.createElement('div');
@@ -1952,25 +2127,25 @@
             const eventList = document.getElementById('upcomingEventList');
             eventList.innerHTML = '';
 
-            const allEvents = getStorageData('calendar_events') || [];
+            const allEvents = getStorageData('pf_calendar_events') || [];
             const now = new Date();
 
             // Filter events from next 7 days
             let filteredEvents = allEvents.filter(evt => {
-                const eventDate = new Date(evt.start);
+                const eventDate = new Date(evt.date);
                 const daysAway = Math.floor((eventDate - now) / (1000 * 60 * 60 * 24));
                 if (daysAway < 0 || daysAway > 7) return false;
 
                 if (activeFilter === 'all') return true;
-                if (activeFilter === 'interview') return evt.type === 'interview';
-                if (activeFilter === 'followup') return evt.type === 'followup';
-                if (activeFilter === 'unlinked') return !evt.linkedRoleId;
+                if (activeFilter === 'interview') return ['phone_screen', 'technical', 'behavioral', 'panel', 'hiring_manager'].includes(evt.type);
+                if (activeFilter === 'followup') return evt.type === 'follow_up';
+                if (activeFilter === 'unlinked') return !evt.roleId;
 
                 return true;
             });
 
             // Sort by date
-            filteredEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
+            filteredEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
 
             if (filteredEvents.length === 0) {
                 const emptyMsg = document.createElement('div');
@@ -1983,12 +2158,12 @@
 
             filteredEvents.forEach(evt => {
                 const item = document.createElement('div');
-                item.className = `event-item ${!evt.linkedRoleId ? 'unlinked' : ''}`;
+                item.className = `event-item ${!evt.roleId ? 'unlinked' : ''}`;
                 item.onclick = () => openEventDetail(evt);
 
                 const time = document.createElement('div');
                 time.className = 'event-item-time';
-                time.textContent = formatTime(new Date(evt.start));
+                time.textContent = formatTime(new Date(evt.date));
                 item.appendChild(time);
 
                 const title = document.createElement('div');
@@ -1999,9 +2174,14 @@
                 const company = document.createElement('div');
                 company.className = 'event-item-company';
                 if (evt.company !== 'Unknown') {
+                    // Try to find domain from company name
+                    const companies = getStorageData('pf_companies') || [];
+                    const comp = companies.find(c => c.name === evt.company);
+                    const domain = comp ? comp.domain : evt.company.toLowerCase().replace(/\s+/g, '') + '.com';
+
                     const logo = document.createElement('img');
                     logo.className = 'event-item-company-logo';
-                    logo.src = `https://logo.clearbit.com/${evt.companyDomain}`;
+                    logo.src = `https://logo.clearbit.com/${domain}`;
                     logo.onerror = function() { this.style.display = 'none'; };
                     company.appendChild(logo);
                 }
@@ -2013,10 +2193,10 @@
                 const meta = document.createElement('div');
                 meta.className = 'event-item-meta';
                 const statusDot = document.createElement('span');
-                statusDot.className = `event-item-status ${evt.linkedRoleId ? 'linked' : 'unlinked'}`;
+                statusDot.className = `event-item-status ${evt.roleId ? 'linked' : 'unlinked'}`;
                 meta.appendChild(statusDot);
                 const metaText = document.createElement('span');
-                metaText.textContent = evt.linkedRoleId ? 'Linked' : 'Unlinked';
+                metaText.textContent = evt.roleId ? 'Linked' : 'Unlinked';
                 meta.appendChild(metaText);
                 item.appendChild(meta);
 
@@ -2028,12 +2208,12 @@
          * Update badge counts for filters.
          */
         function updateFilterBadges() {
-            const allEvents = getStorageData('calendar_events') || [];
+            const allEvents = getStorageData('pf_calendar_events') || [];
 
             const allCount = allEvents.length;
-            const interviewCount = allEvents.filter(e => e.type === 'interview').length;
-            const followupCount = allEvents.filter(e => e.type === 'followup').length;
-            const unlinkedCount = allEvents.filter(e => !e.linkedRoleId).length;
+            const interviewCount = allEvents.filter(e => ['phone_screen', 'technical', 'behavioral', 'panel', 'hiring_manager'].includes(e.type)).length;
+            const followupCount = allEvents.filter(e => e.type === 'follow_up').length;
+            const unlinkedCount = allEvents.filter(e => !e.roleId).length;
 
             document.getElementById('badgeAll').textContent = allCount;
             document.getElementById('badgeInterview').textContent = interviewCount;
@@ -2282,41 +2462,41 @@
          */
         function generateNudges() {
             const nudges = [];
-            const allEvents = getStorageData('calendar_events') || [];
+            const allEvents = getStorageData('pf_calendar_events') || [];
+            const roles = getStorageData('pf_roles') || [];
             const now = new Date();
 
             allEvents.forEach(evt => {
-                const eventDate = new Date(evt.start);
+                const eventDate = new Date(evt.date);
                 const msUntilEvent = eventDate - now;
                 const hoursUntil = msUntilEvent / (1000 * 60 * 60);
                 const daysUntil = msUntilEvent / (1000 * 60 * 60 * 24);
 
-                // 72 hours before: research nudge
-                if (hoursUntil > 72 && hoursUntil <= 73) {
-                    nudges.push({
-                        id: `nudge-72h-${evt.id}`,
-                        eventId: evt.id,
-                        timing: '72h',
-                        title: `Interview at ${evt.company} in 3 days`,
-                        description: `Research brief not started for the ${evt.type} round. Prepare to discuss the company, product, and strategy.`,
-                        action: 'Launch Research Brief',
-                        actionUrl: '../research-brief/index.html',
-                        timestamp: now
-                    });
+                // Get role info if linked
+                let roleInfo = '';
+                let roleId = evt.roleId;
+                if (roleId) {
+                    const role = roles.find(r => r.id === roleId);
+                    if (role) {
+                        roleInfo = ` - ${role.title}`;
+                    }
                 }
 
-                // 48 hours before: prep nudge
-                if (hoursUntil > 48 && hoursUntil <= 49) {
-                    nudges.push({
-                        id: `nudge-48h-${evt.id}`,
-                        eventId: evt.id,
-                        timing: '48h',
-                        title: `Prepare for ${evt.company} ${evt.type}`,
-                        description: `Review your prep and notes. Make sure you have questions to ask prepared.`,
-                        action: 'Open Brief',
-                        actionUrl: '../research-brief/index.html',
-                        timestamp: now
-                    });
+                // Within 24 hours: prep nudge
+                if (hoursUntil > 0 && hoursUntil <= 24) {
+                    if (daysUntil < 1 && daysUntil > 0.5) { // 12-24 hours
+                        nudges.push({
+                            id: `nudge-24h-${evt.id}`,
+                            eventId: evt.id,
+                            roleId: roleId,
+                            timing: '24h',
+                            title: `Interview at ${evt.company} tomorrow${roleInfo}`,
+                            description: `Start your prep. Review the company research brief and prepare questions for the interviewer.`,
+                            action: 'Research Brief',
+                            actionUrl: roleId ? `../research-brief/?role=${roleId}` : '../research-brief/',
+                            timestamp: now
+                        });
+                    }
                 }
 
                 // Morning of: review nudge
@@ -2324,17 +2504,33 @@
                     nudges.push({
                         id: `nudge-morning-${evt.id}`,
                         eventId: evt.id,
+                        roleId: roleId,
                         timing: 'morning',
-                        title: `${evt.company} interview today at ${formatTime(eventDate)}`,
-                        description: `Review your TMAY script and questions. Check the Zoom link and give yourself time to compose.`,
-                        action: 'Review Interview Notes',
-                        actionUrl: '../research-brief/index.html',
+                        title: `${evt.company} interview today at ${formatTime(eventDate)}${roleInfo}`,
+                        description: `Take a few minutes to review your prep notes and practice your TMAY (Tell Me About Yourself) script.`,
+                        action: 'Review Notes',
+                        actionUrl: roleId ? `../research-brief/?role=${roleId}` : '../research-brief/',
+                        timestamp: now
+                    });
+                }
+
+                // After event: debrief nudge
+                if (eventDate < now && evt.status === 'upcoming') {
+                    nudges.push({
+                        id: `nudge-debrief-${evt.id}`,
+                        eventId: evt.id,
+                        roleId: roleId,
+                        timing: 'post',
+                        title: `Debrief: ${evt.company} interview${roleInfo}`,
+                        description: `While the interview is fresh in your mind, capture key moments and feedback.`,
+                        action: 'Start Debrief',
+                        actionUrl: roleId ? `../debrief/?role=${roleId}` : '../debrief/',
                         timestamp: now
                     });
                 }
             });
 
-            saveStorageData('calendar_nudges', nudges);
+            saveStorageData('pf_calendar_nudges', nudges);
         }
 
         /**
@@ -2344,7 +2540,7 @@
             const nudgeList = document.getElementById('nudgeList');
             nudgeList.innerHTML = '';
 
-            const nudges = getStorageData('calendar_nudges') || [];
+            const nudges = getStorageData('pf_calendar_nudges') || [];
             const now = new Date();
 
             if (nudges.length === 0) {
@@ -2357,18 +2553,15 @@
 
             // Group nudges by timing
             const grouped = {
-                'up_soon': [],
-                '72h': [],
-                '48h': [],
+                '24h': [],
                 'morning': [],
-                'past': []
+                'post': []
             };
 
             nudges.forEach(nudge => {
-                if (nudge.timing === '72h') grouped['72h'].push(nudge);
-                else if (nudge.timing === '48h') grouped['48h'].push(nudge);
+                if (nudge.timing === '24h') grouped['24h'].push(nudge);
                 else if (nudge.timing === 'morning') grouped['morning'].push(nudge);
-                else if (nudge.timing === '1h-after') grouped['past'].push(nudge);
+                else if (nudge.timing === 'post') grouped['post'].push(nudge);
             });
 
             // Render each group
@@ -2381,11 +2574,9 @@
                 const groupTitle = document.createElement('div');
                 groupTitle.className = 'nudge-group-title';
                 const labels = {
-                    'up_soon': 'Coming Up',
-                    '72h': '72 Hours Before',
-                    '48h': '48 Hours Before',
-                    'morning': 'Morning Of',
-                    'past': 'Post-Interview'
+                    '24h': 'Prep Soon',
+                    'morning': 'Today',
+                    'post': 'Post-Interview'
                 };
                 groupTitle.textContent = labels[groupKey];
                 group.appendChild(groupTitle);
@@ -2400,12 +2591,11 @@
                     const timing = document.createElement('div');
                     timing.className = 'nudge-timing';
                     const timingLabels = {
-                        '72h': '72h',
-                        '48h': '48h',
+                        '24h': '24h',
                         'morning': 'Now',
-                        '1h-after': '1h'
+                        'post': 'Done'
                     };
-                    timing.textContent = timingLabels[nudge.timing];
+                    timing.textContent = timingLabels[nudge.timing] || nudge.timing;
                     header.appendChild(timing);
 
                     const content = document.createElement('div');
@@ -2825,6 +3015,103 @@
                 });
             }
         });
+
+        // ============================================================================
+        // MODAL MANAGEMENT
+        // ============================================================================
+
+        /**
+         * Open a modal by ID
+         */
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('active');
+            }
+        }
+
+        /**
+         * Close a modal by ID
+         */
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        /**
+         * Open event detail modal
+         */
+        function openEventDetail(event) {
+            const modal = document.getElementById('eventModal');
+            const title = document.getElementById('eventModalTitle');
+            const content = document.getElementById('eventModalContent');
+
+            title.textContent = event.title;
+
+            let html = `
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div>
+                        <div style="font-size: 12px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 4px;">Date & Time</div>
+                        <div style="font-size: 14px; color: var(--text-primary);">${formatDateShort(new Date(event.date))} at ${formatTime(new Date(event.date))}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Duration: ${event.duration} minutes</div>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 12px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 4px;">Company</div>
+                        <div style="font-size: 14px; color: var(--text-primary);">${event.company}</div>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 12px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 4px;">Interview Type</div>
+                        <div style="font-size: 14px; color: var(--text-primary); text-transform: capitalize;">${event.type.replace(/_/g, ' ')}</div>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 12px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 4px;">Interviewers</div>
+                        <div style="font-size: 14px; color: var(--text-primary);">${event.interviewers.length > 0 ? event.interviewers.join(', ') : 'Not specified'}</div>
+                    </div>
+            `;
+
+            if (event.roleId) {
+                const roles = getStorageData('pf_roles') || [];
+                const role = roles.find(r => r.id === event.roleId);
+                if (role) {
+                    html += `
+                        <div>
+                            <div style="font-size: 12px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 4px;">Linked Role</div>
+                            <div style="font-size: 14px; color: var(--text-primary);">${role.title}</div>
+                        </div>
+                    `;
+                }
+            }
+
+            if (event.meetingLink) {
+                html += `
+                    <div>
+                        <div style="font-size: 12px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 4px;">Meeting Link</div>
+                        <a href="${event.meetingLink}" target="_blank" style="color: var(--accent); text-decoration: none; font-size: 14px;">Join Meeting</a>
+                    </div>
+                `;
+            }
+
+            if (event.prepNotes) {
+                html += `
+                    <div>
+                        <div style="font-size: 12px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 4px;">Preparation Notes</div>
+                        <div style="font-size: 14px; color: var(--text-primary); white-space: pre-wrap;">${event.prepNotes}</div>
+                    </div>
+                `;
+            }
+
+            html += `
+                </div>
+            `;
+
+            content.innerHTML = html;
+            openModal('eventModal');
+        }
 
         // ============================================================================
         // NOTIFICATIONS

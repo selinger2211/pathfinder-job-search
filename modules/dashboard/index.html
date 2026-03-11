@@ -914,9 +914,9 @@
        DASHBOARD ARCHITECTURE OVERVIEW
 
        This script manages:
-       1. Data Layer: reads pf_companies/pf_roles, owns streak + nudges
+       1. Data Layer: reads pf_companies/pf_roles from real localStorage
        2. Streak Engine: tracks consecutive days with meaningful actions
-       3. Nudge Engine: scans roles/companies against time-based rules
+       3. Nudge Engine: 12-rule system scanning roles/companies against time-based triggers
        4. Pipeline Stats: computes stage distribution and conversion rates
        5. UI Rendering: displays everything with animations
        6. Keyboard Shortcuts: command palette and navigation shortcuts
@@ -993,15 +993,16 @@
 
     /**
      * Load all data from localStorage
-     * Returns object with companies, roles, streak, and dismissed nudges
+     * Returns object with companies, roles, connections, streak, and dismissed nudges
      */
     function loadData() {
       const companies = JSON.parse(localStorage.getItem('pf_companies') || '[]');
       const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+      const connections = JSON.parse(localStorage.getItem('pf_connections') || '[]');
       const streak = JSON.parse(localStorage.getItem('pf_streak') || null);
       const dismissedNudges = JSON.parse(localStorage.getItem('pf_dismissed_nudges') || '[]');
 
-      return { companies, roles, streak, dismissedNudges };
+      return { companies, roles, connections, streak, dismissedNudges };
     }
 
     /**
@@ -1019,78 +1020,16 @@
     }
 
     // ================================================================
-    // DEMO DATA GENERATOR
+    // EMPTY STATE HANDLING
     // ================================================================
 
     /**
-     * Create demo data if none exists
-     * Generates 15-20 realistic roles across all stages
+     * Check if localStorage has any real data
+     * If empty, show helpful empty state messages
      */
-    function initializeDemoData() {
-      // In Personal mode, never seed demo data — the data-switcher handles it
-      if (localStorage.getItem('pf_data_mode') === 'personal') return;
-
-      const { companies, roles } = loadData();
-
-      if (roles.length > 0) {
-        return; // Use existing data
-      }
-
-      // Create demo companies
-      const demoCompanies = [
-        { id: 'google', name: 'Google', tier: 'hot', industry: 'Tech', founded: 1998 },
-        { id: 'microsoft', name: 'Microsoft', tier: 'hot', industry: 'Tech', founded: 1975 },
-        { id: 'openai', name: 'OpenAI', tier: 'active', industry: 'AI', founded: 2015 },
-        { id: 'anthropic', name: 'Anthropic', tier: 'active', industry: 'AI', founded: 2021 },
-        { id: 'stripe', name: 'Stripe', tier: 'active', industry: 'FinTech', founded: 2010 },
-        { id: 'figma', name: 'Figma', tier: 'watching', industry: 'Design', founded: 2012 },
-        { id: 'notion', name: 'Notion', tier: 'watching', industry: 'Productivity', founded: 2016 },
-        { id: 'databricks', name: 'Databricks', tier: 'active', industry: 'Data', founded: 2013 },
-        { id: 'replit', name: 'Replit', tier: 'watching', industry: 'Dev Tools', founded: 2016 },
-        { id: 'huggingface', name: 'Hugging Face', tier: 'active', industry: 'AI', founded: 2016 },
-      ];
-
-      // Create demo roles across all stages with varied dates
-      // IMPORTANT: role.company must be a string (company name), matching Pipeline Tracker format
-      const now = new Date();
-      const d = (days) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
-      const f = (days) => new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
-      const demoRoles = [
-        // Discovered (just found)
-        { id: 'role_1', company: 'Google', title: 'Senior Software Engineer', stage: 'discovered', tier: 'hot', positioning: 'ic', dateAdded: d(2), lastActivity: d(2), stageHistory: [] },
-        { id: 'role_2', company: 'Figma', title: 'Product Manager', stage: 'discovered', tier: 'watching', positioning: 'ic', dateAdded: d(5), lastActivity: d(5), stageHistory: [] },
-
-        // Researching
-        { id: 'role_3', company: 'Stripe', title: 'Staff Product Manager, Payments', stage: 'researching', tier: 'active', positioning: 'ic', dateAdded: d(8), lastActivity: d(3), stageHistory: [] },
-        { id: 'role_4', company: 'Anthropic', title: 'Product Manager, Claude Platform', stage: 'researching', tier: 'hot', positioning: 'ic', dateAdded: d(10), lastActivity: d(4), stageHistory: [] },
-
-        // Outreach
-        { id: 'role_5', company: 'OpenAI', title: 'ML Engineer', stage: 'outreach', tier: 'active', positioning: 'ic', dateAdded: d(12), lastActivity: d(6), stageHistory: [] },
-        { id: 'role_6', company: 'Databricks', title: 'Data Engineer', stage: 'outreach', tier: 'active', positioning: 'ic', dateAdded: d(15), lastActivity: d(8), stageHistory: [] },
-
-        // Applied
-        { id: 'role_7', company: 'Microsoft', title: 'Cloud Architect', stage: 'applied', tier: 'hot', positioning: 'ic', dateAdded: d(20), lastActivity: d(18), stageHistory: [] },
-        { id: 'role_8', company: 'Notion', title: 'Backend Engineer', stage: 'applied', tier: 'watching', positioning: 'ic', dateAdded: d(25), lastActivity: d(22), stageHistory: [] },
-        { id: 'role_9', company: 'Replit', title: 'Developer Relations', stage: 'applied', tier: 'watching', positioning: 'ic', dateAdded: d(30), lastActivity: d(28), stageHistory: [] },
-
-        // Screen
-        { id: 'role_10', company: 'Hugging Face', title: 'ML Research Engineer', stage: 'screen', tier: 'active', positioning: 'ic', dateAdded: d(35), lastActivity: d(10), stageHistory: [] },
-        { id: 'role_11', company: 'Stripe', title: 'Site Reliability Engineer', stage: 'screen', tier: 'active', positioning: 'ic', dateAdded: d(40), lastActivity: d(14), stageHistory: [] },
-
-        // Interviewing
-        { id: 'role_12', company: 'Google', title: 'Solutions Architect', stage: 'interviewing', tier: 'hot', positioning: 'ic', dateAdded: d(45), lastActivity: d(5), nextInterviewDate: f(1), stageHistory: [] },
-        { id: 'role_13', company: 'Anthropic', title: 'Systems Engineer', stage: 'interviewing', tier: 'hot', positioning: 'ic', dateAdded: d(50), lastActivity: d(3), stageHistory: [] },
-
-        // Offer
-        { id: 'role_14', company: 'OpenAI', title: 'Prompt Engineer', stage: 'offer', tier: 'active', positioning: 'ic', dateAdded: d(60), lastActivity: d(1), offerReceivedDate: d(1), stageHistory: [] },
-
-        // Closed
-        { id: 'role_15', company: 'Notion', title: 'Product Design Lead', stage: 'closed', tier: 'watching', positioning: 'ic', dateAdded: d(90), lastActivity: d(45), closedReason: 'declined', stageHistory: [] },
-      ];
-
-      localStorage.setItem('pf_companies', JSON.stringify(demoCompanies));
-      localStorage.setItem('pf_roles', JSON.stringify(demoRoles));
-      localStorage.setItem('pf_streak', JSON.stringify({ currentStreak: 7, longestStreak: 7, lastActiveDate: getTodayDateString(), history: [] }));
+    function hasData() {
+      const { roles, companies } = loadData();
+      return roles.length > 0 || companies.length > 0;
     }
 
     // ================================================================
@@ -1175,133 +1114,258 @@
 
     /**
      * Generate all nudges for today by scanning roles and companies
+     * Implements the full 12-rule nudge engine from the PRD
      * Returns array of nudge objects sorted by priority
      */
     function generateNudges() {
-      const { companies, roles, dismissedNudges } = loadData();
+      const { companies, roles, connections, dismissedNudges } = loadData();
       const nudges = [];
+      const now = new Date();
 
-      // Trigger 1: Role in "applied" > 21 days without response
+      // RULE 1: Stale discovered roles (>3 days in discovered stage)
       roles.forEach(role => {
-        if (role.stage === 'applied') {
-          const daysSinceApplied = daysSince(role.stageChangedDate || role.lastActivity);
-          if (daysSinceApplied > 21) {
-            const nudgeId = generateNudgeId('ghosted', role.id);
+        if (role.stage === 'discovered') {
+          const daysSinceAdded = daysSince(role.dateAdded);
+          if (daysSinceAdded > 3) {
+            const nudgeId = generateNudgeId('stale_discovered', role.id);
             if (!isDismissed(nudgeId, dismissedNudges)) {
-              const companyName = role.company || 'Unknown';
+              nudges.push({
+                id: nudgeId,
+                priority: 'suggested',
+                trigger: 'stale_discovered',
+                roleId: role.id,
+                company: role.company || 'Unknown',
+                text: `Review <span class="nudge-highlight">${role.title}</span> at <span class="nudge-highlight">${role.company}</span> — been sitting for ${daysSinceAdded} days`,
+                action: { label: 'Review Role', href: `../pipeline/index.html?roleId=${role.id}` },
+              });
+            }
+          }
+        }
+      });
+
+      // RULE 2: Researching too long (>5 days in researching stage)
+      roles.forEach(role => {
+        if (role.stage === 'researching') {
+          const daysSinceAdded = daysSince(role.dateAdded);
+          if (daysSinceAdded > 5) {
+            const nudgeId = generateNudgeId('researching_long', role.id);
+            if (!isDismissed(nudgeId, dismissedNudges)) {
               nudges.push({
                 id: nudgeId,
                 priority: 'important',
-                trigger: 'ghosted',
+                trigger: 'researching_long',
                 roleId: role.id,
-                company: companyName,
-                text: `No response from <span class="nudge-highlight">${companyName}</span> in 3 weeks — mark as ghosted?`,
-                action: { label: 'View Role', href: '../pipeline/index.html' },
+                company: role.company || 'Unknown',
+                text: `Ready to apply to <span class="nudge-highlight">${role.title}</span>? You've been researching for ${daysSinceAdded} days`,
+                action: { label: 'Move Forward', href: `../pipeline/index.html?roleId=${role.id}` },
               });
             }
           }
         }
       });
 
-      // Trigger 2: Offer without response > 48 hours
+      // RULE 3: Applied, no response (>10 days in applied stage)
       roles.forEach(role => {
-        if (role.stage === 'offer') {
-          const daysSinceOffer = daysSince(role.stageChangedDate || role.lastActivity);
-          if (daysSinceOffer > 2) {
-            const nudgeId = generateNudgeId('offer_pending', role.id);
+        if (role.stage === 'applied') {
+          const daysSinceApplied = daysSince(role.lastActivity || role.dateAdded);
+          if (daysSinceApplied > 10) {
+            const nudgeId = generateNudgeId('applied_no_response', role.id);
             if (!isDismissed(nudgeId, dismissedNudges)) {
-              const companyName = role.company || 'Unknown';
               nudges.push({
                 id: nudgeId,
-                priority: 'critical',
-                trigger: 'offer_pending',
+                priority: 'important',
+                trigger: 'applied_no_response',
                 roleId: role.id,
-                company: companyName,
-                text: `Offer from <span class="nudge-highlight">${companyName}</span> needs a response`,
-                action: { label: 'Respond', href: '../pipeline/index.html' },
+                company: role.company || 'Unknown',
+                text: `<span class="nudge-highlight">${role.company}</span> hasn't responded to your application in ${daysSinceApplied} days`,
+                action: { label: 'Follow Up', href: `../pipeline/index.html?roleId=${role.id}` },
               });
             }
           }
         }
       });
 
-      // Trigger 3: Hot-tier company with no active roles
-      // Build unique companies from roles data
-      const companyNames = [...new Set(roles.map(r => r.company).filter(Boolean))];
-      companyNames.forEach(companyName => {
-        const companyRoles = roles.filter(r => r.company === companyName);
-        const isHot = companyRoles.some(r => r.tier === 'hot') || companies.some(c => c.name === companyName && c.tier === 'hot');
-        if (isHot) {
-          const activeRoles = companyRoles.filter(r => !['closed'].includes(r.stage));
-          if (activeRoles.length === 0) {
-            const nudgeId = generateNudgeId('hot_no_roles', companyName);
-            if (!isDismissed(nudgeId, dismissedNudges)) {
-              nudges.push({
-                id: nudgeId,
-                priority: 'informational',
-                trigger: 'hot_no_roles',
-                company: companyName,
-                text: `<span class="nudge-highlight">${companyName}</span> is Hot with no active roles — check for openings?`,
-                action: { label: 'Check Careers', href: '../research-brief/index.html' },
-              });
-            }
-          }
-        }
-      });
-
-      // Trigger 4: Interview in < 48h with no brief
+      // RULE 4: Screen prep needed (in screen stage)
       roles.forEach(role => {
-        if (role.stage === 'interviewing' && role.nextInterviewDate) {
-          const hoursUntilInterview = (new Date(role.nextInterviewDate) - new Date()) / (1000 * 60 * 60);
-          if (hoursUntilInterview > 0 && hoursUntilInterview < 48) {
-            const nudgeId = generateNudgeId('interview_brief', role.id);
-            if (!isDismissed(nudgeId, dismissedNudges)) {
-              const companyName = role.company || 'Unknown';
-              nudges.push({
-                id: nudgeId,
-                priority: 'critical',
-                trigger: 'interview_brief',
-                roleId: role.id,
-                company: companyName,
-                text: `Interview at <span class="nudge-highlight">${companyName}</span> in ${Math.ceil(hoursUntilInterview / 24)} days — generate research brief?`,
-                action: { label: 'Generate Brief', href: '../research-brief/index.html' },
-              });
-            }
-          }
-        }
-      });
-
-      // Trigger 5: Company profile < 50% complete
-      companies.forEach(company => {
-        const profileCompleteness = (
-          (company.name ? 20 : 0) +
-          (company.tier ? 20 : 0) +
-          (company.industry ? 20 : 0) +
-          (company.founded ? 20 : 0) +
-          (company.websiteUrl ? 20 : 0)
-        ) / 5;
-
-        if (profileCompleteness < 50) {
-          const nudgeId = generateNudgeId('incomplete_profile', company.id);
+        if (role.stage === 'screen') {
+          const nudgeId = generateNudgeId('screen_prep', role.id);
           if (!isDismissed(nudgeId, dismissedNudges)) {
             nudges.push({
               id: nudgeId,
-              priority: 'informational',
-              trigger: 'incomplete_profile',
-              companyId: company.id,
-              company: company.name,
-              text: `<span class="nudge-highlight">${company.name}</span> profile is sparse — fill in before advancing`,
-              action: { label: 'Edit Profile', href: '../pipeline/index.html' },
+              priority: 'important',
+              trigger: 'screen_prep',
+              roleId: role.id,
+              company: role.company || 'Unknown',
+              text: `Prep for your screen at <span class="nudge-highlight">${role.company}</span>`,
+              action: { label: 'Generate Brief', href: `../research-brief/index.html?roleId=${role.id}` },
             });
           }
         }
       });
 
-      // Sort by priority: critical > important > informational
-      const priorityOrder = { critical: 0, important: 1, informational: 2 };
-      nudges.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+      // RULE 5: Interview coming (in interviewing stage, check within 3 days)
+      roles.forEach(role => {
+        if (role.stage === 'interviewing' && role.nextInterviewDate) {
+          const hoursUntil = (new Date(role.nextInterviewDate) - now) / (1000 * 60 * 60);
+          if (hoursUntil > 0 && hoursUntil < 72) {
+            const nudgeId = generateNudgeId('interview_coming', role.id);
+            if (!isDismissed(nudgeId, dismissedNudges)) {
+              const daysUntil = Math.ceil(hoursUntil / 24);
+              nudges.push({
+                id: nudgeId,
+                priority: 'critical',
+                trigger: 'interview_coming',
+                roleId: role.id,
+                company: role.company || 'Unknown',
+                text: `Interview at <span class="nudge-highlight">${role.company}</span> in ${daysUntil} day${daysUntil !== 1 ? 's' : ''}!`,
+                action: { label: 'Prepare', href: `../research-brief/index.html?roleId=${role.id}` },
+              });
+            }
+          }
+        }
+      });
 
-      return nudges;
+      // RULE 6: Offer pending (in offer stage)
+      roles.forEach(role => {
+        if (role.stage === 'offer') {
+          const nudgeId = generateNudgeId('offer_pending', role.id);
+          if (!isDismissed(nudgeId, dismissedNudges)) {
+            nudges.push({
+              id: nudgeId,
+              priority: 'critical',
+              trigger: 'offer_pending',
+              roleId: role.id,
+              company: role.company || 'Unknown',
+              text: `You have an active offer from <span class="nudge-highlight">${role.company}</span> — don't let it expire`,
+              action: { label: 'Review Offer', href: `../pipeline/index.html?roleId=${role.id}` },
+            });
+          }
+        }
+      });
+
+      // RULE 7: No new roles this week (0 roles added in last 7 days)
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const rolesAddedThisWeek = roles.filter(r => new Date(r.dateAdded) > weekAgo).length;
+      if (rolesAddedThisWeek === 0 && roles.length > 0) {
+        const nudgeId = generateNudgeId('no_new_roles', 'weekly');
+        if (!isDismissed(nudgeId, dismissedNudges)) {
+          nudges.push({
+            id: nudgeId,
+            priority: 'suggested',
+            trigger: 'no_new_roles',
+            text: `Your pipeline is drying up — check the <span class="nudge-highlight">Job Feed</span>`,
+            action: { label: 'View Feed', href: '../job-feed-listener/index.html' },
+          });
+        }
+      }
+
+      // RULE 8: High-value stale (Hot tier company with role stale >5 days)
+      roles.forEach(role => {
+        const isHotCompany = (role.tier === 'hot') || (companies.find(c => c.name === role.company && c.tier === 'hot'));
+        if (isHotCompany && role.stage !== 'closed') {
+          const daysSinceActivity = daysSince(role.lastActivity || role.dateAdded);
+          if (daysSinceActivity > 5) {
+            const nudgeId = generateNudgeId('hot_company_stale', role.id);
+            if (!isDismissed(nudgeId, dismissedNudges)) {
+              nudges.push({
+                id: nudgeId,
+                priority: 'suggested',
+                trigger: 'hot_company_stale',
+                roleId: role.id,
+                company: role.company || 'Unknown',
+                text: `Your dream company <span class="nudge-highlight">${role.company}</span> needs attention`,
+                action: { label: 'Review', href: `../pipeline/index.html?roleId=${role.id}` },
+              });
+            }
+          }
+        }
+      });
+
+      // RULE 9: Outreach follow-up needed (in outreach >7 days)
+      roles.forEach(role => {
+        if (role.stage === 'outreach') {
+          const daysSinceAdded = daysSince(role.dateAdded);
+          if (daysSinceAdded > 7) {
+            const nudgeId = generateNudgeId('outreach_followup', role.id);
+            if (!isDismissed(nudgeId, dismissedNudges)) {
+              nudges.push({
+                id: nudgeId,
+                priority: 'important',
+                trigger: 'outreach_followup',
+                roleId: role.id,
+                company: role.company || 'Unknown',
+                text: `Follow up on your outreach to <span class="nudge-highlight">${role.company}</span>`,
+                action: { label: 'Follow Up', href: `../outreach/index.html?roleId=${role.id}` },
+              });
+            }
+          }
+        }
+      });
+
+      // RULE 10: Closed role pattern (3+ roles closed as rejected recently)
+      const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+      const recentlyClosed = roles.filter(r =>
+        r.stage === 'closed' &&
+        r.closedReason === 'rejected' &&
+        new Date(r.lastActivity) > twoDaysAgo
+      ).length;
+      if (recentlyClosed >= 3) {
+        const nudgeId = generateNudgeId('closed_pattern', 'rejection');
+        if (!isDismissed(nudgeId, dismissedNudges)) {
+          nudges.push({
+            id: nudgeId,
+            priority: 'suggested',
+            trigger: 'closed_pattern',
+            text: `Consider adjusting your targeting — ${recentlyClosed} rejections recently`,
+            action: { label: 'Review Pipeline', href: '../pipeline/index.html' },
+          });
+        }
+      }
+
+      // RULE 11: Empty pipeline (0 active roles)
+      const activeRoles = roles.filter(r => r.stage !== 'closed').length;
+      if (activeRoles === 0 && roles.length === 0) {
+        const nudgeId = generateNudgeId('empty_pipeline', 'all');
+        if (!isDismissed(nudgeId, dismissedNudges)) {
+          nudges.push({
+            id: nudgeId,
+            priority: 'critical',
+            trigger: 'empty_pipeline',
+            text: `Time to start! Add companies to your pipeline`,
+            action: { label: 'Add Role', href: '../pipeline/index.html?modal=add' },
+          });
+        }
+      }
+
+      // RULE 12: Streak broken (no activity in 2+ days)
+      const twoDaysAgoTime = now.getTime() - 2 * 24 * 60 * 60 * 1000;
+      const hasRecentActivity = roles.some(r => {
+        const lastActivity = new Date(r.lastActivity || r.dateAdded);
+        return lastActivity.getTime() > twoDaysAgoTime;
+      });
+      if (!hasRecentActivity && roles.length > 0) {
+        const nudgeId = generateNudgeId('streak_broken', 'activity');
+        if (!isDismissed(nudgeId, dismissedNudges)) {
+          nudges.push({
+            id: nudgeId,
+            priority: 'suggested',
+            trigger: 'streak_broken',
+            text: `Your job search streak broke — get back on track`,
+            action: { label: 'Take Action', href: '../pipeline/index.html' },
+          });
+        }
+      }
+
+      // Sort by priority: critical > important > suggested > informational
+      const priorityOrder = { critical: 0, important: 1, suggested: 2, informational: 3 };
+      nudges.sort((a, b) => {
+        const aPriority = priorityOrder[a.priority] !== undefined ? priorityOrder[a.priority] : 4;
+        const bPriority = priorityOrder[b.priority] !== undefined ? priorityOrder[b.priority] : 4;
+        return aPriority - bPriority;
+      });
+
+      // Return top 5 nudges (can dismiss to see more)
+      return nudges.slice(0, 5);
     }
 
     // ================================================================
@@ -1681,10 +1745,7 @@
       // Load theme first
       initTheme();
 
-      // Initialize demo data if needed
-      initializeDemoData();
-
-      // Render all UI elements
+      // Render all UI elements (reads from real localStorage)
       renderGreeting();
       renderStreak();
       renderNudges();
@@ -1694,8 +1755,11 @@
       initQuickActions();
       initCommandPalette();
 
-      // Re-render nudges every minute (in case things change)
+      // Re-render nudges every minute (in case data changes from other modules)
       setInterval(renderNudges, 60000);
+
+      // Re-render pipeline stats every minute
+      setInterval(renderPipelineStats, 60000);
 
       // Re-render streak at midnight
       const now = new Date();

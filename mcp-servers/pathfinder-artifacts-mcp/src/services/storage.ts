@@ -393,7 +393,7 @@ export class StorageService {
           if (matches > 0) {
             // Calculate relevance score
             // Higher score for more matches, with diminishing returns
-            const relevance = Math.min(matches / Math.max(1, matches), 1.0);
+            const relevance = Math.min(matches / Math.max(1, content.length / 500), 1.0);
 
             results.push({
               artifactId: entry.artifactId,

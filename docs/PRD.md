@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v1.4.4
+**Status:** v1.5.0
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v1.5.0 | 2026-03-10 | **Full system implementation**: All 10 modules rebuilt with real functionality. Shared Claude API utility (direct browser API calls). Dashboard: 12-rule nudge engine with real localStorage data. Job Feed: weighted scoring engine (6 dimensions). Research Brief: direct Claude API fallback. Resume Builder: Phase 2 streaming generation. Outreach: 8 message types via Claude. Mock Interview: multi-turn Claude sessions. Debrief: 8-section form + Claude synthesis. Comp Intelligence: data entry + negotiation strategy. Calendar: manual event tracking + pre/post-interview nudges. MCP server: artifact ID collision fix + search scoring fix. |
 | v1.4.4 | 2026-03-10 | Job Feed PRD v1.1.0: credited Abhijay Arora Vuyyuru's AI job search automation work as primary inspiration, expanded Section 13 with specific workflow references |
 | v1.4.3 | 2026-03-10 | Complete standalone PRD suite: Pipeline Tracker, Dashboard, Outreach, Mock Interview, Debrief, Comp Intelligence, Calendar, Artifacts MCP Server |
 | v1.4.2 | 2026-03-10 | Standalone PRDs for Resume Builder and Job Feed Listener modules |

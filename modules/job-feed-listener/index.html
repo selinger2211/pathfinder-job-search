@@ -919,13 +919,22 @@
           <input type="text" class="pref-input" id="titleInput" placeholder="Add title (e.g., Senior PM)">
         </div>
 
-        <!-- Target Domains -->
-        <div class="sidebar-section-title">Target Domains</div>
+        <!-- Primary Domains -->
+        <div class="sidebar-section-title">Primary Domains</div>
         <div class="pref-group">
-          <div class="pill-container" id="domainsPills">
+          <div class="pill-container" id="primaryDomainsPills">
             <!-- Pills populated by JavaScript -->
           </div>
-          <input type="text" class="pref-input" id="domainInput" placeholder="Add domain (e.g., AdTech)">
+          <input type="text" class="pref-input" id="primaryDomainInput" placeholder="Add domain (e.g., AdTech)">
+        </div>
+
+        <!-- Secondary Domains -->
+        <div class="sidebar-section-title">Secondary Domains</div>
+        <div class="pref-group">
+          <div class="pill-container" id="secondaryDomainsPills">
+            <!-- Pills populated by JavaScript -->
+          </div>
+          <input type="text" class="pref-input" id="secondaryDomainInput" placeholder="Add domain (e.g., Enterprise SaaS)">
         </div>
 
         <!-- Excluded Domains -->
@@ -940,13 +949,22 @@
         <!-- Company Stage -->
         <div class="sidebar-section-title">Company Stage</div>
         <div class="pref-group">
-          <select class="pref-select" id="companyStage">
-            <option value="">All Stages</option>
-            <option value="Series B+">Series B+</option>
-            <option value="Late-stage">Late-stage</option>
-            <option value="Pre-IPO">Pre-IPO</option>
-            <option value="Public">Public</option>
-          </select>
+          <label class="pref-checkbox">
+            <input type="checkbox" id="stageSeriesB" value="Series B+">
+            <span>Series B+</span>
+          </label>
+          <label class="pref-checkbox">
+            <input type="checkbox" id="stageLateStage" value="Late-stage">
+            <span>Late-stage</span>
+          </label>
+          <label class="pref-checkbox">
+            <input type="checkbox" id="stagePreIPO" value="Pre-IPO">
+            <span>Pre-IPO</span>
+          </label>
+          <label class="pref-checkbox">
+            <input type="checkbox" id="stagePublic" value="Public">
+            <span>Public</span>
+          </label>
         </div>
 
         <!-- Min Headcount -->
@@ -988,6 +1006,15 @@
           <input type="number" class="pref-input" id="targetTotal" placeholder="350" value="350">
           <label class="pref-label">Max Total ($K)</label>
           <input type="number" class="pref-input" id="maxTotal" placeholder="450" value="450">
+        </div>
+
+        <!-- Must-Have Keywords -->
+        <div class="sidebar-section-title">Must-Have Keywords</div>
+        <div class="pref-group">
+          <div class="pill-container" id="mustHaveKeywordsPills">
+            <!-- Pills populated by JavaScript -->
+          </div>
+          <input type="text" class="pref-input" id="mustHaveKeywordInput" placeholder="Add keyword (e.g., product manager)">
         </div>
 
         <!-- Boost Keywords -->
@@ -1088,81 +1115,57 @@
     </div>
   </div>
 
+  <script src="../shared/claude-api.js"></script>
   <script>
     /**
      * ============================================================
-     * JOB FEED LISTENER MODULE
+     * JOB FEED LISTENER MODULE - REAL SCORING ENGINE
      * ============================================================
      *
-     * ARCHITECTURE OVERVIEW:
+     * ARCHITECTURE:
      *
-     * This module implements a job feed monitoring and scoring system.
-     * It has four main layers:
+     * 1. DATA LAYER: localStorage with pf_preferences, pf_feed_queue, pf_feed_runs
+     * 2. SCORING ENGINE: Weighted scoring (0-100) with detailed breakdown
+     * 3. UI LAYER: Preference editor, feed cards, manual role entry
+     * 4. EVENT LAYER: Accept/Dismiss/Snooze actions, preference auto-save
      *
-     * 1. DATA LAYER: Manages user preferences and feed data
-     *    - loadPreferences(): Read user preferences from localStorage
-     *    - savePreferences(): Write preferences to localStorage
-     *    - loadFeedRuns(): Retrieve historical feed check logs
-     *    - loadFeedItems(): Get feed items (from demo data)
+     * SCORING MODEL:
+     * Score = (titleMatch * 0.25) + (domainMatch * 0.25) +
+     *         (keywordRelevance * 0.20) + (locationMatch * 0.15) +
+     *         (companyStage * 0.10) + (compSignal * 0.05)
      *
-     * 2. SCORING ENGINE: Evaluates how well roles match preferences
-     *    - runQuickCheck(): Fast pass/fail filter (5/6 required)
-     *    - calculateMatchScore(): Detailed scoring 0-100
-     *    - Factors: title/level, domain, keywords, location, stage, comp
-     *
-     * 3. UI LAYER: Renders preferences, cards, and controls
-     *    - renderPreferences(): Display sidebar preference form
-     *    - renderFeedCard(): Create individual role cards
-     *    - renderTabs(): Switch between feed/sources/analytics/log
-     *
-     * 4. EVENT LAYER: Handle user interactions
-     *    - acceptRole(): Move role to pipeline
-     *    - dismissRole(): Archive role
-     *    - snoozeRole(): Hide for 7 days
-     *    - updatePreferences(): Save and re-score
-     *
-     * DATA FLOW:
-     * User sets preferences → saved to localStorage
-     * Feed items loaded from demo data
-     * Each role scored against preferences
-     * Cards rendered sorted by score descending
-     * User actions update pf_roles and localStorage
+     * Hard caps: excludeKeywords present = max 39, excludedDomains match = max 39
+     * Quick-check: must pass 5/6 checks (or Tier 1 company)
      *
      * ============================================================
      */
 
     // ============================================================
-    // DATA STRUCTURES & DEFAULTS
+    // DEFAULT PREFERENCES & CONSTANTS
     // ============================================================
 
-    /**
-     * Default user preferences. These define what the user is
-     * looking for in their next role.
-     */
     const DEFAULT_PREFERENCES = {
-      targetTitles: ['Senior PM', 'Staff PM', 'Principal PM', 'Director', 'VP'],
-      targetDomains: ['AdTech', 'AI/ML', 'Data Platforms', 'Enterprise SaaS', 'Fintech', 'Marketplaces'],
+      targetTitles: ['Senior PM', 'Staff PM', 'Principal PM'],
+      seniority: 'senior',
+      primaryDomains: ['AdTech', 'AI/ML', 'Data Platforms'],
+      secondaryDomains: ['Enterprise SaaS', 'Fintech'],
       excludedDomains: ['Crypto', 'Gaming', 'Consumer Social'],
-      companyStage: 'Series B+',
+      companyStage: ['Series B+', 'Late-stage', 'Pre-IPO', 'Public'],
       minHeadcount: 100,
       locations: ['Remote', 'Hybrid (SF Bay)', 'San Francisco'],
-      minBase: 285,
-      targetTotal: 350,
-      maxTotal: 450,
-      boostKeywords: ['AdTech', 'targeting', 'ranking', 'LLM', 'agents', 'real-time', 'decisioning'],
-      excludeKeywords: ['junior', 'associate', 'intern', 'contract', '6-month']
+      excludedLocations: [],
+      compRange: { minBase: 285000, targetBase: 350000, maxTotal: 450000 },
+      mustHaveKeywords: ['product manager', 'strategy'],
+      boostKeywords: ['AdTech', 'targeting', 'LLM', 'agents', 'real-time', 'decisioning'],
+      excludeKeywords: ['junior', 'associate', 'intern', 'contract']
     };
 
-    /**
-     * Feed sources available for monitoring.
-     * In production, these would integrate with real APIs.
-     */
+    // Feed sources for display
     const FEED_SOURCES = [
-      { id: 'gmail-recruiter', name: 'Gmail (Recruiter Outreach)', lastChecked: '2 hours ago', status: 'active' },
-      { id: 'gmail-alerts', name: 'Gmail (Job Alerts)', lastChecked: '4 hours ago', status: 'active' },
-      { id: 'indeed', name: 'Indeed', lastChecked: '1 day ago', status: 'inactive' },
-      { id: 'dice', name: 'Dice', lastChecked: '3 days ago', status: 'inactive' },
-      { id: 'career-pages', name: 'Company Career Pages', lastChecked: '2 days ago', status: 'active' }
+      { id: 'manual', name: 'Manual Entry', status: 'active' },
+      { id: 'gmail', name: 'Gmail', status: 'inactive' },
+      { id: 'indeed', name: 'Indeed', status: 'inactive' },
+      { id: 'career-pages', name: 'Career Pages', status: 'inactive' }
     ];
 
     /**
@@ -1568,180 +1571,191 @@
     }
 
     // ============================================================
-    // SCORING ENGINE: Match role against preferences
+    // SCORING ENGINE: Real weighted matching algorithm
     // ============================================================
 
     /**
-     * Quick-check filter: fast pass/fail before detailed scoring.
-     * Must pass 5 of 6 checks to proceed.
-     *
-     * Checks:
-     * 1. Title level appropriate?
-     * 2. Domain relevant?
-     * 3. Location acceptable?
-     * 4. Company stage meets criteria?
-     * 5. No hard-blocker keywords?
-     * 6. Has at least 2 boost keywords?
-     *
-     * @param {Object} role - Role to evaluate
-     * @param {Object} prefs - User preferences
-     * @returns {Object} { pass: boolean, reason?: string }
-     */
-    function runQuickCheck(role, prefs) {
-      let passCount = 0;
-
-      // Check 1: Title level appropriate
-      const titleMatch = prefs.targetTitles.some(title =>
-        role.title.toLowerCase().includes(title.toLowerCase())
-      );
-      if (titleMatch) passCount++;
-
-      // Check 2: Domain relevant
-      const domainMatch = prefs.targetDomains.some(domain =>
-        role.domain.toLowerCase().includes(domain.toLowerCase()) ||
-        role.jd.toLowerCase().includes(domain.toLowerCase())
-      );
-      if (domainMatch) passCount++;
-
-      // Check 3: Location acceptable
-      const locationMatch = prefs.locations.some(loc => {
-        if (loc === 'Remote' && role.remote) return true;
-        if (loc.includes('SF') && role.location.includes('Francisco')) return true;
-        if (loc === 'San Francisco' && role.location.includes('Francisco')) return true;
-        return role.location.includes(loc);
-      });
-      if (locationMatch) passCount++;
-
-      // Check 4: Company stage OK
-      const stageMatch = !prefs.companyStage || role.stage === prefs.companyStage ||
-        (prefs.companyStage === 'Series B+' && ['Series B+', 'Late-stage', 'Pre-IPO', 'Public'].includes(role.stage));
-      if (stageMatch) passCount++;
-
-      // Check 5: No hard blockers (excluded keywords)
-      const hasBlocker = prefs.excludeKeywords.some(keyword =>
-        role.jd.toLowerCase().includes(keyword.toLowerCase()) ||
-        role.title.toLowerCase().includes(keyword.toLowerCase())
-      );
-      if (!hasBlocker) passCount++;
-
-      // Check 6: Has at least 2 boost keywords
-      const boostCount = prefs.boostKeywords.filter(keyword =>
-        role.jd.toLowerCase().includes(keyword.toLowerCase())
-      ).length;
-      if (boostCount >= 2) passCount++;
-
-      return {
-        pass: passCount >= 5,
-        reason: passCount < 5 ? `Failed ${6 - passCount} checks` : null
-      };
-    }
-
-    /**
-     * Calculate detailed match score 0-100.
+     * Pure function: Score a role against preferences (0-100)
      *
      * Scoring breakdown:
-     * - Title/Level Match (25%): exact title match
-     * - Domain Match (25%): exact domain or secondary
-     * - Keyword Relevance (20%): count of boost keywords, minus excluded
-     * - Location Match (15%): exact location preference match
-     * - Company Stage (10%): stage and headcount requirements
-     * - Compensation (5%): salary overlap with target range
-     *
-     * Roles with excluded keywords get hard cap at 39.
+     * - Title Match (25%): Exact title match = 100, adjacent = 50, no match = 0
+     * - Domain Match (25%): Primary = 100, secondary = 50, excluded = 0 (hard cap 39)
+     * - Keyword Relevance (20%): Boost keywords count, exclude keywords hard cap 39
+     * - Location Match (15%): Matches preference = 100, remote if preferred = 100
+     * - Company Stage (10%): Matches preferred stages = 100, else = 30
+     * - Comp Signal (5%): Overlaps range = 100, no data = 50, below min = 0
      *
      * @param {Object} role - Role to score
      * @param {Object} prefs - User preferences
-     * @returns {Object} { score: number, breakdown: Object }
-     */
-    function calculateMatchScore(role, prefs) {
-      const breakdown = {
-        title: 0,
-        domain: 0,
-        keywords: 0,
-        location: 0,
-        stage: 0,
-        comp: 0
-      };
-
-      // Title match (25 points max)
-      const titleMatch = prefs.targetTitles.some(title =>
-        role.title.toLowerCase().includes(title.toLowerCase())
-      );
-      breakdown.title = titleMatch ? 25 : 15;
-
-      // Domain match (25 points max)
-      const primaryDomainMatch = prefs.targetDomains.some(domain =>
-        role.domain.toLowerCase() === domain.toLowerCase()
-      );
-      const secondaryDomainMatch = prefs.targetDomains.some(domain =>
-        role.jd.toLowerCase().includes(domain.toLowerCase())
-      );
-      if (primaryDomainMatch) breakdown.domain = 25;
-      else if (secondaryDomainMatch) breakdown.domain = 18;
-      else breakdown.domain = 8;
-
-      // Keyword relevance (20 points max)
-      const boostCount = prefs.boostKeywords.filter(keyword =>
-        role.jd.toLowerCase().includes(keyword.toLowerCase())
-      ).length;
-      breakdown.keywords = Math.min(boostCount * 3, 20);
-
-      // Location match (15 points max)
-      let locationScore = 0;
-      if (prefs.locations.includes('Remote') && role.remote) locationScore = 15;
-      else if (prefs.locations.some(loc => loc.includes('Francisco')) && role.location.includes('Francisco')) {
-        locationScore = 14;
-      } else if (prefs.locations.some(loc => role.location.includes(loc))) {
-        locationScore = 12;
-      }
-      breakdown.location = locationScore;
-
-      // Company stage (10 points max)
-      const stageMatch = role.stage === prefs.companyStage ||
-        (prefs.companyStage === 'Series B+' && ['Series B+', 'Late-stage', 'Pre-IPO', 'Public'].includes(role.stage));
-      const headcountOK = role.headcount >= prefs.minHeadcount;
-      breakdown.stage = (stageMatch ? 5 : 2) + (headcountOK ? 5 : 2);
-
-      // Compensation (5 points max)
-      if (role.salary) {
-        const salaryMatch = role.salary.includes('$');
-        breakdown.comp = salaryMatch ? 5 : 2;
-      } else {
-        breakdown.comp = 1;
-      }
-
-      let totalScore = Object.values(breakdown).reduce((a, b) => a + b, 0);
-
-      // Hard cap: excluded keywords
-      const hasExcludedKeyword = prefs.excludeKeywords.some(keyword =>
-        role.jd.toLowerCase().includes(keyword.toLowerCase()) ||
-        role.title.toLowerCase().includes(keyword.toLowerCase())
-      );
-      if (hasExcludedKeyword) totalScore = Math.min(totalScore, 39);
-
-      return {
-        score: Math.min(Math.round(totalScore), 100),
-        breakdown
-      };
-    }
-
-    /**
-     * Score a feed item. Combines quick check and detailed scoring.
-     * Returns null if quick check fails.
-     *
-     * @param {Object} role - Role to score
-     * @param {Object} prefs - User preferences
-     * @returns {Object|null} { score, breakdown, pass } or null
+     * @returns {Object} { score: 0-100, breakdown: {...scores} }
      */
     function scoreRole(role, prefs) {
-      const quickCheck = runQuickCheck(role, prefs);
-      if (!quickCheck.pass) return null;
+      const jdLower = role.jd.toLowerCase();
+      const titleLower = role.title.toLowerCase();
+      const domainLower = role.domain.toLowerCase();
 
-      const detailed = calculateMatchScore(role, prefs);
+      // ===== DIMENSION 1: Title Match (25% weight) =====
+      let titleScore = 0;
+      const targetTitlesLower = (prefs.targetTitles || []).map(t => t.toLowerCase());
+
+      const exactTitleMatch = targetTitlesLower.some(t => titleLower.includes(t));
+      const seniorityWords = ['senior', 'staff', 'principal', 'director', 'vp', 'head'];
+      const hasTargetSeniority = seniorityWords.some(word => titleLower.includes(word));
+
+      if (exactTitleMatch) {
+        titleScore = 100;
+      } else if (hasTargetSeniority) {
+        titleScore = 50;
+      } else {
+        titleScore = 0;
+      }
+      const titleDim = titleScore * 0.25;
+
+      // ===== DIMENSION 2: Domain Match (25% weight) =====
+      let domainScore = 0;
+      const primaryDomainsLower = (prefs.primaryDomains || []).map(d => d.toLowerCase());
+      const secondaryDomainsLower = (prefs.secondaryDomains || []).map(d => d.toLowerCase());
+      const excludedDomainsLower = (prefs.excludedDomains || []).map(d => d.toLowerCase());
+
+      // Check excluded first (hard cap)
+      const hasExcludedDomain = excludedDomainsLower.some(d =>
+        domainLower.includes(d) || jdLower.includes(d)
+      );
+      if (hasExcludedDomain) {
+        domainScore = 0;
+      } else {
+        // Check primary
+        const hasPrimaryDomain = primaryDomainsLower.some(d =>
+          domainLower.includes(d) || jdLower.includes(d)
+        );
+        // Check secondary
+        const hasSecondaryDomain = secondaryDomainsLower.some(d =>
+          domainLower.includes(d) || jdLower.includes(d)
+        );
+
+        if (hasPrimaryDomain) {
+          domainScore = 100;
+        } else if (hasSecondaryDomain) {
+          domainScore = 50;
+        } else {
+          domainScore = 0;
+        }
+      }
+      const domainDim = domainScore * 0.25;
+
+      // ===== DIMENSION 3: Keyword Relevance (20% weight) =====
+      let keywordScore = 0;
+      let keywordNote = '';
+
+      // Check for exclude keywords (hard cap at 39)
+      const excludeKeywordsLower = (prefs.excludeKeywords || []).map(k => k.toLowerCase());
+      const hasExcludeKeyword = excludeKeywordsLower.some(k =>
+        jdLower.includes(k) || titleLower.includes(k)
+      );
+
+      if (hasExcludeKeyword) {
+        keywordScore = 0; // Will be capped at 39 later
+        keywordNote = 'EXCLUDE_KEYWORD';
+      } else {
+        // Count boost keywords
+        const boostKeywordsLower = (prefs.boostKeywords || []).map(k => k.toLowerCase());
+        const boostCount = boostKeywordsLower.filter(k => jdLower.includes(k)).length;
+
+        // Scale: 0 keywords = 0, 1 = 25, 2+ = 100
+        if (boostCount === 0) {
+          keywordScore = 0;
+        } else if (boostCount === 1) {
+          keywordScore = 25;
+        } else {
+          keywordScore = Math.min(boostCount * 20, 100);
+        }
+      }
+      const keywordDim = keywordScore * 0.20;
+
+      // ===== DIMENSION 4: Location Match (15% weight) =====
+      let locationScore = 0;
+      const prefsLocations = prefs.locations || [];
+      const excludedLocations = prefs.excludedLocations || [];
+
+      // Check excluded locations
+      const inExcludedLocation = excludedLocations.some(loc =>
+        role.location.toLowerCase().includes(loc.toLowerCase())
+      );
+
+      if (inExcludedLocation) {
+        locationScore = 0;
+      } else if (prefsLocations.includes('Remote') && role.remote) {
+        locationScore = 100;
+      } else if (prefsLocations.some(loc =>
+        role.location.toLowerCase().includes(loc.toLowerCase())
+      )) {
+        locationScore = 100;
+      } else {
+        locationScore = 0;
+      }
+      const locationDim = locationScore * 0.15;
+
+      // ===== DIMENSION 5: Company Stage (10% weight) =====
+      let stageScore = 0;
+      const preferredStages = prefs.companyStage || [];
+
+      if (preferredStages.includes(role.stage)) {
+        stageScore = 100;
+      } else if (preferredStages.length === 0) {
+        stageScore = 100; // No preference = all stages OK
+      } else {
+        stageScore = 30; // Doesn't match but not disqualified
+      }
+      const stageDim = stageScore * 0.10;
+
+      // ===== DIMENSION 6: Compensation Signal (5% weight) =====
+      let compScore = 0;
+      const minBase = prefs.compRange?.minBase || 0;
+      const targetBase = prefs.compRange?.targetBase || 0;
+      const maxTotal = prefs.compRange?.maxTotal || 0;
+
+      if (!role.salary || role.salary === 'Salary not listed') {
+        compScore = 50; // No data = neutral
+      } else {
+        // Parse salary range (e.g., "$320K - $450K")
+        const salaryMatch = role.salary.match(/\$(\d+)K?\s*-\s*\$(\d+)K?/i);
+        if (salaryMatch) {
+          const salaryMin = parseInt(salaryMatch[1]) * 1000;
+          const salaryMax = parseInt(salaryMatch[2]) * 1000;
+
+          // Check overlap with target range
+          if (salaryMax >= minBase && salaryMin <= maxTotal) {
+            compScore = 100; // Overlaps with desired range
+          } else if (salaryMax < minBase) {
+            compScore = 0; // Below minimum
+          } else {
+            compScore = 50; // No perfect overlap but exists
+          }
+        } else {
+          compScore = 50; // Can't parse, be neutral
+        }
+      }
+      const compDim = compScore * 0.05;
+
+      // ===== FINAL SCORE =====
+      let finalScore = titleDim + domainDim + keywordDim + locationDim + stageDim + compDim;
+      finalScore = Math.round(finalScore);
+
+      // Hard caps
+      if (hasExcludedDomain || keywordNote === 'EXCLUDE_KEYWORD') {
+        finalScore = Math.min(finalScore, 39);
+      }
+
       return {
-        score: detailed.score,
-        breakdown: detailed.breakdown,
-        pass: true
+        score: Math.max(0, Math.min(100, finalScore)),
+        breakdown: {
+          title: Math.round(titleScore),
+          domain: Math.round(domainScore),
+          keywords: Math.round(keywordScore),
+          location: Math.round(locationScore),
+          stage: Math.round(stageScore),
+          comp: Math.round(compScore)
+        }
       };
     }
 
@@ -1751,8 +1765,6 @@
 
     /**
      * Render preference pills (tags) in the sidebar.
-     * Pills display selected values and can be clicked to remove.
-     *
      * @param {string} containerId - ID of container to populate
      * @param {Array} items - Array of items to display
      * @param {string} type - Type for event delegation (title, domain, etc.)
@@ -1769,16 +1781,18 @@
 
     /**
      * Remove a pill (tag) from preferences and re-render.
-     * @param {string} type - Type of pill (title, domain, etc.)
+     * @param {string} type - Type of pill
      * @param {string} value - Value to remove
      */
     function removePill(type, value) {
       const prefs = state.preferences;
       const map = {
         'title': 'targetTitles',
-        'domain': 'targetDomains',
+        'primary-domain': 'primaryDomains',
+        'secondary-domain': 'secondaryDomains',
         'excluded-domain': 'excludedDomains',
         'location': 'locations',
+        'must-have-keyword': 'mustHaveKeywords',
         'boost-keyword': 'boostKeywords',
         'exclude-keyword': 'excludeKeywords'
       };
@@ -1793,7 +1807,7 @@
 
     /**
      * Add a pill to preferences from input field.
-     * @param {string} type - Type of pill (title, domain, etc.)
+     * @param {string} type - Type of pill
      * @param {string} inputId - ID of input element
      */
     function addPill(type, inputId) {
@@ -1805,9 +1819,11 @@
       const prefs = state.preferences;
       const map = {
         'title': 'targetTitles',
-        'domain': 'targetDomains',
+        'primary-domain': 'primaryDomains',
+        'secondary-domain': 'secondaryDomains',
         'excluded-domain': 'excludedDomains',
         'location': 'locations',
+        'must-have-keyword': 'mustHaveKeywords',
         'boost-keyword': 'boostKeywords',
         'exclude-keyword': 'excludeKeywords'
       };
@@ -1828,53 +1844,87 @@
     function renderPreferences() {
       const prefs = state.preferences;
 
-      // Render title pills
-      renderPills('targetTitlesPills', prefs.targetTitles, 'title');
+      // Target titles
+      renderPills('targetTitlesPills', prefs.targetTitles || [], 'title');
       document.getElementById('titleInput').onkeypress = (e) => {
         if (e.key === 'Enter') addPill('title', 'titleInput');
       };
 
-      // Render domain pills
-      renderPills('domainsPills', prefs.targetDomains, 'domain');
-      document.getElementById('domainInput').onkeypress = (e) => {
-        if (e.key === 'Enter') addPill('domain', 'domainInput');
+      // Primary domains
+      renderPills('primaryDomainsPills', prefs.primaryDomains || [], 'primary-domain');
+      document.getElementById('primaryDomainInput').onkeypress = (e) => {
+        if (e.key === 'Enter') addPill('primary-domain', 'primaryDomainInput');
       };
 
-      // Render excluded domain pills
-      renderPills('excludedDomainsPills', prefs.excludedDomains, 'excluded-domain');
+      // Secondary domains
+      renderPills('secondaryDomainsPills', prefs.secondaryDomains || [], 'secondary-domain');
+      document.getElementById('secondaryDomainInput').onkeypress = (e) => {
+        if (e.key === 'Enter') addPill('secondary-domain', 'secondaryDomainInput');
+      };
+
+      // Excluded domains
+      renderPills('excludedDomainsPills', prefs.excludedDomains || [], 'excluded-domain');
       document.getElementById('excludedDomainInput').onkeypress = (e) => {
         if (e.key === 'Enter') addPill('excluded-domain', 'excludedDomainInput');
       };
 
-      // Render location pills
-      renderPills('locationsPills', prefs.locations, 'location');
+      // Company stages (checkboxes)
+      const stages = ['Series B+', 'Late-stage', 'Pre-IPO', 'Public'];
+      stages.forEach(stage => {
+        const stageMap = {
+          'Series B+': 'stageSeriesB',
+          'Late-stage': 'stageLateStage',
+          'Pre-IPO': 'stagePreIPO',
+          'Public': 'stagePublic'
+        };
+        const el = document.getElementById(stageMap[stage]);
+        if (el) {
+          el.checked = (prefs.companyStage || []).includes(stage);
+          el.onchange = (e) => {
+            const selected = Array.from(document.querySelectorAll('input[id^="stage"]:checked'))
+              .map(c => c.value);
+            prefs.companyStage = selected;
+            state.preferences = prefs;
+          };
+        }
+      });
+
+      // Locations
+      renderPills('locationsPills', prefs.locations || [], 'location');
       document.getElementById('locationInput').onkeypress = (e) => {
         if (e.key === 'Enter') addPill('location', 'locationInput');
       };
 
-      // Render boost keyword pills
-      renderPills('boostKeywordsPills', prefs.boostKeywords, 'boost-keyword');
+      // Compensation display
+      const minK = Math.round((prefs.compRange?.minBase || 285000) / 1000);
+      const targetK = Math.round((prefs.compRange?.targetBase || 350000) / 1000);
+      const maxK = Math.round((prefs.compRange?.maxTotal || 450000) / 1000);
+
+      document.getElementById('minBaseDisplay').textContent = `$${minK}K`;
+      document.getElementById('targetTotalDisplay').textContent = `$${targetK}K`;
+      document.getElementById('maxTotalDisplay').textContent = `$${maxK}K`;
+
+      document.getElementById('minBase').value = minK;
+      document.getElementById('targetTotal').value = targetK;
+      document.getElementById('maxTotal').value = maxK;
+
+      // Must-have keywords
+      renderPills('mustHaveKeywordsPills', prefs.mustHaveKeywords || [], 'must-have-keyword');
+      document.getElementById('mustHaveKeywordInput').onkeypress = (e) => {
+        if (e.key === 'Enter') addPill('must-have-keyword', 'mustHaveKeywordInput');
+      };
+
+      // Boost keywords
+      renderPills('boostKeywordsPills', prefs.boostKeywords || [], 'boost-keyword');
       document.getElementById('boostKeywordInput').onkeypress = (e) => {
         if (e.key === 'Enter') addPill('boost-keyword', 'boostKeywordInput');
       };
 
-      // Render exclude keyword pills
-      renderPills('excludeKeywordsPills', prefs.excludeKeywords, 'exclude-keyword');
+      // Exclude keywords
+      renderPills('excludeKeywordsPills', prefs.excludeKeywords || [], 'exclude-keyword');
       document.getElementById('excludeKeywordInput').onkeypress = (e) => {
         if (e.key === 'Enter') addPill('exclude-keyword', 'excludeKeywordInput');
       };
-
-      // Update compensation display
-      document.getElementById('minBaseDisplay').textContent = formatComp(prefs.minBase);
-      document.getElementById('targetTotalDisplay').textContent = formatComp(prefs.targetTotal);
-      document.getElementById('maxTotalDisplay').textContent = formatComp(prefs.maxTotal);
-
-      // Update form values
-      document.getElementById('minBase').value = prefs.minBase;
-      document.getElementById('targetTotal').value = prefs.targetTotal;
-      document.getElementById('maxTotal').value = prefs.maxTotal;
-      document.getElementById('minHeadcount').value = prefs.minHeadcount;
-      document.getElementById('companyStage').value = prefs.companyStage;
     }
 
     /**
@@ -2138,7 +2188,7 @@
         feedBanner.style.display = isPersonal ? 'block' : 'none';
       }
 
-      // Score all demo items (curated sample feed, used in both modes)
+      // Score all demo items
       const scored = DEMO_FEED_ITEMS
         .map(role => {
           const scoring = scoreRole(role, state.preferences);
@@ -2147,14 +2197,7 @@
           return {
             ...role,
             score: scoring.score,
-            scoring: {
-              title: scoring.breakdown.title,
-              domain: scoring.breakdown.domain,
-              keywords: scoring.breakdown.keywords,
-              location: scoring.breakdown.location,
-              stage: scoring.breakdown.stage,
-              comp: scoring.breakdown.comp
-            }
+            scoring: scoring.breakdown
           };
         })
         .filter(item => item !== null)
@@ -2171,19 +2214,24 @@
 
       // Event handlers
       document.getElementById('savePrefsBtn').addEventListener('click', () => {
+        const minK = parseInt(document.getElementById('minBase').value) || 285;
+        const targetK = parseInt(document.getElementById('targetTotal').value) || 350;
+        const maxK = parseInt(document.getElementById('maxTotal').value) || 450;
+
         const updated = {
           ...state.preferences,
-          minBase: parseInt(document.getElementById('minBase').value) || 285,
-          targetTotal: parseInt(document.getElementById('targetTotal').value) || 350,
-          maxTotal: parseInt(document.getElementById('maxTotal').value) || 450,
-          minHeadcount: parseInt(document.getElementById('minHeadcount').value) || 100,
-          companyStage: document.getElementById('companyStage').value || 'Series B+'
+          compRange: {
+            minBase: minK * 1000,
+            targetBase: targetK * 1000,
+            maxTotal: maxK * 1000
+          },
+          minHeadcount: parseInt(document.getElementById('minHeadcount').value) || 100
         };
 
         savePreferences(updated);
         showToast('Preferences saved! Re-scoring feed...', 'success');
 
-        // Re-score
+        // Re-score all items
         state.feedItems = DEMO_FEED_ITEMS
           .map(role => {
             const scoring = scoreRole(role, updated);
@@ -2192,14 +2240,7 @@
             return {
               ...role,
               score: scoring.score,
-              scoring: {
-                title: scoring.breakdown.title,
-                domain: scoring.breakdown.domain,
-                keywords: scoring.breakdown.keywords,
-                location: scoring.breakdown.location,
-                stage: scoring.breakdown.stage,
-                comp: scoring.breakdown.comp
-              }
+              scoring: scoring.breakdown
             };
           })
           .filter(item => item !== null)

@@ -4,6 +4,34 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v1.5.0 — 2026-03-10
+
+### What Changed
+- **Full system implementation** — All 10 browser modules rebuilt from UI shells to functional applications with real localStorage data and Claude API integration. This is the "make it real" release.
+
+#### Shared Infrastructure
+- **Shared Claude API utility** (`modules/shared/claude-api.js`) — Direct browser-to-Anthropic API calls via `anthropic-dangerous-direct-browser-access` header. Supports `generate()`, `stream()`, `converse()`, `generateHTML()`. API key management, model selection, MCP bridge fallback. All AI-powered modules use this.
+
+#### Module Rebuilds
+- **Dashboard** — 12-rule nudge engine reading real `pf_roles`/`pf_companies` data. Rules: stale discovered, researching too long, applied no response, screen prep, interview coming, offer pending, pipeline dry, high-value stale, outreach follow-up, rejection pattern, empty pipeline, streak broken. Real streak tracking. Action queue with module deep-links.
+- **Job Feed Listener** — Real weighted scoring engine (6 dimensions: title 25%, domain 25%, keywords 20%, location 15%, stage 10%, comp 5%). Full preference editor with tag inputs. Hard caps for excluded domains/keywords (max 39). Feed cards with score breakdown tooltips. Accept/Dismiss/Snooze actions.
+- **Research Brief** — Direct Claude API fallback when MCP bridge unavailable. All 14 section prompts embedded in browser JS. Automatic bridge detection with seamless fallback. Same response format from both paths.
+- **Resume Builder** — Phase 2: Claude-powered streaming resume generation. Expert system prompt with positioning awareness (IC vs management). Bullet bank context injection. Copy HTML, download, save to pipeline actions. Phase 1 analysis preserved.
+- **Outreach** — 8 message types via Claude API (LinkedIn connect, cold email, referral request, thank you, follow-up, recruiter response, networking intro, interest expression). Anti-template system prompt. Context from roles, companies, connections, bullet bank. Copy + save to outreach log.
+- **Mock Interview** — Multi-turn Claude conversation via `converse()`. 7 interview types (behavioral, product sense, execution, strategy, design, technical, TMAY). Framework-specific prompts. Session recording to `pf_mock_sessions`. Story bank reference sidebar.
+- **Debrief** — 8-section structured form (overall impression, what landed, didn't land, questions asked, priorities, red flags, follow-ups, notes). Claude-powered synthesis generating themes, patterns, recommendations. Storage in `pf_debriefs`. History tab.
+- **Comp Intelligence** — Manual comp data entry per role. Market benchmark data points. Comp comparison dashboard. Claude-powered negotiation strategy generation. Target range display from preferences.
+- **Calendar** — Manual event entry (Phase 1, no Google Calendar API yet). Week view with colored event blocks by type. Upcoming events sidebar. Pre-interview nudges (24h) with deep links to Research Brief, Mock Interview. Post-interview debrief prompts.
+
+#### MCP Server Fixes
+- **Artifact ID collision** — `generate-brief.ts` now includes role ID and section number in artifact ID, preventing sections from overwriting each other
+- **Search relevance scoring** — Fixed formula that always returned 1.0; now uses content-length-scaled scoring
+
+### PRD Rule
+- **NEW RULE**: Every code change must update the relevant component PRD + main PRD version + changelog. No exceptions.
+
+---
+
 ## v1.4.4 — 2026-03-10
 
 ### What Changed

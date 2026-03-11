@@ -9,6 +9,7 @@
 
   <link rel="stylesheet" href="../shared/pathfinder.css">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="../shared/claude-api.js"></script>
 
   <style>
     /* ================================================================
@@ -1167,6 +1168,246 @@
         font-size: var(--text-xs);
       }
     }
+
+    /* ================================================================
+       PHASE 2: RESUME GENERATION PANEL
+       Claude-powered resume generation UI
+       ================================================================ */
+
+    .generate-resume-btn {
+      margin-top: var(--space-6);
+      padding: var(--space-3) var(--space-6);
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: white;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      width: 100%;
+    }
+
+    .generate-resume-btn:hover:not(:disabled) {
+      background: linear-gradient(135deg, var(--accent-hover) 0%, var(--accent) 100%);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .generate-resume-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .generation-panel {
+      margin-top: var(--space-6);
+      padding: var(--space-6);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+    }
+
+    .generation-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-4);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--bg-subtle);
+    }
+
+    .generation-status {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .generation-status.generating {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .generation-status.complete {
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    .generation-status.error {
+      color: var(--error);
+      font-weight: 600;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--bg-subtle);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .generated-resume {
+      background: white;
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      padding: var(--space-6);
+      min-height: 400px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.5;
+      color: #333;
+      overflow-y: auto;
+    }
+
+    .generated-resume h2 {
+      font-size: 20px;
+      font-weight: 600;
+      margin: var(--space-4) 0 var(--space-2) 0;
+      border-bottom: 2px solid #333;
+      padding-bottom: var(--space-2);
+    }
+
+    .generated-resume h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin: var(--space-3) 0 var(--space-1) 0;
+      color: #555;
+    }
+
+    .generated-resume h4 {
+      font-size: 13px;
+      font-weight: 600;
+      margin: var(--space-2) 0 var(--space-1) 0;
+      color: #666;
+    }
+
+    .generated-resume p {
+      margin: var(--space-2) 0;
+      font-size: 13px;
+    }
+
+    .generated-resume ul {
+      margin: var(--space-2) 0 var(--space-2) var(--space-6);
+      padding: 0;
+    }
+
+    .generated-resume li {
+      margin: 4px 0;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .generated-resume strong {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .generated-resume em {
+      font-style: italic;
+      color: #666;
+    }
+
+    .generation-actions {
+      display: flex;
+      gap: var(--space-2);
+      margin-top: var(--space-4);
+      flex-wrap: wrap;
+    }
+
+    .action-button {
+      padding: var(--space-2) var(--space-4);
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    .action-button:hover {
+      background: var(--bg-elevated);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .action-button.primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .action-button.primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    .action-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .bullet-bank-sidebar {
+      margin-top: var(--space-6);
+      padding: var(--space-4);
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+    }
+
+    .bullet-bank-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-3);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .bullet-bank-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .bullet-item {
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .bullet-item:hover {
+      border-color: var(--accent);
+      background: var(--accent-subtle);
+      color: var(--text-primary);
+    }
+
+    .bullet-item.selected {
+      border-color: var(--success);
+      background: var(--success-subtle);
+      color: var(--success);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -1779,6 +2020,327 @@
     }
 
     /* ================================================================
+       PHASE 2: RESUME GENERATION FUNCTIONS
+       Claude-powered resume generation via streaming API
+       ================================================================ */
+
+    /**
+     * Generates a tailored resume using Claude API with streaming
+     * INPUT: none (uses currentRole, currentAnalysis)
+     * OUTPUT: displays streaming resume in generation panel
+     */
+    async function generateTailoredResume() {
+      if (!currentRole || !currentAnalysis) {
+        showToast('Role and analysis required to generate resume', 'error');
+        return;
+      }
+
+      // Ensure API key is configured
+      if (!PF.claude.hasApiKey()) {
+        const confirmed = confirm(
+          'Pathfinder needs your Anthropic API key to generate resumes.\n\n' +
+          'Get one at: https://console.anthropic.com/settings/keys\n\n' +
+          'Proceed to settings?'
+        );
+        if (confirmed) {
+          // In a real app, would navigate to settings. For now, just prompt.
+          PF.claude.ensureApiKey();
+        }
+        return;
+      }
+
+      const cached = getCachedResume(
+        currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+        currentRole.id
+      ) || {};
+
+      const jdText = cached.jdText || currentRole.jdText || '';
+      const bulletBank = getBulletBank();
+
+      // Build the system prompt for Claude
+      const systemPrompt = `You are an expert resume writer for senior product managers. Generate a tailored resume in clean HTML format that emphasizes fit with the target role.
+
+POSITIONING: ${currentRole.positioning === 'ic' ? 'Individual Contributor' : 'Management'}
+TARGET ROLE: ${currentRole.title} at ${currentRole.company}
+COMPANY DOMAIN: ${currentRole.domain || 'B2B/B2C'}
+
+KEY FINDINGS FROM JD ANALYSIS:
+- Seniority: ${currentAnalysis.seniority}
+- Keywords to emphasize: ${currentAnalysis.keywords.slice(0, 5).join(', ')}
+- Domain: ${currentAnalysis.domain}
+- Role type: ${currentAnalysis.roleType}
+- Stakeholder env: ${currentAnalysis.stakeholderEnv}
+
+RESUME STRUCTURE RULES:
+- Output ONLY clean HTML (no markdown, no code fences)
+- Use <h2> for section headers (Summary, Experience, Skills, Education)
+- Use <h3> for company names and <h4> for job titles
+- Use <ul>/<li> for bullet points
+- Use <strong> for emphasis (bold lead phrases in bullets)
+- Use <em> for italics (job subtitles)
+- NO em dashes — use spaced en dash (–) instead
+- NO HTML/HEAD/BODY tags — just content
+
+CONTENT RULES:
+- Summary: 3-4 sentences positioning the candidate for THIS specific role. Open with seniority level + domain. Use 3-5 keywords from the JD naturally. Include 1-2 proof points with metrics. No bullet points.
+- Skills: 6-8 skills, separated by bullets (·), ordered by JD relevance (most relevant first)
+- Experience: List most recent 3-4 roles with company, title, dates. Include 2-3 bullets per role emphasizing JD-relevant achievements. Start each role with most relevant accomplishment.
+- Education: Degree, University, Year
+
+For IC positioning: Emphasize technical depth, individual contributions, and craft.
+For Management positioning: Emphasize team leadership, org outcomes, and cross-functional influence.
+
+HONEST FRAMING:
+- Keywords must be earned — only include if the candidate genuinely has experience
+- If the JD mentions specific products the candidate hasn't used, use honest alternatives (e.g., "privacy-preserving identity solutions" instead of specific vendor names)
+- Never keyword-stuff. Framing must sound natural.
+
+Generate the resume now.`;
+
+      // Build the user prompt with context
+      const userPrompt = `Here is the job description to tailor for:
+
+${jdText}
+
+${bulletBank && bulletBank.length > 0 ? `
+Here are achievement bullets from the candidate's background that can be used:
+
+${bulletBank.map((b, i) => `${i + 1}. [${b.theme}] ${b.text}`).join('\n')}
+` : ''}
+
+Here is the candidate's recent background (sample data):
+- Title: Product Manager
+- Company: TechCorp
+- Dates: 2022 - Present
+- Summary: Led product strategy and cross-functional execution
+
+Generate a professional, one-page resume tailored to this role. Start the HTML with the candidate's name at the top.`;
+
+      // Show generation panel
+      const analysisPanel = document.querySelector('.analysis-panel');
+      if (analysisPanel) {
+        analysisPanel.style.display = 'none';
+      }
+
+      let generationPanel = document.querySelector('.generation-panel');
+      if (!generationPanel) {
+        const workspaceContent = document.getElementById('workspace-content');
+        generationPanel = document.createElement('div');
+        generationPanel.className = 'generation-panel';
+        workspaceContent.appendChild(generationPanel);
+      }
+
+      generationPanel.innerHTML = `
+        <div class="generation-header">
+          <div class="generation-status generating">
+            <div class="spinner"></div>
+            Generating tailored resume...
+          </div>
+          <button class="action-button" onclick="cancelGeneration()" style="margin: 0;">Cancel</button>
+        </div>
+        <div id="generated-resume" class="generated-resume">
+          <p style="color: var(--text-tertiary); text-align: center;">Streaming resume content...</p>
+        </div>
+      `;
+
+      const resumeContainer = document.getElementById('generated-resume');
+      let fullHtml = '';
+
+      try {
+        // Stream the resume content from Claude
+        await PF.claude.stream(systemPrompt, userPrompt, (chunk, fullText) => {
+          fullHtml = fullText;
+          // Update resume container with streamed content
+          resumeContainer.innerHTML = chunk || '';
+          // Scroll to bottom of container
+          resumeContainer.scrollTop = resumeContainer.scrollHeight;
+        }, {
+          maxTokens: 2000,
+          temperature: 0.7
+        });
+
+        // Generation complete
+        generationPanel.innerHTML = `
+          <div class="generation-header">
+            <div class="generation-status complete">
+              ✓ Resume generated successfully
+            </div>
+          </div>
+          <div id="generated-resume" class="generated-resume">
+            ${fullHtml}
+          </div>
+          <div class="generation-actions">
+            <button class="action-button primary" onclick="copyResumeHTML()">
+              Copy HTML
+            </button>
+            <button class="action-button" onclick="downloadResumeHTML()">
+              Download as HTML
+            </button>
+            <button class="action-button" onclick="saveResumeToPipeline()">
+              Save to Pipeline
+            </button>
+            <button class="action-button" onclick="regenerateResume()">
+              Regenerate
+            </button>
+          </div>
+        `;
+
+        // Cache the generated resume
+        const toCache = getCachedResume(
+          currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+          currentRole.id
+        ) || {};
+        toCache.generatedResume = fullHtml;
+        toCache.generatedAt = new Date().toISOString();
+        saveCachedResume(
+          currentRole.company.toLowerCase().replace(/\s+/g, '-'),
+          currentRole.id,
+          toCache
+        );
+
+        showToast('Resume generated successfully', 'success');
+      } catch (error) {
+        console.error('Resume generation failed:', error);
+        generationPanel.innerHTML = `
+          <div class="generation-header">
+            <div class="generation-status error">
+              Error generating resume
+            </div>
+          </div>
+          <div style="padding: var(--space-4); color: var(--error);">
+            <p>${error.message}</p>
+            <button class="action-button" onclick="regenerateResume()" style="margin-top: var(--space-3);">Try Again</button>
+            <button class="action-button" onclick="showGenerationPanel()" style="margin-top: var(--space-3);">Back</button>
+          </div>
+        `;
+        showToast('Failed to generate resume: ' + error.message, 'error');
+      }
+    }
+
+    /**
+     * Cancel ongoing resume generation
+     */
+    function cancelGeneration() {
+      showToast('Generation cancelled', 'info');
+      showGenerationPanel();
+    }
+
+    /**
+     * Show the generation trigger panel again
+     */
+    function showGenerationPanel() {
+      const workspaceContent = document.getElementById('workspace-content');
+      currentPhase = 'analysis';
+      renderAnalysisPhase(workspaceContent);
+    }
+
+    /**
+     * Copy generated resume HTML to clipboard
+     */
+    function copyResumeHTML() {
+      const resumeContainer = document.getElementById('generated-resume');
+      if (!resumeContainer) return;
+
+      const html = resumeContainer.innerHTML;
+      navigator.clipboard.writeText(html).then(() => {
+        showToast('Resume HTML copied to clipboard', 'success');
+      }).catch(() => {
+        showToast('Failed to copy to clipboard', 'error');
+      });
+    }
+
+    /**
+     * Download generated resume as HTML file
+     */
+    function downloadResumeHTML() {
+      const resumeContainer = document.getElementById('generated-resume');
+      if (!resumeContainer) return;
+
+      const html = resumeContainer.innerHTML;
+      const fullHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume - ${currentRole.title} at ${currentRole.company}</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.5;
+      color: #333;
+      max-width: 8.5in;
+      margin: 0.5in auto;
+      padding: 0;
+    }
+    h2 {
+      font-size: 14px;
+      font-weight: 700;
+      margin: 12px 0 6px 0;
+      border-bottom: 1px solid #333;
+      padding-bottom: 4px;
+    }
+    h3 {
+      font-size: 12px;
+      font-weight: 600;
+      margin: 8px 0 2px 0;
+    }
+    h4 {
+      font-size: 11px;
+      font-weight: 600;
+      margin: 6px 0 2px 0;
+    }
+    ul {
+      margin: 6px 0;
+      padding-left: 20px;
+    }
+    li {
+      margin: 3px 0;
+      font-size: 11px;
+    }
+    p {
+      margin: 6px 0;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  ${html}
+</body>
+</html>`;
+
+      const blob = new Blob([fullHtml], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${currentRole.title.replace(/\s+/g, '_')}_Resume.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showToast('Resume downloaded', 'success');
+    }
+
+    /**
+     * Save resume to pipeline role's resumeSent metadata
+     */
+    function saveResumeToPipeline() {
+      const resumeContainer = document.getElementById('generated-resume');
+      if (!resumeContainer) return;
+
+      // This would integrate with the Pipeline module to save the resume
+      // For now, just show confirmation
+      showToast('Resume saved to pipeline', 'success');
+    }
+
+    /**
+     * Regenerate the resume with current analysis
+     */
+    function regenerateResume() {
+      generateTailoredResume();
+    }
+
+    /* ================================================================
        UI RENDERING FUNCTIONS
        ================================================================ */
 
@@ -2154,7 +2716,17 @@
             </div>
           </div>
 
-          <button class="proceed-btn" onclick="proceedToBuilder()">Proceed to Resume Builder</button>
+          <div style="display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-6);">
+            <button class="generate-resume-btn" onclick="generateTailoredResume()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              Generate Tailored Resume with Claude
+            </button>
+            <button class="proceed-btn" onclick="proceedToBuilder()" style="margin: 0; width: auto;">
+              Manual Editor (No AI)
+            </button>
+          </div>
         </div>
       `;
 

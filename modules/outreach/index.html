@@ -4,27 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pathfinder — Outreach Generator</title>
-  <meta name="description" content="Generate personalized networking and outreach messages">
+  <meta name="description" content="Generate personalized networking and outreach messages with Claude AI">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>P</text></svg>">
 
   <link rel="stylesheet" href="../shared/pathfinder.css">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="../shared/claude-api.js"></script>
 
   <style>
-    /**
-     * ================================================================
-     * OUTREACH MODULE STYLES
-     * These styles apply only to the Outreach Generator page.
-     * ================================================================
-     *
-     * Layout approach: Two-panel design
-     * - Left: Context sidebar (company, role, connection info) — 320px fixed
-     * - Right: Message workspace (generator, editor, history) — flexible
-     *
-     * Responsive: On mobile, stacks vertically and hides sidebar behind toggle
-     */
-
-    /* Main page container: two-column layout */
+    /* Main container */
     .outreach-container {
       display: flex;
       height: calc(100vh - var(--nav-height));
@@ -32,7 +20,7 @@
       overflow: hidden;
     }
 
-    /* Left sidebar: context panel (collapsible on mobile) */
+    /* Left sidebar: selectors and context */
     .sidebar {
       width: 320px;
       background: var(--bg-surface);
@@ -45,7 +33,6 @@
       gap: var(--space-4);
     }
 
-    /* Sidebar title */
     .sidebar-section-title {
       font-size: var(--text-xs);
       font-weight: 700;
@@ -53,21 +40,14 @@
       letter-spacing: 0.08em;
       color: var(--text-tertiary);
       margin-bottom: var(--space-2);
-      margin-top: var(--space-3);
     }
 
-    .sidebar-section-title:first-child {
-      margin-top: 0;
-    }
-
-    /* Selector container (for company, role, connection dropdowns) */
     .selector-group {
       display: flex;
       flex-direction: column;
       gap: var(--space-2);
     }
 
-    /* Dropdown/select styling */
     .selector-input {
       width: 100%;
       padding: var(--space-2) var(--space-3);
@@ -91,13 +71,12 @@
       box-shadow: 0 0 0 3px var(--accent-subtle);
     }
 
-    /* Context card: shows company/role/connection details */
+    /* Context card */
     .context-card {
       background: var(--bg-elevated);
       border: 1px solid var(--bg-subtle);
       border-radius: var(--radius-md);
       padding: var(--space-3);
-      margin-top: var(--space-2);
     }
 
     .context-card-empty {
@@ -107,70 +86,17 @@
       font-size: var(--text-sm);
     }
 
-    /* Company card styling */
-    .company-card {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-3);
-    }
-
-    .company-header {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-    }
-
-    .company-logo {
-      width: 40px;
-      height: 40px;
-      border-radius: var(--radius-sm);
-      background: var(--bg-base);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      color: var(--accent);
-      font-size: var(--text-sm);
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-
-    .company-logo img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    .company-info h3 {
+    .context-card h3 {
       font-size: var(--text-sm);
       font-weight: 600;
       color: var(--text-primary);
-      margin-bottom: var(--space-1);
+      margin-bottom: var(--space-2);
     }
 
-    .company-info p {
-      font-size: var(--text-xs);
-      color: var(--text-secondary);
-      margin: 0;
-    }
-
-    .company-meta {
-      font-size: var(--text-xs);
+    .detail-row {
       display: flex;
       flex-direction: column;
       gap: var(--space-1);
-      color: var(--text-tertiary);
-    }
-
-    .company-meta strong {
-      color: var(--text-secondary);
-    }
-
-    /* Role and connection details */
-    .detail-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
       font-size: var(--text-xs);
       padding: var(--space-2) 0;
       border-bottom: 1px solid var(--bg-surface);
@@ -187,38 +113,10 @@
 
     .detail-value {
       color: var(--text-primary);
-      text-align: right;
-      flex: 1;
-      margin-left: var(--space-2);
       word-break: break-word;
     }
 
-    /* Relationship type badge */
-    .relationship-badge {
-      display: inline-block;
-      padding: var(--space-1) var(--space-2);
-      border-radius: var(--radius-sm);
-      font-size: var(--text-xs);
-      font-weight: 500;
-      background: var(--accent-subtle);
-      color: var(--accent);
-    }
-
-    /* JD snippet styling */
-    .jd-snippet {
-      background: var(--bg-base);
-      border-left: 2px solid var(--accent);
-      padding: var(--space-2);
-      border-radius: var(--radius-sm);
-      font-size: var(--text-xs);
-      color: var(--text-secondary);
-      line-height: 1.5;
-      font-family: var(--font-mono);
-      max-height: 120px;
-      overflow-y: auto;
-    }
-
-    /* Right workspace panel */
+    /* Right workspace */
     .workspace {
       flex: 1;
       display: flex;
@@ -227,7 +125,7 @@
       overflow: hidden;
     }
 
-    /* Top bar with message type tabs */
+    /* Message type tabs */
     .message-tabs {
       display: flex;
       align-items: center;
@@ -245,7 +143,7 @@
       font-size: var(--text-sm);
       color: var(--text-secondary);
       cursor: pointer;
-      transition: all var(--duration-fast) var(--ease-default);;
+      transition: all var(--duration-fast) var(--ease-default);
       white-space: nowrap;
       border: 1px solid transparent;
     }
@@ -261,7 +159,7 @@
       border-color: var(--accent);
     }
 
-    /* Message editor area */
+    /* Editor panel */
     .editor-panel {
       flex: 1;
       display: flex;
@@ -286,362 +184,169 @@
     .editor-meta {
       font-size: var(--text-xs);
       color: var(--text-secondary);
+      display: flex;
+      gap: var(--space-3);
     }
 
-    /* Message display area */
+    /* Message content area */
     .message-content {
       background: var(--bg-surface);
       border: 1px solid var(--bg-subtle);
       border-radius: var(--radius-md);
       padding: var(--space-4);
-      min-height: 140px;
-      max-height: 300px;
+      min-height: 200px;
+      max-height: 400px;
       overflow-y: auto;
       font-size: var(--text-sm);
       line-height: 1.6;
-      color: var(--text-primary);
-      white-space: pre-wrap;
-      word-break: break-word;
-      position: relative;
-    }
-
-    /* Streaming text animation: characters appear one by one */
-    .message-content.streaming .char {
-      opacity: 0;
-      animation: slideIn 0.05s ease-out forwards;
-    }
-
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(2px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* Character count meter */
-    .char-count-container {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      padding: var(--space-2) var(--space-3);
-      background: var(--bg-elevated);
-      border-radius: var(--radius-sm);
-    }
-
-    .char-count-bar {
-      flex: 1;
-      height: 8px;
-      background: var(--bg-surface);
-      border-radius: var(--radius-pill);
-      overflow: hidden;
-    }
-
-    .char-count-fill {
-      height: 100%;
-      background: var(--accent);
-      transition: all var(--duration-fast) var(--ease-default));
-    }
-
-    .char-count-fill.warning {
-      background: var(--warning);
-    }
-
-    .char-count-fill.danger {
-      background: var(--danger);
-    }
-
-    .char-count-text {
-      font-size: var(--text-xs);
       font-family: var(--font-mono);
-      color: var(--text-secondary);
-      white-space: nowrap;
-      min-width: 80px;
-      text-align: right;
+      white-space: pre-wrap;
+      word-wrap: break-word;
     }
 
-    .char-count-text.danger {
-      color: var(--danger);
-    }
-
-    /* Control buttons */
-    .editor-controls {
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-    }
-
-    .tone-selector {
-      display: flex;
-      gap: var(--space-2);
-    }
-
-    .tone-button {
-      padding: var(--space-2) var(--space-3);
-      border-radius: var(--radius-sm);
-      font-size: var(--text-xs);
-      font-weight: 500;
-      color: var(--text-secondary);
-      background: var(--bg-elevated);
-      border: 1px solid var(--bg-subtle);
-      cursor: pointer;
-      transition: all var(--duration-fast) var(--ease-default));
-    }
-
-    .tone-button:hover {
-      background: var(--bg-subtle);
-      color: var(--text-primary);
-    }
-
-    .tone-button.active {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-    }
-
-    /* Action buttons: Regenerate, Copy */
-    .action-buttons {
-      display: flex;
-      gap: var(--space-3);
-    }
-
-    .btn-primary {
-      flex: 1;
-      padding: var(--space-3) var(--space-4);
-      border-radius: var(--radius-md);
-      font-weight: 600;
-      font-size: var(--text-sm);
-      color: white;
-      background: var(--accent);
-      border: none;
-      cursor: pointer;
-      transition: all var(--duration-fast) var(--ease-default));
+    .message-content.empty {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: var(--space-2);
-    }
-
-    .btn-primary:hover {
-      background: var(--accent-hover);
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-md);
-    }
-
-    .btn-primary:active {
-      transform: translateY(0);
-    }
-
-    .btn-secondary {
-      padding: var(--space-2) var(--space-3);
-      border-radius: var(--radius-sm);
-      font-size: var(--text-sm);
-      color: var(--text-secondary);
-      background: var(--bg-elevated);
-      border: 1px solid var(--bg-subtle);
-      cursor: pointer;
-      transition: all var(--duration-fast) var(--ease-default));
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-    }
-
-    .btn-secondary:hover {
-      background: var(--bg-subtle);
-      color: var(--text-primary);
-    }
-
-    /* Outreach sequence timeline */
-    .sequence-panel {
-      display: none;
-      flex-direction: column;
-      gap: var(--space-3);
-    }
-
-    .sequence-panel.active {
-      display: flex;
-    }
-
-    .sequence-title {
-      font-size: var(--text-sm);
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .timeline {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-3);
-      position: relative;
-    }
-
-    .timeline::before {
-      content: '';
-      position: absolute;
-      left: 12px;
-      top: var(--space-3);
-      bottom: 0;
-      width: 2px;
-      background: var(--bg-subtle);
-    }
-
-    .timeline-step {
-      display: flex;
-      gap: var(--space-3);
-      position: relative;
-    }
-
-    .timeline-dot {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: var(--bg-elevated);
-      border: 2px solid var(--bg-subtle);
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: var(--text-xs);
       color: var(--text-tertiary);
-      position: relative;
-      z-index: 1;
+      text-align: center;
     }
 
-    .timeline-dot.completed {
-      background: var(--success);
-      border-color: var(--success);
-      color: white;
-    }
-
-    .timeline-dot.pending {
+    /* Message textarea */
+    .message-textarea {
       background: var(--bg-surface);
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .timeline-content {
-      flex: 1;
-      padding: var(--space-2);
-    }
-
-    .timeline-label {
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      min-height: 200px;
+      max-height: 400px;
       font-size: var(--text-sm);
-      font-weight: 500;
+      font-family: var(--font-mono);
       color: var(--text-primary);
+      line-height: 1.6;
+      resize: vertical;
     }
 
-    .timeline-details {
+    .message-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+
+    /* Character count */
+    .char-count {
       font-size: var(--text-xs);
       color: var(--text-secondary);
-      margin-top: var(--space-1);
-    }
-
-    .timeline-status {
-      font-size: var(--text-xs);
-      font-weight: 500;
-      display: inline-block;
-      padding: var(--space-1) var(--space-2);
-      border-radius: var(--radius-sm);
-      background: var(--accent-subtle);
-      color: var(--accent);
       margin-top: var(--space-2);
     }
 
-    .timeline-status.completed {
-      background: rgba(34, 197, 94, 0.15);
-      color: var(--success);
+    .char-count.warning {
+      color: var(--warning);
     }
 
-    /* Version history panel */
-    .history-panel {
-      display: none;
-      flex-direction: column;
-      gap: var(--space-3);
-    }
-
-    .history-panel.active {
+    /* Action buttons */
+    .action-buttons {
       display: flex;
-    }
-
-    .history-list {
-      display: flex;
-      flex-direction: column;
       gap: var(--space-3);
-      max-height: 400px;
-      overflow-y: auto;
+      flex-wrap: wrap;
     }
 
-    .history-item {
-      background: var(--bg-elevated);
+    .btn {
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-sm);
       border: 1px solid var(--bg-subtle);
-      border-radius: var(--radius-md);
-      padding: var(--space-3);
+      font-size: var(--text-sm);
+      font-weight: 500;
       cursor: pointer;
-      transition: all var(--duration-fast) var(--ease-default));
+      transition: all var(--duration-fast) var(--ease-default);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
     }
 
-    .history-item:hover {
-      background: var(--bg-subtle);
+    .btn:hover {
+      border-color: var(--accent);
+      background: var(--bg-base);
+    }
+
+    .btn.primary {
+      background: var(--accent);
+      color: white;
       border-color: var(--accent);
     }
 
-    .history-item-meta {
+    .btn.primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Loading state */
+    .loading {
       display: flex;
-      justify-content: space-between;
-      font-size: var(--text-xs);
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
       color: var(--text-secondary);
-      margin-bottom: var(--space-2);
-    }
-
-    .history-item-preview {
-      font-size: var(--text-xs);
-      color: var(--text-primary);
-      line-height: 1.4;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    /* Toast notifications */
-    .toast {
-      position: fixed;
-      bottom: var(--space-4);
-      right: var(--space-4);
-      background: var(--accent);
-      color: white;
-      padding: var(--space-3) var(--space-4);
-      border-radius: var(--radius-md);
       font-size: var(--text-sm);
-      box-shadow: var(--shadow-lg);
-      animation: slideUp 0.3s ease-out;
-      z-index: 1000;
     }
 
-    .toast.error {
-      background: var(--danger);
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--accent);
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
     }
 
-    .toast.success {
-      background: var(--success);
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    /* API key setup */
+    .api-key-setup {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-4);
+      padding: var(--space-6);
     }
 
-    /* Mobile responsive: stack layout on small screens */
-    @media (max-width: 900px) {
+    .api-key-setup h2 {
+      font-size: var(--text-xl);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .api-key-setup p {
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 400px;
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-3);
+      padding: var(--space-6);
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      opacity: 0.5;
+    }
+
+    @media (max-width: 768px) {
       .outreach-container {
         flex-direction: column;
       }
@@ -651,1317 +356,24 @@
         border-right: none;
         border-bottom: 1px solid var(--bg-subtle);
         max-height: 200px;
-        padding: var(--space-3);
       }
 
       .editor-panel {
-        padding: var(--space-4);
+        padding: var(--space-3);
       }
 
       .message-tabs {
-        padding: var(--space-3) var(--space-4);
+        padding: var(--space-3);
+        gap: var(--space-1);
       }
-    }
 
-    /* Module navigation bar (if needed) */
-    .module-nav {
-      background: var(--bg-surface);
-      border-bottom: 1px solid var(--bg-subtle);
-      padding: var(--space-3) var(--space-6);
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-    }
-
-    .module-nav-item {
-      font-size: var(--text-sm);
-      color: var(--text-secondary);
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-    }
-
-    .module-nav-item.active {
-      color: var(--accent);
-      font-weight: 600;
-    }
-
-    /* Help text and empty states */
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      gap: var(--space-4);
-      color: var(--text-tertiary);
-      text-align: center;
-    }
-
-    .empty-state-icon {
-      font-size: 48px;
-      opacity: 0.5;
-    }
-
-    .empty-state-text {
-      font-size: var(--text-sm);
-      max-width: 280px;
+      .message-tab {
+        padding: var(--space-1) var(--space-2);
+        font-size: var(--text-xs);
+      }
     }
   </style>
-
-  <script>
-    /**
-     * ================================================================
-     * OUTREACH MESSAGE GENERATOR MODULE
-     * Version: 1.0 | March 2026
-     * ================================================================
-     *
-     * PURPOSE
-     * Generates personalized networking and outreach messages for each
-     * step of the job search outreach sequence. Never generic templates —
-     * every message references specific company details, role context,
-     * and the actual relationship with the connection.
-     *
-     * DATA SOURCES
-     * - Reads: pf_companies, pf_roles, pf_connections (from Pipeline module)
-     * - Owns: pf_outreach_messages (generated message history)
-     *          pf_outreach_sequences (sequence progress tracking)
-     *
-     * ARCHITECTURE OVERVIEW
-     * 1. Left sidebar: Context panel (company/role/connection selectors)
-     * 2. Right workspace: Message type tabs, editor, controls
-     * 3. Message generation: Template functions + streaming animation
-     * 4. Local storage: All data persisted in browser localStorage
-     * 5. Keyboard shortcuts: Cmd+K (search), Cmd+C (copy), etc.
-     *
-     * KEYBOARD SHORTCUTS
-     * - Cmd/Ctrl+K: Open command palette
-     * - Cmd/Ctrl+C: Copy current message to clipboard
-     * - Cmd/Ctrl+Enter: Regenerate message
-     * - 1-8: Switch between message types
-     * - Tab: Cycle through tone options
-     * - N: New message (in sidebar)
-     *
-     * This file is ~2200 lines and is entirely self-contained.
-     * ================================================================
-     */
-
-    /**
-     * MESSAGE TYPE DEFINITIONS
-     * Each type has a name, description, character limit, and template function
-     */
-    const MESSAGE_TYPES = [
-      {
-        id: 'linkedin-connect',
-        name: 'LinkedIn Connection',
-        description: 'First-touch message when connecting',
-        charLimit: 300,
-        template: generateLinkedInConnect
-      },
-      {
-        id: 'cold-email-initial',
-        name: 'Cold Email — Initial',
-        description: 'First cold email outreach',
-        charLimit: 800,
-        template: generateColdEmailInitial
-      },
-      {
-        id: 'cold-email-followup',
-        name: 'Cold Email — Follow-up',
-        description: 'Follow-up after initial outreach',
-        charLimit: 500,
-        template: generateColdEmailFollowup
-      },
-      {
-        id: 'referral-request',
-        name: 'Referral Request',
-        description: 'Ask for referral to role/team',
-        charLimit: 600,
-        template: generateReferralRequest
-      },
-      {
-        id: 'inmail',
-        name: 'LinkedIn InMail',
-        description: 'Paid message on LinkedIn',
-        charLimit: 650,
-        template: generateInMail
-      },
-      {
-        id: 'thank-you-call',
-        name: 'Thank You — Networking Call',
-        description: 'After an informational interview',
-        charLimit: 500,
-        template: generateThankYouCall
-      },
-      {
-        id: 'thank-you-interview',
-        name: 'Thank You — Interview',
-        description: 'After formal interview round',
-        charLimit: 700,
-        template: generateThankYouInterview
-      },
-      {
-        id: 'recruiter-response',
-        name: 'Recruiter Response',
-        description: 'Reply to recruiter outreach',
-        charLimit: 600,
-        template: generateRecruiterResponse
-      }
-    ];
-
-    /**
-     * OUTREACH SEQUENCE TEMPLATE
-     * Defines the standard outreach flow and timeline
-     */
-    const OUTREACH_SEQUENCE = [
-      { step: 1, type: 'linkedin-connect', day: 0, label: 'LinkedIn Connect', description: 'Send connection request' },
-      { step: 2, type: 'cold-email-initial', day: 2, label: 'Initial Email', description: 'Follow-up with email' },
-      { step: 3, type: 'cold-email-followup', day: 5, label: 'Follow-up Email', description: 'Second follow-up' },
-      { step: 4, type: 'thank-you-call', day: 10, label: 'Networking Call', description: 'If you connected' },
-      { step: 5, type: 'thank-you-interview', day: 15, label: 'Interview Thank You', description: 'After interview' }
-    ];
-
-    /**
-     * ================================================================
-     * STATE MANAGEMENT
-     * Keep track of current selections and UI state
-     * ================================================================
-     */
-
-    let currentCompanyName = null;
-    let currentRoleId = null;
-    let currentConnectionId = null;
-    let currentMessageType = MESSAGE_TYPES[0].id;
-    let currentTone = 'professional';
-    let currentMessage = '';
-    let isGenerating = false;
-
-    /**
-     * Initialize the application on page load
-     * Sets up demo data, renders UI, attaches event listeners
-     */
-    function initializeApp() {
-      initializeDemoData();
-      renderUI();
-      attachEventListeners();
-      showToast('Outreach Generator loaded. Select a company to begin.', 'success');
-    }
-
-    /**
-     * Initialize demo data if it doesn't exist in localStorage
-     * Creates sample connections and messages for demonstration
-     */
-    function initializeDemoData() {
-      // In Personal mode, never seed demo data — the data-switcher handles it
-      if (localStorage.getItem('pf_data_mode') === 'personal') return;
-
-      // Initialize companies from Pipeline module
-      if (!localStorage.getItem('pf_companies')) {
-        const demoCompanies = [
-          {
-            name: 'Stripe',
-            domain: 'stripe.com',
-            tier: 'hot',
-            missionStatement: 'Financial infrastructure for the internet',
-            logoUrl: 'https://logo.clearbit.com/stripe.com'
-          },
-          {
-            name: 'Anthropic',
-            domain: 'anthropic.com',
-            tier: 'hot',
-            missionStatement: 'AI safety and research',
-            logoUrl: 'https://logo.clearbit.com/anthropic.com'
-          },
-          {
-            name: 'Figma',
-            domain: 'figma.com',
-            tier: 'active',
-            missionStatement: 'Design platform for teams',
-            logoUrl: 'https://logo.clearbit.com/figma.com'
-          },
-          {
-            name: 'Notion',
-            domain: 'notion.so',
-            tier: 'hot',
-            missionStatement: 'All-in-one workspace',
-            logoUrl: 'https://logo.clearbit.com/notion.so'
-          }
-        ];
-        localStorage.setItem('pf_companies', JSON.stringify(demoCompanies));
-      }
-
-      // Initialize roles from Pipeline module
-      if (!localStorage.getItem('pf_roles')) {
-        const demoRoles = [
-          {
-            id: 'stripe-pm-1',
-            company: 'Stripe',
-            title: 'Staff Product Manager, Payments Platform',
-            positioning: 'ic',
-            stage: 'researching',
-            jdText: 'Lead product strategy for Stripe\'s core payments platform...'
-          },
-          {
-            id: 'anthropic-pm-1',
-            company: 'Anthropic',
-            title: 'Senior Product Manager, Claude API',
-            positioning: 'ic',
-            stage: 'applied',
-            jdText: 'Manage Claude API product roadmap and developer experience...'
-          },
-          {
-            id: 'figma-pm-1',
-            company: 'Figma',
-            title: 'Product Manager, AI & Automation',
-            positioning: 'ic',
-            stage: 'interviewing',
-            jdText: 'Drive AI-powered design features and automation capabilities...'
-          },
-          {
-            id: 'notion-pm-1',
-            company: 'Notion',
-            title: 'Senior Product Manager, Templates',
-            positioning: 'ic',
-            stage: 'researching',
-            jdText: 'Build and scale Notion\'s template ecosystem for teams...'
-          }
-        ];
-        localStorage.setItem('pf_roles', JSON.stringify(demoRoles));
-      }
-
-      // Initialize connections specific to this module
-      if (!localStorage.getItem('pf_connections')) {
-        const demoConnections = [
-          {
-            id: 'conn-1',
-            company: 'Stripe',
-            name: 'Patrick Collison',
-            title: 'CEO & Co-founder',
-            relationshipType: 'hiring-manager',
-            outreachStatus: 'pending',
-            dateConnected: Date.now() - 30 * 24 * 60 * 60 * 1000,
-            lastContact: null
-          },
-          {
-            id: 'conn-2',
-            company: 'Stripe',
-            name: 'Caitlin Strandberg',
-            title: 'Head of Product Management',
-            relationshipType: 'recruiter',
-            outreachStatus: 'sent',
-            dateConnected: Date.now() - 10 * 24 * 60 * 60 * 1000,
-            lastContact: Date.now() - 5 * 24 * 60 * 60 * 1000
-          },
-          {
-            id: 'conn-3',
-            company: 'Anthropic',
-            name: 'Dario Amodei',
-            title: 'CEO & Co-founder',
-            relationshipType: 'hiring-manager',
-            outreachStatus: 'pending',
-            dateConnected: null,
-            lastContact: null
-          },
-          {
-            id: 'conn-4',
-            company: 'Anthropic',
-            name: 'Sarah Kim',
-            title: 'Hiring Manager, Product',
-            relationshipType: 'hiring-manager',
-            outreachStatus: 'sent',
-            dateConnected: Date.now() - 15 * 24 * 60 * 60 * 1000,
-            lastContact: Date.now() - 8 * 24 * 60 * 60 * 1000
-          },
-          {
-            id: 'conn-5',
-            company: 'Figma',
-            name: 'Yuhki Yamashita',
-            title: 'VP Product',
-            relationshipType: 'peer',
-            outreachStatus: 'pending',
-            dateConnected: null,
-            lastContact: null
-          },
-          {
-            id: 'conn-6',
-            company: 'Notion',
-            name: 'Ivan Zhao',
-            title: 'CEO & Co-founder',
-            relationshipType: 'alumni',
-            outreachStatus: 'not-started',
-            dateConnected: null,
-            lastContact: null
-          }
-        ];
-        localStorage.setItem('pf_connections', JSON.stringify(demoConnections));
-      }
-
-      // Initialize outreach messages
-      if (!localStorage.getItem('pf_outreach_messages')) {
-        localStorage.setItem('pf_outreach_messages', JSON.stringify([]));
-      }
-
-      // Initialize outreach sequences
-      if (!localStorage.getItem('pf_outreach_sequences')) {
-        localStorage.setItem('pf_outreach_sequences', JSON.stringify([]));
-      }
-    }
-
-    /**
-     * DATA RETRIEVAL FUNCTIONS
-     * These fetch data from localStorage for use throughout the app
-     */
-
-    function getCompanies() {
-      const data = localStorage.getItem('pf_companies');
-      return data ? JSON.parse(data) : [];
-    }
-
-    function getRoles() {
-      const data = localStorage.getItem('pf_roles');
-      return data ? JSON.parse(data) : [];
-    }
-
-    function getConnections() {
-      const data = localStorage.getItem('pf_connections');
-      return data ? JSON.parse(data) : [];
-    }
-
-    function getOutreachMessages() {
-      const data = localStorage.getItem('pf_outreach_messages');
-      return data ? JSON.parse(data) : [];
-    }
-
-    function getOutreachSequences() {
-      const data = localStorage.getItem('pf_outreach_sequences');
-      return data ? JSON.parse(data) : [];
-    }
-
-    /**
-     * SAVE FUNCTIONS
-     * Persist changes to localStorage
-     */
-
-    function saveOutreachMessages(messages) {
-      localStorage.setItem('pf_outreach_messages', JSON.stringify(messages));
-    }
-
-    function saveOutreachSequences(sequences) {
-      localStorage.setItem('pf_outreach_sequences', JSON.stringify(sequences));
-    }
-
-    /**
-     * ================================================================
-     * MESSAGE GENERATION TEMPLATES
-     * Each function generates a message for a specific outreach type.
-     * All pull real data from company/role/connection to avoid generics.
-     * ================================================================
-     */
-
-    /**
-     * Generate LinkedIn Connection Request (300 char max)
-     * Tone: Brief, specific, immediate value proposition
-     */
-    function generateLinkedInConnect(company, role, connection, tone) {
-      const companyName = company.name;
-      const connectionName = connection.name.split(' ')[0];
-      const productMentions = getProductMentions(company.name);
-
-      const templates = {
-        professional: `Hi ${connectionName}, impressed by your work on ${company.name}'s ${productMentions}. I'm exploring PM roles focused on ${role.title.split(',')[0].toLowerCase()}. Would love to connect and learn from your experience.`,
-        warm: `${connectionName}! Love what you're building at ${company.name} — especially the work on ${productMentions}. I'm currently exploring roles in this space and would appreciate connecting to chat sometime.`,
-        direct: `Interested in connecting on your experience with ${productMentions} at ${company.name}. Working toward similar product goals. Happy to share context if useful.`
-      };
-
-      return templates[tone] || templates.professional;
-    }
-
-    /**
-     * Generate Cold Email — Initial (800 char max)
-     * Tone: Detailed, specific context, clear value exchange
-     */
-    function generateColdEmailInitial(company, role, connection, tone) {
-      const companyName = company.name;
-      const connectionName = connection.name.split(' ')[0];
-      const fullName = connection.name;
-      const productMentions = getProductMentions(company.name);
-      const relevantBackground = getRelevantBackground();
-
-      const templates = {
-        professional: `Hi ${connectionName},
-
-I'm reaching out because I've been following ${companyName}'s work on ${productMentions}, and I think there's a strong fit with my background.
-
-I spent the last 3 years ${relevantBackground}, and I'm now looking for PM roles where I can apply that experience to build infrastructure products at scale. Your approach to ${productMentions} at ${companyName} aligns with how I think about product strategy.
-
-Would you have 20 minutes in the next few weeks to grab coffee or jump on a call? Even if timing isn't right for the ${role.title} role, I'd value your perspective on the space.
-
-Best,
-[Your Name]`,
-        warm: `Hey ${connectionName},
-
-I came across your profile while researching ${companyName}'s ${productMentions} work — you're building some really interesting stuff.
-
-I've spent the last few years ${relevantBackground}, and I'm now looking for a place where I can dig into problems like the ones you're solving. Your experience resonates with me because [specific reason].
-
-Would love to pick your brain for 15-20 minutes when you have a moment. Even just a quick call would help me understand the team and space better.
-
-Thanks,
-[Your Name]`,
-        direct: `${fullName} — I've been following ${companyName}'s ${productMentions} roadmap. I think I can be useful.
-
-I've built ${relevantBackground}. Looking to apply that to the next phase of work at a company like yours.
-
-Let's talk — 20 min call this week?
-
-[Your Name]`
-      };
-
-      return templates[tone] || templates.professional;
-    }
-
-    /**
-     * Generate Cold Email — Follow-up (500 char max)
-     * Tone: Friendly, gentle persistence, new angle
-     */
-    function generateColdEmailFollowup(company, role, connection, tone) {
-      const connectionName = connection.name.split(' ')[0];
-      const productMentions = getProductMentions(company.name);
-
-      const templates = {
-        professional: `Hi ${connectionName},
-
-Just following up on my previous note. I'm still very interested in exploring how my background in ${productMentions} might align with opportunities at ${company.name}.
-
-No pressure if timing isn't right — I'll be in the area next month if you'd like to grab coffee then.
-
-Looking forward to connecting.`,
-        warm: `Hey ${connectionName}, quick follow-up on my last message. Still very interested in chatting when you have time.
-
-I get that inboxes are chaotic — no worries if it slipped by. Would love to find 15 minutes for a quick call.
-
-Let me know!`,
-        direct: `${connectionName} — Just a quick check in. Still keen to talk about ${company.name}'s work.
-
-Available for a call this week if that works for you.`
-      };
-
-      return templates[tone] || templates.professional;
-    }
-
-    /**
-     * Generate Referral Request (600 char max)
-     * Tone: Specific ask, clear value, appreciation
-     */
-    function generateReferralRequest(company, role, connection, tone) {
-      const connectionName = connection.name.split(' ')[0];
-      const roleTitleClean = role.title.split(',')[0];
-      const productMentions = getProductMentions(company.name);
-
-      const templates = {
-        professional: `Hi ${connectionName},
-
-I've been following ${company.name}'s growth, especially in ${productMentions}. The ${roleTitleClean} role seems like a perfect match for my background, and I believe I could make a significant impact on the team.
-
-Given your experience there, I was wondering if you'd be open to referring me. I'd be happy to send over my background — I think we'd make a strong team.
-
-Really appreciate you thinking of this.
-
-Best`,
-        warm: `${connectionName}, I'm applying for the ${roleTitleClean} role at ${company.name} and think you'd be perfect to refer me.
-
-I've been impressed by what you've all built with ${productMentions}, and I'm excited about the opportunity to contribute.
-
-Would you be willing to pass my info along? Happy to jump on a quick call if that helps.
-
-Thanks!`,
-        direct: `Would you refer me for the ${roleTitleClean} role at ${company.name}? I think there's a strong match.
-
-Happy to sync up if you need more context on my background.`
-      };
-
-      return templates[tone] || templates.professional;
-    }
-
-    /**
-     * Generate LinkedIn InMail (650 char max)
-     * Tone: Premium, respectful of scarcity, high signal
-     */
-    function generateInMail(company, role, connection, tone) {
-      const connectionName = connection.name.split(' ')[0];
-      const productMentions = getProductMentions(company.name);
-      const relevantBackground = getRelevantBackground();
-
-      const templates = {
-        professional: `Hi ${connectionName},
-
-I've been impressed with ${company.name}'s approach to ${productMentions}, and I believe my background is well-suited to contribute to that mission.
-
-I spent the last few years ${relevantBackground}, and I'm now looking for a role where I can apply that expertise at a company pushing boundaries like ${company.name}.
-
-Would you be open to a brief conversation about the ${role.title} opportunity? I think I could add significant value to the team.
-
-Looking forward to connecting.`,
-        warm: `Hey ${connectionName},
-
-Love what you're building with ${productMentions} at ${company.name}. I've been following the progress and think it's exactly the kind of work I want to focus on next.
-
-My background in ${relevantBackground} has prepared me well for this type of challenge, and I'd love to explore how I could contribute.
-
-Would you have 20 minutes to chat?
-
-Thanks`,
-        direct: `${connectionName} — I can help with the ${productMentions} roadmap. Have built similar systems before.
-
-Let's talk.`
-      };
-
-      return templates[tone] || templates.professional;
-    }
-
-    /**
-     * Generate Thank You — Networking Call (500 char max)
-     * Tone: Grateful, specific callouts, continuity
-     */
-    function generateThankYouCall(company, role, connection, tone) {
-      const connectionName = connection.name.split(' ')[0];
-      const productMentions = getProductMentions(company.name);
-
-      const templates = {
-        professional: `Hi ${connectionName},
-
-Thank you so much for taking the time to chat yesterday. Your perspective on ${company.name}'s ${productMentions} strategy was incredibly valuable, and it's reinforced my interest in exploring opportunities with the team.
-
-I appreciate the context you shared about the roadmap and team dynamics. I'll follow up with the materials we discussed.
-
-Looking forward to staying in touch.`,
-        warm: `${connectionName}, thanks again for the call yesterday! I really enjoyed chatting about ${productMentions} and hearing your take on where things are headed.
-
-You gave me a lot to think about, and I'm even more excited about the possibility of working together.
-
-Let's stay in touch!`,
-        direct: `Great call. Thanks for the insights on ${company.name}'s direction with ${productMentions}. Definitely piqued my interest.
-
-Looking forward to next steps.`
-      };
-
-      return templates[tone] || templates.professional;
-    }
-
-    /**
-     * Generate Thank You — Interview Round (700 char max)
-     * Tone: Professional, enthusiastic, thoughtful
-     */
-    function generateThankYouInterview(company, role, connection, tone) {
-      const connectionName = connection.name.split(' ')[0];
-      const companyName = company.name;
-      const roleTitleClean = role.title.split(',')[0];
-
-      const templates = {
-        professional: `Hi ${connectionName},
-
-Thank you for taking the time to interview me for the ${roleTitleClean} role at ${companyName}. I genuinely enjoyed our conversation and learning more about the team's priorities and vision.
-
-Our discussion reinforced my enthusiasm for the role and confirmed that I can make a meaningful impact on the products you're building. I'm excited about the opportunity to contribute.
-
-I look forward to hearing next steps. Please don't hesitate to reach out if you need any additional information from me.
-
-Best regards`,
-        warm: `Hey ${connectionName},
-
-Thanks so much for the interview today — I really enjoyed our chat about the ${roleTitleClean} role and the team's approach to solving these problems.
-
-I came away even more excited about the opportunity, and I think I'm a great fit for what you're building. Can't wait to hear what comes next.
-
-Talk soon!`,
-        direct: `Great interview. Excited about the ${roleTitleClean} role and the team's mission at ${companyName}. Let's keep the momentum going.
-
-Looking forward to next steps.`
-      };
-
-      return templates[tone] || templates.professional;
-    }
-
-    /**
-     * Generate Recruiter Response (600 char max)
-     * Tone: Professional, interested, efficient
-     */
-    function generateRecruiterResponse(company, role, connection, tone) {
-      const connectionName = connection.name.split(' ')[0];
-      const companyName = company.name;
-      const roleTitleClean = role.title.split(',')[0];
-
-      const templates = {
-        professional: `Hi ${connectionName},
-
-Thank you for reaching out about the ${roleTitleClean} role at ${companyName}. I'm very interested in this opportunity and believe my background is a strong match.
-
-I'd love to learn more about the role and team. I'm available for a call next week — would Tuesday or Wednesday morning work better for you?
-
-Looking forward to diving deeper.`,
-        warm: `Hey ${connectionName},
-
-Thanks for thinking of me for the ${roleTitleClean} role at ${companyName}! I'm definitely interested and would love to chat more about it.
-
-I'm pretty open on timing — let me know what works best for a call this week and we can go from there.
-
-Cheers`,
-        direct: `Interested. Let's set up a time to discuss the ${roleTitleClean} role. Available this week.`
-      };
-
-      return templates[tone] || templates.professional;
-    }
-
-    /**
-     * HELPER FUNCTIONS FOR MESSAGE GENERATION
-     * These extract specific details to make messages personal
-     */
-
-    /**
-     * Get product/initiative mentions for a company
-     * Maps company names to their key products/initiatives
-     */
-    function getProductMentions(companyName) {
-      const productMap = {
-        'Stripe': 'payments infrastructure and API ecosystem',
-        'Anthropic': 'Claude AI model development',
-        'Figma': 'collaborative design platform',
-        'Notion': 'workspace automation and templates',
-        'Datadog': 'cloud observability platform',
-        'Plaid': 'financial data connectivity',
-        'Scale AI': 'data labeling infrastructure',
-        'Vercel': 'frontend deployment platform',
-        'Ramp': 'spend management platform',
-        'MongoDB': 'document database platform'
-      };
-      return productMap[companyName] || 'product initiatives';
-    }
-
-    /**
-     * Generate relevant background statement
-     * In a real app, this would pull from a user profile
-     */
-    function getRelevantBackground() {
-      const backgrounds = [
-        'designing product strategy for platform companies at scale',
-        'building infrastructure products used by thousands of engineers',
-        'leading cross-functional teams through complex product launches',
-        'driving growth through deep user research and data analysis',
-        'scaling technical products from 0 to 1M+ users'
-      ];
-      return backgrounds[Math.floor(Math.random() * backgrounds.length)];
-    }
-
-    /**
-     * ================================================================
-     * UI RENDERING FUNCTIONS
-     * These build the DOM and update the interface
-     * ================================================================
-     */
-
-    /**
-     * Main render function: updates all UI sections
-     */
-    function renderUI() {
-      renderCompanySelector();
-      renderRoleSelector();
-      renderConnectionSelector();
-      renderContextCard();
-      renderMessageTabs();
-      renderMessageEditor();
-      renderSequenceTimeline();
-    }
-
-    /**
-     * Render company selector dropdown in sidebar
-     */
-    function renderCompanySelector() {
-      const selector = document.getElementById('company-selector');
-      const companies = getCompanies();
-
-      selector.innerHTML = `<option value="">Select a company...</option>` +
-        companies.map(c => `<option value="${c.name}" ${c.name === currentCompanyName ? 'selected' : ''}>${c.name}</option>`).join('');
-    }
-
-    /**
-     * Render role selector dropdown in sidebar
-     * Only shows roles for the selected company
-     */
-    function renderRoleSelector() {
-      const selector = document.getElementById('role-selector');
-      if (!currentCompanyName) {
-        selector.innerHTML = '<option value="">Select a company first</option>';
-        return;
-      }
-
-      const roles = getRoles().filter(r => r.company === currentCompanyName);
-      selector.innerHTML = `<option value="">Select a role...</option>` +
-        roles.map(r => `<option value="${r.id}" ${r.id === currentRoleId ? 'selected' : ''}>${r.title}</option>`).join('');
-    }
-
-    /**
-     * Render connection selector dropdown in sidebar
-     * Only shows connections for the selected company
-     */
-    function renderConnectionSelector() {
-      const selector = document.getElementById('connection-selector');
-      if (!currentCompanyName) {
-        selector.innerHTML = '<option value="">Select a company first</option>';
-        return;
-      }
-
-      const connections = getConnections().filter(c => c.company === currentCompanyName);
-      selector.innerHTML = `<option value="">Select a connection...</option>` +
-        connections.map(c => `<option value="${c.id}" ${c.id === currentConnectionId ? 'selected' : ''}>${c.name}</option>`).join('');
-    }
-
-    /**
-     * Render context card: shows details about selected company/role/connection
-     */
-    function renderContextCard() {
-      const container = document.getElementById('context-card');
-
-      if (!currentCompanyName || !currentRoleId || !currentConnectionId) {
-        container.innerHTML = '<div class="context-card-empty">Select company, role, and connection to see context</div>';
-        return;
-      }
-
-      const companies = getCompanies();
-      const roles = getRoles();
-      const connections = getConnections();
-
-      const company = companies.find(c => c.name === currentCompanyName);
-      const role = roles.find(r => r.id === currentRoleId);
-      const connection = connections.find(c => c.id === currentConnectionId);
-
-      if (!company || !role || !connection) {
-        container.innerHTML = '<div class="context-card-empty">Invalid selection</div>';
-        return;
-      }
-
-      const jdPreview = (role.jdText || '').substring(0, 200);
-      const daysSinceContact = connection.lastContact ?
-        Math.floor((Date.now() - connection.lastContact) / (24 * 60 * 60 * 1000)) : null;
-
-      container.innerHTML = `
-        <div class="context-card">
-          <div class="company-card">
-            <div class="company-header">
-              <div class="company-logo">
-                <img src="${company.logoUrl || ''}" alt="${company.name}" onerror="this.style.display='none'">
-              </div>
-              <div class="company-info">
-                <h3>${company.name}</h3>
-                <p>${company.missionStatement || ''}</p>
-              </div>
-            </div>
-
-            <div class="company-meta">
-              <div><strong>Tier:</strong> ${company.tier}</div>
-              <div><strong>Domain:</strong> ${company.domain}</div>
-            </div>
-
-            <div style="margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--bg-surface);">
-              <div class="detail-row">
-                <span class="detail-label">Role</span>
-                <span class="detail-value">${role.title}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Stage</span>
-                <span class="detail-value" style="text-transform: capitalize;">${role.stage}</span>
-              </div>
-            </div>
-
-            <div style="margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--bg-surface);">
-              <div class="detail-row">
-                <span class="detail-label">Contact</span>
-                <span class="detail-value">${connection.name}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Title</span>
-                <span class="detail-value">${connection.title}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Type</span>
-                <span class="detail-value"><span class="relationship-badge">${connection.relationshipType}</span></span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Status</span>
-                <span class="detail-value">${connection.outreachStatus}</span>
-              </div>
-              ${daysSinceContact ? `
-              <div class="detail-row">
-                <span class="detail-label">Last Contact</span>
-                <span class="detail-value">${daysSinceContact} days ago</span>
-              </div>
-              ` : ''}
-            </div>
-
-            ${jdPreview ? `
-            <div style="margin-top: var(--space-3);">
-              <div class="sidebar-section-title">Job Description</div>
-              <div class="jd-snippet">${jdPreview}...</div>
-            </div>
-            ` : ''}
-          </div>
-        </div>
-      `;
-    }
-
-    /**
-     * Render message type tabs
-     * Allows user to switch between the 8 message types
-     */
-    function renderMessageTabs() {
-      const container = document.getElementById('message-tabs');
-      container.innerHTML = MESSAGE_TYPES.map(type =>
-        `<button class="message-tab ${type.id === currentMessageType ? 'active' : ''}" data-type="${type.id}">
-          ${type.name}
-        </button>`
-      ).join('');
-    }
-
-    /**
-     * Render the message editor with generated message
-     */
-    function renderMessageEditor() {
-      const container = document.getElementById('editor-panel');
-
-      if (!currentCompanyName || !currentRoleId || !currentConnectionId) {
-        container.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-state-icon">📝</div>
-            <div class="empty-state-text">Select a company, role, and connection to generate a personalized message.</div>
-          </div>
-        `;
-        return;
-      }
-
-      const messageType = MESSAGE_TYPES.find(t => t.id === currentMessageType);
-      const companies = getCompanies();
-      const roles = getRoles();
-      const connections = getConnections();
-
-      const company = companies.find(c => c.name === currentCompanyName);
-      const role = roles.find(r => r.id === currentRoleId);
-      const connection = connections.find(c => c.id === currentConnectionId);
-
-      if (!messageType || !company || !role || !connection) {
-        container.innerHTML = '<div class="empty-state"><div class="empty-state-text">Invalid selection</div></div>';
-        return;
-      }
-
-      // Generate message if not already generated
-      if (!currentMessage) {
-        currentMessage = messageType.template(company, role, connection, currentTone);
-      }
-
-      const charCount = currentMessage.length;
-      const charLimit = messageType.charLimit;
-      const charPercent = Math.min((charCount / charLimit) * 100, 100);
-      const isOverLimit = charCount > charLimit;
-
-      const charCountClass = isOverLimit ? 'danger' : charPercent > 80 ? 'warning' : '';
-
-      container.innerHTML = `
-        <div class="editor-header">
-          <div>
-            <div class="editor-title">${messageType.name}</div>
-            <div class="editor-meta">${messageType.description}</div>
-          </div>
-        </div>
-
-        <div class="message-content">${escapeHtml(currentMessage)}</div>
-
-        <div class="char-count-container">
-          <div class="char-count-bar">
-            <div class="char-count-fill ${charCountClass}" style="width: ${charPercent}%"></div>
-          </div>
-          <div class="char-count-text ${charCountClass}">
-            ${charCount} / ${charLimit}
-          </div>
-        </div>
-
-        <div class="editor-controls">
-          <div class="tone-selector">
-            <button class="tone-button ${currentTone === 'professional' ? 'active' : ''}" data-tone="professional">Professional</button>
-            <button class="tone-button ${currentTone === 'warm' ? 'active' : ''}" data-tone="warm">Warm</button>
-            <button class="tone-button ${currentTone === 'direct' ? 'active' : ''}" data-tone="direct">Direct</button>
-          </div>
-          <div class="action-buttons">
-            <button class="btn-secondary" id="regenerate-btn">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-              </svg>
-              Regenerate
-            </button>
-            <button class="btn-primary" id="copy-btn">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-              </svg>
-              Copy to Clipboard
-            </button>
-          </div>
-        </div>
-
-        <div id="version-history" style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--bg-subtle);">
-          <div class="sidebar-section-title">Version History</div>
-          <div class="history-list" id="history-list"></div>
-        </div>
-      `;
-
-      updateHistoryDisplay();
-    }
-
-    /**
-     * Render the outreach sequence timeline
-     * Shows the standard outreach flow and marks completed steps
-     */
-    function renderSequenceTimeline() {
-      const container = document.getElementById('sequence-timeline');
-
-      if (!currentConnectionId) {
-        container.innerHTML = '';
-        return;
-      }
-
-      const connections = getConnections();
-      const connection = connections.find(c => c.id === currentConnectionId);
-
-      const sequences = getOutreachSequences();
-      const sequence = sequences.find(s => s.connectionId === currentConnectionId);
-
-      let timeline = `<div class="sidebar-section-title" style="margin-top: 0;">Outreach Sequence</div><div class="timeline">`;
-
-      OUTREACH_SEQUENCE.forEach(step => {
-        const isCompleted = sequence && sequence.completedSteps && sequence.completedSteps.includes(step.step);
-        const statusClass = isCompleted ? 'completed' : 'pending';
-        const statusText = isCompleted ? '✓' : step.step;
-
-        timeline += `
-          <div class="timeline-step">
-            <div class="timeline-dot ${statusClass}">${statusText}</div>
-            <div class="timeline-content">
-              <div class="timeline-label">${step.label}</div>
-              <div class="timeline-details">Day ${step.day} • ${step.description}</div>
-              <button class="timeline-status ${statusClass}" data-step="${step.step}">
-                ${isCompleted ? 'Completed' : 'Mark as done'}
-              </button>
-            </div>
-          </div>
-        `;
-      });
-
-      timeline += '</div>';
-      container.innerHTML = timeline;
-    }
-
-    /**
-     * Update the version history display
-     * Shows previously generated messages for this contact
-     */
-    function updateHistoryDisplay() {
-      const container = document.getElementById('history-list');
-      const allMessages = getOutreachMessages();
-      const contactMessages = allMessages.filter(m =>
-        m.connectionId === currentConnectionId && m.messageType === currentMessageType
-      );
-
-      if (contactMessages.length === 0) {
-        container.innerHTML = '<div style="text-align: center; color: var(--text-tertiary); font-size: var(--text-xs); padding: var(--space-4);">No version history yet</div>';
-        return;
-      }
-
-      container.innerHTML = contactMessages.slice(0, 5).map(msg =>
-        `<div class="history-item" data-message-id="${msg.id}">
-          <div class="history-item-meta">
-            <span>${msg.tone}</span>
-            <span>${formatDate(msg.generatedAt)}</span>
-          </div>
-          <div class="history-item-preview">${escapeHtml(msg.content.substring(0, 120))}...</div>
-        </div>`
-      ).join('');
-    }
-
-    /**
-     * ================================================================
-     * EVENT LISTENERS
-     * Handle user interactions (clicks, changes, keyboard)
-     * ================================================================
-     */
-
-    function attachEventListeners() {
-      // Selector changes
-      document.getElementById('company-selector').addEventListener('change', (e) => {
-        currentCompanyName = e.target.value;
-        currentRoleId = null;
-        currentConnectionId = null;
-        currentMessage = '';
-        renderUI();
-      });
-
-      document.getElementById('role-selector').addEventListener('change', (e) => {
-        currentRoleId = e.target.value;
-        currentConnectionId = null;
-        currentMessage = '';
-        renderUI();
-      });
-
-      document.getElementById('connection-selector').addEventListener('change', (e) => {
-        currentConnectionId = e.target.value;
-        currentMessage = '';
-        renderUI();
-      });
-
-      // Message tab clicks
-      document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('message-tab')) {
-          currentMessageType = e.target.dataset.type;
-          currentMessage = '';
-          renderUI();
-        }
-      });
-
-      // Tone button clicks
-      document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('tone-button')) {
-          currentTone = e.target.dataset.tone;
-          currentMessage = '';
-          renderUI();
-        }
-      });
-
-      // Regenerate button
-      document.addEventListener('click', (e) => {
-        if (e.target.id === 'regenerate-btn' || e.target.closest('#regenerate-btn')) {
-          regenerateMessage();
-        }
-      });
-
-      // Copy button
-      document.addEventListener('click', (e) => {
-        if (e.target.id === 'copy-btn' || e.target.closest('#copy-btn')) {
-          copyToClipboard();
-        }
-      });
-
-      // Timeline step buttons
-      document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('timeline-status')) {
-          markStepComplete(parseInt(e.target.dataset.step));
-        }
-      });
-
-      // History item clicks
-      document.addEventListener('click', (e) => {
-        if (e.target.closest('.history-item')) {
-          const messageId = e.target.closest('.history-item').dataset.messageId;
-          loadHistoryMessage(messageId);
-        }
-      });
-
-      // Keyboard shortcuts
-      document.addEventListener('keydown', handleKeyboardShortcuts);
-    }
-
-    /**
-     * Handle keyboard shortcuts
-     */
-    function handleKeyboardShortcuts(e) {
-      // Cmd/Ctrl+C: Copy message
-      if ((e.metaKey || e.ctrlKey) && e.key === 'c' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-        e.preventDefault();
-        copyToClipboard();
-      }
-
-      // Cmd/Ctrl+Enter: Regenerate
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-        e.preventDefault();
-        regenerateMessage();
-      }
-
-      // Number keys 1-8: Switch message type
-      const num = parseInt(e.key);
-      if (num >= 1 && num <= 8 && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-        if (MESSAGE_TYPES[num - 1]) {
-          currentMessageType = MESSAGE_TYPES[num - 1].id;
-          currentMessage = '';
-          renderUI();
-        }
-      }
-
-      // Tab: Cycle through tones
-      if (e.key === 'Tab' && e.target.classList.contains('tone-button')) {
-        e.preventDefault();
-        const tones = ['professional', 'warm', 'direct'];
-        const currentIndex = tones.indexOf(currentTone);
-        currentTone = tones[(currentIndex + 1) % tones.length];
-        currentMessage = '';
-        renderUI();
-      }
-
-      // N: New message
-      if (e.key === 'n' && !e.ctrlKey && !e.metaKey && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-        currentMessage = '';
-        renderUI();
-      }
-    }
-
-    /**
-     * Copy current message to clipboard
-     */
-    function copyToClipboard() {
-      navigator.clipboard.writeText(currentMessage).then(() => {
-        showToast('Copied to clipboard!', 'success');
-        saveMessageToHistory();
-      }).catch(err => {
-        showToast('Failed to copy', 'error');
-      });
-    }
-
-    /**
-     * Regenerate message with different variant
-     */
-    function regenerateMessage() {
-      if (!currentCompanyName || !currentRoleId || !currentConnectionId) {
-        showToast('Select company, role, and connection first', 'error');
-        return;
-      }
-
-      const messageType = MESSAGE_TYPES.find(t => t.id === currentMessageType);
-      const companies = getCompanies();
-      const roles = getRoles();
-      const connections = getConnections();
-
-      const company = companies.find(c => c.name === currentCompanyName);
-      const role = roles.find(r => r.id === currentRoleId);
-      const connection = connections.find(c => c.id === currentConnectionId);
-
-      currentMessage = messageType.template(company, role, connection, currentTone);
-      renderMessageEditor();
-      showToast('Message regenerated!', 'success');
-    }
-
-    /**
-     * Save message to history
-     */
-    function saveMessageToHistory() {
-      const messages = getOutreachMessages();
-      const newMessage = {
-        id: 'msg-' + Date.now(),
-        connectionId: currentConnectionId,
-        messageType: currentMessageType,
-        tone: currentTone,
-        content: currentMessage,
-        generatedAt: Date.now()
-      };
-
-      messages.push(newMessage);
-      saveOutreachMessages(messages);
-      updateHistoryDisplay();
-    }
-
-    /**
-     * Load a message from history
-     */
-    function loadHistoryMessage(messageId) {
-      const messages = getOutreachMessages();
-      const message = messages.find(m => m.id === messageId);
-
-      if (message) {
-        currentMessage = message.content;
-        currentTone = message.tone;
-        currentMessageType = message.messageType;
-        renderUI();
-        showToast('Loaded from history', 'success');
-      }
-    }
-
-    /**
-     * Mark an outreach step as complete
-     */
-    function markStepComplete(step) {
-      const sequences = getOutreachSequences();
-      let sequence = sequences.find(s => s.connectionId === currentConnectionId);
-
-      if (!sequence) {
-        sequence = {
-          id: 'seq-' + Date.now(),
-          connectionId: currentConnectionId,
-          completedSteps: [],
-          createdAt: Date.now()
-        };
-        sequences.push(sequence);
-      }
-
-      if (!sequence.completedSteps.includes(step)) {
-        sequence.completedSteps.push(step);
-      }
-
-      saveOutreachSequences(sequences);
-      renderSequenceTimeline();
-      showToast(`Step ${step} marked as complete!`, 'success');
-    }
-
-    /**
-     * ================================================================
-     * UTILITY FUNCTIONS
-     * ================================================================
-     */
-
-    /**
-     * Show a toast notification
-     */
-    function showToast(message, type = 'success') {
-      const toast = document.createElement('div');
-      toast.className = `toast ${type}`;
-      toast.textContent = message;
-      document.body.appendChild(toast);
-
-      setTimeout(() => {
-        toast.remove();
-      }, 3000);
-    }
-
-    /**
-     * Escape HTML special characters to prevent injection
-     */
-    function escapeHtml(text) {
-      const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-      };
-      return text.replace(/[&<>"']/g, m => map[m]);
-    }
-
-    /**
-     * Format a timestamp as a human-readable date
-     */
-    function formatDate(timestamp) {
-      const date = new Date(timestamp);
-      const now = new Date();
-      const diff = now - date;
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-      if (hours < 1) return 'Just now';
-      if (hours < 24) return `${hours}h ago`;
-      if (days < 7) return `${days}d ago`;
-      return date.toLocaleDateString();
-    }
-
-    /**
-     * Initialize app when DOM is ready
-     */
-    document.addEventListener('DOMContentLoaded', initializeApp);
-  </script>
 </head>
-
 <body>
   <!-- Navigation Bar -->
   <nav class="nav">
@@ -1989,14 +401,19 @@ Cheers`,
       <div>
         <div class="sidebar-section-title">Company & Role</div>
         <div class="selector-group">
-          <select id="company-selector" class="selector-input"></select>
-          <select id="role-selector" class="selector-input"></select>
-          <select id="connection-selector" class="selector-input"></select>
+          <select id="company-selector" class="selector-input">
+            <option value="">Select a company...</option>
+          </select>
+          <select id="role-selector" class="selector-input" disabled>
+            <option value="">Select a role...</option>
+          </select>
+          <select id="connection-selector" class="selector-input" disabled>
+            <option value="">Select a connection...</option>
+          </select>
         </div>
       </div>
 
       <div id="context-card"></div>
-      <div id="sequence-timeline"></div>
     </div>
 
     <!-- RIGHT WORKSPACE: Message Editor -->
@@ -2008,6 +425,684 @@ Cheers`,
       <div id="editor-panel" class="editor-panel"></div>
     </div>
   </div>
+
   <script src="../shared/data-switcher.js"></script>
+  <script>
+    /**
+     * ============================================================
+     * PATHFINDER OUTREACH MODULE — Real Claude API Integration
+     * Version: 2.0 | March 2026
+     * ============================================================
+     *
+     * This module generates personalized outreach messages using
+     * real Claude API calls, never templates or generics.
+     *
+     * Features:
+     * - 8 message types with Claude-generated content
+     * - Real company, role, and connection data from localStorage
+     * - Anti-template system prompts (no generic openers)
+     * - Character limits and formatting per message type
+     * - Full message editing and history tracking
+     */
+
+    const AppState = {
+      selectedCompanyId: null,
+      selectedRoleId: null,
+      selectedConnectionId: null,
+      selectedMessageType: 'linkedin-connect',
+      currentMessage: '',
+      isGenerating: false,
+    };
+
+    const MESSAGE_TYPES = [
+      {
+        id: 'linkedin-connect',
+        name: 'LinkedIn Connection',
+        description: 'Request to connect',
+        charLimit: 300,
+      },
+      {
+        id: 'cold-email',
+        name: 'Cold Email',
+        description: 'Initial outreach',
+        charLimit: 800,
+      },
+      {
+        id: 'cold-email-followup',
+        name: 'Follow-Up Email',
+        description: 'Gentle reminder after 7+ days',
+        charLimit: 500,
+      },
+      {
+        id: 'referral-request',
+        name: 'Referral Request',
+        description: 'Ask someone to refer you',
+        charLimit: 600,
+      },
+      {
+        id: 'thank-you-call',
+        name: 'Thank You (Call)',
+        description: 'After a networking call',
+        charLimit: 400,
+      },
+      {
+        id: 'thank-you-interview',
+        name: 'Thank You (Interview)',
+        description: 'Post-interview follow-up',
+        charLimit: 700,
+      },
+      {
+        id: 'recruiter-response',
+        name: 'Recruiter Response',
+        description: 'Reply to inbound recruiter',
+        charLimit: 600,
+      },
+      {
+        id: 'networking-intro',
+        name: 'Networking Intro',
+        description: 'Warm introduction request',
+        charLimit: 500,
+      },
+    ];
+
+    // ────────────────────────────────────────────────────────
+    // DATA ACCESS FUNCTIONS
+    // ────────────────────────────────────────────────────────
+
+    function getCompanies() {
+      const data = localStorage.getItem('pf_companies');
+      return data ? JSON.parse(data) : [];
+    }
+
+    function getRoles() {
+      const data = localStorage.getItem('pf_roles');
+      return data ? JSON.parse(data) : [];
+    }
+
+    function getConnections() {
+      const data = localStorage.getItem('pf_connections');
+      return data ? JSON.parse(data) : [];
+    }
+
+    function getPreferences() {
+      const data = localStorage.getItem('pf_preferences');
+      return data ? JSON.parse(data) : {};
+    }
+
+    function getBulletBank() {
+      const data = localStorage.getItem('pf_bullet_bank');
+      return data ? JSON.parse(data) : [];
+    }
+
+    function getStoryBank() {
+      const data = localStorage.getItem('pf_story_bank');
+      return data ? JSON.parse(data) : [];
+    }
+
+    // ────────────────────────────────────────────────────────
+    // CLAUDE PROMPT GENERATION
+    // ────────────────────────────────────────────────────────
+
+    function buildOutreachPrompt(messageType, context) {
+      const { company, role, connection, userBackground } = context;
+
+      const antiTemplateRules = `
+CRITICAL RULES — Must follow these exactly:
+1. NEVER use: "I hope this message finds you well"
+2. NEVER use: "I'm reaching out because..."
+3. NEVER use: "I've followed your profile and was impressed by..."
+4. NEVER use: "I think I would be a great fit..."
+5. NEVER use: "I'd love to pick your brain..."
+6. NEVER use generic openers that could work for 100 different people
+
+REQUIRED:
+- Reference SOMETHING SPECIFIC about this company/role/person
+- Be direct and concrete, not flowery
+- Keep tone professional but casual ("Hi John" not "Dear Mr. Chen")
+- Make it sound like a real person wrote it, not a template
+- One clear idea or ask, not multiple
+- No emojis, no exclamation marks in excess`;
+
+      let typeSpecificGuidance = '';
+
+      switch (messageType) {
+        case 'linkedin-connect':
+          typeSpecificGuidance = `
+PURPOSE: Get on their radar so you can DM later
+STRUCTURE:
+1. One specific thing about them or their work
+2. One concrete reason your background is relevant
+3. Soft ask: "I'd love to connect"
+STRICT LIMIT: ${MESSAGE_TYPES.find(t => t.id === messageType).charLimit} characters max`;
+          break;
+
+        case 'cold-email':
+          typeSpecificGuidance = `
+PURPOSE: Introduce yourself and propose a concrete next step
+STRUCTURE:
+1. Hook: specific thing about them / their work / company moment
+2. Your credibility: one concrete sentence about relevant experience
+3. Why now: reason this conversation makes sense
+4. Soft ask: 15-minute call? Coffee chat?
+5. Closing: signature with LinkedIn link
+FORMAT: 4-6 sentences, multiple short paragraphs
+STRICT LIMIT: ${MESSAGE_TYPES.find(t => t.id === messageType).charLimit} characters`;
+          break;
+
+        case 'cold-email-followup':
+          typeSpecificGuidance = `
+PURPOSE: Gentle reminder; assume they're busy
+STRUCTURE:
+1. Reference the previous email (don't repeat it)
+2. New angle or reason to respond now
+3. Soft ask: still open? Quick call?
+FORMAT: 2-3 sentences only
+STRICT LIMIT: ${MESSAGE_TYPES.find(t => t.id === messageType).charLimit} characters`;
+          break;
+
+        case 'referral-request':
+          typeSpecificGuidance = `
+PURPOSE: Ask someone to refer you
+STRUCTURE:
+1. Thank them for being in your network
+2. Specific person/role/company you're targeting
+3. Why you think you're a good fit (one sentence)
+4. Ask: "Would you be willing to intro?"
+FORMAT: 3-4 sentences
+STRICT LIMIT: ${MESSAGE_TYPES.find(t => t.id === messageType).charLimit} characters`;
+          break;
+
+        case 'thank-you-call':
+          typeSpecificGuidance = `
+PURPOSE: Follow-up after a call with a potential advisor/mentor
+STRUCTURE:
+1. Thank them for their time
+2. One specific thing you learned or appreciated
+3. Concrete next step you'll take
+4. Optional: stay in touch / reconnect later
+FORMAT: 3-4 sentences, brief and genuine
+STRICT LIMIT: ${MESSAGE_TYPES.find(t => t.id === messageType).charLimit} characters`;
+          break;
+
+        case 'thank-you-interview':
+          typeSpecificGuidance = `
+PURPOSE: Follow-up after an interview
+STRUCTURE:
+1. Thank them for their time
+2. One specific thing you discussed
+3. How you see yourself contributing to that topic
+4. Next steps: "Looking forward to hearing from you"
+5. Optional: reference a specific question and your research
+FORMAT: 4-5 sentences
+STRICT LIMIT: ${MESSAGE_TYPES.find(t => t.id === messageType).charLimit} characters`;
+          break;
+
+        case 'recruiter-response':
+          typeSpecificGuidance = `
+PURPOSE: Reply to a recruiter who reached out
+STRUCTURE:
+1. Thank them for reaching out
+2. Express genuine, specific interest
+3. Ask for key info: JD, timeline, process
+4. Offer availability: "I'm available Tuesday-Thursday"
+FORMAT: 3-5 sentences
+STRICT LIMIT: ${MESSAGE_TYPES.find(t => t.id === messageType).charLimit} characters`;
+          break;
+
+        case 'networking-intro':
+          typeSpecificGuidance = `
+PURPOSE: Warm introduction request
+STRUCTURE:
+1. Context: how you know this person
+2. Why the introduction would be valuable
+3. What you're looking for / working on
+4. Ask: "Would you be open to an intro?"
+FORMAT: 3-4 sentences
+STRICT LIMIT: ${MESSAGE_TYPES.find(t => t.id === messageType).charLimit} characters`;
+          break;
+      }
+
+      const systemPrompt = `You are a personalized message generator for job search outreach. Your job is to create REAL, SPECIFIC messages that sound like they come from a real person, never from a template.
+
+${antiTemplateRules}
+
+${typeSpecificGuidance}
+
+PERSONALIZATION CHECKLIST — Aim for at least 2 of these:
+1. Specific product/initiative/news the company is working on
+2. Recipient's specific role or scope
+3. Concrete, measurable reason your background is relevant
+4. Mutual connection or shared history
+
+OUTPUT FORMAT:
+- Plain text only, no markdown
+- If subject line applicable, start with "Subject: ..."
+- No citations or footnotes needed
+- Keep it concise and direct`;
+
+      const userPrompt = `Generate a ${MESSAGE_TYPES.find(t => t.id === messageType).name.toLowerCase()} message with these specifics:
+
+RECIPIENT:
+- Name: ${connection.name}
+- Title: ${connection.title}
+- Company: ${company.name}
+- Relationship: ${connection.relationship || 'cold'}
+
+COMPANY:
+- Name: ${company.name}
+- Mission: ${company.mission || 'Not specified'}
+- Domain: ${company.domain || 'Not specified'}
+
+ROLE YOU'RE TARGETING:
+- Title: ${role.title}
+- Description: ${role.description || role.jd || 'See job description'}
+
+YOUR BACKGROUND:
+${userBackground.bullets && userBackground.bullets.length > 0
+  ? '- ' + userBackground.bullets.slice(0, 3).join('\n- ')
+  : '- Not specified'}
+
+Create a compelling, specific message that references at least one concrete detail about the company, role, or person. Make it sound authentic.`;
+
+      return { systemPrompt, userPrompt };
+    }
+
+    // ────────────────────────────────────────────────────────
+    // MESSAGE GENERATION
+    // ────────────────────────────────────────────────────────
+
+    async function generateOutreachMessage(messageType) {
+      const companyId = AppState.selectedCompanyId;
+      const roleId = AppState.selectedRoleId;
+      const connectionId = AppState.selectedConnectionId;
+
+      if (!companyId || !roleId || !connectionId) {
+        showToast('Please select a company, role, and connection first', 'error');
+        return;
+      }
+
+      const companies = getCompanies();
+      const roles = getRoles();
+      const connections = getConnections();
+      const bullets = getBulletBank();
+
+      const company = companies.find(c => c.id === companyId);
+      const role = roles.find(r => r.id === roleId);
+      const connection = connections.find(c => c.id === connectionId);
+
+      if (!company || !role || !connection) {
+        showToast('Invalid selection', 'error');
+        return;
+      }
+
+      AppState.isGenerating = true;
+      updateUI();
+
+      try {
+        const context = {
+          company,
+          role,
+          connection,
+          userBackground: { bullets: bullets.map(b => b.text).slice(0, 5) },
+        };
+
+        const { systemPrompt, userPrompt } = buildOutreachPrompt(messageType, context);
+
+        const result = await PF.claude.generate(systemPrompt, userPrompt, {
+          maxTokens: 1500,
+          temperature: 0.7,
+        });
+
+        AppState.currentMessage = result.content;
+        showToast('Message generated successfully!', 'success');
+      } catch (error) {
+        console.error('Generation error:', error);
+        showToast(`Error: ${error.message}`, 'error');
+      } finally {
+        AppState.isGenerating = false;
+        updateUI();
+      }
+    }
+
+    // ────────────────────────────────────────────────────────
+    // UI RENDERING
+    // ────────────────────────────────────────────────────────
+
+    function renderSidebar() {
+      const companies = getCompanies();
+      const roles = getRoles();
+      const connections = getConnections();
+
+      // Populate company selector
+      const companySelect = document.getElementById('company-selector');
+      companySelect.innerHTML = '<option value="">Select a company...</option>';
+      companies.forEach(c => {
+        const option = document.createElement('option');
+        option.value = c.id;
+        option.textContent = c.name;
+        companySelect.appendChild(option);
+      });
+
+      // Populate role selector (filtered by company)
+      const roleSelect = document.getElementById('role-selector');
+      if (AppState.selectedCompanyId) {
+        const companyRoles = roles.filter(r => r.company === AppState.selectedCompanyId || r.companyId === AppState.selectedCompanyId);
+        roleSelect.innerHTML = '<option value="">Select a role...</option>';
+        companyRoles.forEach(r => {
+          const option = document.createElement('option');
+          option.value = r.id;
+          option.textContent = r.title;
+          roleSelect.appendChild(option);
+        });
+        roleSelect.disabled = false;
+      } else {
+        roleSelect.innerHTML = '<option value="">Select a role...</option>';
+        roleSelect.disabled = true;
+        AppState.selectedRoleId = null;
+      }
+
+      // Populate connection selector (filtered by company)
+      const connectionSelect = document.getElementById('connection-selector');
+      if (AppState.selectedCompanyId) {
+        const company = companies.find(c => c.id === AppState.selectedCompanyId);
+        const companyConnections = connections.filter(c => c.company === company.name || c.companyId === AppState.selectedCompanyId);
+        connectionSelect.innerHTML = '<option value="">Select a connection...</option>';
+        companyConnections.forEach(c => {
+          const option = document.createElement('option');
+          option.value = c.id;
+          option.textContent = `${c.name} (${c.title})`;
+          connectionSelect.appendChild(option);
+        });
+        connectionSelect.disabled = false;
+      } else {
+        connectionSelect.innerHTML = '<option value="">Select a connection...</option>';
+        connectionSelect.disabled = true;
+        AppState.selectedConnectionId = null;
+      }
+
+      // Render context card
+      renderContextCard();
+    }
+
+    function renderContextCard() {
+      const card = document.getElementById('context-card');
+      const companies = getCompanies();
+      const roles = getRoles();
+      const connections = getConnections();
+
+      if (!AppState.selectedCompanyId || !AppState.selectedRoleId || !AppState.selectedConnectionId) {
+        card.innerHTML = '<div class="context-card-empty">Select company, role, and connection above</div>';
+        return;
+      }
+
+      const company = companies.find(c => c.id === AppState.selectedCompanyId);
+      const role = roles.find(r => r.id === AppState.selectedRoleId);
+      const connection = connections.find(c => c.id === AppState.selectedConnectionId);
+
+      card.innerHTML = `
+        <div class="context-card">
+          <h3>${connection.name}</h3>
+          <div class="detail-row">
+            <span class="detail-label">Title:</span>
+            <span class="detail-value">${connection.title}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Company:</span>
+            <span class="detail-value">${company.name}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Relationship:</span>
+            <span class="detail-value">${connection.relationship || 'Cold'}</span>
+          </div>
+          <h3 style="margin-top: var(--space-3);">Role</h3>
+          <div class="detail-row">
+            <span class="detail-label">Title:</span>
+            <span class="detail-value">${role.title}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Stage:</span>
+            <span class="detail-value">${role.stage || 'Researching'}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMessageTabs() {
+      const container = document.getElementById('message-tabs');
+      container.innerHTML = MESSAGE_TYPES
+        .map(
+          type => `
+        <button class="message-tab ${type.id === AppState.selectedMessageType ? 'active' : ''}"
+          onclick="selectMessageType('${type.id}')">
+          ${type.name}
+        </button>
+      `
+        )
+        .join('');
+    }
+
+    function renderEditorPanel() {
+      const panel = document.getElementById('editor-panel');
+
+      if (!PF.claude.hasApiKey()) {
+        panel.innerHTML = `
+          <div class="api-key-setup">
+            <h2>API Key Required</h2>
+            <p>To generate personalized messages, you need to set your Anthropic API key.</p>
+            <div style="width: 100%; max-width: 400px;"></div>
+          </div>
+        `;
+        setTimeout(() => PF.claude.renderApiKeyUI(document.querySelector('.api-key-setup > div')), 100);
+        return;
+      }
+
+      if (!AppState.selectedCompanyId || !AppState.selectedRoleId || !AppState.selectedConnectionId) {
+        panel.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <h3>Select Context</h3>
+            <p>Choose a company, role, and connection from the sidebar to begin.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const messageType = MESSAGE_TYPES.find(t => t.id === AppState.selectedMessageType);
+      const charCount = AppState.currentMessage.length;
+      const isOverLimit = charCount > messageType.charLimit;
+
+      panel.innerHTML = `
+        <div class="editor-header">
+          <div>
+            <h2 class="editor-title">${messageType.name}</h2>
+            <div class="editor-meta">
+              <span>${messageType.description}</span>
+              <span>${charCount} / ${messageType.charLimit} characters</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="message-display">
+          ${
+            AppState.isGenerating
+              ? `
+          <div class="loading">
+            <div class="spinner"></div>
+            <span>Generating personalized message...</span>
+          </div>
+          `
+              : AppState.currentMessage
+              ? `
+          <textarea class="message-textarea" id="message-editor" placeholder="Message will appear here...">${AppState.currentMessage}</textarea>
+          <div class="char-count ${isOverLimit ? 'warning' : ''}">
+            ${isOverLimit ? '⚠️ ' : '✓ '} ${charCount} / ${messageType.charLimit} characters
+          </div>
+          `
+              : `
+          <div class="message-content empty">
+            <div>
+              <p>Click "Generate" to create a personalized message</p>
+            </div>
+          </div>
+          `
+          }
+        </div>
+
+        <div class="action-buttons">
+          ${
+            AppState.isGenerating
+              ? ''
+              : `
+          <button class="btn primary" onclick="generateOutreachMessage('${AppState.selectedMessageType}')">
+            ${AppState.currentMessage ? 'Regenerate' : 'Generate'}
+          </button>
+          `
+          }
+          ${
+            AppState.currentMessage
+              ? `
+          <button class="btn" onclick="copyToClipboard()">
+            Copy to Clipboard
+          </button>
+          <button class="btn" onclick="saveToOutreachLog()">
+            Save to Outreach Log
+          </button>
+          <button class="btn" onclick="clearMessage()">
+            Clear
+          </button>
+          `
+              : ''
+          }
+        </div>
+      `;
+
+      // Re-attach textarea listeners
+      if (AppState.currentMessage) {
+        const textarea = document.getElementById('message-editor');
+        if (textarea) {
+          textarea.addEventListener('input', e => {
+            AppState.currentMessage = e.target.value;
+            renderEditorPanel();
+          });
+        }
+      }
+    }
+
+    function updateUI() {
+      renderMessageTabs();
+      renderEditorPanel();
+    }
+
+    // ────────────────────────────────────────────────────────
+    // EVENT HANDLERS
+    // ────────────────────────────────────────────────────────
+
+    function selectMessageType(typeId) {
+      AppState.selectedMessageType = typeId;
+      AppState.currentMessage = '';
+      updateUI();
+    }
+
+    function copyToClipboard() {
+      navigator.clipboard.writeText(AppState.currentMessage);
+      showToast('Copied to clipboard!', 'success');
+    }
+
+    function saveToOutreachLog() {
+      if (!AppState.selectedConnectionId || !AppState.selectedRoleId) {
+        showToast('Select a connection and role first', 'error');
+        return;
+      }
+
+      const connections = getConnections();
+      const selectedConn = connections.find(c => c.id === AppState.selectedConnectionId);
+
+      if (!selectedConn) {
+        showToast('Connection not found', 'error');
+        return;
+      }
+
+      // Initialize outreach log if not present
+      if (!selectedConn.outreachLog) {
+        selectedConn.outreachLog = [];
+      }
+
+      const logEntry = {
+        roleId: AppState.selectedRoleId,
+        messageType: AppState.selectedMessageType,
+        messageSnapshot: AppState.currentMessage,
+        sentDate: new Date().toISOString(),
+        status: 'draft',
+      };
+
+      selectedConn.outreachLog.push(logEntry);
+      localStorage.setItem('pf_connections', JSON.stringify(connections));
+
+      showToast('Saved to outreach log!', 'success');
+    }
+
+    function clearMessage() {
+      AppState.currentMessage = '';
+      updateUI();
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: ${type === 'error' ? '#dc2626' : type === 'success' ? '#16a34a' : '#3b82f6'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        z-index: 1000;
+        animation: slideIn 0.3s ease;
+      `;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ────────────────────────────────────────────────────────
+    // EVENT LISTENERS
+    // ────────────────────────────────────────────────────────
+
+    document.getElementById('company-selector').addEventListener('change', e => {
+      AppState.selectedCompanyId = e.target.value;
+      AppState.selectedRoleId = null;
+      AppState.selectedConnectionId = null;
+      AppState.currentMessage = '';
+      renderSidebar();
+      updateUI();
+    });
+
+    document.getElementById('role-selector').addEventListener('change', e => {
+      AppState.selectedRoleId = e.target.value;
+      AppState.currentMessage = '';
+      renderContextCard();
+      updateUI();
+    });
+
+    document.getElementById('connection-selector').addEventListener('change', e => {
+      AppState.selectedConnectionId = e.target.value;
+      AppState.currentMessage = '';
+      renderContextCard();
+      updateUI();
+    });
+
+    // ────────────────────────────────────────────────────────
+    // INITIALIZATION
+    // ────────────────────────────────────────────────────────
+
+    function initializeApp() {
+      renderSidebar();
+      renderMessageTabs();
+      renderEditorPanel();
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeApp);
+  </script>
 </body>
 </html>

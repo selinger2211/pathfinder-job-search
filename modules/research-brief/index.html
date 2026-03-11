@@ -938,6 +938,228 @@
     };
 
     // ================================================================
+    // SECTION PROMPTS — for direct API fallback when bridge is down
+    // ================================================================
+    // These are embedded here so the browser can generate sections directly
+    // if the MCP bridge at localhost:3456 is unavailable.
+    // Sourced from the pathfinder-artifacts-mcp service/claude.ts.
+    const SECTION_PROMPTS = {
+      0: {
+        title: "Known Context",
+        prompt: `Generate Section 0: Known Context.
+
+This section only appears when there is NO job description (JD) available. It aggregates everything known about the role from recruiter conversations, emails, and research.
+
+Output structure (use h3 for subsections):
+- **Source of This Role** — Who told the candidate about it, when, through what channel.
+- **What We Know** — Structured summary of all roleHints fields that have values (function, level, scope, product area, team size, reporting line, tech stack, location). Use a definition-list style.
+- **Recruiter Intel Log** — Chronological entries from knownContext[], each with date, source channel, and what was learned.
+- **Reconstructed Role Profile** — A synthesized paragraph that downstream sections can use as a JD substitute. Be conservative: only assert what the data supports, flag anything uncertain.
+- **What's Still Unknown** — Explicit list of gaps (full JD, explicit requirements, comp range, interview panel). For each gap, note which brief sections it would unlock.
+
+This section is primarily data assembly, not generation. The "Reconstructed Role Profile" paragraph is the only generative part.`,
+      },
+      1: {
+        title: "Role Decode",
+        prompt: `Generate Section 1: Role Decode.
+
+Parse the JD (or Reconstructed Role Profile if no JD) and surface what this role actually needs — the stuff between the lines.
+
+Output structure (use h3 for subsections):
+- **The Real Problem** — One paragraph: what business problem is this hire solving? Inferred from JD language, team description, and company stage.
+- **Explicit Requirements** — Bulleted list of what the JD directly asks for. Tag each as "must-have" or "nice-to-have" based on JD language ("required" vs "preferred").
+- **Implied Requirements** — What the JD signals without stating. E.g., "comfortable with ambiguity" → early-stage product, undefined roadmap.
+- **Level Signals** — Seniority indicators: scope of ownership, decision-making authority, team size, reporting line hints. Does this match the stated title?
+- **Red Flags & Watch Items** — Anything unusual: unrealistic scope, conflicting requirements, buzzword density suggesting the role isn't well-defined.
+
+Read the JD as a hiring manager would write it — with constraints, urgency signals, and organizational context embedded in word choices. This is not a summary; it's an interpretation.
+
+If no JD is available, generate from the Known Context section's "Reconstructed Role Profile" and clearly label: "Based on recruiter intel — will be updated when JD is available."`,
+      },
+      2: {
+        title: "Company Now",
+        prompt: `Generate Section 2: Company Now.
+
+What's happening at this company RIGHT NOW that's relevant to THIS role. Not a founding story — a situational briefing.
+
+Output structure (use h3 for subsections):
+- **Current Moment** — 2-3 paragraphs on what the company is doing this quarter. Product launches, strategic shifts, market moves, leadership changes. Everything timestamped.
+- **Why This Role, Why Now** — Hypothesis: what's driving this hire? New product line? Team scaling? Backfill? Derived from company context + JD language.
+- **Key Metrics** (if available) — Revenue signals, growth rate, user base, market share. For public companies: recent earnings highlights. For private: last known fundraise, headcount trajectory.
+- **Leadership** — CEO, relevant VP/SVP over this function, CTO (if engineering-adjacent). One line each: name, tenure, background, notable decisions.
+
+Prioritize recency. If your training data is limited for this company, say so and flag sections for manual research. Never fabricate news or metrics.`,
+      },
+      3: {
+        title: "Funding & Corporate Structure",
+        prompt: `Generate Section 3: Funding & Corporate Structure.
+
+Follow the money. Who funds this company, what's the cap table story, and what's the corporate family tree.
+
+Output structure (use h3 for subsections):
+- **Funding History** — HTML table: Round, Date, Amount, Lead Investor(s), Valuation (if known). Most recent round first.
+- **Notable Investors & Board Members** — Names, firms, and why they matter.
+- **Corporate Structure** — Parent company (if subsidiary), subsidiaries, recent acquisitions, joint ventures.
+- **Financial Health Signals** — For public: market cap, P/E, revenue trend. For private: runway signals. For both: layoffs, hiring freezes, or aggressive hiring signals.
+- **What This Means for You** — One paragraph connecting the financial picture to the role.
+
+Use known funding databases (Crunchbase-style knowledge). If you don't have specific data, say "Not found in available data — verify on Crunchbase" rather than guessing. Never fabricate funding amounts or valuations.`,
+      },
+      4: {
+        title: "Competitive Landscape",
+        prompt: `Generate Section 4: Competitive Landscape.
+
+Who is this company fighting, specifically in the product area this role touches.
+
+Output structure (use h3 for subsections):
+- **Direct Competitors** — 3-5 companies competing in the same product space as this role. For each: one-line description, estimated scale, key differentiator.
+- **Indirect / Adjacent Competitors** — 2-3 companies that compete tangentially or could expand into this space.
+- **Competitive Dynamics** — Market narrative: consolidating? Land-grab? Feature parity race? Who's winning and why?
+- **Target Company's Moat** — Defensible advantage: network effects, data, distribution, brand, switching costs, regulatory?
+- **Interview Leverage** — How to reference the competitive landscape in interviews. One example talking point.
+
+Scope competitors to the PRODUCT AREA the role sits in, not the company overall. The JD should provide scoping signals.`,
+      },
+      5: {
+        title: "Team & Org Intelligence",
+        prompt: `Generate Section 5: Team & Org Intelligence.
+
+Who would the candidate work with? Who's the hiring manager? What does the org look like?
+
+Output structure (use h3 for subsections):
+- **Likely Reporting Line** — Inferred from JD: who does this role report to? What does that imply about scope and visibility?
+- **Team Shape** — Estimated team size, composition (PMs, engineers, designers, data), and org model (squad, pod, functional).
+- **Adjacent Teams** — Who would this role interact with most? Based on JD's "cross-functional" mentions.
+- **Interviewer Profiles** — If interviewer names are provided in the context, generate a brief profile for each. If not, show: "Add interviewer names in the sidebar to unlock this section."
+- **Org Observations** — Signals about the org from JD or public info: new team, re-org, rapid growth.
+
+Use only publicly available professional information for interviewer research. Flag uncertainty.`,
+      },
+      6: {
+        title: "Network & Connections",
+        prompt: `Generate Section 6: Network & Connections.
+
+Who does the candidate already know at this company? Turn the network into an advantage.
+
+Output structure (use h3 for subsections):
+- **Direct Connections** — People from pf_connections who work at this company. For each: name, title, relationship context, suggested action.
+- **Second-Degree Paths** — Connections who previously worked there, or who are connected to known employees.
+- **Suggested Outreach** — For each viable connection, a one-liner on what to say — not a full email, just a hook.
+- **No Connections?** — If no matches: "No connections found at [Company]. Consider: LinkedIn search for [Company] + [your school/previous employers]."
+
+This section is data-driven. Cross-reference the connections list against the company name. Creative suggestions for second-degree paths are welcome, but the core list must be factual from the user's data.`,
+      },
+      7: {
+        title: "Fit Analysis",
+        prompt: `Generate Section 7: Fit Analysis.
+
+The honest answer to "why should they hire you?" — mapped requirement by requirement against the candidate's actual experience.
+
+Output structure (use h3 for subsections):
+- **Requirements Map** — HTML table with columns: Requirement (from JD), Your Evidence (matched bullet or story), Fit (green check / yellow warning / red X), Notes.
+  - Green: direct, demonstrable experience.
+  - Yellow: adjacent experience that can be positioned.
+  - Red: genuine gap, no relevant experience found.
+- **Overall Fit Score** — X/Y requirements matched (green + yellow count). Not a percentage — a concrete count.
+- **Gap Positioning Strategies** — For each yellow/red requirement: how to talk about it without lying. Specific framing suggestions.
+- **Secret Weapons** — Experience from the bullet bank that the JD doesn't ask for but would be valuable.
+
+This must be HONEST. Never fabricate matches or inflate yellow to green. A brief that tells you "you're perfect" is useless. If the bullet bank is empty, flag it prominently and generate a degraded version using only JD analysis.`,
+      },
+      8: {
+        title: "Compensation Intelligence",
+        prompt: `Generate Section 8: Compensation Intelligence.
+
+Know your number before they ask.
+
+Output structure (use h3 for subsections):
+- **Expected Range** — Base salary range for this title + level + location + company stage. Source your estimates.
+- **Total Comp Structure** — How this company typically pays: base + bonus + equity. RSUs vs options. Vesting schedule.
+- **JD Comp Signals** — Does the JD state a range? Is it competitive? Does "competitive compensation" mean below-market base?
+- **Negotiation Leverage Points** — Urgency language, niche skill requirements, scarce talent market.
+- **Your Target** — Suggested ask range (low / target / stretch) with rationale. Caveat: "This is a data-informed starting point, not financial advice."
+
+Use levels.fyi and glassdoor-style knowledge. Never fabricate specific salary numbers — cite the source and date. If no data available, say so.`,
+      },
+      9: {
+        title: "Strategic Challenges & First 90 Days",
+        prompt: `Generate Section 9: Strategic Challenges & First 90 Days.
+
+Walk into the interview with a hypothesis.
+
+Output structure (use h3 for subsections):
+- **Top 3 Strategic Challenges** — Derived from JD priorities, company stage, and competitive landscape. For each: the challenge (one sentence), why it matters now (one paragraph), evidence from JD or company context.
+- **Your First 90 Days** — Realistic, phase-based plan:
+  - Days 1-30: Listen and learn. What to understand? Who to talk to? What data to look at?
+  - Days 31-60: Quick wins. What to ship or unblock?
+  - Days 61-90: Strategic bets. What to propose to leadership?
+- **Talking Points** — 2-3 specific things to say in the interview to demonstrate strategic thinking about THIS role at THIS company.
+
+The 90-day plan should be realistic for the level. Avoid generic "build relationships" — focus on specifics from the JD and company context.`,
+      },
+      10: {
+        title: "Culture & Values Decode",
+        prompt: `Generate Section 10: Culture & Values Decode.
+
+What this company ACTUALLY values — not just what the careers page says.
+
+Output structure (use h3 for subsections):
+- **Stated Values** — What the company says it values (careers page, mission statement). Listed with source.
+- **Signals from the JD** — What the JD language implies. "Fast-paced" = long hours? "Collaborative" = consensus-driven? Decoded realistically.
+- **Interview Style Signals** — What to expect: case study, system design, behavioral, portfolio review? Inferred from company size, stage, industry.
+- **What Gets Rewarded** — Shipping fast or careful analysis? Builder or optimizer? Consensus or conviction?
+- **Culture Fit Questions for You** — 3-4 questions the candidate should ask themselves.
+
+Be nuanced. "Fast-paced" doesn't always mean burnout. Read signals in context of company stage, size, and industry.`,
+      },
+      11: {
+        title: "Questions to Ask",
+        prompt: `Generate Section 11: Questions to Ask.
+
+Role-specific questions organized by interview round that demonstrate the candidate has done the homework.
+
+Output structure (use h3 for subsections):
+- **Recruiter Screen** (3-4 questions) — Logistics, process, timeline, team structure validation.
+- **Hiring Manager** (4-5 questions) — Role-specific: what does success look like? Biggest challenge? What happened to the last person?
+- **Technical / Panel** (3-4 questions) — Product/engineering-focused: tech stack decisions, product process.
+- **Executive / Final Round** (3-4 questions) — Company direction, team investment, strategic priorities.
+- **Back-pocket Questions** — 2-3 that work in any round.
+
+Every question should be derivable from the brief's other sections. Generic questions ("tell me about the culture") should NEVER appear here. Reference specific JD requirements and company context.`,
+      },
+      12: {
+        title: "TMAY Script",
+        prompt: `Generate Section 12: TMAY Script.
+
+A "Tell Me About Yourself" narrative built from the candidate's actual resume, positioned for this specific role.
+
+Output structure (use h3 for subsections):
+- **90-Second Version** — Tight version for recruiter screens. Arc: where you've been → what you're great at → why this role. MUST be speakable in 90 seconds (~225 words). Count them.
+- **2-Minute Version** — Expanded for hiring manager rounds. Same arc with more detail: specific accomplishments, named companies, quantified impact. ~450 words.
+- **Key Beats** — The 4-5 inflection points the script hits. For each: why it's included (maps to which JD requirement).
+- **What to Skip** — Experience that should NOT be brought up unprompted for this role.
+- **Transition Line** — How to end the TMAY: a bridge sentence connecting story to role.
+
+The script should sound like a person talking, not a resume being read aloud. Use first person. Natural transitions. NOT "Subsequently, I transitioned to..."`,
+      },
+      13: {
+        title: "Likely Interview Questions",
+        prompt: `Generate Section 13: Likely Interview Questions.
+
+Predict what they'll ask and have an answer ready.
+
+Output structure (use h3 for subsections):
+- **Behavioral Questions** (5-7) — Derived from JD requirements and company values. For each: the likely question, why they'd ask it, and a matched STAR story from the story bank (or "No matching story — consider preparing one about [topic]").
+- **Technical / Product Questions** (3-5) — Domain-specific: case studies, estimation, system design, strategy.
+- **Role-Specific Curveballs** (2-3) — Unique to this role or company. "Why this company specifically?" "How would you handle [specific challenge]?"
+- **Questions About Your Gaps** (1-3) — The ones that probe red/yellow items from the Fit Analysis. For each: likely question and a prepared answer that's honest but well-positioned.
+- **Your Answer Framework** — For behavioral: STAR structure with specific stories selected. For technical: go-to frameworks.
+
+Questions must be SPECIFIC to this role. Every question needs a "why they'd ask this" rationale tied to the JD or company context.`,
+      }
+    };
+
+    // ================================================================
     // STATE & CONFIG
     // ================================================================
 
@@ -950,6 +1172,7 @@
       sidebarCollapsed: false,
       apiKey: localStorage.getItem('pf_anthropic_key') || '',  // Claude API key
       bridgeAvailable: false,  // Whether the HTTP bridge is reachable
+      useFallbackAPI: false,   // Whether to use direct Claude API fallback
       generatedSections: {},   // { sectionNum: htmlContent } for dependency passing
       isGenerating: false,     // Prevent duplicate generation
     };
@@ -1390,19 +1613,51 @@
 
     /**
      * Check if the MCP HTTP bridge is available on localhost:3456.
-     * Sets state.bridgeAvailable and returns the result.
+     * Sets state.bridgeAvailable and state.useFallbackAPI based on result.
+     * If bridge is down, shows a notice about using direct API.
+     * Returns true if bridge is up, false if we'll use the fallback.
      */
     async function checkBridgeHealth() {
       try {
         const resp = await fetch(BRIDGE_ENDPOINTS.health, { signal: AbortSignal.timeout(3000) });
         if (resp.ok) {
           state.bridgeAvailable = true;
+          state.useFallbackAPI = false;
           return true;
         }
       } catch (e) {
-        // Bridge not running — that's okay, we'll show a setup message
+        // Bridge not running — that's okay, we'll use the fallback
       }
       state.bridgeAvailable = false;
+      state.useFallbackAPI = true;
+
+      // Show a notice about using the fallback API
+      const noticeEl = document.createElement('div');
+      noticeEl.style.cssText = `
+        padding: 10px 14px;
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 4px;
+        font-size: 12px;
+        color: rgb(59, 130, 246);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      `;
+      noticeEl.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 1C4.13 1 1 4.13 1 8s3.13 7 7 7 7-3.13 7-7-3.13-7-7-7zm0 12.5c-3.035 0-5.5-2.465-5.5-5.5S4.965 2.5 8 2.5s5.5 2.465 5.5 5.5-2.465 5.5-5.5 5.5z"/>
+          <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" fill="currentColor" font-size="12" font-weight="bold">i</text>
+        </svg>
+        <span>MCP bridge not running — using direct Claude API (slower but works)</span>
+      `;
+
+      const briefArea = document.getElementById('briefArea');
+      if (briefArea && briefArea.firstChild) {
+        briefArea.insertBefore(noticeEl, briefArea.firstChild);
+      }
+
       return false;
     }
 
@@ -1466,39 +1721,257 @@
     }
 
     /**
-     * Generate a single section via the MCP HTTP bridge.
-     * POSTs to /api/generate-section with full context.
+     * Generate a single section via the MCP HTTP bridge, with fallback to direct API.
+     *
+     * PREFERRED PATH: MCP bridge at localhost:3456 (faster, batched)
+     * FALLBACK PATH: Direct Claude API call (slower but works when bridge is down)
+     *
      * Returns { content, citations, inputsUsed, inputsMissing, ... }
      */
     async function generateSectionViaAPI(sectionNum, role, company, previousSections) {
       const context = gatherBriefContext(role, company);
 
-      const payload = {
-        apiKey: state.apiKey,
-        sectionNum,
-        role: context.role,
-        company: context.company,
-        connections: context.connections,
-        bulletBank: context.bulletBank,
-        storyBank: context.storyBank,
-        compData: context.compData,
-        previousSections: previousSections || {},
-        forceRefresh: true,
-        model: localStorage.getItem('pf_claude_model') || 'claude-sonnet-4-20250514',
-      };
+      // Try the MCP bridge first if available
+      if (state.bridgeAvailable && !state.useFallbackAPI) {
+        try {
+          const payload = {
+            apiKey: state.apiKey,
+            sectionNum,
+            role: context.role,
+            company: context.company,
+            connections: context.connections,
+            bulletBank: context.bulletBank,
+            storyBank: context.storyBank,
+            compData: context.compData,
+            previousSections: previousSections || {},
+            forceRefresh: true,
+            model: localStorage.getItem('pf_claude_model') || 'claude-sonnet-4-20250514',
+          };
 
-      const resp = await fetch(BRIDGE_ENDPOINTS.generateSection, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+          const resp = await fetch(BRIDGE_ENDPOINTS.generateSection, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            signal: AbortSignal.timeout(30000), // 30s timeout
+          });
 
-      if (!resp.ok) {
-        const errBody = await resp.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(errBody.error || `HTTP ${resp.status}`);
+          if (!resp.ok) {
+            const errBody = await resp.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(errBody.error || `HTTP ${resp.status}`);
+          }
+
+          return await resp.json();
+        } catch (error) {
+          // Bridge call failed — fall through to direct API
+          console.warn(`Bridge call failed for section ${sectionNum}: ${error.message}`);
+          state.useFallbackAPI = true;
+        }
       }
 
-      return await resp.json();
+      // FALLBACK: Direct Claude API call
+      return await generateSectionViaDirectAPI(sectionNum, context, previousSections);
+    }
+
+    /**
+     * Generate a section via direct Claude API (fallback when bridge is unavailable).
+     * Builds the same prompts and context blocks as the bridge would.
+     * Returns { content, citations, inputsUsed, inputsMissing, ... }
+     */
+    async function generateSectionViaDirectAPI(sectionNum, context, previousSections) {
+      // Check that we have PF.claude available (from claude-api.js)
+      if (!window.PF || !window.PF.claude) {
+        throw new Error('Claude API utility not loaded. Please reload the page.');
+      }
+
+      const sectionDef = SECTION_PROMPTS[sectionNum];
+      if (!sectionDef) {
+        throw new Error(`Unknown section number: ${sectionNum}`);
+      }
+
+      // Build system prompt (same as MCP server uses)
+      const systemPrompt = `You are a job search preparation researcher. You generate highly specific, role-tailored research briefs for interview preparation. Every claim must be sourced. Never fabricate company data, funding amounts, names, or metrics. If you don't have specific data, say so clearly and suggest where the user can find it.
+
+CRITICAL: Your output MUST be valid HTML only — never markdown. Use semantic HTML tags: <h3>, <p>, <ul>, <li>, <ol>, <table>, <strong>, <em>. Do NOT use markdown syntax like **bold**, *italic*, ## headers, or - list items. Include citation markers as [n] where n maps to the citations array you return alongside the content.
+
+Be direct. No filler. No "in today's rapidly evolving landscape." Every sentence should give the reader something they can use in an interview or a decision.
+
+When data is sourced from recruiter intel (knownContext entries), clearly label it: "Based on recruiter intel, not confirmed JD."
+
+When data is inferred from your training knowledge, label the source and date: "Based on publicly available information as of [your knowledge cutoff]."
+
+Format citations as a JSON array at the end of your response, wrapped in <citations> tags:
+<citations>
+[
+  {"n": 1, "claim": "brief claim text", "source": "source description", "sourceType": "enrichment_web|job_board|manual_entry|ai_generated", "url": "optional url", "date": "optional date"}
+]
+</citations>
+
+The HTML content should come first, followed by the citations block. Do not include any other text after the citations block.`;
+
+      // Build context block (same structure as MCP server)
+      let contextBlock = '';
+
+      contextBlock += `<role>\n`;
+      contextBlock += `  Title: ${context.role.title || "Unknown"}\n`;
+      contextBlock += `  Company: ${context.role.company || "Unknown"}\n`;
+      contextBlock += `  Level: ${context.role.targetLevel || "Not specified"}\n`;
+      contextBlock += `  Positioning: ${context.role.positioning || "ic"}\n`;
+      contextBlock += `  Stage: ${context.role.stage || "researching"}\n`;
+      contextBlock += `  URL: ${context.role.url || "Not provided"}\n`;
+      if (context.role.dateAdded) {
+        contextBlock += `  Date Added: ${new Date(context.role.dateAdded).toISOString().split("T")[0]}\n`;
+      }
+      contextBlock += `  Salary Info: ${context.role.salary || "Not provided"}\n`;
+      contextBlock += `</role>\n\n`;
+
+      contextBlock += `<company>\n`;
+      contextBlock += `  Name: ${context.company.name || "Unknown"}\n`;
+      contextBlock += `  Domain: ${context.company.domain || "Unknown"}\n`;
+      contextBlock += `  Type: ${context.company.companyType || "Unknown"}\n`;
+      contextBlock += `  Funding: ${context.company.fundingStage || "Unknown"}\n`;
+      contextBlock += `  Headcount: ${context.company.headcount || "Unknown"}\n`;
+      contextBlock += `  Mission: ${context.company.missionStatement || "Not provided"}\n`;
+      contextBlock += `  Remote Policy: ${context.company.remotePolicy || "Not specified"}\n`;
+      contextBlock += `  Tech Stack: ${context.company.techStack || "Not specified"}\n`;
+      contextBlock += `</company>\n\n`;
+
+      if (context.role.jdText) {
+        contextBlock += `<jd>\n${context.role.jdText}\n</jd>\n\n`;
+      } else {
+        contextBlock += `<jd>No job description available. Use role hints and known context as a substitute.</jd>\n\n`;
+      }
+
+      if (context.role.roleHints && Object.keys(context.role.roleHints).length > 0) {
+        contextBlock += `<role_hints>\n`;
+        Object.entries(context.role.roleHints)
+          .filter(([, v]) => v)
+          .forEach(([k, v]) => {
+            contextBlock += `  ${k}: ${v}\n`;
+          });
+        contextBlock += `</role_hints>\n\n`;
+      }
+
+      if (context.role.knownContext && context.role.knownContext.length > 0) {
+        contextBlock += `<known_context>\n`;
+        context.role.knownContext.forEach(e => {
+          contextBlock += `  [${e.date}] (${e.source}) ${e.note}\n`;
+        });
+        contextBlock += `</known_context>\n\n`;
+      }
+
+      if (context.role.recruiterSource) {
+        contextBlock += `<recruiter_source>${context.role.recruiterSource}</recruiter_source>\n\n`;
+      }
+
+      // Build extra inputs block (section-specific data)
+      let extraInputsBlock = '';
+
+      if (sectionDef.prompt.includes('connections') && context.connections && context.connections.length > 0) {
+        extraInputsBlock += `<connections>\n`;
+        context.connections.forEach(c => {
+          extraInputsBlock += `  - ${c.name} | ${c.company} | ${c.title || "?"} | ${c.relationship || "unknown"} | LinkedIn: ${c.linkedinUrl || "N/A"}\n`;
+        });
+        extraInputsBlock += `</connections>\n\n`;
+      }
+
+      if (sectionDef.prompt.includes('bullet') && context.bulletBank && context.bulletBank.length > 0) {
+        extraInputsBlock += `<bullet_bank>\n`;
+        context.bulletBank.forEach(b => {
+          extraInputsBlock += `  - [${b.company || "?"}] ${b.text}${b.impact ? ` (Impact: ${b.impact})` : ""}\n`;
+        });
+        extraInputsBlock += `</bullet_bank>\n\n`;
+      }
+
+      if (sectionDef.prompt.includes('story') && context.storyBank && context.storyBank.length > 0) {
+        extraInputsBlock += `<story_bank>\n`;
+        context.storyBank.forEach(s => {
+          const tags = (s.tags || []).join(", ");
+          extraInputsBlock += `  - "${s.title}" [${tags}]\n`;
+        });
+        extraInputsBlock += `</story_bank>\n\n`;
+      }
+
+      if (sectionDef.prompt.includes('comp') && context.compData && Object.keys(context.compData).length > 0) {
+        extraInputsBlock += `<comp_data>\n${JSON.stringify(context.compData, null, 2)}\n</comp_data>\n\n`;
+      }
+
+      if (sectionDef.prompt.includes('interviewer') && context.role.interviewerNames) {
+        const names = context.role.interviewerNames.join(", ");
+        extraInputsBlock += `<interviewer_names>${names || "None provided"}</interviewer_names>\n\n`;
+      }
+
+      // Build previously generated sections block (for dependent sections)
+      let previousSectionsBlock = '';
+      if (previousSections && Object.keys(previousSections).length > 0) {
+        previousSectionsBlock += `<previously_generated_sections>\n`;
+        Object.entries(previousSections).forEach(([num, content]) => {
+          const prevDef = SECTION_PROMPTS[parseInt(num)];
+          previousSectionsBlock += `<previous_section num="${num}" title="${prevDef?.title || "Unknown"}">\n${content}\n</previous_section>\n\n`;
+        });
+        previousSectionsBlock += `</previously_generated_sections>\n\n`;
+      }
+
+      // Assemble final user prompt
+      const userMessage = `${contextBlock}${extraInputsBlock}${previousSectionsBlock}---\n\n${sectionDef.prompt}`;
+
+      // Call Claude API directly
+      const model = localStorage.getItem('pf_claude_model') || 'claude-sonnet-4-20250514';
+      const response = await PF.claude.generate(systemPrompt, userMessage, {
+        model,
+        maxTokens: 4096
+      });
+
+      // Parse the response to extract HTML and citations
+      const responseText = response.content;
+      const citationsMatch = responseText.match(/<citations>\s*([\s\S]*?)\s*<\/citations>/);
+      let citations = [];
+      let content = responseText;
+
+      if (citationsMatch) {
+        content = responseText.replace(/<citations>[\s\S]*?<\/citations>/, "").trim();
+        try {
+          citations = JSON.parse(citationsMatch[1]);
+        } catch (e) {
+          console.warn("Failed to parse citations JSON from API response");
+          citations = [];
+        }
+      }
+
+      // Analyze which inputs were available
+      const inputsUsed = [];
+      const inputsMissing = [];
+
+      if (context.role.jdText) inputsUsed.push("jdText");
+      else inputsMissing.push("jdText");
+
+      if (context.role.title && context.role.title !== "Exploratory") inputsUsed.push("roleTitle");
+      else inputsMissing.push("roleTitle");
+
+      if (context.company.name) inputsUsed.push("companyName");
+      else inputsMissing.push("companyName");
+
+      if (context.company.fundingStage) inputsUsed.push("fundingStage");
+      else inputsMissing.push("fundingStage");
+
+      if (context.connections && context.connections.length > 0) inputsUsed.push("connections");
+      else if (sectionDef.prompt.includes('connections')) inputsMissing.push("connections");
+
+      if (context.bulletBank && context.bulletBank.length > 0) inputsUsed.push("bulletBank");
+      else if (sectionDef.prompt.includes('bullet')) inputsMissing.push("bulletBank");
+
+      if (context.storyBank && context.storyBank.length > 0) inputsUsed.push("storyBank");
+      else if (sectionDef.prompt.includes('story')) inputsMissing.push("storyBank");
+
+      return {
+        content,
+        citations,
+        inputsUsed,
+        inputsMissing,
+        generatedAt: new Date().toISOString(),
+        sectionNum,
+        title: sectionDef.title,
+        model,
+      };
     }
 
     /**
@@ -2883,6 +3356,7 @@
     document.addEventListener('DOMContentLoaded', initializeUI);
 
   </script>
+  <script src="../shared/claude-api.js"></script>
   <script src="../shared/data-switcher.js"></script>
 </body>
 </html>

@@ -177,7 +177,7 @@ export async function handleGenerateBriefSection(
   const result = await generateBriefSection(apiKey, sectionNum, ctx, previousSections, model);
 
   // Save as artifact
-  const artifactId = storageService.generateArtifactId("research_brief", company.name);
+  const artifactId = storageService.generateArtifactId("research_brief", `${company.name}_${role.id}_s${sectionNum}`);
   const filename = `brief_${company.name.toLowerCase().replace(/\s+/g, "-")}_${role.id}_section${sectionNum}.json`;
   const filePath = storageService.resolveTypePath("research_brief", filename);
 
