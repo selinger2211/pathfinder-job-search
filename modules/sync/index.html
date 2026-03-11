@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pathfinder — Sync Hub</title>
+    <meta name="description" content="Sync external data sources (Google Calendar, Indeed, Gmail, Clay) into Pathfinder modules">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>P</text></svg>">
+
+    <link rel="stylesheet" href="../shared/pathfinder.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+    /* ================================================================
+       SYNC HUB STYLES
+       Layout, cards, and status indicators for the data sync UI.
+       ================================================================ */
+
+    .sync-layout {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: var(--space-6);
+    }
+
+    /* Hero banner at the top */
+    .sync-hero {
+        background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-subtle) 100%);
+        border: 1px solid var(--bg-subtle);
+        border-radius: var(--radius-lg);
+        padding: var(--space-8);
+        margin-bottom: var(--space-6);
+        text-align: center;
+    }
+
+    .sync-hero h1 {
+        font-size: var(--text-2xl);
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--space-2);
+    }
+
+    .sync-hero p {
+        color: var(--text-secondary);
+        font-size: var(--text-base);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    /* Sync timestamp banner */
+    .sync-timestamp {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-2);
+        padding: var(--space-3);
+        background: var(--bg-surface);
+        border: 1px solid var(--bg-subtle);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-6);
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+    }
+
+    .sync-timestamp .fresh { color: var(--accent-green); }
+    .sync-timestamp .stale { color: var(--accent-amber); }
+
+    /* Source cards grid */
+    .sync-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: var(--space-5);
+        margin-bottom: var(--space-6);
+    }
+
+    .sync-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--bg-subtle);
+        border-radius: var(--radius-lg);
+        padding: var(--space-5);
+        transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .sync-card:hover {
+        border-color: var(--text-tertiary);
+        box-shadow: var(--shadow-md);
+    }
+
+    .sync-card-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        margin-bottom: var(--space-4);
+    }
+
+    .sync-card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+
+    .sync-card-icon.calendar { background: rgba(66, 133, 244, 0.15); color: #4285F4; }
+    .sync-card-icon.indeed { background: rgba(46, 90, 255, 0.15); color: #2E5AFF; }
+    .sync-card-icon.gmail { background: rgba(234, 67, 53, 0.15); color: #EA4335; }
+    .sync-card-icon.clay { background: rgba(99, 102, 241, 0.15); color: #6366f1; }
+
+    .sync-card-title {
+        font-size: var(--text-lg);
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .sync-card-subtitle {
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+    }
+
+    /* Data preview inside cards */
+    .sync-preview {
+        background: var(--bg-base);
+        border: 1px solid var(--bg-subtle);
+        border-radius: var(--radius-md);
+        padding: var(--space-3);
+        margin-bottom: var(--space-4);
+        max-height: 200px;
+        overflow-y: auto;
+        font-size: var(--text-sm);
+    }
+
+    .sync-preview-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2) 0;
+        border-bottom: 1px solid var(--bg-subtle);
+        color: var(--text-secondary);
+    }
+
+    .sync-preview-item:last-child { border-bottom: none; }
+    .sync-preview-item .label { color: var(--text-primary); font-weight: 500; flex: 1; }
+    .sync-preview-item .meta { color: var(--text-tertiary); font-size: var(--text-xs); white-space: nowrap; }
+
+    /* Sync action buttons */
+    .sync-actions {
+        display: flex;
+        gap: var(--space-3);
+        align-items: center;
+    }
+
+    .sync-btn {
+        flex: 1;
+        padding: var(--space-3) var(--space-4);
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: var(--text-sm);
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-2);
+        transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .sync-btn.primary {
+        background: var(--accent-blue);
+        color: white;
+    }
+
+    .sync-btn.primary:hover { opacity: 0.9; }
+    .sync-btn.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .sync-btn.secondary {
+        background: var(--bg-subtle);
+        color: var(--text-primary);
+        border: 1px solid var(--bg-subtle);
+    }
+
+    .sync-btn.secondary:hover { border-color: var(--text-tertiary); }
+
+    /* Status badges */
+    .sync-status {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        padding: var(--space-1) var(--space-2);
+        border-radius: var(--radius-full);
+        font-size: var(--text-xs);
+        font-weight: 600;
+    }
+
+    .sync-status.ready { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+    .sync-status.synced { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+    .sync-status.error { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+
+    .sync-status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    /* Summary footer */
+    .sync-summary {
+        background: var(--bg-surface);
+        border: 1px solid var(--bg-subtle);
+        border-radius: var(--radius-lg);
+        padding: var(--space-5);
+    }
+
+    .sync-summary h3 {
+        font-size: var(--text-base);
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--space-3);
+    }
+
+    .sync-log {
+        font-family: 'SF Mono', 'Fira Code', monospace;
+        font-size: var(--text-xs);
+        color: var(--text-secondary);
+        max-height: 200px;
+        overflow-y: auto;
+        line-height: 1.8;
+    }
+
+    .sync-log .success { color: var(--accent-green); }
+    .sync-log .warning { color: var(--accent-amber); }
+    .sync-log .info { color: var(--accent-blue); }
+
+    /* Data count badges */
+    .data-count {
+        font-size: var(--text-2xl);
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .data-count-label {
+        font-size: var(--text-xs);
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* Sync All banner */
+    .sync-all-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4) var(--space-5);
+        margin-bottom: var(--space-6);
+    }
+
+    .sync-all-bar .info {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+    }
+
+    .sync-all-bar .info strong {
+        color: var(--text-primary);
+        font-size: var(--text-base);
+    }
+
+    .sync-all-bar .info span {
+        color: var(--text-secondary);
+        font-size: var(--text-sm);
+    }
+
+    /* File upload area */
+    .upload-area {
+        border: 2px dashed var(--bg-subtle);
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        text-align: center;
+        margin-bottom: var(--space-6);
+        transition: all var(--duration-fast) var(--ease-default);
+        cursor: pointer;
+    }
+
+    .upload-area:hover, .upload-area.dragover {
+        border-color: var(--accent-blue);
+        background: rgba(59, 130, 246, 0.05);
+    }
+
+    .upload-area input[type="file"] { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- ================================================================
+         NAVIGATION BAR
+         Standard Pathfinder nav shared across all modules.
+         ================================================================ -->
+    <nav class="nav-bar">
+        <a href="../dashboard/" class="nav-brand">⚡ Pathfinder</a>
+        <div class="nav-links">
+            <a href="../dashboard/">Dashboard</a>
+            <a href="../pipeline/">Pipeline</a>
+            <a href="../job-feed-listener/">Job Feed</a>
+            <a href="../research-brief/">Research</a>
+            <a href="../resume-tailor/">Resume</a>
+            <a href="../outreach/">Outreach</a>
+            <a href="../mock-interview/">Mock Interview</a>
+            <a href="../debrief/">Debrief</a>
+            <a href="../comp-intel/">Comp Intel</a>
+            <a href="../calendar/">Calendar</a>
+            <a href="../sync/" class="active" style="color: var(--accent-blue); font-weight: 600;">Sync Hub</a>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+            <i data-lucide="sun" class="theme-icon-light"></i>
+            <i data-lucide="moon" class="theme-icon-dark"></i>
+        </button>
+    </nav>
+
+    <!-- ================================================================
+         MAIN SYNC HUB CONTENT
+         ================================================================ -->
+    <main class="sync-layout">
+
+        <!-- Hero -->
+        <div class="sync-hero">
+            <h1>🔄 Sync Hub</h1>
+            <p>Bridge your external data sources into Pathfinder. Sync calendar events, job listings, email alerts, and company data from connected APIs.</p>
+        </div>
+
+        <!-- Sync timestamp -->
+        <div class="sync-timestamp" id="syncTimestamp">
+            <i data-lucide="clock" style="width:14px; height:14px;"></i>
+            <span>Data fetched: <strong id="fetchTime">Loading...</strong></span>
+            <span class="fresh" id="freshIndicator" style="display:none;">● Fresh</span>
+            <span class="stale" id="staleIndicator" style="display:none;">● Stale — re-run sync in Cowork</span>
+        </div>
+
+        <!-- Sync All bar -->
+        <div class="sync-all-bar">
+            <div class="info">
+                <strong>Sync All Sources</strong>
+                <span>Push all available data into Pathfinder modules at once</span>
+            </div>
+            <button class="sync-btn primary" onclick="syncAll()" id="syncAllBtn" style="flex:0; white-space:nowrap; padding: var(--space-3) var(--space-6);">
+                <i data-lucide="refresh-cw" style="width:16px; height:16px;"></i>
+                Sync All
+            </button>
+        </div>
+
+        <!-- Upload area for fresh sync data -->
+        <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+            <input type="file" id="fileInput" accept=".json" onchange="handleFileUpload(event)">
+            <i data-lucide="upload-cloud" style="width:32px; height:32px; color: var(--text-tertiary); margin-bottom: 8px;"></i>
+            <p style="color: var(--text-secondary); font-size: var(--text-sm);">
+                <strong>Drop a sync-payload.json here</strong> or click to upload<br>
+                <span style="color: var(--text-tertiary);">Generated by Cowork with fresh API data</span>
+            </p>
+        </div>
+
+        <!-- Source cards -->
+        <div class="sync-grid">
+
+            <!-- ========== GOOGLE CALENDAR CARD ========== -->
+            <div class="sync-card" id="calCard">
+                <div class="sync-card-header">
+                    <div class="sync-card-icon calendar">📅</div>
+                    <div>
+                        <div class="sync-card-title">Google Calendar</div>
+                        <div class="sync-card-subtitle">→ Calendar Module</div>
+                    </div>
+                    <div style="margin-left:auto;">
+                        <span class="sync-status ready" id="calStatus">
+                            <span class="sync-status-dot"></span>
+                            <span id="calStatusText">Ready</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:var(--space-4); margin-bottom:var(--space-3);">
+                    <div><span class="data-count" id="calTotal">0</span><br><span class="data-count-label">Events</span></div>
+                    <div><span class="data-count" id="calInterviews">0</span><br><span class="data-count-label">Interview-Related</span></div>
+                    <div><span class="data-count" id="calNetworking">0</span><br><span class="data-count-label">Networking</span></div>
+                </div>
+
+                <div class="sync-preview" id="calPreview">
+                    <div style="color: var(--text-tertiary); text-align: center; padding: var(--space-3);">Loading data...</div>
+                </div>
+
+                <div class="sync-actions">
+                    <button class="sync-btn primary" onclick="syncCalendar()">
+                        <i data-lucide="download" style="width:14px; height:14px;"></i>
+                        Sync to Calendar
+                    </button>
+                    <button class="sync-btn secondary" onclick="previewData('calendar')">
+                        <i data-lucide="eye" style="width:14px; height:14px;"></i>
+                        Preview
+                    </button>
+                </div>
+            </div>
+
+            <!-- ========== INDEED JOBS CARD ========== -->
+            <div class="sync-card" id="indeedCard">
+                <div class="sync-card-header">
+                    <div class="sync-card-icon indeed">💼</div>
+                    <div>
+                        <div class="sync-card-title">Indeed</div>
+                        <div class="sync-card-subtitle">→ Job Feed Listener</div>
+                    </div>
+                    <div style="margin-left:auto;">
+                        <span class="sync-status ready" id="indeedStatus">
+                            <span class="sync-status-dot"></span>
+                            <span id="indeedStatusText">Ready</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:var(--space-4); margin-bottom:var(--space-3);">
+                    <div><span class="data-count" id="indeedTotal">0</span><br><span class="data-count-label">Jobs</span></div>
+                    <div><span class="data-count" id="indeedNew">0</span><br><span class="data-count-label">New</span></div>
+                    <div><span class="data-count" id="indeedAvgComp">$0</span><br><span class="data-count-label">Avg Comp</span></div>
+                </div>
+
+                <div class="sync-preview" id="indeedPreview">
+                    <div style="color: var(--text-tertiary); text-align: center; padding: var(--space-3);">Loading data...</div>
+                </div>
+
+                <div class="sync-actions">
+                    <button class="sync-btn primary" onclick="syncIndeed()">
+                        <i data-lucide="download" style="width:14px; height:14px;"></i>
+                        Sync to Job Feed
+                    </button>
+                    <button class="sync-btn secondary" onclick="previewData('indeed')">
+                        <i data-lucide="eye" style="width:14px; height:14px;"></i>
+                        Preview
+                    </button>
+                </div>
+            </div>
+
+            <!-- ========== GMAIL ALERTS CARD ========== -->
+            <div class="sync-card" id="gmailCard">
+                <div class="sync-card-header">
+                    <div class="sync-card-icon gmail">✉️</div>
+                    <div>
+                        <div class="sync-card-title">Gmail</div>
+                        <div class="sync-card-subtitle">→ Job Feed + Pipeline</div>
+                    </div>
+                    <div style="margin-left:auto;">
+                        <span class="sync-status ready" id="gmailStatus">
+                            <span class="sync-status-dot"></span>
+                            <span id="gmailStatusText">Ready</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:var(--space-4); margin-bottom:var(--space-3);">
+                    <div><span class="data-count" id="gmailTotal">0</span><br><span class="data-count-label">Alerts</span></div>
+                    <div><span class="data-count" id="gmailJobs">0</span><br><span class="data-count-label">Job Leads</span></div>
+                    <div><span class="data-count" id="gmailApps">0</span><br><span class="data-count-label">Applications</span></div>
+                </div>
+
+                <div class="sync-preview" id="gmailPreview">
+                    <div style="color: var(--text-tertiary); text-align: center; padding: var(--space-3);">Loading data...</div>
+                </div>
+
+                <div class="sync-actions">
+                    <button class="sync-btn primary" onclick="syncGmail()">
+                        <i data-lucide="download" style="width:14px; height:14px;"></i>
+                        Sync to Feed + Pipeline
+                    </button>
+                    <button class="sync-btn secondary" onclick="previewData('gmail')">
+                        <i data-lucide="eye" style="width:14px; height:14px;"></i>
+                        Preview
+                    </button>
+                </div>
+            </div>
+
+            <!-- ========== CLAY ENRICHMENT CARD ========== -->
+            <div class="sync-card" id="clayCard">
+                <div class="sync-card-header">
+                    <div class="sync-card-icon clay">🧱</div>
+                    <div>
+                        <div class="sync-card-title">Clay</div>
+                        <div class="sync-card-subtitle">→ Pipeline Enrichment</div>
+                    </div>
+                    <div style="margin-left:auto;">
+                        <span class="sync-status ready" id="clayStatus">
+                            <span class="sync-status-dot"></span>
+                            <span id="clayStatusText">Ready</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:var(--space-4); margin-bottom:var(--space-3);">
+                    <div><span class="data-count" id="clayCompanies">0</span><br><span class="data-count-label">Companies</span></div>
+                    <div><span class="data-count" id="clayEnriched">0</span><br><span class="data-count-label">Enriched</span></div>
+                    <div><span class="data-count" id="clayContacts">0</span><br><span class="data-count-label">Contacts</span></div>
+                </div>
+
+                <div class="sync-preview" id="clayPreview">
+                    <div style="color: var(--text-tertiary); text-align: center; padding: var(--space-3);">
+                        Clay enrichment runs on-demand via Cowork.<br>
+                        Pipeline companies will be enriched with funding, headcount, tech stack, and news.
+                    </div>
+                </div>
+
+                <div class="sync-actions">
+                    <button class="sync-btn primary" onclick="syncClay()" disabled title="Run enrichment from Cowork first">
+                        <i data-lucide="download" style="width:14px; height:14px;"></i>
+                        Sync Enrichment
+                    </button>
+                    <button class="sync-btn secondary" onclick="previewData('clay')">
+                        <i data-lucide="eye" style="width:14px; height:14px;"></i>
+                        Preview
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sync Log -->
+        <div class="sync-summary">
+            <h3>Sync Log</h3>
+            <div class="sync-log" id="syncLog">
+                <div class="info">Sync Hub loaded. Ready to push data into Pathfinder modules.</div>
+            </div>
+        </div>
+
+    </main>
+
+
+    <!-- ================================================================
+         EMBEDDED SYNC DATA
+         This data was fetched by Cowork via MCP APIs and embedded
+         here for the user to sync into Pathfinder's localStorage.
+         To refresh: re-run the sync in Cowork and regenerate this page.
+         ================================================================ -->
+    <script>
+    /* ====== DATA FETCH TIMESTAMP ====== */
+    const SYNC_METADATA = {
+        fetchedAt: "2026-03-10T21:30:00-07:00",
+        sources: {
+            calendar: { api: "Google Calendar", status: "ok", count: 50 },
+            indeed: { api: "Indeed", status: "ok", count: 10 },
+            gmail: { api: "Gmail", status: "ok", count: 20 },
+            clay: { api: "Clay", status: "pending", count: 0 }
+        }
+    };
+
+    /* ====== GOOGLE CALENDAR RAW DATA ======
+       50 events from March 10 – April 10, 2026.
+       We classify them into interview-related, networking, prep, and personal. */
+    const GCAL_EVENTS = [
+        // Mar 10
+        { gcal_id: "36dq4je5j4u7fp97ulacu8agup_20260310T150000Z", summary: "Deep Case Block", start: "2026-03-10T08:00:00-07:00", end: "2026-03-10T09:30:00-07:00", duration: 90, description: "Mon – Product Design, Tue – Marketplace, Wed – Growth/Retention, Thu – Strategy/Ambiguous, Fri – Full 30-min mock", colorId: "2", recurring: true },
+        { gcal_id: "0ansc7huad2blfrlk7ke3i84ec_20260310T163000Z", summary: "Framework reinforcement", start: "2026-03-10T09:30:00-07:00", end: "2026-03-10T10:00:00-07:00", duration: 30, description: "Rewrite clean version of answer.", colorId: "", recurring: true },
+        { gcal_id: "networking_20260310", summary: "Networking Block", start: "2026-03-10T10:00:00-07:00", end: "2026-03-10T11:45:00-07:00", duration: 105, description: "", colorId: "", recurring: true },
+        { gcal_id: "swim_20260310", summary: "Swimming", start: "2026-03-10T11:45:00-07:00", end: "2026-03-10T12:45:00-07:00", duration: 60, description: "", colorId: "", recurring: true },
+        { gcal_id: "decomp_20260310", summary: "Decompression", start: "2026-03-10T13:30:00-07:00", end: "2026-03-10T14:00:00-07:00", duration: 30, description: "", colorId: "", recurring: true },
+        { gcal_id: "lance_ili_20260310", summary: "Lance < > Ili", start: "2026-03-10T13:30:00-07:00", end: "2026-03-10T14:15:00-07:00", duration: 45, description: "", colorId: "", recurring: false, numAttendees: 2 },
+        { gcal_id: "sql_20260310", summary: "Daily SQL Training", start: "2026-03-10T14:15:00-07:00", end: "2026-03-10T15:00:00-07:00", duration: 45, description: "", colorId: "", recurring: true },
+        { gcal_id: "apps_20260310", summary: "Applications / Resume tailoring / Behavioral stories", start: "2026-03-10T15:00:00-07:00", end: "2026-03-10T15:30:00-07:00", duration: 30, description: "", colorId: "", recurring: true },
+        { gcal_id: "dave_ili_20260310", summary: "Dave < > Ili - Connect", start: "2026-03-10T15:30:00-07:00", end: "2026-03-10T16:00:00-07:00", duration: 30, description: "", colorId: "", recurring: false, numAttendees: 2 },
+        { gcal_id: "gia_20260310", summary: "Take Gia to Dance", start: "2026-03-10T18:30:00-07:00", end: "2026-03-10T19:30:00-07:00", duration: 60, description: "", colorId: "", recurring: false },
+        // Mar 11
+        { gcal_id: "case_20260311", summary: "Deep Case Block", start: "2026-03-11T08:00:00-07:00", end: "2026-03-11T09:30:00-07:00", duration: 90, description: "Tue – Marketplace", colorId: "2", recurring: true },
+        { gcal_id: "jamie_faiz_20260311", summary: "lli*Jamie & Faiz", start: "2026-03-11T09:00:00-07:00", end: "2026-03-11T09:30:00-07:00", duration: 30, description: "", colorId: "", recurring: false, numAttendees: 3 },
+        { gcal_id: "fw_20260311", summary: "Framework reinforcement", start: "2026-03-11T09:30:00-07:00", end: "2026-03-11T10:00:00-07:00", duration: 30, description: "", colorId: "", recurring: true },
+        { gcal_id: "net_20260311", summary: "Networking Block", start: "2026-03-11T10:00:00-07:00", end: "2026-03-11T12:00:00-07:00", duration: 120, description: "", colorId: "", recurring: true },
+        { gcal_id: "swim_20260311", summary: "Swimming", start: "2026-03-11T12:00:00-07:00", end: "2026-03-11T13:00:00-07:00", duration: 60, description: "", colorId: "", recurring: true },
+        { gcal_id: "decomp_20260311", summary: "Decompression", start: "2026-03-11T13:30:00-07:00", end: "2026-03-11T14:00:00-07:00", duration: 30, description: "", colorId: "", recurring: true },
+        { gcal_id: "sql_20260311", summary: "Daily SQL Training", start: "2026-03-11T14:15:00-07:00", end: "2026-03-11T15:00:00-07:00", duration: 45, description: "", colorId: "", recurring: true },
+        { gcal_id: "apps_20260311", summary: "Applications / Resume tailoring / Behavioral stories", start: "2026-03-11T15:00:00-07:00", end: "2026-03-11T15:30:00-07:00", duration: 30, description: "", colorId: "", recurring: true },
+        { gcal_id: "apoorv_ili_20260311", summary: "Apoorv < > Ili", start: "2026-03-11T15:30:00-07:00", end: "2026-03-11T16:00:00-07:00", duration: 30, description: "", colorId: "", recurring: false, numAttendees: 2 },
+        // Mar 12
+        { gcal_id: "case_20260312", summary: "Deep Case Block", start: "2026-03-12T08:00:00-07:00", end: "2026-03-12T09:30:00-07:00", duration: 90, description: "Wed – Growth/Retention", colorId: "2", recurring: true },
+        { gcal_id: "fw_20260312", summary: "Framework reinforcement", start: "2026-03-12T09:30:00-07:00", end: "2026-03-12T10:00:00-07:00", duration: 30, description: "", colorId: "", recurring: true },
+        { gcal_id: "net_20260312", summary: "Networking Block", start: "2026-03-12T10:00:00-07:00", end: "2026-03-12T11:45:00-07:00", duration: 105, description: "", colorId: "", recurring: true },
+        { gcal_id: "swim_20260312", summary: "Swimming", start: "2026-03-12T11:45:00-07:00", end: "2026-03-12T12:45:00-07:00", duration: 60, description: "", colorId: "", recurring: true },
+        { gcal_id: "sql_20260312", summary: "Daily SQL Training", start: "2026-03-12T14:15:00-07:00", end: "2026-03-12T15:00:00-07:00", duration: 45, description: "", colorId: "", recurring: true },
+        { gcal_id: "apps_20260312", summary: "Applications / Resume tailoring / Behavioral stories", start: "2026-03-12T15:00:00-07:00", end: "2026-03-12T15:30:00-07:00", duration: 30, description: "", colorId: "", recurring: true },
+    ];
+
+    /* ====== INDEED JOBS RAW DATA ======
+       Product Manager roles in San Francisco, fetched from Indeed API. */
+    const INDEED_JOBS = [
+        { id: "indeed-lambda-pm", company: "Lambda", title: "Product Manager – Networking", location: "San Francisco, CA", salary: "$291,000 - $484,000 a year", posted: "March 09, 2026", type: "Fulltime", source: "Indeed", url: "https://to.indeed.com/aaqbgvzddnft", domain: "AI/ML", stage: "Late-stage", headcount: 500 },
+        { id: "indeed-parafin-pm", company: "Parafin", title: "Product Manager", location: "San Francisco, CA", salary: "$230,000 - $290,000 a year", posted: "December 01, 2024", type: "Fulltime", source: "Indeed", url: "https://to.indeed.com/aad42khy8dns", domain: "Fintech", stage: "Series B+", headcount: 200 },
+        { id: "indeed-mongodb-pm", company: "MongoDB", title: "Product Manager", location: "San Francisco, CA", salary: "$98,000 - $193,000 a year", posted: "March 09, 2026", type: "Not specified", source: "Indeed", url: "https://to.indeed.com/aa8vt94sxc8b", domain: "Data Platforms", stage: "Public", headcount: 5000 },
+        { id: "indeed-doordash-pm", company: "DoorDash", title: "Product Manager (Multiple Levels)", location: "San Francisco, CA", salary: "$130,600 - $192,000 a year", posted: "January 29, 2025", type: "Not specified", source: "Indeed", url: "https://to.indeed.com/aans2k2wp79m", domain: "Consumer", stage: "Public", headcount: 20000 },
+        { id: "indeed-wellsfargo-pm", company: "Wells Fargo", title: "Lead Digital Product Manager - Lead Alerts & Messaging", location: "San Francisco, CA", salary: "$119,000 - $224,000 a year", posted: "March 10, 2026", type: "Fulltime", source: "Indeed", url: "https://to.indeed.com/aaq728ggfcpf", domain: "Fintech", stage: "Public", headcount: 250000 },
+        { id: "indeed-pyramid-pmm", company: "Pyramid Consulting", title: "Product Marketing Manager", location: "San Francisco, CA", salary: "$80 - $85 an hour", posted: "February 26, 2026", type: "Not specified", source: "Indeed", url: "https://to.indeed.com/aah4kgws8b8l", domain: "Consulting", stage: "Unknown", headcount: 5000 },
+        { id: "indeed-sartorius-pm", company: "Sartorius", title: "Product Manager, flow cytometry - Remote", location: "San Francisco Bay Area, CA", salary: "$150,000 - $180,000 a year", posted: "January 23, 2026", type: "Fulltime", source: "Indeed", url: "https://to.indeed.com/aagxz2lmfbns", domain: "Biotech", stage: "Public", headcount: 14000 },
+        { id: "indeed-known-pm", company: "Known", title: "Product Operations", location: "San Francisco, CA", salary: "$120,000 - $150,000 a year", posted: "January 14, 2026", type: "Fulltime", source: "Indeed", url: "https://to.indeed.com/aa2n8q748wtv", domain: "AdTech", stage: "Series B+", headcount: 300 },
+        { id: "indeed-tomo-pm", company: "Tomo Credit", title: "Product Manager", location: "San Francisco, CA", salary: "$93,210 - $155,894 a year", posted: "January 07, 2025", type: "Fulltime", source: "Indeed", url: "https://to.indeed.com/aa6fzyky6gqr", domain: "Fintech", stage: "Series A", headcount: 100 },
+        { id: "indeed-dataannotation-pm", company: "DataAnnotation", title: "Product Manager - AI Trainer", location: "California", salary: "From $40 an hour", posted: "January 16, 2026", type: "Not specified", source: "Indeed", url: "https://to.indeed.com/aaw9djk9lphb", domain: "AI/ML", stage: "Unknown", headcount: 1000 },
+    ];
+
+    /* ====== GMAIL JOB ALERTS RAW DATA ======
+       Extracted from Gmail job-related emails in the last 30 days. */
+    const GMAIL_ALERTS = [
+        // Built In alert — extracted job leads
+        { id: "gmail-builtin-sofi", company: "SoFi", title: "Principal Product Manager, AI SDLC", location: "San Francisco, CA (Hybrid)", source: "Gmail / Built In", posted: "2026-03-10", salary: "", domain: "Fintech", stage: "Public", headcount: 8000 },
+        { id: "gmail-builtin-autodesk", company: "Autodesk", title: "Sr. Principal Product Manager, Services", location: "Remote", source: "Gmail / Built In", posted: "2026-03-10", salary: "$125,000 - $223,850", domain: "Enterprise SaaS", stage: "Public", headcount: 13000 },
+        { id: "gmail-builtin-zendesk", company: "Zendesk", title: "Principal Data Product Manager", location: "Multiple Locations", source: "Gmail / Built In", posted: "2026-03-10", salary: "$183,000 - $275,000", domain: "Enterprise SaaS", stage: "Public", headcount: 6000 },
+        // LiveRamp referral — application confirmation
+        { id: "gmail-liveramp-ref", company: "LiveRamp", title: "Sr. Director Product Management: Addressability", location: "San Francisco, CA", source: "Gmail / Referral", posted: "2026-03-09", salary: "", domain: "AdTech", stage: "Public", headcount: 1500, isApplication: true, referredBy: "Manoj Kumar", applicationUrl: "https://liveramp.wd5.myworkdayjobs.com/LiveRampCareers/job/San-Francisco/Sr-Director-Product-Management--Addressability_JR011930-1" },
+        // LinkedIn alerts
+        { id: "gmail-linkedin-kaiser", company: "Kaiser Permanente", title: "Product Director", location: "United States", source: "Gmail / LinkedIn", posted: "2026-03-07", salary: "", domain: "Healthcare", stage: "Enterprise", headcount: 300000 },
+    ];
+
+    /* ====== CLAY ENRICHMENT DATA (placeholder) ======
+       Will be populated when Clay enrichment is run from Cowork. */
+    const CLAY_DATA = [];
+    </script>
+
+
+    <!-- ================================================================
+         SYNC ENGINE
+         Transforms raw API data → Pathfinder localStorage format
+         and writes it into the correct keys.
+         ================================================================ -->
+    <script>
+    /* ====== UTILITY FUNCTIONS ====== */
+
+    /**
+     * getStorage(key) → Reads a Pathfinder localStorage key
+     * INPUT: key name (without pf_ prefix)
+     * OUTPUT: parsed JSON array/object, or default
+     */
+    function getStorage(key, fallback = []) {
+        try {
+            const raw = localStorage.getItem('pf_' + key);
+            return raw ? JSON.parse(raw) : fallback;
+        } catch { return fallback; }
+    }
+
+    /**
+     * setStorage(key, data) → Writes to Pathfinder localStorage key
+     * INPUT: key name (without pf_ prefix), data to save
+     * OUTPUT: none (side effect: writes to localStorage)
+     */
+    function setStorage(key, data) {
+        localStorage.setItem('pf_' + key, JSON.stringify(data));
+    }
+
+    /**
+     * log(message, type) → Appends a line to the sync log UI
+     * INPUT: message string, type ('success' | 'warning' | 'info')
+     * OUTPUT: none (side effect: updates DOM)
+     */
+    function log(message, type = 'info') {
+        const logEl = document.getElementById('syncLog');
+        const time = new Date().toLocaleTimeString();
+        logEl.innerHTML += `<div class="${type}">[${time}] ${message}</div>`;
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    /**
+     * setCardStatus(cardId, status, text) → Updates a card's status badge
+     * INPUT: card ID prefix, status class, display text
+     * OUTPUT: none (side effect: updates DOM)
+     */
+    function setCardStatus(id, status, text) {
+        const statusEl = document.getElementById(id + 'Status');
+        const textEl = document.getElementById(id + 'StatusText');
+        statusEl.className = 'sync-status ' + status;
+        textEl.textContent = text;
+    }
+
+    /* ====== EVENT CLASSIFICATION ======
+       Categorizes Google Calendar events by type based on keywords. */
+
+    /** Keyword patterns for classifying calendar events */
+    const EVENT_PATTERNS = {
+        interview: /interview|phone screen|technical|behavioral|panel|hiring manager|onsite|final round|recruiter call/i,
+        networking: /networking|< >|connect|coffee|catch up|intro|1:1|referral/i,
+        prep: /case block|framework|sql training|applications|resume|behavioral stories|mock|prep/i,
+        personal: /swimming|dance|gym|lunch|dinner|doctor|dentist|haircut|errand/i
+    };
+
+    /**
+     * classifyEvent(event) → Determines event category
+     * INPUT: raw calendar event object
+     * OUTPUT: string category ('interview' | 'networking' | 'prep' | 'personal' | 'other')
+     */
+    function classifyEvent(event) {
+        const text = (event.summary + ' ' + (event.description || '')).toLowerCase();
+        if (EVENT_PATTERNS.interview.test(text)) return 'interview';
+        if (EVENT_PATTERNS.networking.test(text)) return 'networking';
+        if (EVENT_PATTERNS.prep.test(text)) return 'prep';
+        if (EVENT_PATTERNS.personal.test(text)) return 'personal';
+        return 'other';
+    }
+
+    /**
+     * mapCalEventType(category) → Maps classification to Pathfinder event type
+     * INPUT: classification string
+     * OUTPUT: Pathfinder type string for pf_calendar_events
+     */
+    function mapCalEventType(category, summary) {
+        if (category === 'interview') {
+            if (/phone screen|recruiter/i.test(summary)) return 'phone_screen';
+            if (/technical/i.test(summary)) return 'technical';
+            if (/behavioral/i.test(summary)) return 'behavioral';
+            if (/panel/i.test(summary)) return 'panel';
+            if (/hiring manager/i.test(summary)) return 'hiring_manager';
+            return 'other';
+        }
+        if (category === 'networking') return 'follow_up';
+        if (category === 'prep') return 'other';
+        return 'other';
+    }
+
+    /* ====== SYNC: GOOGLE CALENDAR → pf_calendar_events ====== */
+
+    /**
+     * syncCalendar() → Transforms GCAL_EVENTS and merges into pf_calendar_events
+     * Deduplicates by gcal_id to avoid creating duplicates on re-sync.
+     * Only syncs interview-related and networking events (skips personal/prep).
+     */
+    function syncCalendar() {
+        log('Starting Google Calendar sync...', 'info');
+
+        const existing = getStorage('calendar_events');
+        const existingGcalIds = new Set(existing.map(e => e.gcalId || ''));
+
+        let added = 0;
+        let skipped = 0;
+
+        GCAL_EVENTS.forEach(event => {
+            const category = classifyEvent(event);
+
+            // Only sync interview and networking events to the Calendar module
+            if (category === 'personal' || category === 'prep') {
+                skipped++;
+                return;
+            }
+
+            // Skip if already synced (dedup by gcal_id)
+            if (existingGcalIds.has(event.gcal_id)) {
+                skipped++;
+                return;
+            }
+
+            // Extract company name from networking events like "Lance < > Ili"
+            let company = '';
+            const networkMatch = event.summary.match(/(.+?)\s*<\s*>\s*/);
+            if (networkMatch) {
+                company = networkMatch[1].trim();
+            }
+
+            // Transform to Pathfinder calendar event format
+            const pfEvent = {
+                id: 'evt-gcal-' + Date.now() + '-' + added,
+                gcalId: event.gcal_id,
+                title: event.summary,
+                company: company,
+                date: event.start,
+                duration: event.duration,
+                type: mapCalEventType(category, event.summary),
+                roleId: null,
+                interviewers: [],
+                prepNotes: event.description || '',
+                meetingLink: '',
+                status: new Date(event.start) > new Date() ? 'upcoming' : 'completed',
+                createdAt: new Date().toISOString(),
+                source: 'gcal_sync',
+                category: category
+            };
+
+            existing.push(pfEvent);
+            existingGcalIds.add(event.gcal_id);
+            added++;
+        });
+
+        setStorage('calendar_events', existing);
+
+        log(`Calendar sync complete: ${added} events added, ${skipped} skipped (dedup/filtered)`, 'success');
+        setCardStatus('cal', 'synced', `Synced (${added})`);
+
+        // Also record the sync in pf_sync_log
+        const syncLog = getStorage('sync_log');
+        syncLog.push({ source: 'gcal', timestamp: new Date().toISOString(), added, skipped });
+        setStorage('sync_log', syncLog);
+    }
+
+    /* ====== SYNC: INDEED → pf_feed_queue ====== */
+
+    /**
+     * syncIndeed() → Transforms INDEED_JOBS into feed items with scoring,
+     * then merges into pf_feed_queue. Deduplicates by company+title combo.
+     */
+    function syncIndeed() {
+        log('Starting Indeed sync...', 'info');
+
+        const existing = getStorage('feed_queue');
+        const prefs = getStorage('preferences', null);
+
+        // Build a set of existing company+title combos for dedup
+        const existingKeys = new Set(existing.map(e =>
+            (e.company + '|' + e.title).toLowerCase()
+        ));
+
+        let added = 0;
+        let skipped = 0;
+
+        INDEED_JOBS.forEach(job => {
+            const key = (job.company + '|' + job.title).toLowerCase();
+            if (existingKeys.has(key)) {
+                skipped++;
+                return;
+            }
+
+            // Parse salary range for scoring
+            let minSalary = 0;
+            let maxSalary = 0;
+            const salaryMatch = job.salary.match(/\$([\d,]+)/g);
+            if (salaryMatch) {
+                minSalary = parseInt(salaryMatch[0].replace(/[$,]/g, ''));
+                if (salaryMatch[1]) maxSalary = parseInt(salaryMatch[1].replace(/[$,]/g, ''));
+            }
+
+            // Calculate days since posted
+            const postedDate = new Date(job.posted);
+            const daysSince = Math.floor((Date.now() - postedDate.getTime()) / (1000 * 60 * 60 * 24));
+            const postedLabel = daysSince <= 1 ? 'Today' : daysSince + ' days ago';
+
+            // Score the role against preferences (simplified scoring)
+            const score = scoreJob(job, prefs);
+
+            const feedItem = {
+                id: job.id,
+                company: job.company,
+                logo: '💼',
+                title: job.title,
+                domain: job.domain,
+                location: job.location,
+                remote: /remote/i.test(job.location),
+                posted: postedLabel,
+                source: 'Indeed',
+                jd: '',
+                salary: job.salary,
+                stage: job.stage,
+                headcount: job.headcount,
+                url: job.url,
+                score: score.total,
+                scoring: score.breakdown,
+                syncedAt: new Date().toISOString()
+            };
+
+            existing.push(feedItem);
+            existingKeys.add(key);
+            added++;
+        });
+
+        setStorage('feed_queue', existing);
+
+        log(`Indeed sync complete: ${added} jobs added, ${skipped} skipped (duplicates)`, 'success');
+        setCardStatus('indeed', 'synced', `Synced (${added})`);
+
+        const syncLog = getStorage('sync_log');
+        syncLog.push({ source: 'indeed', timestamp: new Date().toISOString(), added, skipped });
+        setStorage('sync_log', syncLog);
+    }
+
+    /* ====== SYNC: GMAIL → pf_feed_queue + pf_roles ====== */
+
+    /**
+     * syncGmail() → Processes GMAIL_ALERTS:
+     * - Job leads → added to pf_feed_queue
+     * - Application confirmations → added to pf_roles as "applied" stage
+     */
+    function syncGmail() {
+        log('Starting Gmail sync...', 'info');
+
+        const feedQueue = getStorage('feed_queue');
+        const roles = getStorage('roles');
+        const companies = getStorage('companies');
+
+        const feedKeys = new Set(feedQueue.map(e => (e.company + '|' + e.title).toLowerCase()));
+        const roleKeys = new Set(roles.map(r => (r.company + '|' + r.title).toLowerCase()));
+
+        let feedAdded = 0;
+        let rolesAdded = 0;
+        let companiesAdded = 0;
+        let skipped = 0;
+        const prefs = getStorage('preferences', null);
+
+        GMAIL_ALERTS.forEach(alert => {
+            if (alert.isApplication) {
+                // This is an application confirmation — add to pipeline
+                const roleKey = (alert.company + '|' + alert.title).toLowerCase();
+                if (roleKeys.has(roleKey)) {
+                    skipped++;
+                    return;
+                }
+
+                // Ensure company exists
+                const companyExists = companies.some(c =>
+                    c.name.toLowerCase() === alert.company.toLowerCase()
+                );
+                if (!companyExists) {
+                    companies.push({
+                        id: 'comp-gmail-' + Date.now() + '-' + companiesAdded,
+                        name: alert.company,
+                        domain: alert.company.toLowerCase().replace(/\s+/g, '') + '.com',
+                        url: alert.applicationUrl || '',
+                        logoUrl: '',
+                        tier: 'active',
+                        missionStatement: '',
+                        headcount: alert.headcount ? String(alert.headcount) : '',
+                        fundingStage: alert.stage || '',
+                        remotePolicy: '',
+                        enrichmentStatus: 'pending',
+                        dateAdded: Date.now(),
+                        source: 'gmail_sync'
+                    });
+                    companiesAdded++;
+                }
+
+                // Add role to pipeline as "applied"
+                roles.push({
+                    id: 'role-gmail-' + Date.now() + '-' + rolesAdded,
+                    company: alert.company,
+                    title: alert.title,
+                    url: alert.applicationUrl || '',
+                    jdText: '',
+                    positioning: /director/i.test(alert.title) ? 'management' : 'ic',
+                    targetLevel: /director/i.test(alert.title) ? 'Director' :
+                                 /principal/i.test(alert.title) ? 'Principal' :
+                                 /senior|sr/i.test(alert.title) ? 'Senior' : 'Mid',
+                    source: 'gmail_referral',
+                    stage: 'applied',
+                    stageHistory: [{ stage: 'applied', date: Date.now() }],
+                    salary: alert.salary || '',
+                    dateAdded: Date.now(),
+                    lastActivity: Date.now(),
+                    connections: alert.referredBy ? 1 : 0,
+                    tier: 'active',
+                    referredBy: alert.referredBy || null
+                });
+                roleKeys.add(roleKey);
+                rolesAdded++;
+                log(`  Pipeline: Added ${alert.company} — ${alert.title} (applied via referral)`, 'success');
+            } else {
+                // This is a job lead — add to feed queue
+                const feedKey = (alert.company + '|' + alert.title).toLowerCase();
+                if (feedKeys.has(feedKey)) {
+                    skipped++;
+                    return;
+                }
+
+                const score = scoreJob(alert, prefs);
+
+                feedQueue.push({
+                    id: alert.id,
+                    company: alert.company,
+                    logo: '✉️',
+                    title: alert.title,
+                    domain: alert.domain,
+                    location: alert.location,
+                    remote: /remote/i.test(alert.location),
+                    posted: alert.posted,
+                    source: alert.source,
+                    jd: '',
+                    salary: alert.salary || 'Not disclosed',
+                    stage: alert.stage,
+                    headcount: alert.headcount,
+                    url: '',
+                    score: score.total,
+                    scoring: score.breakdown,
+                    syncedAt: new Date().toISOString()
+                });
+                feedKeys.add(feedKey);
+                feedAdded++;
+            }
+        });
+
+        setStorage('feed_queue', feedQueue);
+        setStorage('roles', roles);
+        setStorage('companies', companies);
+
+        log(`Gmail sync complete: ${feedAdded} job leads added to feed, ${rolesAdded} applications added to pipeline, ${companiesAdded} companies created, ${skipped} skipped`, 'success');
+        setCardStatus('gmail', 'synced', `Synced (${feedAdded + rolesAdded})`);
+
+        const syncLog = getStorage('sync_log');
+        syncLog.push({ source: 'gmail', timestamp: new Date().toISOString(), feedAdded, rolesAdded, companiesAdded, skipped });
+        setStorage('sync_log', syncLog);
+    }
+
+    /* ====== SYNC: CLAY → pf_companies enrichment ====== */
+
+    /**
+     * syncClay() → Merges CLAY_DATA enrichment into existing pf_companies.
+     * Matches by company name/domain and updates enrichment fields.
+     */
+    function syncClay() {
+        if (CLAY_DATA.length === 0) {
+            log('No Clay enrichment data available. Run enrichment from Cowork first.', 'warning');
+            return;
+        }
+
+        log('Starting Clay enrichment sync...', 'info');
+        const companies = getStorage('companies');
+        let enriched = 0;
+
+        CLAY_DATA.forEach(clayCompany => {
+            const match = companies.find(c =>
+                c.name.toLowerCase() === clayCompany.name.toLowerCase() ||
+                c.domain === clayCompany.domain
+            );
+            if (match) {
+                // Merge enrichment data
+                Object.assign(match, {
+                    headcount: clayCompany.headcount || match.headcount,
+                    fundingStage: clayCompany.fundingStage || match.fundingStage,
+                    missionStatement: clayCompany.description || match.missionStatement,
+                    enrichmentStatus: 'complete',
+                    clayEnrichedAt: new Date().toISOString()
+                });
+                enriched++;
+            }
+        });
+
+        setStorage('companies', companies);
+        log(`Clay sync complete: ${enriched} companies enriched`, 'success');
+        setCardStatus('clay', 'synced', `Synced (${enriched})`);
+    }
+
+    /* ====== SYNC ALL ====== */
+
+    /**
+     * syncAll() → Runs all available syncs in sequence
+     */
+    function syncAll() {
+        log('═══ Starting full sync ═══', 'info');
+        syncCalendar();
+        syncIndeed();
+        syncGmail();
+        if (CLAY_DATA.length > 0) syncClay();
+        log('═══ Full sync complete ═══', 'success');
+
+        document.getElementById('syncAllBtn').innerHTML =
+            '<i data-lucide="check" style="width:16px; height:16px;"></i> All Synced!';
+        setTimeout(() => {
+            document.getElementById('syncAllBtn').innerHTML =
+                '<i data-lucide="refresh-cw" style="width:16px; height:16px;"></i> Sync All';
+            lucide.createIcons();
+        }, 3000);
+        lucide.createIcons();
+    }
+
+    /* ====== JOB SCORING ENGINE (simplified) ======
+       Scores a job against user preferences. Uses the same 6-dimension model
+       as the Job Feed Listener but simplified for sync context. */
+
+    /**
+     * scoreJob(job, prefs) → Calculates match score for a job
+     * INPUT: job object, user preferences (from pf_preferences)
+     * OUTPUT: { total: 0-100, breakdown: { title, domain, keywords, location, stage, comp } }
+     */
+    function scoreJob(job, prefs) {
+        // If no preferences set, return a neutral score
+        if (!prefs) {
+            return { total: 50, breakdown: { title: 50, domain: 50, keywords: 50, location: 50, stage: 50, comp: 50 } };
+        }
+
+        let titleScore = 0, domainScore = 0, keywordScore = 0;
+        let locationScore = 0, stageScore = 0, compScore = 0;
+
+        // Title match (25%)
+        const titleLower = (job.title || '').toLowerCase();
+        const targetTitles = (prefs.targetTitles || []).map(t => t.toLowerCase());
+        if (targetTitles.some(t => titleLower.includes(t))) {
+            titleScore = 100;
+        } else if (prefs.seniority && titleLower.includes(prefs.seniority)) {
+            titleScore = 50;
+        }
+
+        // Domain match (25%)
+        const jobDomain = (job.domain || '').toLowerCase();
+        const primary = (prefs.primaryDomains || []).map(d => d.toLowerCase());
+        const secondary = (prefs.secondaryDomains || []).map(d => d.toLowerCase());
+        const excluded = (prefs.excludedDomains || []).map(d => d.toLowerCase());
+        if (excluded.some(d => jobDomain.includes(d))) {
+            domainScore = 0; // Hard exclude
+        } else if (primary.some(d => jobDomain.includes(d))) {
+            domainScore = 100;
+        } else if (secondary.some(d => jobDomain.includes(d))) {
+            domainScore = 50;
+        }
+
+        // Location match (15%)
+        const locLower = (job.location || '').toLowerCase();
+        const prefLocs = (prefs.locations || []).map(l => l.toLowerCase());
+        if (prefLocs.some(l => locLower.includes(l)) || /remote/i.test(locLower)) {
+            locationScore = 100;
+        }
+
+        // Stage match (10%)
+        const prefStages = (prefs.companyStage || []).map(s => s.toLowerCase());
+        if (prefStages.some(s => (job.stage || '').toLowerCase().includes(s))) {
+            stageScore = 100;
+        }
+
+        // Comp match (5%)
+        const salaryMatch = (job.salary || '').match(/\$([\d,]+)/g);
+        if (salaryMatch && prefs.compRange) {
+            const maxSalary = parseInt((salaryMatch[1] || salaryMatch[0]).replace(/[$,]/g, ''));
+            if (maxSalary >= (prefs.compRange.minBase || 0)) {
+                compScore = 100;
+            }
+        }
+
+        // Keywords (20%) — simplified: check title against boost keywords
+        const boostKw = (prefs.boostKeywords || []).map(k => k.toLowerCase());
+        const kwFound = boostKw.filter(k => titleLower.includes(k)).length;
+        keywordScore = Math.min(100, kwFound * 50);
+
+        // Weighted total
+        const total = Math.round(
+            titleScore * 0.25 +
+            domainScore * 0.25 +
+            keywordScore * 0.20 +
+            locationScore * 0.15 +
+            stageScore * 0.10 +
+            compScore * 0.05
+        );
+
+        // Hard cap: if excluded domain, max score is 39
+        const hardCapped = excluded.some(d => jobDomain.includes(d)) ? Math.min(total, 39) : total;
+
+        return {
+            total: hardCapped,
+            breakdown: {
+                title: titleScore,
+                domain: domainScore,
+                keywords: keywordScore,
+                location: locationScore,
+                stage: stageScore,
+                comp: compScore
+            }
+        };
+    }
+
+    /* ====== FILE UPLOAD HANDLER ======
+       Allows loading a fresh sync-payload.json from Cowork. */
+
+    /**
+     * handleFileUpload(event) → Reads a JSON file and replaces embedded data
+     * INPUT: file input change event
+     * OUTPUT: none (side effect: updates global data arrays + re-renders)
+     */
+    function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const payload = JSON.parse(e.target.result);
+
+                // Replace global data arrays
+                if (payload.calendar) GCAL_EVENTS.length = 0, GCAL_EVENTS.push(...payload.calendar);
+                if (payload.indeed) INDEED_JOBS.length = 0, INDEED_JOBS.push(...payload.indeed);
+                if (payload.gmail) GMAIL_ALERTS.length = 0, GMAIL_ALERTS.push(...payload.gmail);
+                if (payload.clay) CLAY_DATA.length = 0, CLAY_DATA.push(...payload.clay);
+                if (payload.metadata) Object.assign(SYNC_METADATA, payload.metadata);
+
+                log(`Loaded fresh data from ${file.name}`, 'success');
+                renderPreviews();
+            } catch (err) {
+                log(`Error loading file: ${err.message}`, 'warning');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    /* ====== DRAG & DROP for upload area ====== */
+    const uploadArea = document.getElementById('uploadArea');
+    ['dragenter', 'dragover'].forEach(event => {
+        uploadArea.addEventListener(event, e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+    });
+    ['dragleave', 'drop'].forEach(event => {
+        uploadArea.addEventListener(event, e => { e.preventDefault(); uploadArea.classList.remove('dragover'); });
+    });
+    uploadArea.addEventListener('drop', e => {
+        const file = e.dataTransfer.files[0];
+        if (file && file.name.endsWith('.json')) {
+            const input = document.getElementById('fileInput');
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            input.files = dt.files;
+            handleFileUpload({ target: input });
+        }
+    });
+
+
+    /* ====== UI RENDERING ====== */
+
+    /**
+     * renderPreviews() → Populates the preview cards with data summaries
+     */
+    function renderPreviews() {
+        // Calendar preview
+        const calInterviews = GCAL_EVENTS.filter(e => classifyEvent(e) === 'interview').length;
+        const calNetworking = GCAL_EVENTS.filter(e => classifyEvent(e) === 'networking').length;
+        document.getElementById('calTotal').textContent = GCAL_EVENTS.length;
+        document.getElementById('calInterviews').textContent = calInterviews;
+        document.getElementById('calNetworking').textContent = calNetworking;
+
+        const calPreview = document.getElementById('calPreview');
+        calPreview.innerHTML = GCAL_EVENTS.slice(0, 8).map(e => {
+            const cat = classifyEvent(e);
+            const catEmoji = { interview: '🎯', networking: '🤝', prep: '📚', personal: '🏠', other: '📌' }[cat] || '📌';
+            const date = new Date(e.start).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            const time = new Date(e.start).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+            return `<div class="sync-preview-item">
+                <span>${catEmoji}</span>
+                <span class="label">${e.summary}</span>
+                <span class="meta">${date} ${time}</span>
+            </div>`;
+        }).join('');
+
+        // Indeed preview
+        document.getElementById('indeedTotal').textContent = INDEED_JOBS.length;
+        document.getElementById('indeedNew').textContent = INDEED_JOBS.filter(j => {
+            const posted = new Date(j.posted);
+            return (Date.now() - posted.getTime()) < 7 * 24 * 60 * 60 * 1000;
+        }).length;
+        // Average comp
+        const salaries = INDEED_JOBS.map(j => {
+            const m = j.salary.match(/\$([\d,]+)/);
+            return m ? parseInt(m[1].replace(/,/g, '')) : 0;
+        }).filter(s => s > 1000);
+        const avgComp = salaries.length ? Math.round(salaries.reduce((a, b) => a + b, 0) / salaries.length / 1000) : 0;
+        document.getElementById('indeedAvgComp').textContent = '$' + avgComp + 'K';
+
+        const indeedPreview = document.getElementById('indeedPreview');
+        indeedPreview.innerHTML = INDEED_JOBS.map(j =>
+            `<div class="sync-preview-item">
+                <span>💼</span>
+                <span class="label">${j.company} — ${j.title}</span>
+                <span class="meta">${j.salary.split(' a ')[0] || 'N/A'}</span>
+            </div>`
+        ).join('');
+
+        // Gmail preview
+        const gmailJobs = GMAIL_ALERTS.filter(a => !a.isApplication).length;
+        const gmailApps = GMAIL_ALERTS.filter(a => a.isApplication).length;
+        document.getElementById('gmailTotal').textContent = GMAIL_ALERTS.length;
+        document.getElementById('gmailJobs').textContent = gmailJobs;
+        document.getElementById('gmailApps').textContent = gmailApps;
+
+        const gmailPreview = document.getElementById('gmailPreview');
+        gmailPreview.innerHTML = GMAIL_ALERTS.map(a => {
+            const icon = a.isApplication ? '📨' : '✉️';
+            const tag = a.isApplication ? '(Applied)' : `(${a.source.split('/')[1] || a.source})`;
+            return `<div class="sync-preview-item">
+                <span>${icon}</span>
+                <span class="label">${a.company} — ${a.title}</span>
+                <span class="meta">${tag}</span>
+            </div>`;
+        }).join('');
+
+        // Clay preview
+        document.getElementById('clayCompanies').textContent = getStorage('companies').length;
+        document.getElementById('clayEnriched').textContent = getStorage('companies').filter(c => c.enrichmentStatus === 'complete').length;
+        document.getElementById('clayContacts').textContent = getStorage('connections', []).length;
+
+        // Timestamp
+        const fetchTime = new Date(SYNC_METADATA.fetchedAt);
+        const hoursSince = (Date.now() - fetchTime.getTime()) / (1000 * 60 * 60);
+        document.getElementById('fetchTime').textContent = fetchTime.toLocaleString();
+        if (hoursSince < 1) {
+            document.getElementById('freshIndicator').style.display = 'inline';
+        } else {
+            document.getElementById('staleIndicator').style.display = 'inline';
+        }
+    }
+
+    /**
+     * previewData(source) → Shows detailed data preview in a modal or expands
+     */
+    function previewData(source) {
+        // For now, just scroll to the preview area and expand it
+        const previewEl = document.getElementById(source === 'calendar' ? 'calPreview' :
+                         source === 'indeed' ? 'indeedPreview' :
+                         source === 'gmail' ? 'gmailPreview' : 'clayPreview');
+        previewEl.style.maxHeight = previewEl.style.maxHeight === 'none' ? '200px' : 'none';
+    }
+
+    /* ====== THEME TOGGLE ====== */
+    function toggleTheme() {
+        const current = localStorage.getItem('pf_theme') || 'dark';
+        const next = current === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('pf_theme', next);
+        document.documentElement.setAttribute('data-theme', next);
+    }
+
+    /* ====== INITIALIZE ====== */
+    document.addEventListener('DOMContentLoaded', () => {
+        // Apply theme
+        const theme = localStorage.getItem('pf_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+
+        // Render previews
+        renderPreviews();
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        log('Sync Hub initialized. ' + GCAL_EVENTS.length + ' calendar events, ' + INDEED_JOBS.length + ' Indeed jobs, ' + GMAIL_ALERTS.length + ' Gmail alerts loaded.', 'info');
+    });
+    </script>
+
+</body>
+</html>

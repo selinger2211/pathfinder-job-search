@@ -28,6 +28,7 @@ Pathfinder is an agentic job search system with 11 standalone HTML modules shari
 | Debrief | `modules/debrief/` | 8-section post-interview capture + Claude synthesis | `pf_debriefs` |
 | Comp Intelligence | `modules/comp-intel/` | Compensation data entry, comparison, negotiation strategy | `pf_comp_cache` |
 | Calendar | `modules/calendar/` | Manual event tracking, pre/post-interview nudges | `pf_calendar_events`, `pf_calendar_nudges` |
+| Sync Hub | `modules/sync/` | Bridge external APIs (GCal, Indeed, Gmail, Clay) into Pathfinder | `pf_sync_log` (writes to other module keys) |
 | Artifacts MCP | `mcp-servers/pathfinder-artifacts-mcp/` | File storage layer — research briefs, resumes, JDs | Filesystem (not localStorage) |
 
 ---
@@ -95,7 +96,7 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v1.6.0
+**Current Version:** v1.7.0
 **Last Updated:** 2026-03-10
 
 ### Implementation Status
@@ -112,6 +113,7 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 | Debrief | ~85% | 8-section form, Claude synthesis, history, pattern analysis, timeline, export, Research Brief triggers | Auto-trigger from Calendar events |
 | Comp Intel | ~80% | Data entry, comparison table, Claude negotiation, visualization charts, aggregation stats, 25-point scorecard | Levels.fyi/Glassdoor data scraping |
 | Calendar | ~80% | Manual events, week/month/day views, nudges, smart event-role linking, post-event automation | Google Calendar API |
+| Sync Hub | ~70% | GCal sync, Indeed sync, Gmail sync (leads + applications), Clay placeholder, file upload, dedup, sync log | Auto-refresh from Cowork scheduled tasks, richer Gmail parsing |
 | MCP Server | ~45% | Tool stubs, storage layer, HTTP bridge skeleton, bug fixes | Build on Mac (`npm run build`), end-to-end testing |
 
 ### Known Issues

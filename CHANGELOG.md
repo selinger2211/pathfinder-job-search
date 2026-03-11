@@ -4,6 +4,26 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v1.7.0 — 2026-03-10
+
+### What Changed
+- **New Module: Sync Hub** (`modules/sync/index.html`) — Bridges external APIs (Google Calendar, Indeed, Gmail, Clay) into Pathfinder's localStorage data layer.
+
+#### Sync Hub Features
+- Google Calendar sync: fetches events via MCP, auto-classifies (interview, networking, prep, personal), transforms to `pf_calendar_events` format with dedup by `gcalId`
+- Indeed sync: imports job listings with full metadata (company, title, salary, location), scores against `pf_preferences` using the same 6-dimension model as Job Feed, writes to `pf_feed_queue`
+- Gmail sync: extracts job leads from Built In, LinkedIn, and recruiter alerts → feed queue; detects application confirmations → creates `pf_roles` entries as "applied" stage with referral tracking
+- Clay enrichment: placeholder infrastructure for company enrichment (funding, headcount, tech stack), syncs to `pf_companies`
+- File upload: accepts `sync-payload.json` from Cowork for fresh data (drag-and-drop or click)
+- Sync log: timestamped activity log showing what was added/skipped per sync
+- Event classification engine: keyword-based categorization of calendar events
+- Dedup engine: prevents duplicate entries across re-syncs using composite keys
+
+#### Navigation
+- Added "Sync Hub" link to all 9 module navbars (dashboard, pipeline, job-feed-listener, research-brief, resume-tailor, outreach, mock-interview, debrief, calendar)
+
+---
+
 ## v1.6.0 — 2026-03-10
 
 ### What Changed
