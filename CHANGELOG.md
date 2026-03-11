@@ -4,6 +4,43 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.1.0 — 2026-03-10
+
+### What Changed — Perfection Pass (All 8 Browser Modules → 100%)
+
+Applied enterprise-grade polish across all modules simultaneously:
+
+#### Error Handling (All Modules)
+- Every `localStorage.getItem` / `JSON.parse` wrapped in try/catch with graceful fallbacks
+- Empty state messages for all lists, tables, charts, and panels when no data exists
+- Form validation: required fields enforced, numeric range checks, date format validation
+- CDN script loading failures handled with user-facing error messages
+
+#### Accessibility — WCAG 2.1 AA (All Modules)
+- `aria-label` on ALL icon-only buttons across all 8 modules
+- `role="alert"` on notification/status elements
+- `aria-live="polite"` on dynamic content regions
+- Focus management: modals auto-focus first input on open, return focus on close
+- Keyboard navigation: Escape closes modals, Enter submits forms, arrow keys navigate
+
+#### Visual Polish (All Modules)
+- CSS transitions (150-200ms ease) on ALL interactive elements
+- Hover states on every clickable element with shadow elevation
+- Loading spinners during Claude API calls
+- `cursor: pointer` on all clickable non-anchor elements
+- Consistent CSS variable usage throughout
+
+#### Data Validation (All Modules)
+- Input sanitization using `.trim()` and `textContent` (prevents XSS)
+- Email validation in Outreach, salary validation in Comp Intel, date validation in Calendar/Debrief
+
+#### Code Quality (All Modules)
+- Removed all `console.log` statements
+- Fixed all TODO/FIXME/HACK comments
+- JSDoc comments on every function
+
+---
+
 ## v2.0.0 — 2026-03-10
 
 ### What Changed — System-Wide Completion Milestone

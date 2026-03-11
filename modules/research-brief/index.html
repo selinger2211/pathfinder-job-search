@@ -113,6 +113,17 @@
       color: var(--text-primary);
       font-size: var(--text-sm);
       cursor: pointer;
+      transition: border-color var(--duration-fast) var(--ease-default);
+    }
+
+    .role-selector select:hover {
+      border-color: var(--accent);
+    }
+
+    .role-selector select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
     }
 
     /* Company card in sidebar */
@@ -259,6 +270,13 @@
       font-family: inherit;
       resize: none;
       height: 80px;
+      transition: border-color var(--duration-fast) var(--ease-default);
+    }
+
+    .interviewer-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
     }
 
     /* Action buttons in sidebar */
@@ -868,7 +886,7 @@
     <div class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <h2 class="sidebar-title">Research Brief</h2>
-        <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">
+        <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar" aria-label="Close sidebar">
           <i data-lucide="x" style="width: 16px; height: 16px;"></i>
         </button>
       </div>
@@ -918,32 +936,32 @@
 
         <!-- Job description text -->
         <div id="jdSection" style="display: none;" class="jd-section">
-          <label class="jd-label">Job Description</label>
-          <div class="jd-text" id="jdText"></div>
+          <label class="jd-label" for="jdText">Job Description</label>
+          <div class="jd-text" id="jdText" role="region" aria-label="Job description content"></div>
         </div>
 
         <!-- Interviewer names input -->
         <div id="interviewerSection" style="display: none;" class="interviewer-section">
-          <label class="jd-label">Interviewer Names (comma-separated)</label>
-          <textarea class="interviewer-input" id="interviewerInput" placeholder="e.g., Sarah Chen, Mike Johnson, Lisa Park"></textarea>
+          <label class="jd-label" for="interviewerInput">Interviewer Names (comma-separated)</label>
+          <textarea class="interviewer-input" id="interviewerInput" placeholder="e.g., Sarah Chen, Mike Johnson, Lisa Park" aria-label="Interviewer names"></textarea>
         </div>
 
         <!-- API Key Settings -->
         <div id="apiKeySection" class="api-key-section" style="margin-top: var(--space-3); padding: var(--space-3); background: var(--bg-elevated); border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm);">
-          <label class="jd-label" style="display: flex; align-items: center; gap: 6px;">
+          <label class="jd-label" for="apiKeyInput" style="display: flex; align-items: center; gap: 6px;">
             <i data-lucide="key" style="width: 14px; height: 14px;"></i>
             Anthropic API Key
           </label>
           <div style="display: flex; gap: 6px; margin-top: var(--space-1);">
-            <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." style="flex: 1; padding: 6px 10px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); font-size: var(--text-sm); background: var(--bg-base); color: var(--text-primary); font-family: monospace;">
-            <button id="apiKeySaveBtn" onclick="saveApiKey()" title="Save API key" style="padding: 6px 10px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); background: var(--bg-elevated); cursor: pointer; font-size: var(--text-sm); color: var(--text-secondary);">Save</button>
+            <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." style="flex: 1; padding: 6px 10px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); font-size: var(--text-sm); background: var(--bg-base); color: var(--text-primary); font-family: monospace; transition: border-color var(--duration-fast) var(--ease-default);" aria-label="Anthropic API key">
+            <button id="apiKeySaveBtn" onclick="saveApiKey()" title="Save API key" aria-label="Save API key" style="padding: 6px 10px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); background: var(--bg-elevated); cursor: pointer; font-size: var(--text-sm); color: var(--text-secondary); transition: all var(--duration-fast) var(--ease-default);">Save</button>
           </div>
-          <p id="apiKeyStatus" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;"></p>
+          <p id="apiKeyStatus" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;" role="status" aria-live="polite"></p>
         </div>
 
         <!-- Saved briefs section -->
         <div id="savedBriefsSection" style="display: none; margin-top: var(--space-3); border-top: 1px solid var(--bg-subtle); padding-top: var(--space-3);">
-          <button class="saved-briefs-toggle" onclick="toggleSavedBriefs()">
+          <button class="saved-briefs-toggle" onclick="toggleSavedBriefs()" aria-label="Toggle saved briefs panel">
             <i data-lucide="inbox" style="width: 16px; height: 16px;"></i>
             Saved Briefs
           </button>
@@ -952,11 +970,11 @@
 
         <!-- Action buttons -->
         <div class="sidebar-actions">
-          <button class="btn btn-primary" id="generateBtn" style="display: none;">
+          <button class="btn btn-primary" id="generateBtn" style="display: none;" aria-label="Generate research brief">
             <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i>
             Generate Brief
           </button>
-          <button class="btn btn-ghost" id="clearCacheBtn" style="display: none;">
+          <button class="btn btn-ghost" id="clearCacheBtn" style="display: none;" aria-label="Clear cached sections">
             <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
             Clear Cache
           </button>
@@ -973,11 +991,11 @@
           <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: var(--space-1);" id="briefSubtitle"></p>
         </div>
         <div class="brief-actions">
-          <button id="exportBtn" title="Export as HTML" style="display: none;">
+          <button id="exportBtn" title="Export as HTML" aria-label="Download brief as HTML" style="display: none;">
             <i data-lucide="download" style="width: 16px; height: 16px;"></i>
             Export
           </button>
-          <button id="printBtn" title="Print brief" style="display: none;">
+          <button id="printBtn" title="Print brief" aria-label="Print brief" style="display: none;">
             <i data-lucide="printer" style="width: 16px; height: 16px;"></i>
             Print
           </button>
@@ -987,12 +1005,15 @@
       <!-- Main content area with sections and TOC -->
       <div class="brief-content">
         <!-- Sections area (center) -->
-        <div class="sections-area" id="sectionsArea">
+        <div class="sections-area" id="sectionsArea" role="main" aria-live="polite" aria-label="Research brief content">
           <div class="empty-state">
             <div class="empty-state-icon">📋</div>
             <div class="empty-state-text">
-              <p>Select a role from the sidebar to generate your research brief.</p>
+              <p><strong>No brief selected</strong></p>
               <p style="font-size: var(--text-sm); margin-top: var(--space-2);">
+                Select a role from the sidebar to generate your research brief.
+              </p>
+              <p style="font-size: var(--text-sm); margin-top: var(--space-2); color: var(--text-tertiary);">
                 This will create a comprehensive multi-section interview prep document.
               </p>
             </div>
@@ -1500,9 +1521,13 @@ Questions must be SPECIFIC to this role. Every question needs a "why they'd ask 
      * RETURNS: array of company objects
      */
     function getCompanies() {
-      const fromPipeline = localStorage.getItem('pf_companies');
-      if (fromPipeline) {
-        return JSON.parse(fromPipeline);
+      try {
+        const fromPipeline = localStorage.getItem('pf_companies');
+        if (fromPipeline) {
+          return JSON.parse(fromPipeline);
+        }
+      } catch (e) {
+        console.warn('Failed to load companies from localStorage:', e);
       }
       // No pipeline data: initialize demo data
       initializeDemo();
@@ -1516,9 +1541,13 @@ Questions must be SPECIFIC to this role. Every question needs a "why they'd ask 
      * RETURNS: array of role/job objects
      */
     function getRoles() {
-      const fromPipeline = localStorage.getItem('pf_roles');
-      if (fromPipeline) {
-        return JSON.parse(fromPipeline);
+      try {
+        const fromPipeline = localStorage.getItem('pf_roles');
+        if (fromPipeline) {
+          return JSON.parse(fromPipeline);
+        }
+      } catch (e) {
+        console.warn('Failed to load roles from localStorage:', e);
       }
       // No pipeline data: initialize demo data
       initializeDemo();
@@ -1532,27 +1561,31 @@ Questions must be SPECIFIC to this role. Every question needs a "why they'd ask 
      * OUTPUT: populates localStorage with pf_companies and pf_roles
      */
     function initializeDemo() {
-      // In Personal mode, never seed demo data — the data-switcher handles it
-      if (localStorage.getItem('pf_data_mode') === 'personal') return;
+      try {
+        // In Personal mode, never seed demo data — the data-switcher handles it
+        if (localStorage.getItem('pf_data_mode') === 'personal') return;
 
-      if (!localStorage.getItem('pf_companies')) {
-        const companies = DEMO_COMPANIES.map(c => ({
-          ...c,
-          url: `https://${c.domain}`,
-          logoUrl: `https://logo.clearbit.com/${c.domain}`,
-          enrichmentStatus: 'complete',
-          dateAdded: Date.now()
-        }));
-        localStorage.setItem('pf_companies', JSON.stringify(companies));
-      }
-      if (!localStorage.getItem('pf_roles')) {
-        const roles = DEMO_ROLES.map(r => ({
-          ...r,
-          dateAdded: r.dateAdded || Date.now(),
-          stageHistory: [],
-          connections: 0
-        }));
-        localStorage.setItem('pf_roles', JSON.stringify(roles));
+        if (!localStorage.getItem('pf_companies')) {
+          const companies = DEMO_COMPANIES.map(c => ({
+            ...c,
+            url: `https://${c.domain}`,
+            logoUrl: `https://logo.clearbit.com/${c.domain}`,
+            enrichmentStatus: 'complete',
+            dateAdded: Date.now()
+          }));
+          localStorage.setItem('pf_companies', JSON.stringify(companies));
+        }
+        if (!localStorage.getItem('pf_roles')) {
+          const roles = DEMO_ROLES.map(r => ({
+            ...r,
+            dateAdded: r.dateAdded || Date.now(),
+            stageHistory: [],
+            connections: 0
+          }));
+          localStorage.setItem('pf_roles', JSON.stringify(roles));
+        }
+      } catch (e) {
+        console.warn('Failed to initialize demo data:', e);
       }
     }
 
@@ -1629,14 +1662,18 @@ Questions must be SPECIFIC to this role. Every question needs a "why they'd ask 
      * RETURNS: cached content string, or null if not cached
      */
     function getCachedSection(companySlug, roleId, sectionNum) {
-      const key = `research_${companySlug}_${roleId}_${sectionNum}`;
-      const cached = localStorage.getItem(key);
-      if (cached) {
-        const data = JSON.parse(cached);
-        return {
-          content: data.content,
-          timestamp: data.timestamp
-        };
+      try {
+        const key = `research_${companySlug}_${roleId}_${sectionNum}`;
+        const cached = localStorage.getItem(key);
+        if (cached) {
+          const data = JSON.parse(cached);
+          return {
+            content: data.content,
+            timestamp: data.timestamp
+          };
+        }
+      } catch (e) {
+        console.warn('Failed to get cached section:', e);
       }
       return null;
     }
@@ -1647,24 +1684,32 @@ Questions must be SPECIFIC to this role. Every question needs a "why they'd ask 
      * OUTPUT: data persisted to localStorage
      */
     function cacheSectionContent(companySlug, roleId, sectionNum, content) {
-      const key = `research_${companySlug}_${roleId}_${sectionNum}`;
-      localStorage.setItem(key, JSON.stringify({
-        content: content,
-        timestamp: Date.now()
-      }));
+      try {
+        const key = `research_${companySlug}_${roleId}_${sectionNum}`;
+        localStorage.setItem(key, JSON.stringify({
+          content: content,
+          timestamp: Date.now()
+        }));
+      } catch (e) {
+        console.warn('Failed to cache section content:', e);
+      }
     }
 
     /**
      * Clears all cached sections for a specific role
      * Used when user clicks "Clear Cache" button
      * INPUT: companySlug, roleId
-     * OUTPUT: removes 10 cache entries from localStorage
+     * OUTPUT: removes 14 cache entries from localStorage
      */
     function clearAllCachedSections(companySlug, roleId) {
-      // Clear all 14 sections (0-13)
-      for (let i = 0; i <= 13; i++) {
-        const key = `research_${companySlug}_${roleId}_${i}`;
-        localStorage.removeItem(key);
+      try {
+        // Clear all 14 sections (0-13)
+        for (let i = 0; i <= 13; i++) {
+          const key = `research_${companySlug}_${roleId}_${i}`;
+          localStorage.removeItem(key);
+        }
+      } catch (e) {
+        console.warn('Failed to clear cached sections:', e);
       }
     }
 
@@ -1822,17 +1867,21 @@ Questions must be SPECIFIC to this role. Every question needs a "why they'd ask 
       };
 
       // Load existing briefs from localStorage
-      let briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
+      try {
+        let briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
 
-      // Limit to last 20 briefs per company to prevent storage bloat
-      briefs = briefs.filter(b => b.company !== company.name);
-      briefs.push(brief);
-      if (briefs.length > 20) {
-        briefs = briefs.slice(-20);
+        // Limit to last 20 briefs per company to prevent storage bloat
+        briefs = briefs.filter(b => b.company !== company.name);
+        briefs.push(brief);
+        if (briefs.length > 20) {
+          briefs = briefs.slice(-20);
+        }
+
+        // Save to localStorage
+        localStorage.setItem('pf_research_briefs', JSON.stringify(briefs));
+      } catch (e) {
+        console.warn('Failed to save brief to localStorage:', e);
       }
-
-      // Save to localStorage
-      localStorage.setItem('pf_research_briefs', JSON.stringify(briefs));
 
       // Show saved confirmation
       const companySlug = getCompanySlug(company.name);
@@ -1854,85 +1903,89 @@ Questions must be SPECIFIC to this role. Every question needs a "why they'd ask 
      * OUTPUT: sections are restored to the DOM
      */
     function loadSavedBrief(briefId) {
-      const briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
-      const brief = briefs.find(b => b.id === briefId);
-      if (!brief) {
-        alert('Brief not found in saved artifacts.');
-        return;
-      }
-
-      // Render sections
-      const sectionsArea = document.getElementById('sectionsArea');
-      sectionsArea.innerHTML = '';
-
-      brief.sections.forEach(sectionData => {
-        let section = document.createElement('div');
-
-        // Sources section uses different styling
-        if (sectionData.num === 'sources') {
-          section.innerHTML = sectionData.content;
-          sectionsArea.appendChild(section);
+      try {
+        const briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
+        const brief = briefs.find(b => b.id === briefId);
+        if (!brief) {
+          console.warn('Brief not found in saved artifacts:', briefId);
           return;
         }
 
-        section.className = 'section';
-        section.id = `section-${sectionData.num}`;
-        section.setAttribute('data-section-num', sectionData.num);
+        // Render sections
+        const sectionsArea = document.getElementById('sectionsArea');
+        sectionsArea.innerHTML = '';
 
-        // Header
-        const header = document.createElement('div');
-        header.className = 'section-header';
+        brief.sections.forEach(sectionData => {
+          let section = document.createElement('div');
 
-        const titleGroup = document.createElement('div');
-        titleGroup.className = 'section-title-group';
+          // Sources section uses different styling
+          if (sectionData.num === 'sources') {
+            section.innerHTML = sectionData.content;
+            sectionsArea.appendChild(section);
+            return;
+          }
 
-        const badge = document.createElement('div');
-        badge.className = 'section-badge';
-        badge.textContent = sectionData.num;
-        titleGroup.appendChild(badge);
+          section.className = 'section';
+          section.id = `section-${sectionData.num}`;
+          section.setAttribute('data-section-num', sectionData.num);
 
-        const titleEl = document.createElement('h3');
-        titleEl.className = 'section-title';
-        titleEl.textContent = sectionData.title;
-        titleGroup.appendChild(titleEl);
+          // Header
+          const header = document.createElement('div');
+          header.className = 'section-header';
 
-        header.appendChild(titleGroup);
+          const titleGroup = document.createElement('div');
+          titleGroup.className = 'section-title-group';
 
-        // Status (loaded from saved)
-        const statusGroup = document.createElement('div');
-        statusGroup.style.cssText = 'display: flex; gap: var(--space-3); align-items: center;';
-        const statusEl = document.createElement('div');
-        statusEl.className = 'section-status';
-        statusEl.innerHTML = '<span class="badge" style="background: rgba(99, 102, 241, 0.15); color: var(--accent);">Loaded</span>';
-        statusGroup.appendChild(statusEl);
+          const badge = document.createElement('div');
+          badge.className = 'section-badge';
+          badge.textContent = sectionData.num;
+          titleGroup.appendChild(badge);
 
-        header.appendChild(statusGroup);
-        section.appendChild(header);
+          const titleEl = document.createElement('h3');
+          titleEl.className = 'section-title';
+          titleEl.textContent = sectionData.title;
+          titleGroup.appendChild(titleEl);
 
-        // Content
-        const content = document.createElement('div');
-        content.className = 'section-content';
-        content.innerHTML = sectionData.content;
-        section.appendChild(content);
+          header.appendChild(titleGroup);
 
-        sectionsArea.appendChild(section);
-      });
+          // Status (loaded from saved)
+          const statusGroup = document.createElement('div');
+          statusGroup.style.cssText = 'display: flex; gap: var(--space-3); align-items: center;';
+          const statusEl = document.createElement('div');
+          statusEl.className = 'section-status';
+          statusEl.innerHTML = '<span class="badge" style="background: rgba(99, 102, 241, 0.15); color: var(--accent);">Loaded</span>';
+          statusGroup.appendChild(statusEl);
 
-      // Update TOC
-      const visibleSections = brief.sections.filter(s => s.num !== 'sources');
-      const tocList = document.getElementById('tocList');
-      tocList.innerHTML = '';
-      visibleSections.forEach(sec => {
-        const li = document.createElement('li');
-        li.className = 'toc-item';
-        li.textContent = `${sec.num}. ${sec.title}`;
-        li.onclick = () => scrollToSection(sec.num);
-        tocList.appendChild(li);
-      });
+          header.appendChild(statusGroup);
+          section.appendChild(header);
 
-      document.getElementById('tocSidebar').style.display = 'block';
-      updateProgress();
-      lucide.createIcons();
+          // Content
+          const content = document.createElement('div');
+          content.className = 'section-content';
+          content.innerHTML = sectionData.content;
+          section.appendChild(content);
+
+          sectionsArea.appendChild(section);
+        });
+
+        // Update TOC
+        const visibleSections = brief.sections.filter(s => s.num !== 'sources');
+        const tocList = document.getElementById('tocList');
+        tocList.innerHTML = '';
+        visibleSections.forEach(sec => {
+          const li = document.createElement('li');
+          li.className = 'toc-item';
+          li.textContent = `${sec.num}. ${sec.title}`;
+          li.onclick = () => scrollToSection(sec.num);
+          tocList.appendChild(li);
+        });
+
+        document.getElementById('tocSidebar').style.display = 'block';
+        updateProgress();
+        lucide.createIcons();
+      } catch (e) {
+        console.warn('Failed to load saved brief:', e);
+      }
     }
 
     /**
@@ -1943,11 +1996,14 @@ Questions must be SPECIFIC to this role. Every question needs a "why they'd ask 
     function deleteSavedBrief(briefId) {
       if (!confirm('Delete this saved brief? This cannot be undone.')) return;
 
-      let briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
-      briefs = briefs.filter(b => b.id !== briefId);
-      localStorage.setItem('pf_research_briefs', JSON.stringify(briefs));
-
-      updateSavedBriefsList();
+      try {
+        let briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
+        briefs = briefs.filter(b => b.id !== briefId);
+        localStorage.setItem('pf_research_briefs', JSON.stringify(briefs));
+        updateSavedBriefsList();
+      } catch (e) {
+        console.warn('Failed to delete saved brief:', e);
+      }
     }
 
     /**
@@ -1961,56 +2017,61 @@ Questions must be SPECIFIC to this role. Every question needs a "why they'd ask 
       const company = state.selectedCompany;
       if (!role || !company) return;
 
-      const briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
-      const relevantBriefs = briefs.filter(b =>
-        b.company === company.name && b.roleId === role.id
-      );
+      try {
+        const briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
+        const relevantBriefs = briefs.filter(b =>
+          b.company === company.name && b.roleId === role.id
+        );
 
-      const listEl = document.getElementById('savedBriefsList');
-      if (!listEl) return;
+        const listEl = document.getElementById('savedBriefsList');
+        if (!listEl) return;
 
-      if (relevantBriefs.length === 0) {
-        listEl.innerHTML = '<p style="font-size: var(--text-xs); color: var(--text-secondary); padding: var(--space-2);">No saved briefs yet. Generate one to get started.</p>';
-        return;
+        if (relevantBriefs.length === 0) {
+          listEl.innerHTML = '<p style="font-size: var(--text-xs); color: var(--text-secondary); padding: var(--space-2);">No saved briefs for this role yet.</p>';
+          return;
+        }
+
+        listEl.innerHTML = '';
+        relevantBriefs.forEach(brief => {
+          const item = document.createElement('div');
+          item.className = 'saved-brief-item';
+
+          const info = document.createElement('div');
+          info.className = 'saved-brief-info';
+
+          const name = document.createElement('div');
+          name.className = 'saved-brief-name';
+          const date = new Date(brief.generatedAt);
+          name.textContent = `Brief — ${date.toLocaleDateString()}`;
+          name.onclick = () => loadSavedBrief(brief.id);
+          info.appendChild(name);
+
+          const meta = document.createElement('div');
+          meta.className = 'saved-brief-meta';
+          meta.textContent = `${brief.sections.length} sections`;
+          info.appendChild(meta);
+
+          item.appendChild(info);
+
+          const actions = document.createElement('div');
+          actions.className = 'saved-brief-actions';
+
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'delete';
+          deleteBtn.textContent = 'Delete';
+          deleteBtn.aria-label = 'Delete this brief';
+          deleteBtn.onclick = (e) => {
+            e.stopPropagation();
+            deleteSavedBrief(brief.id);
+          };
+          actions.appendChild(deleteBtn);
+
+          item.appendChild(actions);
+          listEl.appendChild(item);
+        });
+      } catch (e) {
+        console.warn('Failed to update saved briefs list:', e);
       }
-
-      listEl.innerHTML = '';
-      relevantBriefs.forEach(brief => {
-        const item = document.createElement('div');
-        item.className = 'saved-brief-item';
-
-        const info = document.createElement('div');
-        info.className = 'saved-brief-info';
-
-        const name = document.createElement('div');
-        name.className = 'saved-brief-name';
-        const date = new Date(brief.generatedAt);
-        name.textContent = `Brief — ${date.toLocaleDateString()}`;
-        name.onclick = () => loadSavedBrief(brief.id);
-        info.appendChild(name);
-
-        const meta = document.createElement('div');
-        meta.className = 'saved-brief-meta';
-        meta.textContent = `${brief.sections.length} sections`;
-        info.appendChild(meta);
-
-        item.appendChild(info);
-
-        const actions = document.createElement('div');
-        actions.className = 'saved-brief-actions';
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete';
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.onclick = (e) => {
-          e.stopPropagation();
-          deleteSavedBrief(brief.id);
-        };
-        actions.appendChild(deleteBtn);
-
-        item.appendChild(actions);
-        listEl.appendChild(item);
-      });
     }
 
     /**
@@ -2546,12 +2607,16 @@ The HTML content should come first, followed by the citations block. Do not incl
     function ensureApiKey() {
       if (state.apiKey) return true;
 
-      // Try loading from localStorage first
-      const stored = localStorage.getItem('pf_anthropic_key');
-      if (stored) {
-        state.apiKey = stored;
-        updateApiKeyUI();
-        return true;
+      try {
+        // Try loading from localStorage first
+        const stored = localStorage.getItem('pf_anthropic_key');
+        if (stored) {
+          state.apiKey = stored;
+          updateApiKeyUI();
+          return true;
+        }
+      } catch (e) {
+        console.warn('Failed to load API key from localStorage:', e);
       }
 
       // Fall back to prompt
@@ -2563,7 +2628,11 @@ The HTML content should come first, followed by the citations block. Do not incl
 
       if (key && key.trim()) {
         state.apiKey = key.trim();
-        localStorage.setItem('pf_anthropic_key', state.apiKey);
+        try {
+          localStorage.setItem('pf_anthropic_key', state.apiKey);
+        } catch (e) {
+          console.warn('Failed to save API key to localStorage:', e);
+        }
         updateApiKeyUI();
         return true;
       }
@@ -2586,17 +2655,23 @@ The HTML content should come first, followed by the citations block. Do not incl
         return;
       }
 
-      state.apiKey = key;
-      localStorage.setItem('pf_anthropic_key', key);
+      try {
+        state.apiKey = key;
+        localStorage.setItem('pf_anthropic_key', key);
 
-      // Mask the displayed value
-      input.value = key.slice(0, 10) + '...' + key.slice(-4);
-      input.type = 'text';
-      status.textContent = 'Key saved. Stored locally in your browser.';
-      status.style.color = 'var(--text-tertiary)';
+        // Mask the displayed value
+        input.value = key.slice(0, 10) + '...' + key.slice(-4);
+        input.type = 'text';
+        status.textContent = 'Key saved. Stored locally in your browser.';
+        status.style.color = 'var(--text-tertiary)';
 
-      // Reset to password after 3s
-      setTimeout(() => { input.type = 'password'; input.value = key; }, 3000);
+        // Reset to password after 3s
+        setTimeout(() => { input.type = 'password'; input.value = key; }, 3000);
+      } catch (e) {
+        console.warn('Failed to save API key:', e);
+        status.textContent = 'Error saving key. Check browser storage.';
+        status.style.color = 'rgb(239, 68, 68)';
+      }
     }
 
     /**

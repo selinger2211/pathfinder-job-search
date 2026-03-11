@@ -350,6 +350,11 @@
       box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
     }
 
+    .btn-primary:focus {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
+    }
+
     .btn-primary:disabled {
       opacity: 0.5;
       cursor: not-allowed;
@@ -359,10 +364,17 @@
       background: var(--bg-secondary);
       color: var(--text-primary);
       border: 1px solid var(--border-color);
+      transition: all var(--duration-fast, 200ms) ease;
     }
 
     .btn-secondary:hover:not(:disabled) {
       background: var(--bg-tertiary);
+      border-color: var(--accent-primary);
+    }
+
+    .btn-secondary:focus {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
     }
 
     .wizard-nav {
@@ -626,8 +638,8 @@
     <!-- LEFT SIDEBAR -->
     <div class="debrief-sidebar">
       <div>
-        <label class="sidebar-label">Select Role</label>
-        <select class="form-select" id="roleSelect">
+        <label for="roleSelect" class="sidebar-label">Select Role</label>
+        <select class="form-select" id="roleSelect" aria-label="Choose a role to debrief">
           <option value="">Choose a role...</option>
         </select>
       </div>
@@ -644,10 +656,10 @@
       </div>
 
       <div class="tab-nav">
-        <button class="tab-btn active" data-tab="form">New Debrief</button>
-        <button class="tab-btn" data-tab="history">History</button>
-        <button class="tab-btn" data-tab="timeline">Timeline</button>
-        <button class="tab-btn" data-tab="patterns">Patterns</button>
+        <button class="tab-btn active" data-tab="form" aria-label="Create a new interview debrief">New Debrief</button>
+        <button class="tab-btn" data-tab="history" aria-label="View all past debriefs">History</button>
+        <button class="tab-btn" data-tab="timeline" aria-label="See your debriefs on a timeline">Timeline</button>
+        <button class="tab-btn" data-tab="patterns" aria-label="Analyze patterns across all debriefs">Patterns</button>
       </div>
 
       <div class="debrief-content">
@@ -704,12 +716,38 @@
         this.renderHistoryTab();
       },
 
+      /**
+       * Load all app data from localStorage with error handling
+       * Gracefully handles corrupted data with fallback to empty arrays
+       */
       loadData() {
-        // Load from localStorage
-        this.state.debriefs = JSON.parse(localStorage.getItem('pf_debriefs')) || [];
-        this.state.roles = JSON.parse(localStorage.getItem('pf_roles')) || [];
-        this.state.companies = JSON.parse(localStorage.getItem('pf_companies')) || [];
-        this.state.storyBank = JSON.parse(localStorage.getItem('pf_story_bank')) || [];
+        try {
+          this.state.debriefs = JSON.parse(localStorage.getItem('pf_debriefs')) || [];
+        } catch (e) {
+          console.warn('Failed to load debriefs. Starting fresh.');
+          this.state.debriefs = [];
+        }
+
+        try {
+          this.state.roles = JSON.parse(localStorage.getItem('pf_roles')) || [];
+        } catch (e) {
+          console.warn('Failed to load roles. Starting fresh.');
+          this.state.roles = [];
+        }
+
+        try {
+          this.state.companies = JSON.parse(localStorage.getItem('pf_companies')) || [];
+        } catch (e) {
+          console.warn('Failed to load companies. Starting fresh.');
+          this.state.companies = [];
+        }
+
+        try {
+          this.state.storyBank = JSON.parse(localStorage.getItem('pf_story_bank')) || [];
+        } catch (e) {
+          console.warn('Failed to load story bank. Starting fresh.');
+          this.state.storyBank = [];
+        }
       },
 
       /* ====== CALENDAR INTEGRATION: PENDING DEBRIEF ====== */
@@ -720,8 +758,15 @@
        * OUTPUT: auto-populates form if found, clears pending data
        */
       checkPendingDebrief() {
+        try {
+          const pendingDebrief = JSON.parse(localStorage.getItem('pf_pending_debrief'));
+          if (!pendingDebrief) return;
+        } catch (e) {
+          console.warn('Could not parse pending debrief data');
+          return;
+        }
+
         const pendingDebrief = JSON.parse(localStorage.getItem('pf_pending_debrief'));
-        if (!pendingDebrief) return;
 
         // Store for later use when saving
         this.state.pendingDebriefEvent = pendingDebrief;
@@ -774,28 +819,33 @@
        * OUTPUT: array of past interview events without debriefs
        */
       getPendingCalendarEvents() {
-        const calendarEvents = JSON.parse(localStorage.getItem('pf_calendar_events')) || [];
-        const debriefs = this.state.debriefs;
-        const now = new Date();
+        try {
+          const calendarEvents = JSON.parse(localStorage.getItem('pf_calendar_events')) || [];
+          const debriefs = this.state.debriefs;
+          const now = new Date();
 
-        return calendarEvents.filter(evt => {
-          // Must be interview type
-          const interviewTypes = ['phone_screen', 'technical', 'behavioral', 'panel', 'hiring_manager'];
-          if (!interviewTypes.includes(evt.type)) return false;
+          return calendarEvents.filter(evt => {
+            // Must be interview type
+            const interviewTypes = ['phone_screen', 'technical', 'behavioral', 'panel', 'hiring_manager'];
+            if (!interviewTypes.includes(evt.type)) return false;
 
-          // Must be in the past
-          const eventEnd = new Date(evt.date);
-          if (evt.duration) {
-            eventEnd.setMinutes(eventEnd.getMinutes() + evt.duration);
-          } else {
-            eventEnd.setHours(eventEnd.getHours() + 1);
-          }
-          if (eventEnd > now) return false;
+            // Must be in the past
+            const eventEnd = new Date(evt.date);
+            if (evt.duration) {
+              eventEnd.setMinutes(eventEnd.getMinutes() + evt.duration);
+            } else {
+              eventEnd.setHours(eventEnd.getHours() + 1);
+            }
+            if (eventEnd > now) return false;
 
-          // Must not have a debrief yet
-          const hasDebrief = debriefs.some(d => d.eventId === evt.id);
-          return !hasDebrief;
-        });
+            // Must not have a debrief yet
+            const hasDebrief = debriefs.some(d => d.eventId === evt.id);
+            return !hasDebrief;
+          });
+        } catch (e) {
+          console.warn('Could not fetch pending calendar events');
+          return [];
+        }
       },
 
       /**
@@ -831,32 +881,42 @@
       /**
        * Start a debrief for a specific calendar event.
        * INPUT: eventId (string)
-       * OUTPUT: auto-populates form from event data
+       * OUTPUT: auto-populates form from event data, handles missing/invalid data gracefully
        */
       startDebriefForEvent(eventId) {
-        const calendarEvents = JSON.parse(localStorage.getItem('pf_calendar_events')) || [];
-        const evt = calendarEvents.find(e => e.id === eventId);
-        if (!evt) return;
+        try {
+          const calendarEvents = JSON.parse(localStorage.getItem('pf_calendar_events')) || [];
+          const evt = calendarEvents.find(e => e.id === eventId);
+          if (!evt) {
+            console.warn('Calendar event not found:', eventId);
+            return;
+          }
 
-        // Set pending debrief and reload
-        this.state.pendingDebriefEvent = {
-          eventId: evt.id,
-          company: evt.company,
-          title: evt.title,
-          type: evt.type,
-          date: evt.date,
-          interviewers: evt.interviewers || [],
-          roleId: evt.roleId || null
-        };
+          // Set pending debrief and reload (with safe defaults)
+          this.state.pendingDebriefEvent = {
+            eventId: evt.id,
+            company: evt.company || 'Unknown Company',
+            title: evt.title || 'Interview',
+            type: evt.type || 'phone_screen',
+            date: evt.date || new Date().toISOString(),
+            interviewers: evt.interviewers || [],
+            roleId: evt.roleId || null
+          };
 
-        // Auto-select role if available
-        if (evt.roleId) {
-          this.state.currentRoleId = evt.roleId;
-          document.getElementById('roleSelect').value = evt.roleId;
-          this.updateSidebar();
+          // Auto-select role if available
+          if (evt.roleId) {
+            this.state.currentRoleId = evt.roleId;
+            const roleSelect = document.getElementById('roleSelect');
+            if (roleSelect) {
+              roleSelect.value = evt.roleId;
+              this.updateSidebar();
+            }
+          }
+
+          this.renderNewDebriefForm();
+        } catch (e) {
+          console.warn('Error starting debrief for event:', e);
         }
-
-        this.renderNewDebriefForm();
       },
 
       saveData() {
@@ -970,23 +1030,55 @@
       },
 
       // TABS
+      /**
+       * Attach click and keyboard listeners to tab buttons
+       * Supports keyboard navigation with arrow keys
+       */
       attachTabListeners() {
-        document.querySelectorAll('.tab-btn').forEach(btn => {
+        const tabButtons = document.querySelectorAll('.tab-btn');
+
+        tabButtons.forEach((btn, index) => {
           btn.addEventListener('click', (e) => {
             const tab = e.target.dataset.tab;
             this.switchTab(tab);
           });
+
+          // Keyboard navigation: arrow keys to switch tabs
+          btn.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+              e.preventDefault();
+              const nextIndex = e.key === 'ArrowRight'
+                ? (index + 1) % tabButtons.length
+                : (index - 1 + tabButtons.length) % tabButtons.length;
+              tabButtons[nextIndex].click();
+              tabButtons[nextIndex].focus();
+            }
+          });
         });
       },
 
+      /**
+       * Switch to a different tab and update UI
+       * INPUT: tab name ('form', 'history', 'timeline', 'patterns')
+       * OUTPUT: hides other tabs, shows selected tab with animations
+       */
       switchTab(tab) {
         this.state.currentTab = tab;
 
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
 
-        event.target.classList.add('active');
-        document.getElementById(tab + 'Tab').classList.remove('hidden');
+        // Find and activate the button that triggered this tab
+        const activeBtn = document.querySelector(`[data-tab="${tab}"]`);
+        if (activeBtn) {
+          activeBtn.classList.add('active');
+          activeBtn.focus();
+        }
+
+        const tabPane = document.getElementById(tab + 'Tab');
+        if (tabPane) {
+          tabPane.classList.remove('hidden');
+        }
 
         if (tab === 'history') {
           this.renderHistoryTab();
@@ -1139,6 +1231,19 @@
           e.preventDefault();
 
           if (currentStep < 8) {
+            // Validate current step before moving forward
+            const currentSection = form.querySelector(`#section${currentStep}`);
+            const currentSectionInputs = currentSection.querySelectorAll('textarea, input[type="radio"]:checked');
+
+            // For step 1 (impression), require rating to be selected
+            if (currentStep === 1) {
+              const ratingSelected = form.querySelector('input[name="impression"]:checked');
+              if (!ratingSelected) {
+                alert('Please select an overall impression rating before proceeding');
+                return;
+              }
+            }
+
             currentStep++;
             updateUI();
           } else {
@@ -1150,19 +1255,24 @@
         updateUI();
       },
 
+      /**
+       * Collect all form data from debrief form with validation
+       * INPUT: form element
+       * OUTPUT: validated object with all debrief sections
+       */
       collectFormData(form) {
         const data = new FormData(form);
         const formObj = {
           overallRating: data.get('impression') ? parseFloat(data.get('impression')) : 0,
-          overall: data.get('impressionDetails') || '',
-          landed: data.get('landed') || '',
-          didntLand: data.get('notlanded') || '',
-          questions: data.get('questions')?.split('\n').filter(q => q.trim()) || [],
-          priorities: data.get('priorities') || '',
-          redFlags: data.get('redflags') || '',
-          followUps: data.get('followup')?.split('\n').filter(f => f.trim()) || [],
+          overall: (data.get('impressionDetails') || '').trim(),
+          landed: (data.get('landed') || '').trim(),
+          didntLand: (data.get('notlanded') || '').trim(),
+          questions: (data.get('questions') || '').split('\n').filter(q => q.trim()),
+          priorities: (data.get('priorities') || '').trim(),
+          redFlags: (data.get('redflags') || '').trim(),
+          followUps: (data.get('followup') || '').split('\n').filter(f => f.trim()),
           nextStepsDate: data.get('nextStepsDate') || '',
-          notes: data.get('notes') || ''
+          notes: (data.get('notes') || '').trim()
         };
         return formObj;
       },
@@ -1172,14 +1282,21 @@
         const role = this.state.roles.find(r => r.id === this.state.currentRoleId);
         const company = this.getCompanyName(role);
 
+        // Validate required fields
         if (!formData.overall || !formData.landed) {
           alert('Please fill in at least "Overall Impression" and "What Landed" sections');
           return;
         }
 
+        // Validate API key before synthesis
+        if (!PF.claude.hasApiKey()) {
+          alert('API key required. Please add your Claude API key to generate AI insights.');
+          return;
+        }
+
         // Show loading state
         const container = document.getElementById('synthesisContainer');
-        container.innerHTML = '<div style="padding: var(--space-6); text-align: center;"><div class="loading-spinner"></div><p>Generating insights...</p></div>';
+        container.innerHTML = '<div style="padding: var(--space-6); text-align: center;"><div class="loading-spinner"></div><p role="status" aria-live="polite">Generating insights with Claude AI...</p></div>';
 
         try {
           const systemPrompt = `You are a career coach helping a senior PM process an interview debrief. Analyze their responses and provide:
@@ -1239,10 +1356,19 @@ Additional Notes: ${formData.notes}`;
           });
 
         } catch (error) {
-          container.innerHTML = `<div class="empty-state"><p>Error: ${error.message}</p></div>`;
+          let errorMsg = error.message;
+          if (!PF.claude.hasApiKey()) {
+            errorMsg = 'Claude API key is required. Please add your API key to generate insights.';
+          }
+          container.innerHTML = `<div class="empty-state"><p style="color: var(--danger);">Error: ${errorMsg}</p></div>`;
         }
       },
 
+      /**
+       * Save debrief to localStorage with calendar event linking
+       * INPUT: formData (validated), synthesis (HTML string)
+       * OUTPUT: persisted debrief, clears pending state
+       */
       saveDebrief(formData, synthesis) {
         const role = this.state.roles.find(r => r.id === this.state.currentRoleId);
         const company = this.getCompanyName(role);
@@ -1274,11 +1400,15 @@ Additional Notes: ${formData.notes}`;
           debrief.eventId = this.state.pendingDebriefEvent.eventId;
 
           // Update the calendar event with this debrief ID
-          const calendarEvents = JSON.parse(localStorage.getItem('pf_calendar_events')) || [];
-          const eventIndex = calendarEvents.findIndex(e => e.id === this.state.pendingDebriefEvent.eventId);
-          if (eventIndex !== -1) {
-            calendarEvents[eventIndex].debriefId = debrief.id;
-            localStorage.setItem('pf_calendar_events', JSON.stringify(calendarEvents));
+          try {
+            const calendarEvents = JSON.parse(localStorage.getItem('pf_calendar_events')) || [];
+            const eventIndex = calendarEvents.findIndex(e => e.id === this.state.pendingDebriefEvent.eventId);
+            if (eventIndex !== -1) {
+              calendarEvents[eventIndex].debriefId = debrief.id;
+              localStorage.setItem('pf_calendar_events', JSON.stringify(calendarEvents));
+            }
+          } catch (e) {
+            console.warn('Could not link debrief to calendar event');
           }
 
           // Clear the pending debrief flag
@@ -1294,11 +1424,14 @@ Additional Notes: ${formData.notes}`;
         this.updateSidebar();
       },
 
-      // HISTORY TAB
+      /**
+       * Render History tab with all past debriefs
+       * Shows empty state if no debriefs exist yet
+       */
       renderHistoryTab() {
         const container = document.getElementById('historyContainer');
 
-        if (this.state.debriefs.length === 0) {
+        if (!this.state.debriefs || this.state.debriefs.length === 0) {
           container.innerHTML = '<div class="empty-state"><div class="empty-icon">📚</div><p>No debriefs yet. Start by selecting a role and filling out the form.</p></div>';
           return;
         }
@@ -1387,6 +1520,7 @@ Additional Notes: ${formData.notes}`;
 
       /**
        * Debrief Timeline - visualize all debriefs for a role chronologically
+       * Shows empty state if no role selected or no debriefs for that role
        */
       renderTimelineTab() {
         const container = document.getElementById('timelineContainer');
@@ -1396,7 +1530,7 @@ Additional Notes: ${formData.notes}`;
           return;
         }
 
-        const roleDebriefs = this.state.debriefs
+        const roleDebriefs = (this.state.debriefs || [])
           .filter(d => d.roleId === this.state.currentRoleId)
           .sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -1438,11 +1572,12 @@ Additional Notes: ${formData.notes}`;
 
       /**
        * Pattern Analysis - identify recurring themes from 5+ debriefs
+       * Shows empty state if fewer than 5 debriefs completed
        */
       renderPatternsTab() {
         const container = document.getElementById('patternsContainer');
 
-        if (this.state.debriefs.length < 5) {
+        if (!this.state.debriefs || this.state.debriefs.length < 5) {
           container.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><p>Complete 5+ debriefs to see pattern analysis</p></div>';
           return;
         }
@@ -1557,11 +1692,16 @@ Additional Notes: ${formData.notes}`;
       }
 
       /**
-       * Export debrief as text file
+       * Export debrief as text file with proper formatting
+       * INPUT: debriefId, format (currently 'text')
+       * OUTPUT: triggers download of formatted debrief text
        */
       exportDebrief(debriefId, format) {
         const debrief = this.state.debriefs.find(d => d.id === debriefId);
-        if (!debrief) return;
+        if (!debrief) {
+          alert('Debrief not found');
+          return;
+        }
 
         let text = `INTERVIEW DEBRIEF\n`;
         text += `${'='.repeat(50)}\n\n`;
@@ -1627,11 +1767,16 @@ Additional Notes: ${formData.notes}`;
       }
 
       /**
-       * Copy debrief to clipboard
+       * Copy debrief to clipboard for sharing or pasting
+       * INPUT: debriefId (string)
+       * OUTPUT: copies formatted text to clipboard, shows confirmation
        */
       copyDebriefToClipboard(debriefId) {
         const debrief = this.state.debriefs.find(d => d.id === debriefId);
-        if (!debrief) return;
+        if (!debrief) {
+          alert('Debrief not found');
+          return;
+        }
 
         let text = `INTERVIEW DEBRIEF\n`;
         text += `${'='.repeat(50)}\n\n`;

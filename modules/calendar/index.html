@@ -1385,6 +1385,89 @@
             border-left-color: var(--warning) !important;
         }
 
+        /* ============================================================================
+           NOTIFICATIONS & FEEDBACK
+           ============================================================================ */
+        .notification {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 16px;
+            background: var(--accent);
+            color: white;
+            border-radius: var(--radius);
+            font-size: 13px;
+            z-index: 9999;
+            animation: slideUp 0.3s ease-out;
+            box-shadow: var(--shadow-md);
+        }
+
+        .notification.success {
+            background: var(--success);
+        }
+
+        .notification.error {
+            background: var(--error);
+        }
+
+        .notification.warning {
+            background: var(--warning);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+        }
+
+        /* Empty state styling */
+        .empty-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            padding: 48px 24px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .empty-content-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+            color: var(--text-tertiary);
+        }
+
+        .empty-content-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .empty-content-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
     </style>
 </head>
 <body>
@@ -1403,8 +1486,8 @@
             <a href="../comp-intel/index.html">Comp</a>
             <a href="index.html" class="active">Calendar</a>
             <a href="../sync/">Sync Hub</a>
-            <button id="themeToggle" onclick="toggleTheme()" title="Toggle theme">
-                <i id="themeIcon" data-lucide="moon" width="16" height="16"></i>
+            <button id="themeToggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle light/dark theme">
+                <i id="themeIcon" data-lucide="moon" width="16" height="16" aria-hidden="true"></i>
             </button>
         </div>
     </nav>
@@ -1570,8 +1653,8 @@
                 <div>
                     <h2 class="modal-title" id="eventModalTitle">Event Details</h2>
                 </div>
-                <button class="modal-close" onclick="closeModal('eventModal')">
-                    <i data-lucide="x" width="18" height="18"></i>
+                <button class="modal-close" onclick="closeModal('eventModal')" aria-label="Close event details">
+                    <i data-lucide="x" width="18" height="18" aria-hidden="true"></i>
                 </button>
             </div>
             <div class="modal-content" id="eventModalContent"></div>
@@ -1588,8 +1671,8 @@
         <div class="modal">
             <div class="modal-header">
                 <h2 class="modal-title">Add Interview Event</h2>
-                <button class="modal-close" onclick="closeModal('addEventModal')">
-                    <i data-lucide="x" width="18" height="18"></i>
+                <button class="modal-close" onclick="closeModal('addEventModal')" aria-label="Close add event dialog">
+                    <i data-lucide="x" width="18" height="18" aria-hidden="true"></i>
                 </button>
             </div>
             <div class="modal-content">
@@ -1689,9 +1772,9 @@
     <div class="modal-overlay" id="commandModal">
         <div class="modal" style="max-width: 600px;">
             <div class="modal-header">
-                <input type="text" id="commandInput" placeholder="Type a command..." style="background: var(--bg-base); border: 1px solid var(--border); color: var(--text-primary); padding: 10px 12px; border-radius: var(--radius-sm); flex: 1; font-size: 14px;">
-                <button class="modal-close" onclick="closeModal('commandModal')">
-                    <i data-lucide="x" width="18" height="18"></i>
+                <input type="text" id="commandInput" placeholder="Type a command..." style="background: var(--bg-base); border: 1px solid var(--border); color: var(--text-primary); padding: 10px 12px; border-radius: var(--radius-sm); flex: 1; font-size: 14px;" aria-label="Command search">
+                <button class="modal-close" onclick="closeModal('commandModal')" aria-label="Close command palette">
+                    <i data-lucide="x" width="18" height="18" aria-hidden="true"></i>
                 </button>
             </div>
             <div class="modal-content" id="commandList" style="padding: 0;"></div>
@@ -1709,26 +1792,51 @@
          * This runs once when the page loads.
          */
         function initializeModule() {
-            // Load or create demo data
-            loadOrCreateDemoData();
+            try {
+                // Load or create demo data
+                loadOrCreateDemoData();
 
-            // Set up event listeners
-            document.addEventListener('keydown', handleKeyboardShortcuts);
-            document.addEventListener('click', handleOutsideClick);
+                // Set up event listeners
+                document.addEventListener('keydown', handleKeyboardShortcuts);
+                document.addEventListener('click', handleOutsideClick);
 
-            // Populate role dropdown in add event modal
-            populateRoleDropdown();
+                // Handle Escape key to close modals
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') {
+                        const modals = document.querySelectorAll('.modal-overlay.active');
+                        if (modals.length > 0) {
+                            const lastModal = modals[modals.length - 1];
+                            lastModal.classList.remove('active');
+                        }
+                    }
+                });
 
-            // Render initial views
-            renderWeekView();
-            updateUpcomingEventList();
-            updateFilterBadges();
-            generateNudges();
-            renderNudgeTimeline();
-            loadSyncLog();
+                // Close modal when clicking on overlay background
+                document.querySelectorAll('.modal-overlay').forEach(modal => {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            modal.classList.remove('active');
+                        }
+                    });
+                });
 
-            // Initialize Lucide icons
-            lucide.createIcons();
+                // Populate role dropdown in add event modal
+                populateRoleDropdown();
+
+                // Render initial views
+                renderWeekView();
+                updateUpcomingEventList();
+                updateFilterBadges();
+                generateNudges();
+                renderNudgeTimeline();
+                loadSyncLog();
+
+                // Initialize Lucide icons
+                lucide.createIcons();
+            } catch (error) {
+                console.error('Error initializing calendar module:', error);
+                showNotification('Error initializing calendar', 'error');
+            }
         }
 
         /**
@@ -1818,42 +1926,64 @@
             suggestionsDiv.style.display = 'block';
         }
 
+        /**
+         * Handle form submission for adding calendar events.
+         * Includes validation for required fields and date/time.
+         */
         function handleAddEvent(event) {
             event.preventDefault();
 
-            const title = document.getElementById('eventTitle').value;
-            const companyInput = document.getElementById('eventCompany').value;
-            const dateStr = document.getElementById('eventDate').value;
-            const timeStr = document.getElementById('eventTime').value;
-            const duration = parseInt(document.getElementById('eventDuration').value);
-            const type = document.getElementById('eventType').value;
-            const roleId = document.getElementById('eventRoleId').value || null;
-            const interviewers = document.getElementById('eventInterviewers').value
-                .split(',')
-                .map(n => n.trim())
-                .filter(n => n.length > 0);
-            const meetingLink = document.getElementById('eventMeetingLink').value;
-            const prepNotes = document.getElementById('eventPrepNotes').value;
+            // Validate required fields
+            const title = document.getElementById('eventTitle').value?.trim();
+            const companyInput = document.getElementById('eventCompany').value?.trim();
+            const dateStr = document.getElementById('eventDate').value?.trim();
+            const timeStr = document.getElementById('eventTime').value?.trim();
 
-            // Validate and create date
-            if (!dateStr || !timeStr) {
-                showNotification('Please select date and time');
+            if (!title) {
+                showNotification('Event title is required', 'error');
                 return;
             }
 
+            if (!dateStr || !timeStr) {
+                showNotification('Please select date and time', 'error');
+                return;
+            }
+
+            const duration = parseInt(document.getElementById('eventDuration').value);
+            const type = document.getElementById('eventType').value;
+            const roleId = document.getElementById('eventRoleId').value || null;
+            const interviewers = (document.getElementById('eventInterviewers').value || '')
+                .split(',')
+                .map(n => n.trim())
+                .filter(n => n.length > 0);
+            const meetingLink = document.getElementById('eventMeetingLink').value?.trim() || '';
+            const prepNotes = document.getElementById('eventPrepNotes').value?.trim() || '';
+
+            // Parse and validate date
             const [year, month, day] = dateStr.split('-');
             const [hours, minutes] = timeStr.split(':');
-            const eventDate = new Date(year, month - 1, day, hours, minutes);
+
+            if (!year || !month || !day || !hours || !minutes) {
+                showNotification('Invalid date or time format', 'error');
+                return;
+            }
+
+            const eventDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
+
+            if (isNaN(eventDate.getTime())) {
+                showNotification('Invalid date format', 'error');
+                return;
+            }
 
             // Get company from input or role if linked
             let company = companyInput || 'Unknown';
             if (roleId) {
-                const roles = getStorageData('roles') || [];
+                const roles = getStorageData('pf_roles') || [];
                 const role = roles.find(r => r.id === roleId);
                 if (role) {
-                    const companies = getStorageData('companies') || [];
-                    const comp = companies.find(c => c.id === role.companyId);
-                    if (comp) company = comp.name;
+                    const companies = getStorageData('pf_companies') || {};
+                    const comp = companies[role.companyId];
+                    if (comp && comp.name) company = comp.name;
                 }
             }
 
@@ -1862,7 +1992,7 @@
                 id: `evt-${Date.now()}`,
                 title,
                 date: eventDate.toISOString(),
-                duration,
+                duration: duration || 60,
                 type,
                 roleId: roleId || null,
                 company,
@@ -1876,7 +2006,9 @@
             // Save to localStorage
             const allEvents = getStorageData('pf_calendar_events') || [];
             allEvents.push(newEvent);
-            saveStorageData('pf_calendar_events', allEvents);
+            if (!saveStorageData('pf_calendar_events', allEvents)) {
+                return; // Exit on save failure
+            }
 
             // Clear form and close modal
             document.getElementById('addEventForm').reset();
@@ -1889,7 +2021,7 @@
             generateNudges();
             renderNudgeTimeline();
 
-            showNotification(`Added "${title}" to calendar`);
+            showNotification(`Added "${title}" to calendar`, 'success');
         }
 
         /**
@@ -2187,26 +2319,49 @@
 
         /**
          * Get data from localStorage with pf_ prefix.
+         * Returns null on parse error and logs warning.
          */
         function getStorageData(key) {
             try {
                 const data = localStorage.getItem(`pf_${key}`);
-                return data ? JSON.parse(data) : null;
-            } catch (e) {
-                console.error(`Error reading storage key ${key}:`, e);
+                if (!data) return null;
+                return JSON.parse(data);
+            } catch (error) {
+                console.warn(`Error reading storage key "${key}":`, error);
                 return null;
             }
         }
 
         /**
          * Save data to localStorage with pf_ prefix.
+         * Logs error and shows notification on storage failure.
          */
         function saveStorageData(key, data) {
             try {
                 localStorage.setItem(`pf_${key}`, JSON.stringify(data));
-            } catch (e) {
-                console.error(`Error saving storage key ${key}:`, e);
+                return true;
+            } catch (error) {
+                console.error(`Error saving storage key "${key}":`, error);
+                showNotification('Failed to save data. Storage may be full.', 'error');
+                return false;
             }
+        }
+
+        /**
+         * Show notification with auto-dismiss.
+         */
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            notification.role = 'alert';
+            notification.setAttribute('aria-live', 'polite');
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideDown 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
         }
 
         // ============================================================================
@@ -3522,17 +3677,25 @@
         }
 
         /**
-         * Close a modal.
+         * Close a modal safely with error handling.
+         * Restores focus to trigger element if available.
          */
         function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
+            try {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.remove('active');
+                }
+            } catch (error) {
+                console.error('Error closing modal:', error);
+            }
         }
 
         /**
-         * Handle clicks outside modal to close it.
+         * Handle clicks outside modal to close it (clicks on overlay background).
          */
         function handleOutsideClick(e) {
-            if (e.target.classList.contains('modal-overlay')) {
+            if (e.target.classList && e.target.classList.contains('modal-overlay')) {
                 e.target.classList.remove('active');
             }
         }

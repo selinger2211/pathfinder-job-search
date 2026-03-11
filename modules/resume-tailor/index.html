@@ -1849,31 +1849,46 @@
     /**
      * Gets companies from the Pipeline Tracker
      * INPUT: none
-     * RETURNS: array of company objects
+     * RETURNS: array of company objects, empty array on error
      */
     function getCompanies() {
-      const data = localStorage.getItem('pf_companies');
-      return data ? JSON.parse(data) : [];
+      try {
+        const data = localStorage.getItem('pf_companies');
+        return data ? JSON.parse(data) : [];
+      } catch (error) {
+        console.warn('Failed to parse companies from localStorage:', error);
+        return [];
+      }
     }
 
     /**
      * Gets roles from the Pipeline Tracker
      * INPUT: none
-     * RETURNS: array of role/job objects
+     * RETURNS: array of role/job objects, empty array on error
      */
     function getRoles() {
-      const data = localStorage.getItem('pf_roles');
-      return data ? JSON.parse(data) : [];
+      try {
+        const data = localStorage.getItem('pf_roles');
+        return data ? JSON.parse(data) : [];
+      } catch (error) {
+        console.warn('Failed to parse roles from localStorage:', error);
+        return [];
+      }
     }
 
     /**
      * Gets the bullet bank (owned by Resume Tailor)
      * INPUT: none
-     * RETURNS: array of bullet objects
+     * RETURNS: array of bullet objects, empty array on error
      */
     function getBulletBank() {
-      const data = localStorage.getItem('pf_bullet_bank');
-      return data ? JSON.parse(data) : [];
+      try {
+        const data = localStorage.getItem('pf_bullet_bank');
+        return data ? JSON.parse(data) : [];
+      } catch (error) {
+        console.warn('Failed to parse bullet bank from localStorage:', error);
+        return [];
+      }
     }
 
     /**
@@ -1882,17 +1897,26 @@
      * OUTPUT: data persisted to browser storage
      */
     function saveBulletBank(bullets) {
-      localStorage.setItem('pf_bullet_bank', JSON.stringify(bullets));
+      try {
+        localStorage.setItem('pf_bullet_bank', JSON.stringify(bullets));
+      } catch (error) {
+        console.warn('Failed to save bullet bank to localStorage:', error);
+      }
     }
 
     /**
      * Gets the resume version log
      * INPUT: none
-     * RETURNS: array of resume log entries
+     * RETURNS: array of resume log entries, empty array on error
      */
     function getResumeLog() {
-      const data = localStorage.getItem('pf_resume_log');
-      return data ? JSON.parse(data) : [];
+      try {
+        const data = localStorage.getItem('pf_resume_log');
+        return data ? JSON.parse(data) : [];
+      } catch (error) {
+        console.warn('Failed to parse resume log from localStorage:', error);
+        return [];
+      }
     }
 
     /**
@@ -1913,12 +1937,17 @@
     /**
      * Gets cached work for a specific role
      * INPUT: companySlug = company name slug, roleId = role ID
-     * RETURNS: object with cached resume data
+     * RETURNS: object with cached resume data, null on error
      */
     function getCachedResume(companySlug, roleId) {
-      const key = `resume_${companySlug}_${roleId}`;
-      const data = localStorage.getItem(key);
-      return data ? JSON.parse(data) : null;
+      try {
+        const key = `resume_${companySlug}_${roleId}`;
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : null;
+      } catch (error) {
+        console.warn('Failed to retrieve cached resume:', error);
+        return null;
+      }
     }
 
     /**
@@ -1927,8 +1956,12 @@
      * OUTPUT: data cached in localStorage
      */
     function saveCachedResume(companySlug, roleId, data) {
-      const key = `resume_${companySlug}_${roleId}`;
-      localStorage.setItem(key, JSON.stringify(data));
+      try {
+        const key = `resume_${companySlug}_${roleId}`;
+        localStorage.setItem(key, JSON.stringify(data));
+      } catch (error) {
+        console.warn('Failed to cache resume:', error);
+      }
     }
 
     /* ================================================================
@@ -2783,12 +2816,18 @@ Generate a professional, one-page resume tailored to this role. Start the HTML w
     /**
      * Downloads the generated resume as a Word document (.docx)
      * INPUT: none (uses currentRole for filename, reads generated-resume from DOM)
-     * OUTPUT: .docx file downloaded to user's device
+     * OUTPUT: .docx file downloaded to user's device, error message if export fails
      */
     function downloadResumeAsDOCX() {
       const resumeContainer = document.getElementById('generated-resume');
-      if (!resumeContainer) {
-        showToast('Resume not found', 'error');
+      if (!resumeContainer || !resumeContainer.textContent.trim()) {
+        showToast('No resume content to export', 'error');
+        return;
+      }
+
+      // Check if docx library is available
+      if (typeof docx === 'undefined') {
+        showToast('DOCX library not loaded. Please refresh the page.', 'error');
         return;
       }
 
@@ -2815,9 +2854,12 @@ Generate a professional, one-page resume tailored to this role. Start the HTML w
           URL.revokeObjectURL(url);
 
           showToast(`Resume downloaded as ${filename}`, 'success');
+        }).catch(error => {
+          console.warn('Error generating DOCX blob:', error);
+          showToast('Failed to generate DOCX file: ' + error.message, 'error');
         });
       } catch (error) {
-        console.error('Error exporting to DOCX:', error);
+        console.warn('Error exporting to DOCX:', error);
         showToast('Failed to export as DOCX: ' + error.message, 'error');
       }
     }
@@ -2825,12 +2867,18 @@ Generate a professional, one-page resume tailored to this role. Start the HTML w
     /**
      * Downloads the generated resume as a PDF file
      * INPUT: none (uses currentRole for filename, reads generated-resume from DOM)
-     * OUTPUT: .pdf file downloaded to user's device
+     * OUTPUT: .pdf file downloaded to user's device, error message if export fails
      */
     function downloadResumeAsPDF() {
       const resumeContainer = document.getElementById('generated-resume');
-      if (!resumeContainer) {
-        showToast('Resume not found', 'error');
+      if (!resumeContainer || !resumeContainer.textContent.trim()) {
+        showToast('No resume content to export', 'error');
+        return;
+      }
+
+      // Check if html2pdf library is available
+      if (typeof html2pdf === 'undefined') {
+        showToast('PDF library not loaded. Please refresh the page.', 'error');
         return;
       }
 
@@ -2855,7 +2903,7 @@ Generate a professional, one-page resume tailored to this role. Start the HTML w
 
         showToast(`Resume downloaded as ${filename}`, 'success');
       } catch (error) {
-        console.error('Error exporting to PDF:', error);
+        console.warn('Error exporting to PDF:', error);
         showToast('Failed to export as PDF: ' + error.message, 'error');
       }
     }

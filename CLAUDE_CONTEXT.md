@@ -96,7 +96,7 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v2.0.0
+**Current Version:** v2.1.0
 **Last Updated:** 2026-03-10
 
 ### Implementation Status
@@ -105,14 +105,14 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 |--------|-----------|------------|-------------------------------|
 | Pipeline | ~100% | Kanban, CRUD, drag-drop, IndexedDB resume, comms log, URL import, bulk actions, CSV export, company view, fit assessment, keyboard shortcuts, **Clay enrichment display**, **enrichment badges**, **stage analytics + funnel chart**, **stale role detection (14d)** | — |
 | Dashboard | ~100% | 12-rule nudge engine, streak, action queue, feed review, interview intelligence, pipeline funnel, activity feed, weekly stats, real-time storage listener, **GCal card (next 3 events + countdown)**, **sync status indicator**, **quick actions row**, **debrief pending badge**, **outreach queue indicator** | — |
-| Job Feed | ~90% | Scoring engine (6 dimensions), preference editor, manual entry, dedup engine, quick-check filter, auto-pipeline creation, analytics, snooze, **career page URL import (Lever/Greenhouse/Ashby/Workday/LinkedIn)**, **Sources tab with analytics** | Gmail/Indeed/Dice direct APIs |
-| Research Brief | ~90% | Direct Claude API, 14 section prompts, section caching, **citation system (footnotes + source aggregation)**, **localStorage artifact save (pf_research_briefs)**, saved briefs panel | MCP artifact save (optional) |
-| Resume Builder | ~95% | Phase 1 JD analysis, Phase 2 streaming generation, cover letter, bullet bank UI, keyword gap detection, version history, **DOCX/PDF export** | Template system, ATS score preview |
-| Outreach | ~95% | 8 message types via Claude, copy/save, sequence scheduling, response tracking, templates, history/analytics, **Open in Gmail + Draft Queue** | Cowork batch send via Gmail API |
-| Mock Interview | ~95% | Multi-turn Claude, 7 types, session storage, story extraction, **100+ real question bank (11 companies, 7 types, 3 difficulties)**, session playback, performance trends, **Question Bank tab with filtering**, **custom questions**, **practice tracking**, **company-calibrated Claude sessions** | Community question submissions |
-| Debrief | ~95% | 8-section form, Claude synthesis, history, pattern analysis, timeline, export, Research Brief triggers, **auto-populate from Calendar (pf_pending_debrief)**, **pending events section**, **cross-module debrief status sync** | Auto-trigger scheduling |
-| Comp Intel | ~95% | Data entry, comparison table, Claude negotiation, visualization charts, aggregation stats, 25-point scorecard, **Indeed salary integration**, **bulk import (CSV/JSON/plaintext)**, **market positioning chart with percentiles**, **BATNA negotiation** | Levels.fyi data (manual entry) |
-| Calendar | ~90% | Manual events, week/month/day views, nudges, smart event-role linking, post-event automation, **auto-trigger debrief on past interviews**, **pending debrief badge**, **cross-module pf_pending_debrief** | Google Calendar direct API sync |
+| Job Feed | ~100% | Scoring engine, preference editor, manual entry, dedup, quick-check filter, auto-pipeline, analytics, snooze, career page URL import, Sources tab, **error handling, a11y, visual polish** | — |
+| Research Brief | ~100% | Claude API, 14 section prompts, caching, citation system, localStorage artifact save, saved briefs panel, **error handling, a11y, visual polish** | — |
+| Resume Builder | ~100% | Phase 1 JD analysis, Phase 2 streaming, cover letter, bullet bank, keyword gap, version history, DOCX/PDF export, **error handling, a11y, export validation** | — |
+| Outreach | ~100% | 8 message types, sequence scheduling, response tracking, templates, history/analytics, Gmail integration, Draft Queue, **email validation, a11y, error handling** | — |
+| Mock Interview | ~100% | Multi-turn Claude, 7 types, 100+ question bank (11 companies), session playback, performance trends, custom questions, practice tracking, company-calibrated sessions, **a11y, error handling, input sanitization** | — |
+| Debrief | ~100% | 8-section form, Claude synthesis, pattern analysis, timeline, export, Calendar auto-populate, pending events section, cross-module sync, **form validation, a11y, keyboard nav** | — |
+| Comp Intel | ~100% | Data entry, comparison, Claude negotiation, charts, scorecard, Indeed salary, bulk import, market positioning, BATNA, **salary validation, a11y, error handling** | — |
+| Calendar | ~100% | Week/month/day views, nudges, event-role linking, auto-trigger debrief, pending debrief badge, **date validation, a11y, keyboard nav, visual polish** | — |
 | Sync Hub | ~100% | GCal sync, Indeed sync, Gmail sync (leads + applications), Clay placeholder, file upload, dedup, sync log, **outreach draft push**, **richer Gmail parsing (InMail/scheduling/rejection/offer)**, **data freshness indicators**, **sync stats dashboard**, **scheduling UI + auto-sync toggle**, **export sync log** | — |
 | MCP Server | ~95% | **All 7 tools fully implemented** (save, get, list, search, tag, delete, generate-brief), **enhanced storage (SHA-256, excerpts, relevance search)**, **soft/hard delete**, HTTP bridge, **comprehensive README + implementation status docs** | Build on Mac (`npm run build`), end-to-end testing |
 

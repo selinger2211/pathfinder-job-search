@@ -440,8 +440,15 @@
       transition: all var(--duration-fast) var(--ease-default);
     }
 
-    .btn-submit-answer:hover {
+    .btn-submit-answer:hover:not(:disabled) {
       background: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-submit-answer:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     .btn-next-question {
@@ -457,8 +464,15 @@
       transition: all var(--duration-fast) var(--ease-default);
     }
 
-    .btn-next-question:hover {
-      opacity: 0.9;
+    .btn-next-question:hover:not(:disabled) {
+      background: var(--success-hover, #16a34a);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+    }
+
+    .btn-next-question:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     /* Session summary */
@@ -741,10 +755,10 @@
       <aside class="interview-sidebar">
         <!-- Tab navigation -->
         <div class="tab-nav">
-          <button class="tab-button active" data-tab="interview">Interview</button>
-          <button class="tab-button" data-tab="tmay">TMAY</button>
-          <button class="tab-button" data-tab="stories">Stories</button>
-          <button class="tab-button" data-tab="bank">Question Bank <span id="questionBankBadge" style="
+          <button class="tab-button active" data-tab="interview" aria-label="Start a new interview practice session">Interview</button>
+          <button class="tab-button" data-tab="tmay" aria-label="Practice your Tell Me About Yourself elevator pitch">TMAY</button>
+          <button class="tab-button" data-tab="stories" aria-label="View and manage your STAR stories">Stories</button>
+          <button class="tab-button" data-tab="bank" aria-label="Browse and practice from the question bank">Question Bank <span id="questionBankBadge" style="
             display: inline-block;
             background: var(--accent);
             color: white;
@@ -753,18 +767,18 @@
             border-radius: 10px;
             margin-left: 4px;
             font-weight: 600;
-          ">0</span></button>
-          <button class="tab-button" data-tab="playback">Playback</button>
-          <button class="tab-button" data-tab="trends">Trends</button>
-          <button class="tab-button" data-tab="history">History</button>
+          " role="status" aria-live="polite">0</span></button>
+          <button class="tab-button" data-tab="playback" aria-label="Review past interview sessions">Playback</button>
+          <button class="tab-button" data-tab="trends" aria-label="View your performance trends over time">Trends</button>
+          <button class="tab-button" data-tab="history" aria-label="View all past interview sessions">History</button>
         </div>
 
         <!-- INTERVIEW TAB CONTENT -->
         <div class="tab-content" id="interview-tab" style="display: flex; flex-direction: column; gap: var(--space-4);">
           <!-- Role selector -->
           <div class="sidebar-section">
-            <div class="sidebar-section-title">Role</div>
-            <select id="roleSelect" class="sidebar-select">
+            <label for="roleSelect" class="sidebar-section-title">Role</label>
+            <select id="roleSelect" class="sidebar-select" aria-label="Select the role you are interviewing for">
               <option value="">Select a role...</option>
               <option value="pm">Product Manager</option>
               <option value="design">Product Designer</option>
@@ -774,8 +788,8 @@
 
           <!-- Company selector -->
           <div class="sidebar-section">
-            <div class="sidebar-section-title">Company</div>
-            <select id="companySelect" class="sidebar-select">
+            <label for="companySelect" class="sidebar-section-title">Company</label>
+            <select id="companySelect" class="sidebar-select" aria-label="Select the company you are interviewing for">
               <option value="">Select a company...</option>
               <option value="google">Google</option>
               <option value="meta">Meta</option>
@@ -785,8 +799,8 @@
 
           <!-- Interview type selector -->
           <div class="sidebar-section">
-            <div class="sidebar-section-title">Interview Type</div>
-            <select id="interviewTypeSelect" class="sidebar-select">
+            <label for="interviewTypeSelect" class="sidebar-section-title">Interview Type</label>
+            <select id="interviewTypeSelect" class="sidebar-select" aria-label="Select the type of interview to practice">
               <option value="">Select type...</option>
               <option value="product-execution">Product Execution</option>
               <option value="product-strategy">Product Strategy</option>
@@ -800,8 +814,8 @@
 
           <!-- Difficulty level -->
           <div class="sidebar-section">
-            <div class="sidebar-section-title">Difficulty</div>
-            <select id="difficultySelect" class="sidebar-select">
+            <label for="difficultySelect" class="sidebar-section-title">Difficulty</label>
+            <select id="difficultySelect" class="sidebar-select" aria-label="Select the difficulty level for the interview">
               <option value="standard">Standard</option>
               <option value="hard">Hard</option>
               <option value="curveball">Curveball</option>
@@ -810,8 +824,8 @@
 
           <!-- Duration -->
           <div class="sidebar-section">
-            <div class="sidebar-section-title">Duration</div>
-            <select id="durationSelect" class="sidebar-select">
+            <label for="durationSelect" class="sidebar-section-title">Duration</label>
+            <select id="durationSelect" class="sidebar-select" aria-label="Select how many questions to practice">
               <option value="quick">Quick (2 questions)</option>
               <option value="standard">Standard (4 questions)</option>
               <option value="full">Full (6 questions)</option>
@@ -840,14 +854,14 @@
           </div>
 
           <!-- Start session button -->
-          <button id="startSessionBtn" class="btn-start-session">Start Session</button>
+          <button id="startSessionBtn" class="btn-start-session" aria-label="Start a new mock interview session">Start Session</button>
         </div>
 
         <!-- TMAY TAB CONTENT -->
         <div class="tab-content" id="tmay-tab" style="display: none; flex-direction: column; gap: var(--space-4);">
           <div class="sidebar-section">
-            <div class="sidebar-section-title">Role</div>
-            <select id="tmayRoleSelect" class="sidebar-select">
+            <label for="tmayRoleSelect" class="sidebar-section-title">Role</label>
+            <select id="tmayRoleSelect" class="sidebar-select" aria-label="Select a role for your Tell Me About Yourself practice">
               <option value="">Select a role...</option>
               <option value="pm">Product Manager</option>
               <option value="design">Product Designer</option>
@@ -856,8 +870,8 @@
           </div>
 
           <div class="sidebar-section">
-            <div class="sidebar-section-title">Focus Area</div>
-            <select id="focusAreaSelect" class="sidebar-select">
+            <label for="focusAreaSelect" class="sidebar-section-title">Focus Area</label>
+            <select id="focusAreaSelect" class="sidebar-select" aria-label="Select focus area for Tell Me About Yourself">
               <option value="">Default</option>
               <option value="ai-ml">AI/ML</option>
               <option value="scale">Scale & Systems</option>
@@ -865,7 +879,7 @@
             </select>
           </div>
 
-          <button id="generateTmayBtn" class="btn-start-session" style="margin-top: var(--space-4);">Generate Script</button>
+          <button id="generateTmayBtn" class="btn-start-session" style="margin-top: var(--space-4);" aria-label="Generate a personalized Tell Me About Yourself script">Generate Script</button>
         </div>
 
         <!-- STORIES TAB CONTENT -->
@@ -880,12 +894,12 @@
         <div class="tab-content" id="bank-tab" style="display: none; flex-direction: column; gap: var(--space-3); overflow-y: auto;">
           <!-- Search and filter section -->
           <div class="sidebar-section">
-            <div class="sidebar-section-title">Search</div>
-            <input id="bankSearch" type="text" class="sidebar-input" placeholder="Search questions...">
+            <label for="bankSearch" class="sidebar-section-title">Search</label>
+            <input id="bankSearch" type="text" class="sidebar-input" placeholder="Search questions..." aria-label="Search for questions by keyword">
           </div>
           <div class="sidebar-section">
-            <div class="sidebar-section-title">Company</div>
-            <select id="bankCompanyFilter" class="sidebar-select">
+            <label for="bankCompanyFilter" class="sidebar-section-title">Company</label>
+            <select id="bankCompanyFilter" class="sidebar-select" aria-label="Filter questions by company">
               <option value="">All Companies</option>
               <option value="google">Google</option>
               <option value="meta">Meta</option>
@@ -901,8 +915,8 @@
             </select>
           </div>
           <div class="sidebar-section">
-            <div class="sidebar-section-title">Type</div>
-            <select id="bankTypeFilter" class="sidebar-select">
+            <label for="bankTypeFilter" class="sidebar-section-title">Type</label>
+            <select id="bankTypeFilter" class="sidebar-select" aria-label="Filter questions by interview type">
               <option value="">All Types</option>
               <option value="execution">Product Execution</option>
               <option value="strategy">Product Strategy</option>
@@ -914,8 +928,8 @@
             </select>
           </div>
           <div class="sidebar-section">
-            <div class="sidebar-section-title">Difficulty</div>
-            <select id="bankDifficultyFilter" class="sidebar-select">
+            <label for="bankDifficultyFilter" class="sidebar-section-title">Difficulty</label>
+            <select id="bankDifficultyFilter" class="sidebar-select" aria-label="Filter questions by difficulty level">
               <option value="">All Levels</option>
               <option value="easy">Easy</option>
               <option value="medium">Medium</option>
@@ -936,8 +950,8 @@
         <!-- PLAYBACK TAB CONTENT -->
         <div class="tab-content" id="playback-tab" style="display: none; flex-direction: column; gap: var(--space-3); overflow-y: auto;">
           <div class="sidebar-section">
-            <div class="sidebar-section-title">Select Session</div>
-            <select id="playbackSessionSelect" class="sidebar-select">
+            <label for="playbackSessionSelect" class="sidebar-section-title">Select Session</label>
+            <select id="playbackSessionSelect" class="sidebar-select" aria-label="Select a past interview session to review">
               <option value="">Choose a session...</option>
             </select>
           </div>
@@ -971,9 +985,9 @@
       <!-- RIGHT PANEL: Interview Thread -->
       <main class="interview-thread">
         <!-- Idle state (before session starts) -->
-        <div id="idleState" style="display: flex;">
+        <div id="idleState" style="display: flex;" role="region" aria-label="Welcome to mock interview practice">
           <div class="thread-idle">
-            <div class="idle-icon">
+            <div class="idle-icon" aria-hidden="true">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 2a10 10 0 1 0 10 10H12V2z"></path>
                 <path d="M4 12a8 8 0 0 1 8-8"></path>
@@ -992,27 +1006,28 @@
           <div class="thread-header">
             <div>
               <div class="thread-title" id="threadTitle">Interview Session</div>
-              <div class="thread-progress" id="threadProgress">Question 1 of 4</div>
+              <div class="thread-progress" id="threadProgress" role="status" aria-live="polite">Question 1 of 4</div>
             </div>
-            <button id="endSessionBtn" class="btn-ghost">End Session</button>
+            <button id="endSessionBtn" class="btn-ghost" aria-label="End the current interview session">End Session</button>
           </div>
 
           <!-- Messages will be inserted here -->
-          <div id="messagesContainer"></div>
+          <div id="messagesContainer" role="log" aria-live="polite" aria-label="Interview conversation"></div>
 
           <!-- Answer input (shown during interview) -->
           <div id="answerSection" style="display: none;">
             <div class="answer-input-section">
-              <textarea id="answerTextarea" class="answer-textarea" placeholder="Type your answer here..."></textarea>
+              <label for="answerTextarea" style="display: block; margin-bottom: var(--space-2); font-size: var(--text-sm); font-weight: 600; color: var(--text-secondary);">Your Answer</label>
+              <textarea id="answerTextarea" class="answer-textarea" placeholder="Type your answer here..." aria-label="Enter your answer to the interview question"></textarea>
               <div class="answer-actions">
-                <button id="submitAnswerBtn" class="btn-submit-answer">Submit Answer</button>
+                <button id="submitAnswerBtn" class="btn-submit-answer" aria-label="Submit your answer and receive feedback">Submit Answer</button>
               </div>
             </div>
           </div>
 
           <!-- Next question button (shown after evaluation) -->
           <div id="nextQuestionSection" style="display: none;">
-            <button id="nextQuestionBtn" class="btn-next-question">Next Question</button>
+            <button id="nextQuestionBtn" class="btn-next-question" aria-label="Move to the next interview question">Next Question</button>
           </div>
 
           <!-- Summary (shown at end) -->
@@ -1521,8 +1536,16 @@
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
+          // Submit answer with Ctrl+Enter during interview
           if (e.key === 'Enter' && e.ctrlKey && this.state.sessionActive) {
             this.submitAnswer();
+          }
+          // Close modal or end session with Escape
+          if (e.key === 'Escape') {
+            const apiKeyPrompt = document.querySelector('[style*="position: fixed"]');
+            if (apiKeyPrompt) {
+              apiKeyPrompt.remove();
+            }
           }
         });
       }
@@ -1753,8 +1776,11 @@ This is question ${this.state.currentQuestion + 1} of ${this.state.totalQuestion
           this.answerTextarea.focus();
           this.submitAnswerBtn.disabled = false;
         } catch (error) {
-          console.error('Error generating question:', error);
-          this.displayMessage('interviewer', `Error: ${error.message}`);
+          if (!PF.claude.hasApiKey()) {
+            this.displayMessage('interviewer', 'API key is required. Please add your Claude API key in the prompt dialog.');
+          } else {
+            this.displayMessage('interviewer', `Error: ${error.message}`);
+          }
           this.answerSection.style.display = 'block';
         }
       }
@@ -1762,7 +1788,7 @@ This is question ${this.state.currentQuestion + 1} of ${this.state.totalQuestion
       async submitAnswer() {
         const answer = this.answerTextarea.value.trim();
         if (!answer) {
-          alert('Please enter your answer');
+          alert('Please enter your answer before submitting');
           return;
         }
 
@@ -1839,8 +1865,11 @@ ${needMoreQuestions ?
             document.getElementById('saveSessionBtn').onclick = () => this.saveSession();
           }
         } catch (error) {
-          console.error('Error getting feedback:', error);
-          this.displayMessage('interviewer', `Error: ${error.message}`);
+          if (!PF.claude.hasApiKey()) {
+            this.displayMessage('interviewer', 'API key missing. Please add your Claude API key to continue.');
+          } else {
+            this.displayMessage('interviewer', `Error: ${error.message}`);
+          }
           this.answerSection.style.display = 'block';
         }
       }
@@ -1850,18 +1879,25 @@ ${needMoreQuestions ?
         this.generateAndDisplayQuestion();
       }
 
+      /**
+       * Display a message in the interview thread (interviewer or user)
+       * Sanitizes text to prevent XSS attacks
+       * INPUT: sender ('interviewer' or 'user'), text (message content)
+       * OUTPUT: adds message to DOM and scrolls to latest
+       */
       displayMessage(sender, text) {
         const messageEl = document.createElement('div');
         messageEl.className = `thread-message ${sender}`;
 
         const contentEl = document.createElement('div');
         contentEl.className = 'message-content';
+        // Use textContent instead of innerHTML to prevent XSS
         contentEl.textContent = text;
 
         messageEl.appendChild(contentEl);
         this.messagesContainer.appendChild(messageEl);
 
-        // Auto-scroll
+        // Auto-scroll to latest message smoothly
         setTimeout(() => {
           this.messagesContainer.parentElement.scrollTop = this.messagesContainer.parentElement.scrollHeight;
         }, 100);
@@ -1945,7 +1981,7 @@ ${needMoreQuestions ?
             await this.extractStoriesFromSession(sessionData);
           }
         } catch (error) {
-          console.error('Error extracting session data:', error);
+          console.warn('Could not auto-extract session questions. Manual question bank still available.');
         }
       }
 
@@ -2034,7 +2070,7 @@ ${sessionData.conversation
 
           localStorage.setItem('pf_story_bank', JSON.stringify(storyBank));
         } catch (error) {
-          console.error('Error extracting stories:', error);
+          console.warn('Could not auto-extract stories from session');
         }
       }
 

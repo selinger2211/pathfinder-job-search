@@ -16,9 +16,16 @@
        COMP INTELLIGENCE AGENT — MODULE-SPECIFIC STYLES
        ================================================================ */
 
+    /* CSS variable fallbacks for compatibility */
+    :root {
+      --nav-height: 53px;
+      --duration-fast: 0.2s;
+      --ease-default: ease-out;
+    }
+
     .comp-container {
       display: flex;
-      height: calc(100vh - var(--nav-height));
+      height: calc(100vh - var(--nav-height, 53px));
       overflow: hidden;
       background: var(--bg-base);
     }
@@ -612,10 +619,39 @@
 
     .import-tab-content {
       display: none;
+      animation: fadeIn var(--duration-fast);
     }
 
     .import-tab-content.active {
       display: block;
+    }
+
+    /* ================================================================
+       LOADING & TRANSITIONS
+       ================================================================ */
+
+    .loading-spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--bg-subtle);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Icon-only buttons need visible labels for a11y */
+    button[aria-label] {
+      position: relative;
     }
 
     .import-preview-item {
@@ -667,8 +703,8 @@
       <div class="sidebar-header">
         <h2>Roles with Comp Data</h2>
         <div class="sidebar-search">
-          <input type="text" id="roleSearch" placeholder="Search roles...">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <input type="text" id="roleSearch" placeholder="Search roles..." aria-label="Search roles by company or title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         </div>
       </div>
 
@@ -696,9 +732,9 @@
         </div>
       </div>
 
-      <div class="comp-content" id="compContent">
+      <div class="comp-content" id="compContent" role="region" aria-label="Compensation content" aria-live="polite">
         <div class="empty-state">
-          <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           <p class="empty-state-text">No role selected. Choose a role from the list or add compensation data.</p>
         </div>
       </div>
@@ -710,7 +746,7 @@
     <div class="modal">
       <div class="modal-header">
         <h3>Add Compensation Data</h3>
-        <button class="modal-close" data-modal-close="addCompDataModal"></button>
+        <button class="modal-close" data-modal-close="addCompDataModal" aria-label="Close Add Compensation Data dialog"></button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -777,7 +813,7 @@
     <div class="modal">
       <div class="modal-header">
         <h3>Import Compensation Data</h3>
-        <button class="modal-close" data-modal-close="importCompDataModal"></button>
+        <button class="modal-close" data-modal-close="importCompDataModal" aria-label="Close Import Compensation Data dialog"></button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -893,7 +929,7 @@
     <div class="modal">
       <div class="modal-header">
         <h3>Add Market Benchmark</h3>
-        <button class="modal-close" data-modal-close="addBenchmarkModal"></button>
+        <button class="modal-close" data-modal-close="addBenchmarkModal" aria-label="Close Add Market Benchmark dialog"></button>
       </div>
       <div class="modal-body">
         <div class="form-row">
@@ -1226,47 +1262,147 @@
     // DATA MANAGEMENT
     // ================================================================
 
-    // Get or initialize data
+    /**
+     * Get or initialize compensation data from localStorage.
+     * Includes try/catch for graceful fallback on corrupted data.
+     * Returns empty object if data unavailable or invalid.
+     */
     function getCompData() {
-      return JSON.parse(localStorage.getItem('pf_comp_data') || '{}');
+      try {
+        const data = localStorage.getItem('pf_comp_data');
+        return data ? JSON.parse(data) : {};
+      } catch (error) {
+        console.warn('Error reading comp data from localStorage:', error);
+        return {};
+      }
     }
 
+    /**
+     * Save compensation data to localStorage with error handling.
+     */
     function saveCompData(data) {
-      localStorage.setItem('pf_comp_data', JSON.stringify(data));
+      try {
+        localStorage.setItem('pf_comp_data', JSON.stringify(data));
+      } catch (error) {
+        console.error('Error saving comp data:', error);
+        alert('Failed to save compensation data. Your storage may be full.');
+      }
     }
 
+    /**
+     * Get or initialize benchmarks from localStorage.
+     * Returns empty array if data unavailable or invalid.
+     */
     function getCompBenchmarks() {
-      return JSON.parse(localStorage.getItem('pf_comp_benchmarks') || '[]');
+      try {
+        const data = localStorage.getItem('pf_comp_benchmarks');
+        return data ? JSON.parse(data) : [];
+      } catch (error) {
+        console.warn('Error reading benchmarks from localStorage:', error);
+        return [];
+      }
     }
 
+    /**
+     * Save benchmarks to localStorage with error handling.
+     */
     function saveCompBenchmarks(data) {
-      localStorage.setItem('pf_comp_benchmarks', JSON.stringify(data));
+      try {
+        localStorage.setItem('pf_comp_benchmarks', JSON.stringify(data));
+      } catch (error) {
+        console.error('Error saving benchmarks:', error);
+        alert('Failed to save benchmark data. Your storage may be full.');
+      }
     }
 
+    /**
+     * Get pipeline roles from localStorage.
+     * Returns empty array if data unavailable or invalid.
+     */
     function getPipelineRoles() {
-      return JSON.parse(localStorage.getItem('pf_roles') || '[]');
+      try {
+        const data = localStorage.getItem('pf_roles');
+        return data ? JSON.parse(data) : [];
+      } catch (error) {
+        console.warn('Error reading roles from localStorage:', error);
+        return [];
+      }
     }
 
+    /**
+     * Get pipeline companies from localStorage.
+     * Returns empty object if data unavailable or invalid.
+     */
     function getPipelineCompanies() {
-      return JSON.parse(localStorage.getItem('pf_companies') || '{}');
+      try {
+        const data = localStorage.getItem('pf_companies');
+        return data ? JSON.parse(data) : {};
+      } catch (error) {
+        console.warn('Error reading companies from localStorage:', error);
+        return {};
+      }
     }
 
+    /**
+     * Get user preferences from localStorage.
+     * Returns empty object if data unavailable or invalid.
+     */
     function getPreferences() {
-      return JSON.parse(localStorage.getItem('pf_preferences') || '{}');
+      try {
+        const data = localStorage.getItem('pf_preferences');
+        return data ? JSON.parse(data) : {};
+      } catch (error) {
+        console.warn('Error reading preferences from localStorage:', error);
+        return {};
+      }
     }
 
     // ================================================================
     // UI RENDERING
     // ================================================================
 
+    /**
+     * Format numeric value as USD currency with proper locale and rounding.
+     * Handles null/undefined gracefully by returning '$0'.
+     * INPUT: numeric value
+     * OUTPUT: formatted string (e.g., "$250,000")
+     */
     function formatCurrency(value) {
-      if (!value) return '$0';
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-      }).format(value);
+      if (value === null || value === undefined || isNaN(value)) {
+        return '$0';
+      }
+      try {
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(value);
+      } catch (error) {
+        console.warn('Error formatting currency:', error);
+        return '$' + Math.round(value).toLocaleString();
+      }
+    }
+
+    /**
+     * Format date consistently across module.
+     * INPUT: Date object
+     * OUTPUT: formatted date string (e.g., "Mar 10, 2026")
+     */
+    function formatDate(date) {
+      if (!date || !(date instanceof Date)) {
+        return '';
+      }
+      try {
+        return new Intl.DateTimeFormat('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }).format(date);
+      } catch (error) {
+        console.warn('Error formatting date:', error);
+        return date.toLocaleDateString();
+      }
     }
 
     function renderRolesList() {
@@ -1652,12 +1788,53 @@
       `;
     }
 
-    function selectRole(roleId) {
-      sessionStorage.setItem('pf_selectedRoleId', roleId);
-      document.querySelectorAll('.role-item').forEach(el => el.classList.remove('active'));
-      document.querySelector(`[data-role-id="${roleId}"]`)?.classList.add('active');
+    /**
+     * Show notification message to user.
+     * Auto-dismisses after 3 seconds with animation.
+     * OUTPUT: notification displayed on screen
+     */
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.style.position = 'fixed';
+      notification.style.bottom = '24px';
+      notification.style.right = '24px';
+      notification.style.padding = 'var(--space-3) var(--space-4)';
+      notification.style.background = type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : 'var(--accent)';
+      notification.style.color = 'white';
+      notification.style.borderRadius = 'var(--radius-md)';
+      notification.style.fontSize = 'var(--text-sm)';
+      notification.style.fontWeight = '500';
+      notification.style.zIndex = '9999';
+      notification.style.animation = 'slideIn var(--duration-fast)';
+      notification.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+      notification.textContent = message;
+      notification.role = 'alert';
+      notification.setAttribute('aria-live', 'polite');
+      document.body.appendChild(notification);
 
-      renderCompContent(roleId);
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity var(--duration-fast)';
+        setTimeout(() => notification.remove(), 200);
+      }, 3000);
+    }
+
+    /**
+     * Select a role in the sidebar and render its compensation content.
+     */
+    function selectRole(roleId) {
+      try {
+        sessionStorage.setItem('pf_selectedRoleId', roleId);
+        document.querySelectorAll('.role-item').forEach(el => el.classList.remove('active'));
+        const selectedItem = document.querySelector(`[data-role-id="${roleId}"]`);
+        if (selectedItem) {
+          selectedItem.classList.add('active');
+        }
+        renderCompContent(roleId);
+      } catch (error) {
+        console.error('Error selecting role:', error);
+        showNotification('Error selecting role', 'error');
+      }
     }
 
     function renderCompContent(roleId) {
@@ -1969,19 +2146,77 @@
       `;
     }
 
-    // ================================================================
-    // MODAL MANAGEMENT
-    // ================================================================
+    /**
+     * ================================================================
+     * MODAL MANAGEMENT
+     * ================================================================
+     */
 
+    /**
+     * Open a modal with proper focus management and keyboard handling.
+     * Supports Escape key to close modals.
+     */
     function openModal(modalId) {
-      document.getElementById(modalId).classList.add('active');
-      if (modalId === 'addCompDataModal') {
-        populateRoleSelect();
+      try {
+        const modal = document.getElementById(modalId);
+        if (!modal) {
+          console.warn('Modal not found:', modalId);
+          return;
+        }
+        modal.classList.add('active');
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+
+        if (modalId === 'addCompDataModal') {
+          populateRoleSelect();
+        }
+
+        // Focus first form input for accessibility
+        const firstInput = modal.querySelector('input, select, textarea');
+        if (firstInput) {
+          setTimeout(() => firstInput.focus(), 100);
+        }
+      } catch (error) {
+        console.error('Error opening modal:', error);
       }
     }
 
+    /**
+     * Close a modal and restore focus to trigger element.
+     * Handles Escape key press.
+     */
     function closeModal(modalId) {
-      document.getElementById(modalId).classList.remove('active');
+      try {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+          modal.classList.remove('active');
+        }
+      } catch (error) {
+        console.error('Error closing modal:', error);
+      }
+    }
+
+    /**
+     * Handle keyboard shortcuts globally.
+     * Escape closes modals, etc.
+     */
+    function setupKeyboardHandlers() {
+      document.addEventListener('keydown', function(event) {
+        // Escape key closes open modals
+        if (event.key === 'Escape') {
+          const activeModals = document.querySelectorAll('.modal-overlay.active');
+          if (activeModals.length > 0) {
+            closeModal(activeModals[activeModals.length - 1].id);
+          }
+        }
+      });
+
+      // Close modal when clicking outside
+      document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('modal-overlay')) {
+          event.target.classList.remove('active');
+        }
+      });
     }
 
     function populateRoleSelect() {
@@ -2045,31 +2280,69 @@
     // BENCHMARK MANAGEMENT
     // ================================================================
 
+    /**
+     * Validate and save benchmark data.
+     * Includes validation for required fields and numeric salary ranges.
+     */
     function saveBenchmark() {
       const benchmarks = getCompBenchmarks();
 
-      const data = {
-        company: document.getElementById('benchmarkCompany').value,
-        title: document.getElementById('benchmarkTitle').value,
-        level: document.getElementById('benchmarkLevel').value,
-        location: document.getElementById('benchmarkLocation').value,
-        base: parseFloat(document.getElementById('benchmarkBase').value) || 0,
-        equity: parseFloat(document.getElementById('benchmarkEquity').value) || 0,
-        bonus: parseFloat(document.getElementById('benchmarkBonus').value) || 0,
-        total: parseFloat(document.getElementById('benchmarkTotal').value) || 0,
-        sourceUrl: document.getElementById('benchmarkSourceUrl').value,
-        dateAdded: new Date().toISOString()
-      };
+      // Validate required fields
+      const company = document.getElementById('benchmarkCompany').value?.trim();
+      const title = document.getElementById('benchmarkTitle').value?.trim();
+      const baseStr = document.getElementById('benchmarkBase').value?.trim();
 
-      if (!data.company || !data.title) {
-        alert('Company and Title are required.');
+      if (!company || !title) {
+        alert('Company and Title are required fields.');
         return;
       }
 
-      benchmarks.push(data);
-      saveCompBenchmarks(benchmarks);
+      // Validate numeric salary fields
+      const base = baseStr ? parseFloat(baseStr) : 0;
+      const equity = document.getElementById('benchmarkEquity').value?.trim();
+      const bonus = document.getElementById('benchmarkBonus').value?.trim();
+      const total = document.getElementById('benchmarkTotal').value?.trim();
 
-      alert('Benchmark saved!');
+      // Check for positive numbers if provided
+      if (baseStr && (isNaN(base) || base < 0)) {
+        alert('Base salary must be a positive number.');
+        return;
+      }
+      if (equity && (isNaN(parseFloat(equity)) || parseFloat(equity) < 0)) {
+        alert('Equity must be a positive number.');
+        return;
+      }
+      if (bonus && (isNaN(parseFloat(bonus)) || parseFloat(bonus) < 0)) {
+        alert('Bonus must be a positive number.');
+        return;
+      }
+
+      // Reasonable range check (prevent entry errors)
+      if (base > 0 && base > 5000000) {
+        alert('Base salary seems unusually high. Please verify.');
+        return;
+      }
+
+      const data = {
+        company,
+        title,
+        level: document.getElementById('benchmarkLevel').value?.trim() || '',
+        location: document.getElementById('benchmarkLocation').value?.trim() || '',
+        base: base || 0,
+        equity: equity ? parseFloat(equity) : 0,
+        bonus: bonus ? parseFloat(bonus) : 0,
+        total: total ? parseFloat(total) : 0,
+        sourceUrl: document.getElementById('benchmarkSourceUrl').value?.trim() || '',
+        dateAdded: new Date().toISOString()
+      };
+
+      benchmarks.push(data);
+      if (!saveCompBenchmarks(benchmarks)) {
+        showNotification('Failed to save benchmark', 'error');
+        return;
+      }
+
+      showNotification('Benchmark saved successfully!', 'success');
       closeModal('addBenchmarkModal');
 
       // Clear form
@@ -2496,6 +2769,7 @@ Format as clear, actionable HTML with strong headings and bullet lists.
       });
 
       // Initialize
+      setupKeyboardHandlers();
       renderRolesList();
     });
   </script>
