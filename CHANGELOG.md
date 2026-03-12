@@ -4,6 +4,29 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.6.0 — 2026-03-12
+
+### What Changed — Remove Demo Mode (Single-User Architecture)
+
+**User requested:** "let's get rid of Demo Mode, we are just going to have this work for one user (Me), the demo mode is not helpful as of now"
+
+**Changes:**
+1. **Deleted `data-switcher.js`** — The Demo/Personal toggle that appeared in every module's nav bar is gone. The app now operates exclusively with Ili's real data.
+2. **Removed demo seed logic from 5 modules** — Pipeline, Research Brief, Calendar, Job Feed Listener, and Resume Builder no longer inject demo companies/roles/events when localStorage is empty. If there's no data, you get a clean slate.
+3. **Job Feed Listener reads from `pf_feed_queue`** — Instead of rendering hardcoded `DEMO_FEED_ITEMS`, the feed now reads from localStorage (populated by Sync Hub syncs or manual entry). Empty-state banner updated to say "Use Sync Hub to pull jobs."
+4. **Preserved useful defaults** — Resume Builder's starter bullet bank (generic resume bullets) is still seeded on first use. Calendar's nudge/sync-log initialization is preserved.
+5. **New architectural principle established** — localStorage will be backed by MCP server as source of truth (coming in v3.0.0). No more reliance on migration JSON files for data recovery.
+
+**Files changed:**
+- `modules/shared/data-switcher.js` (to be deleted — script tags removed from all 11 modules)
+- `modules/pipeline/index.html` (gutted `initializeData()` demo seed)
+- `modules/research-brief/index.html` (gutted `initializeDemo()`)
+- `modules/calendar/index.html` (gutted `loadOrCreateDemoData()`, kept nudge/theme init)
+- `modules/resume-tailor/index.html` (removed mode check, removed demo resume log)
+- `modules/job-feed-listener/index.html` (added `loadFeedQueue()`, replaced 3 DEMO_FEED_ITEMS references, updated banner text)
+
+---
+
 ## v2.5.0 — 2026-03-12
 
 ### What Changed — Pipeline Side Panel Restructure

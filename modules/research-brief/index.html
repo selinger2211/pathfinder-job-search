@@ -1561,32 +1561,9 @@ Questions must be SPECIFIC to this role. Every question needs a "why they'd ask 
      * OUTPUT: populates localStorage with pf_companies and pf_roles
      */
     function initializeDemo() {
-      try {
-        // In Personal mode, never seed demo data — the data-switcher handles it
-        if (localStorage.getItem('pf_data_mode') === 'personal') return;
-
-        if (!localStorage.getItem('pf_companies')) {
-          const companies = DEMO_COMPANIES.map(c => ({
-            ...c,
-            url: `https://${c.domain}`,
-            logoUrl: `https://www.google.com/s2/favicons?domain=${c.domain}&sz=128`,
-            enrichmentStatus: 'complete',
-            dateAdded: Date.now()
-          }));
-          localStorage.setItem('pf_companies', JSON.stringify(companies));
-        }
-        if (!localStorage.getItem('pf_roles')) {
-          const roles = DEMO_ROLES.map(r => ({
-            ...r,
-            dateAdded: r.dateAdded || Date.now(),
-            stageHistory: [],
-            connections: 0
-          }));
-          localStorage.setItem('pf_roles', JSON.stringify(roles));
-        }
-      } catch (e) {
-        console.warn('Failed to initialize demo data:', e);
-      }
+      /* v2.6.0: Demo mode removed. This function is kept as a no-op
+       * for backwards compatibility (called from initializeUI).
+       * Data comes from user's real pipeline in localStorage. */
     }
 
     /**
@@ -3983,6 +3960,6 @@ The HTML content should come first, followed by the citations block. Do not incl
 
   </script>
   <script src="../shared/claude-api.js"></script>
-  <script src="../shared/data-switcher.js"></script>
+  <!-- data-switcher removed in v2.6.0 — single-user mode -->
 </body>
 </html>

@@ -167,7 +167,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v2.5.0
+**Current Version:** v2.6.0
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -191,7 +191,10 @@ These are the actual field shapes for objects stored in shared localStorage keys
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
-### Recently Fixed (v2.5.0)
+### Recently Fixed (v2.6.0)
+- **Demo Mode removed**: Deleted `data-switcher.js`, removed Demo/Personal toggle from all 11 modules. App is now single-user (Ili only). No more demo seed data in Pipeline, Research Brief, Calendar, Resume Builder. Job Feed reads from `pf_feed_queue` localStorage instead of hardcoded demo items. New principle: localStorage backed by MCP (v3.0.0).
+
+### Previously Fixed (v2.5.0)
 - **Pipeline side panel restructure**: "Resume Sent" renamed to "Artifacts" with type badges (resume/research/document). Added "Generate Research Brief" button that deep-links to Research Brief module via `?roleId=X`. Comms Log now collapsible (starts collapsed, shows count + latest date). New `role.artifacts` array in data model. Reusable `.collapsible` CSS pattern.
 
 ### Previously Fixed (v2.4.0)

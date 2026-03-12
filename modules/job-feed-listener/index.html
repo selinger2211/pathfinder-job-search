@@ -1549,7 +1549,7 @@
         <!-- TAB 1: Feed Review -->
         <div class="tab-content active" id="tab-feed">
           <div id="feedBanner" class="demo-banner" style="margin: var(--space-3) var(--space-3) 0; display: none;" role="status" aria-live="polite">
-            Sample Data — Showing curated job postings scored against your preferences
+            No feed items yet — Use Sync Hub to pull jobs from Indeed/Gmail, or add roles manually
           </div>
           <div class="feed-cards" id="feedCards" role="region" aria-label="Job feed cards" aria-live="polite">
             <!-- Cards populated by JavaScript -->
@@ -2220,6 +2220,22 @@
     }
 
     /**
+     * Load feed queue items from localStorage.
+     * These are roles synced from Indeed, Gmail, or added manually.
+     * INPUT: none
+     * RETURNS: array of feed item objects (may be empty if no syncs have run)
+     */
+    function loadFeedQueue() {
+      try {
+        const stored = localStorage.getItem('pf_feed_queue');
+        return stored ? JSON.parse(stored) : [];
+      } catch (e) {
+        console.warn('Failed to load feed queue from localStorage:', e);
+        return [];
+      }
+    }
+
+    /**
      * Load feed run history from localStorage.
      * @returns {Array} Array of feed run records
      */
@@ -2235,7 +2251,7 @@
       } catch (e) {
         console.warn('Failed to load feed runs from localStorage:', e);
       }
-      return DEMO_FEED_RUNS;
+      return []; // v2.6.0: no demo data — empty until real feed runs happen
     }
 
     /**
@@ -3958,8 +3974,8 @@
       const activeCheckboxes = document.querySelectorAll('.source-filter-checkbox:checked');
       const activeSources = Array.from(activeCheckboxes).map(cb => cb.dataset.source);
 
-      // Filter feed items
-      const allRoles = DEMO_FEED_ITEMS.map(role => {
+      // Filter feed items from localStorage queue
+      const allRoles = loadFeedQueue().map(role => {
         const scoring = scoreRole(role, state.preferences);
         return scoring ? { ...role, score: scoring.score, scoring: scoring.breakdown } : null;
       }).filter(item => item !== null);
@@ -4000,21 +4016,17 @@
       // Load snoozed roles and auto-resurface expired ones
       loadSnoozedRoles();
 
-      // Show sample data banner in Personal mode so user knows
-      // the feed uses curated sample postings (no real API yet)
-      let isPersonal = false;
-      try {
-        isPersonal = localStorage.getItem('pf_data_mode') === 'personal';
-      } catch (e) {
-        console.warn('Failed to check data mode:', e);
-      }
+      // v2.6.0: Load feed items from localStorage (populated by Sync Hub or manual entry)
+      const rawFeedItems = loadFeedQueue();
+
+      // Show empty-state banner if no feed items exist
       const feedBanner = document.getElementById('feedBanner');
       if (feedBanner) {
-        feedBanner.style.display = isPersonal ? 'block' : 'none';
+        feedBanner.style.display = rawFeedItems.length === 0 ? 'block' : 'none';
       }
 
-      // Score all demo items
-      const scored = DEMO_FEED_ITEMS
+      // Score all feed items against user preferences
+      const scored = rawFeedItems
         .map(role => {
           const scoring = scoreRole(role, state.preferences);
           if (!scoring) return null;
@@ -4059,8 +4071,9 @@
         savePreferences(updated);
         showToast('Preferences saved! Re-scoring feed...', 'success');
 
-        // Re-score all items
-        state.feedItems = DEMO_FEED_ITEMS
+        // Re-score all items from localStorage feed queue
+        const freshItems = loadFeedQueue();
+        state.feedItems = freshItems
           .map(role => {
             const scoring = scoreRole(role, updated);
             if (!scoring) return null;
@@ -4142,6 +4155,6 @@
     // Start application when page loads
     document.addEventListener('DOMContentLoaded', init);
   </script>
-  <script src="../shared/data-switcher.js"></script>
+  <!-- data-switcher removed in v2.6.0 — single-user mode -->
 </body>
 </html>

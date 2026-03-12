@@ -2469,28 +2469,10 @@
      * OUTPUT: populates browser memory with initial demo data
      */
     function initializeData() {
-      // In Personal mode, never seed demo data — the data-switcher handles it
-      if (localStorage.getItem('pf_data_mode') === 'personal') return;
-
-      // Check if companies have been saved before
-      if (!localStorage.getItem('pf_companies')) {
-        // First run: prepare demo companies with logo URLs
-        const companies = DEMO_COMPANIES.map(c => ({
-          ...c,
-          url: `https://${c.domain}`,
-          logoUrl: `https://logo.clearbit.com/${c.domain}`,
-          enrichmentStatus: 'complete',
-          dateAdded: Date.now()
-        }));
-        // Save to browser memory
-        localStorage.setItem('pf_companies', JSON.stringify(companies));
-      }
-
-      // Check if jobs have been saved before
-      if (!localStorage.getItem('pf_roles')) {
-        // First run: save demo jobs
-        localStorage.setItem('pf_roles', JSON.stringify(DEMO_ROLES));
-      }
+      /* v2.6.0: Demo mode removed. Data comes from user's real pipeline
+       * (localStorage populated by Sync Hub, manual entry, or MCP restore).
+       * If localStorage is empty, the user starts with a clean slate and
+       * adds roles through the normal workflow. */
     }
 
     /**
@@ -5587,6 +5569,6 @@
     // Render icons from Lucide icon library
     lucide.createIcons();
   </script>
-  <script src="../shared/data-switcher.js"></script>
+  <!-- data-switcher removed in v2.6.0 — single-user mode -->
 </body>
 </html>

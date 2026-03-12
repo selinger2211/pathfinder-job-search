@@ -1975,8 +1975,8 @@
      * OUTPUT: localStorage populated with demo companies, roles, bullets, and resume log
      */
     function initializeDemoData() {
-      // In Personal mode, never seed demo data — the data-switcher handles it
-      if (localStorage.getItem('pf_data_mode') === 'personal') return;
+      /* v2.6.0: Demo mode removed. Only seeds bullet bank if truly empty
+       * (first-time user experience). No mode check needed. */
 
       // Only initialize if no data exists
       if (localStorage.getItem('pf_bullet_bank')) return;
@@ -2152,41 +2152,8 @@
 
       saveBulletBank(demoBullets);
 
-      // Create demo resume log
-      const demoLog = [
-        {
-          id: 'log-1',
-          date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          company: 'Stripe',
-          role: 'Senior PM, Payments',
-          keywords: ['revenue impact', 'technical depth', 'scale'],
-          fitScore: 0.87,
-          filename: 'Resume_Stripe_SeniorPM.pdf'
-        },
-        {
-          id: 'log-2',
-          date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-          company: 'Linear',
-          role: 'Product Manager',
-          keywords: ['zero-to-one', 'cross-functional', 'leadership'],
-          fitScore: 0.82,
-          filename: 'Resume_Linear_PM.pdf'
-        },
-        {
-          id: 'log-3',
-          date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-          company: 'Figma',
-          role: 'Senior Product Manager',
-          keywords: ['technical depth', 'user growth', 'leadership'],
-          fitScore: 0.79,
-          filename: 'Resume_Figma_SeniorPM.pdf'
-        }
-      ];
-
-      // Only seed demo resume log if none exists (don't overwrite user's real log)
-      if (!localStorage.getItem('pf_resume_log')) {
-        localStorage.setItem('pf_resume_log', JSON.stringify(demoLog));
-      }
+      /* v2.6.0: Removed demo resume log. Resume log grows organically
+       * as the user generates real resumes for real roles. */
     }
 
     /* ================================================================
@@ -4549,6 +4516,6 @@ Keep it to 3-4 short paragraphs. No templates, no fluff.`;
       renderWorkspace();
     });
   </script>
-  <script src="../shared/data-switcher.js"></script>
+  <!-- data-switcher removed in v2.6.0 — single-user mode -->
 </body>
 </html>

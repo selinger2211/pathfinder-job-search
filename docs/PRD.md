@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v2.5.0
+**Status:** v2.6.0
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v2.6.0 | 2026-03-12 | **Remove Demo Mode — single-user architecture** — Deleted `data-switcher.js` and removed Demo/Personal toggle from all 11 modules. App now operates exclusively with real user data (no demo seed). Pipeline, Research Brief, Calendar, and Resume Builder no longer inject demo companies/roles/events on first load. Job Feed Listener reads from `pf_feed_queue` (localStorage, populated by Sync Hub) instead of hardcoded demo items. Empty-state banner updated. Bullet bank starter content preserved for new users. New architectural principle: localStorage will be backed by MCP server (coming in v3.0.0). |
 | v2.5.0 | 2026-03-12 | **Pipeline side panel restructure** — Renamed "Resume Sent" to "Artifacts" section with type badges (resume, research, document). Added "Generate Research Brief" button that deep-links to Research Brief module with role pre-selected via URL params. Made Comms Log collapsible with accordion toggle (starts collapsed, shows entry count + latest date summary). Added `role.artifacts` array to data model for non-resume files. Research Brief module now supports `?roleId=X` URL parameter for deep-linking. |
 | v2.4.0 | 2026-03-12 | **MCP pipeline backup system** — Added `pf_backup_pipeline` and `pf_restore_pipeline` MCP tools. Backups write timestamped JSON snapshots of all `pf_*` localStorage keys to `~/.pathfinder/backups/` with SHA-256 checksums. Restore tool supports listing all backups and restoring from a specific one. HTTP bridge endpoints added (`POST /backup`, `POST /restore`, `GET /backups`). Sync Hub auto-backs up after every `Sync All` run with localStorage fallback when MCP is unavailable. Max 50 backups with automatic pruning. |
 | v2.3.2 | 2026-03-12 | **Migration data sync** — Updated all 3 migration files to match current browser state: 7 real roles (with full JDs, comms logs, resumes), 50 companies (fixed ATS domains → real domains for LiveRamp, RingCentral, Intuit), 63 connections (4 new manual). Bumped MIGRATION_VERSION to 4. Replaced dead Clearbit logoUrl references with Google Favicon API in migration data. |

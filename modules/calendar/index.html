@@ -2031,17 +2031,12 @@
          * Includes mix of linked, unlinked, phone screens, technical interviews, offer discussions.
          */
         function loadOrCreateDemoData() {
-            // In Personal mode, never seed demo data — the data-switcher handles it
-            if (localStorage.getItem('pf_data_mode') === 'personal') return;
+            /* v2.6.0: Demo mode removed. No longer seeds demo events,
+             * roles, or companies. Only initializes empty arrays for
+             * nudges/sync log if they don't exist (required for Calendar
+             * to function), and loads theme preference. */
 
-            // Check if demo data already exists
-            let calendarEvents = getStorageData('calendar_events');
-            if (!calendarEvents || calendarEvents.length === 0) {
-                calendarEvents = generateDemoCalendarEvents();
-                saveStorageData('calendar_events', calendarEvents);
-            }
-
-            // Ensure nudges exist
+            // Ensure nudges exist (required for Calendar operations)
             let nudges = getStorageData('calendar_nudges');
             if (!nudges) {
                 nudges = [];
@@ -2053,20 +2048,6 @@
             if (!syncLog) {
                 syncLog = [];
                 saveStorageData('sync_log', syncLog);
-            }
-
-            // Load or create demo roles if they don't exist
-            let roles = getStorageData('roles');
-            if (!roles || roles.length === 0) {
-                roles = generateDemoRoles();
-                saveStorageData('roles', roles);
-            }
-
-            // Load or create demo companies if they don't exist
-            let companies = getStorageData('companies');
-            if (!companies || companies.length === 0) {
-                companies = generateDemoCompanies();
-                saveStorageData('companies', companies);
             }
 
             // Load theme preference
@@ -4021,6 +4002,6 @@
         // Run initialization when DOM is ready
         document.addEventListener('DOMContentLoaded', initializeModule);
     </script>
-  <script src="../shared/data-switcher.js"></script>
+  <!-- data-switcher removed in v2.6.0 — single-user mode -->
 </body>
 </html>
