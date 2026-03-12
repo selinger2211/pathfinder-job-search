@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v2.3.0
+**Status:** v2.3.1
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v2.3.1 | 2026-03-11 | **Sibling roles in detail panel** — Role detail slide-out now shows "Other Roles at [Company]" section listing all sibling roles at the same company with stage pill, tier, level, and last activity. Clicking a sibling navigates directly to its detail panel. Section only appears when multiple roles exist at the company. |
 | v2.3.0 | 2026-03-11 | **Remove bulk-select + restore logos** — Deleted checkbox element and all bulk-select code (CSS, toolbar, JS functions). Switched from dead Clearbit API to Google Favicon API for reliable company logos. Letter-initial fallback for missing favicons. |
 | v2.2.2 | 2026-03-11 | **Fix: checkbox white square** — The "checkbox in front of logos" was a literal `<input type="checkbox">` for bulk selection, always visible on every kanban card. Hidden by default now; shows on hover and when checked. |
 | v2.2.0 | 2026-03-11 | **Personal data accuracy + logo fix + migration versioning**: Fixed logo "checkbox" appearance (removed white background boxes, switched to circular transparent logos). Corrected pipeline stages: Yahoo and Amazon Ads moved to "applied". Added LiveRamp to companies and roles (applied stage). Added migration version system to data-switcher — bumping `MIGRATION_VERSION` forces re-seed of personal data on next load, solving stale data problem. |

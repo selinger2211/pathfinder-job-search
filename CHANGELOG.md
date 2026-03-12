@@ -4,6 +4,25 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.3.1 — 2026-03-11
+
+### What Changed — Sibling Roles in Detail Panel
+
+**User reported:** "from the card I cannot see other roles if they exist"
+
+**Feature:**
+1. **"Other Roles at [Company]" section** in the role detail slide-out panel. When a company has multiple roles, this section lists all sibling roles with:
+   - Color-coded stage pill (matches kanban stage colors)
+   - Tier, target level, and last activity date
+   - Click-to-navigate — clicking a sibling opens its detail panel directly
+2. Section only appears when the company has 2+ roles (no empty state clutter)
+3. **Cleaned test data** — removed debugging test role from localStorage
+
+**Files Modified:**
+- `modules/pipeline/index.html` — added sibling role section in `openRoleDetail()`, added `.sibling-role-card` and `.sibling-role-stage` CSS
+
+---
+
 ## v2.3.0 — 2026-03-11
 
 ### What Changed — Remove Bulk-Select Checkbox + Restore Logos

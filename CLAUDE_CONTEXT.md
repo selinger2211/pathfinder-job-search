@@ -164,7 +164,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v2.3.0
+**Current Version:** v2.3.1
 **Last Updated:** 2026-03-11
 
 ### Implementation Status
@@ -188,7 +188,10 @@ These are the actual field shapes for objects stored in shared localStorage keys
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
-### Recently Fixed (v2.3.0)
+### Recently Fixed (v2.3.1)
+- **Sibling roles in detail panel**: Role detail slide-out now shows "Other Roles at [Company]" section when a company has multiple roles. Each sibling shows stage pill, tier, level, last activity. Clicking navigates directly to that role's detail. Uses IIFE in template literal to compute sibling list.
+
+### Previously Fixed (v2.3.0)
 - **Removed bulk-select checkbox entirely**: The `<input type="checkbox">` on every kanban card (and all associated bulk-select CSS, toolbar HTML, JS functions) has been deleted. This was the "white square" reported across 3+ sessions.
 - **Restored company logos**: Switched from dead Clearbit API to Google Favicon API (`/s2/favicons?domain=X&sz=128`). Logos load reliably. Letter-initial colored circles as fallback. New companies get logos automatically via domain resolution (`getCompanyDomain`).
 
