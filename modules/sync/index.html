@@ -1665,10 +1665,100 @@
         log('Sync log exported as JSON', 'success');
     }
 
+    /* ====== PIPELINE BACKUP ======
+       Creates a durable backup of all pf_* localStorage data to the MCP
+       server's filesystem (~/.pathfinder/backups/). Runs automatically
+       after every Sync All, or can be triggered manually.
+       The backup is a JSON snapshot with SHA-256 checksum for integrity.
+       Restore via the pf_restore_pipeline MCP tool. */
+
+    /**
+     * backupPipeline(label) → Snapshots all pf_* keys to MCP backup file
+     * INPUT: optional label string (e.g., "after-sync", "manual")
+     * OUTPUT: none directly (side effect: writes backup via MCP, logs result)
+     *
+     * HOW IT WORKS:
+     * 1. Scans localStorage for all keys starting with "pf_"
+     * 2. Builds a data object mapping key → value
+     * 3. Sends it to the MCP server's pf_backup_pipeline tool via HTTP bridge
+     * 4. MCP server writes a timestamped JSON file to ~/.pathfinder/backups/
+     * 5. Logs success/failure to the sync log UI
+     *
+     * FALLBACK: If the MCP server isn't running, the backup is saved
+     * directly to localStorage under pf_last_backup as a safety net.
+     */
+    async function backupPipeline(label = 'manual') {
+        log('Creating pipeline backup...', 'info');
+
+        try {
+            // Step 1: Collect all pf_* keys from localStorage
+            const data = {};
+            let keyCount = 0;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('pf_')) {
+                    data[key] = localStorage.getItem(key);
+                    keyCount++;
+                }
+            }
+
+            if (keyCount === 0) {
+                log('No pipeline data found to back up.', 'warning');
+                return;
+            }
+
+            // Step 2: Try MCP server via HTTP bridge (preferred path)
+            let mcpSuccess = false;
+            try {
+                const response = await fetch('http://localhost:3456/backup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data, label }),
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    log(
+                        `✓ Pipeline backed up to MCP: ${result.backupId} ` +
+                        `(${keyCount} keys, ${(result.sizeBytes / 1024).toFixed(1)} KB)`,
+                        'success'
+                    );
+                    mcpSuccess = true;
+
+                    // Store the backup ID for reference
+                    localStorage.setItem('pf_last_backup_id', result.backupId);
+                    localStorage.setItem('pf_last_backup_time', new Date().toISOString());
+                }
+            } catch {
+                // MCP bridge not running — fall through to localStorage fallback
+            }
+
+            // Step 3: localStorage fallback if MCP is unavailable
+            if (!mcpSuccess) {
+                const backupPayload = {
+                    timestamp: new Date().toISOString(),
+                    label,
+                    keyCount,
+                    keys: Object.keys(data).sort(),
+                    data,
+                };
+                localStorage.setItem('pf_last_backup', JSON.stringify(backupPayload));
+                localStorage.setItem('pf_last_backup_time', new Date().toISOString());
+                log(
+                    `✓ Pipeline backed up to localStorage fallback (${keyCount} keys). ` +
+                    'MCP server not reachable — start it for durable file backups.',
+                    'warning'
+                );
+            }
+        } catch (err) {
+            log(`✗ Backup failed: ${err.message || err}`, 'warning');
+        }
+    }
+
     /* ====== SYNC ALL ====== */
 
     /**
-     * syncAll() → Runs all available syncs in sequence
+     * syncAll() → Runs all available syncs in sequence, then auto-backs up
      */
     function syncAll() {
         log('═══ Starting full sync ═══', 'info');
@@ -1677,6 +1767,9 @@
         syncGmail();
         if (CLAY_DATA.length > 0) syncClay();
         log('═══ Full sync complete ═══', 'success');
+
+        // Auto-backup pipeline data after every sync
+        backupPipeline('after-sync');
 
         // Update UI after sync
         updateSyncStatistics();

@@ -164,7 +164,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v2.3.2
+**Current Version:** v2.4.0
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -181,14 +181,17 @@ These are the actual field shapes for objects stored in shared localStorage keys
 | Debrief | ~100% | 8-section form, Claude synthesis, pattern analysis, timeline, export, Calendar auto-populate, pending events section, cross-module sync, **form validation, a11y, keyboard nav** | — |
 | Comp Intel | ~100% | Data entry, comparison, Claude negotiation, charts, scorecard, Indeed salary, bulk import, market positioning, BATNA, **salary validation, a11y, error handling** | — |
 | Calendar | ~100% | Week/month/day views, nudges, event-role linking, auto-trigger debrief, pending debrief badge, **date validation, a11y, keyboard nav, visual polish** | — |
-| Sync Hub | ~100% | GCal sync, Indeed sync, Gmail sync (leads + applications), Clay placeholder, file upload, dedup, sync log, **outreach draft push**, **richer Gmail parsing (InMail/scheduling/rejection/offer)**, **data freshness indicators**, **sync stats dashboard**, **scheduling UI + auto-sync toggle**, **export sync log** | — |
-| MCP Server | ~95% | **All 7 tools fully implemented** (save, get, list, search, tag, delete, generate-brief), **enhanced storage (SHA-256, excerpts, relevance search)**, **soft/hard delete**, HTTP bridge, **comprehensive README + implementation status docs** | Build on Mac (`npm run build`), end-to-end testing |
+| Sync Hub | ~100% | GCal sync, Indeed sync, Gmail sync (leads + applications), Clay placeholder, file upload, dedup, sync log, **outreach draft push**, **richer Gmail parsing (InMail/scheduling/rejection/offer)**, **data freshness indicators**, **sync stats dashboard**, **scheduling UI + auto-sync toggle**, **export sync log**, **auto-backup after Sync All** | — |
+| MCP Server | ~95% | **All 9 tools fully implemented** (save, get, list, search, tag, delete, generate-brief, **backup-pipeline**, **restore-pipeline**), **enhanced storage (SHA-256, excerpts, relevance search)**, **soft/hard delete**, HTTP bridge with backup/restore endpoints, **comprehensive README + implementation status docs** | Build on Mac (`npm run build`), end-to-end testing |
 
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
-### Recently Fixed (v2.3.2)
+### Recently Fixed (v2.4.0)
+- **MCP pipeline backup system**: Added `pf_backup_pipeline` and `pf_restore_pipeline` MCP tools. Backups write timestamped JSON snapshots of all `pf_*` keys to `~/.pathfinder/backups/` with SHA-256 checksums and auto-pruning (max 50). HTTP bridge endpoints added (`POST /backup`, `POST /restore`, `GET /backups`). Sync Hub auto-backs up after every Sync All with localStorage fallback when MCP is unavailable.
+
+### Previously Fixed (v2.3.2)
 - **Migration data sync**: Updated all 3 migration JSON files to match browser localStorage: 7 real roles (full JDs, comms logs, resumes), 50 companies (fixed ATS→real domains), 63 connections (4 new manual). Bumped MIGRATION_VERSION to 4. Replaced Clearbit logoUrls with Google Favicon API in migration data.
 
 ### Previously Fixed (v2.3.1)

@@ -52,7 +52,7 @@ The server runs on localhost and is invoked by browser agents via HTTP bridge or
 ### 2.1 System Layers
 
 **MCP Server** (Node.js, runs on localhost:3457 or similar)
-- Exposes six tools: `save_artifact`, `get_artifact`, `list_artifacts`, `search_artifacts`, `tag_artifact`, `delete_artifact`
+- Exposes nine tools: `save_artifact`, `get_artifact`, `list_artifacts`, `search_artifacts`, `tag_artifact`, `delete_artifact`, `generate_brief_section`, `backup_pipeline`, `restore_pipeline`
 - Manages metadata index in `~/.pathfinder/artifacts/.index.json`
 - Writes artifact files to `~/.pathfinder/artifacts/{type}/{artifactId}/`
 - Handles lifecycle: creating, retrieving, tagging, archiving

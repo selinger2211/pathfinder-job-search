@@ -13,6 +13,8 @@ import { handleSearchArtifacts, SearchArtifactsInputSchema } from "./tools/searc
 import { handleTagArtifact, TagArtifactInputSchema } from "./tools/tag.js";
 import { handleDeleteArtifact, DeleteArtifactInputSchema } from "./tools/delete.js";
 import { handleGenerateBriefSection, GenerateBriefSectionInputSchema } from "./tools/generate-brief.js";
+import { handleBackupPipeline, BackupPipelineInputSchema } from "./tools/backup.js";
+import { handleRestorePipeline, RestorePipelineInputSchema } from "./tools/restore.js";
 
 // Import storage service for initialization
 import { storageService } from "./services/storage.js";
@@ -270,6 +272,75 @@ class PathfinderArtifactsMcpServer {
         } catch (error) {
           throw new Error(
             `generate_brief_section failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+        }
+      }
+    );
+
+    // pf_backup_pipeline - Snapshot all localStorage pipeline data to a backup file
+    this.server.registerTool(
+      "pf_backup_pipeline",
+      {
+        title: "Backup Pipeline",
+        description:
+          "Create a timestamped backup of all Pathfinder localStorage data (roles, companies, connections, preferences, etc.) " +
+          "to ~/.pathfinder/backups/. Returns backup ID, checksum, and file path. " +
+          "Use this after sync runs or before risky operations. Keeps up to 50 backups with automatic pruning.",
+        inputSchema: BackupPipelineInputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      async (params) => {
+        try {
+          const result = await handleBackupPipeline(params);
+          return {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          };
+        } catch (error) {
+          throw new Error(
+            `backup_pipeline failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+        }
+      }
+    );
+
+    // pf_restore_pipeline - List available backups or restore data from a specific backup
+    this.server.registerTool(
+      "pf_restore_pipeline",
+      {
+        title: "Restore Pipeline",
+        description:
+          "List available pipeline backups or restore data from a specific one. " +
+          "Use action: 'list' to see all backups with timestamps and labels. " +
+          "Use action: 'restore' with a backupId to get the stored key/value pairs. " +
+          "The caller is responsible for writing the returned data back into localStorage.",
+        inputSchema: RestorePipelineInputSchema,
+        annotations: {
+          readOnlyHint: true, // restore just reads the backup — writing to localStorage is the caller's job
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (params) => {
+        try {
+          const result = await handleRestorePipeline(params);
+          return {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          };
+        } catch (error) {
+          throw new Error(
+            `restore_pipeline failed: ${
               error instanceof Error ? error.message : String(error)
             }`
           );

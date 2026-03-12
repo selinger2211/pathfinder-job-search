@@ -10,6 +10,8 @@
 
 import http from "http";
 import { handleGenerateBriefSection, GenerateBriefSectionInputSchema } from "./tools/generate-brief.js";
+import { handleBackupPipeline, BackupPipelineInputSchema } from "./tools/backup.js";
+import { handleRestorePipeline, RestorePipelineInputSchema } from "./tools/restore.js";
 import { storageService } from "./services/storage.js";
 import { SECTION_PROMPTS } from "./services/claude.js";
 
@@ -176,6 +178,59 @@ export function startHttpBridge(): http.Server {
       }
 
       // ============================================================
+      // POST /backup — Backup all pf_* localStorage data to disk
+      // ============================================================
+      if (req.method === "POST" && url.pathname === "/backup") {
+        const body = await parseBody(req);
+
+        // Validate input
+        const parsed = BackupPipelineInputSchema.safeParse(body);
+        if (!parsed.success) {
+          sendJSON(res, 400, {
+            error: "Invalid input",
+            details: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+          });
+          return;
+        }
+
+        // Create the backup
+        const result = await handleBackupPipeline(parsed.data);
+        sendJSON(res, 200, result);
+        return;
+      }
+
+      // ============================================================
+      // POST /restore — List or restore from a pipeline backup
+      // ============================================================
+      if (req.method === "POST" && url.pathname === "/restore") {
+        const body = await parseBody(req);
+
+        // Validate input
+        const parsed = RestorePipelineInputSchema.safeParse(body);
+        if (!parsed.success) {
+          sendJSON(res, 400, {
+            error: "Invalid input",
+            details: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+          });
+          return;
+        }
+
+        // List or restore
+        const result = await handleRestorePipeline(parsed.data);
+        sendJSON(res, 200, result);
+        return;
+      }
+
+      // ============================================================
+      // GET /backups — Shortcut to list all available backups
+      // ============================================================
+      if (req.method === "GET" && url.pathname === "/backups") {
+        const result = await handleRestorePipeline({ action: "list" });
+        sendJSON(res, 200, result);
+        return;
+      }
+
+      // ============================================================
       // 404 — Unknown route
       // ============================================================
       sendJSON(res, 404, { error: "Not found", path: url.pathname });
@@ -194,6 +249,9 @@ export function startHttpBridge(): http.Server {
     console.error(`  GET  /api/section-defs      — Section definitions`);
     console.error(`  GET  /api/health            — Health check`);
     console.error(`  GET  /api/cached-brief      — Cached brief sections`);
+    console.error(`  POST /backup               — Backup pipeline data to disk`);
+    console.error(`  POST /restore              — Restore pipeline data from backup`);
+    console.error(`  GET  /backups              — List all available backups`);
   });
 
   return server;

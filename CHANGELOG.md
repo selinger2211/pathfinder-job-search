@@ -4,6 +4,30 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.4.0 — 2026-03-12
+
+### What Changed — MCP Pipeline Backup System
+
+**User requested:** "would it not be safer to store the backup and config into the MCP server rather than localStorage?"
+
+**Changes:**
+1. **New MCP tool: `pf_backup_pipeline`** — Takes all `pf_*` localStorage key/value pairs as input, writes a timestamped JSON snapshot to `~/.pathfinder/backups/` with SHA-256 checksum, auto-prunes to keep latest 50 backups
+2. **New MCP tool: `pf_restore_pipeline`** — Two modes: `action: "list"` returns all available backups with timestamps, labels, and key counts; `action: "restore"` reads a specific backup and returns the data for the caller to write back into localStorage. Verifies checksums on restore.
+3. **HTTP bridge endpoints** — `POST /backup`, `POST /restore`, `GET /backups` added to `http-bridge.ts` for browser access (Sync Hub, Pipeline Tracker, etc.)
+4. **Sync Hub auto-backup** — Every `Sync All` run now calls `backupPipeline('after-sync')` which tries MCP first, falls back to localStorage if MCP bridge is unavailable
+5. **Backup file format** — Version 1 schema: `{ version, timestamp, label, keyCount, keys, checksum, data }` — designed for forward compatibility
+
+**Architecture:** localStorage remains the live working copy (fast for the browser). MCP backups are the durable layer that survives browser data clears, machine switches, and bad deploys.
+
+**Files changed:**
+- `mcp-servers/pathfinder-artifacts-mcp/src/tools/backup.ts` (new)
+- `mcp-servers/pathfinder-artifacts-mcp/src/tools/restore.ts` (new)
+- `mcp-servers/pathfinder-artifacts-mcp/src/index.ts` (tool registration)
+- `mcp-servers/pathfinder-artifacts-mcp/src/http-bridge.ts` (HTTP endpoints)
+- `modules/sync/index.html` (auto-backup after sync)
+
+---
+
 ## v2.3.2 — 2026-03-12
 
 ### What Changed — Migration Data Sync
