@@ -2183,7 +2183,10 @@
         }
       ];
 
-      localStorage.setItem('pf_resume_log', JSON.stringify(demoLog));
+      // Only seed demo resume log if none exists (don't overwrite user's real log)
+      if (!localStorage.getItem('pf_resume_log')) {
+        localStorage.setItem('pf_resume_log', JSON.stringify(demoLog));
+      }
     }
 
     /* ================================================================

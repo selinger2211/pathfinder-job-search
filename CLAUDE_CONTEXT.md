@@ -96,7 +96,7 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v2.1.4
+**Current Version:** v2.1.5
 **Last Updated:** 2026-03-11
 
 ### Implementation Status
@@ -118,15 +118,19 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
-- Some modules still have demo/seed data for first-run experience
-- Sync Hub has duplicate localStorage keys (`pf_pf_roles`, `pf_pf_companies`) — double-prefixing bug
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
-### Recently Fixed (v2.1.4)
+### Recently Fixed (v2.1.5)
+- Data-switcher (Demo/Personal toggle) added to Debrief, Comp Intel, Sync Hub — all 11 modules now have it
+- `clearAllData()` now dynamically scans all `pf_*` keys instead of hardcoded list (protects API key + model)
+- Resume Builder demo seeding now checks `pf_resume_log` existence before overwriting
+- Removed false-positive double-prefix bug from Known Issues — code was already correct
+
+### Previously Fixed (v2.1.4)
 - Calendar Add Event modal invisible → modal CSS class mismatch (`active` vs shared `open`); changed all 8 references to `open`
 - Calendar Sync Log "undefined" → data shape mismatch between Sync Hub writer (`source`) and Calendar reader (`action`); now handles both
 
-### Previously Fixed (v2.1.3)
+### Previously Fixed (v2.1.3-v2.1.4)
 - Clearbit logo API dead (HubSpot acquisition) → replaced with Google Favicon API across 6 files
 - Pipeline view toggle buttons destroyed on click → removed conflicting parent handler
 - Research Brief "MCP bridge not running" scare notice → removed (direct API is default)

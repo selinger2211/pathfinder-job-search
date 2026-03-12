@@ -4,6 +4,31 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.1.5 — 2026-03-11
+
+### What Changed — Data Mode Consistency (Demo/Personal Toggle)
+
+Audit of Demo vs Personal data mode revealed 3 modules missing the data-switcher toggle and an incomplete clearing function.
+
+#### Data-Switcher Added to 3 Missing Modules
+- Debrief, Comp Intel, and Sync Hub were the only modules without the Demo/Personal toggle
+- Added `<script src="../shared/data-switcher.js"></script>` to all 3 — now all 11 modules have consistent data mode support
+
+#### Data-Switcher Clearing Now Dynamic
+- `clearAllData()` previously used a hardcoded `PF_KEYS` array that was missing keys like `pf_resume_log`, `pf_bullet_bank`, `pf_comp_data`, `pf_sync_log`, `pf_feed_queue`
+- Replaced with `getAllPfKeys()` which dynamically scans all `pf_*` localStorage keys
+- Protects `pf_data_mode`, `pf_anthropic_key`, and `pf_claude_model` from clearing
+
+#### Resume Builder Demo Seeding Guard
+- `initializeDemoData()` wrote `pf_resume_log` unconditionally even if the user had real resume data
+- Added existence check: `if (!localStorage.getItem('pf_resume_log'))` before writing demo log
+- The function already correctly checks `pf_data_mode === 'personal'` and `pf_bullet_bank` existence
+
+#### Known Issues Cleanup
+- Removed "Sync Hub has duplicate localStorage keys (`pf_pf_roles`, `pf_pf_companies`)" from known issues — verified helper functions correctly add `pf_` prefix and callers pass unprefixed keys. Bug was already fixed or was never in the code.
+
+---
+
 ## v2.1.4 — 2026-03-11
 
 ### What Changed — Calendar Bug Fixes (Interactive QA)

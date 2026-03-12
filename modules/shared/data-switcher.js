@@ -31,14 +31,20 @@
   const MODE_KEY = 'pf_data_mode';
 
   /** All localStorage keys the Pathfinder app uses.
-   *  When switching to demo mode, these get cleared so each
-   *  module falls back to its built-in demo seed data. */
-  const PF_KEYS = [
-    'pf_companies', 'pf_roles', 'pf_connections',
-    'pf_streak', 'pf_dismissed_nudges', 'pf_story_bank',
-    'pf_mock_sessions', 'pf_debriefs', 'pf_preferences',
-    'pf_feed_runs', 'pf_calendar_events', 'pf_outreach_drafts'
-  ];
+   *  When switching modes, we dynamically find all pf_* keys
+   *  (except pf_data_mode and pf_anthropic_key) so we never
+   *  miss a module's data. */
+  function getAllPfKeys() {
+    const protected_keys = ['pf_data_mode', 'pf_anthropic_key', 'pf_claude_model'];
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith('pf_') && !protected_keys.includes(key)) {
+        keys.push(key);
+      }
+    }
+    return keys;
+  }
 
   /** Path to migration-output JSON files (relative to any module page) */
   const MIGRATION_BASE = '../../scripts/migration-output';
@@ -55,9 +61,10 @@
 
   /* ── Data switching logic ──────────────────────────────── */
 
-  /** Clear all Pathfinder data keys so modules re-seed demo data */
+  /** Clear all Pathfinder data keys so modules re-seed demo data.
+   *  Dynamically finds all pf_* keys to ensure nothing is missed. */
   function clearAllData() {
-    PF_KEYS.forEach(key => localStorage.removeItem(key));
+    getAllPfKeys().forEach(key => localStorage.removeItem(key));
   }
 
   /** Fetch personal data from migration output and write to localStorage */
