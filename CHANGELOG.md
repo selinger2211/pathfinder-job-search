@@ -4,6 +4,30 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.7.0 — 2026-03-12
+
+### What Changed — LinkedIn Network Import
+
+**User requested:** "I want to have a list of all my LinkedIn 1st connections so when I add a new company / role I know if I have any connections I can use for references / back-channel to the hiring manager" and "when listing LinkedIn connections favor those in Product and Engineering and by seniority of title"
+
+**Changes:**
+1. **Parsed 2,687 LinkedIn connections** — Python script (`scripts/parse-linkedin-connections.py`) reads LinkedIn data export CSV and produces `pf_linkedin_network.json`. Company names normalized (JPMorganChase → JPMorgan Chase, etc.). Auto-loads into localStorage on first Pipeline visit.
+2. **LinkedIn Network section in Pipeline detail panel** — New collapsible "LinkedIn Network (N)" section between Connections and Sibling Roles. Shows connections at the role's company with fuzzy matching (handles "Amazon" matching "Amazon Ads").
+3. **Smart sorting by seniority + department** — Connections sorted by: (a) Product and Engineering people first, (b) then by seniority tier (C-level → SVP → VP → Director → Senior → Manager → others). No more alphabetical ordering.
+4. **Department badges** — Purple "Product" and blue "Eng" badges on matching titles for quick visual scanning.
+5. **Show More button** — Initial view shows top 10 connections (most senior/relevant). "Show N more connections" button expands to the full list.
+6. **Promote to tracked connection** — "+ Track" button on each LinkedIn connection creates a `pf_connections` record pre-filled with name, title, LinkedIn URL, and "1st" connection degree.
+7. **Kanban card connection counts** — Cards now show combined count of tracked connections + LinkedIn network connections at that company.
+
+**Files changed:**
+- `modules/pipeline/index.html` (CSS, template, JS: sorting engine, expand/collapse, promote, dept badges)
+- `scripts/parse-linkedin-connections.py` (new — LinkedIn CSV parser)
+- `scripts/linkedin-connections.csv` (new — raw LinkedIn export)
+- `scripts/migration-output/pf_linkedin_network.json` (new — parsed output, 2,687 records)
+- `docs/resume_best_practices.md` (new — saved for future Resume Builder integration)
+
+---
+
 ## v2.6.0 — 2026-03-12
 
 ### What Changed — Remove Demo Mode (Single-User Architecture)

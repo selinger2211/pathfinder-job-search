@@ -163,11 +163,26 @@ These are the actual field shapes for objects stored in shared localStorage keys
 | connectionDegree | string | no | "1st" / "2nd" |
 | seniority | string | no | "SVP" / "Director" / etc. |
 
+### pf_linkedin_network — LinkedInConnection[]
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| firstName | string | yes | First name from LinkedIn |
+| lastName | string | yes | Last name from LinkedIn |
+| name | string | yes | Combined "First Last" |
+| linkedinUrl | string | no | Full LinkedIn profile URL |
+| email | string | no | Email if available (rare) |
+| company | string | yes | Current company (normalized) |
+| position | string | no | Current job title |
+| connectedOn | string | no | ISO date string (YYYY-MM-DD) |
+
+**Source:** Parsed from LinkedIn data export via `scripts/parse-linkedin-connections.py`. ~2,687 records. Auto-loaded into localStorage from `scripts/migration-output/pf_linkedin_network.json` on first Pipeline visit. Used as lookup layer only — not editable. Use `pf_connections` for tracked/curated connections.
+
 ---
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v2.6.0
+**Current Version:** v2.7.0
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -191,7 +206,10 @@ These are the actual field shapes for objects stored in shared localStorage keys
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
-### Recently Fixed (v2.6.0)
+### Recently Fixed (v2.7.0)
+- **LinkedIn Network Import**: Parsed 2,687 LinkedIn 1st-degree connections into `pf_linkedin_network`. Pipeline detail panel shows "LinkedIn Network (N)" section sorted by seniority (VP → Director → Senior) with Product/Engineering people surfaced first. Purple "Product" and blue "Eng" department badges. "Show More" button expands from top-10 preview to full list. "+ Track" promotes to active connection. Kanban cards show combined tracked + LinkedIn connection counts.
+
+### Previously Fixed (v2.6.0)
 - **Demo Mode removed**: Deleted `data-switcher.js`, removed Demo/Personal toggle from all 11 modules. App is now single-user (Ili only). No more demo seed data in Pipeline, Research Brief, Calendar, Resume Builder. Job Feed reads from `pf_feed_queue` localStorage instead of hardcoded demo items. New principle: localStorage backed by MCP (v3.0.0).
 
 ### Previously Fixed (v2.5.0)

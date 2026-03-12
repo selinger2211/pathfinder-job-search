@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v2.6.0
+**Status:** v2.7.0
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v2.7.0 | 2026-03-12 | **LinkedIn Network Import** — Parsed 2,687 LinkedIn 1st-degree connections from data export into `pf_linkedin_network` localStorage key. Pipeline detail panel shows "LinkedIn Network (N)" section with connections sorted by seniority (VP/Director/Senior) and department relevance (Product and Engineering surfaced first). Purple "Product" and blue "Eng" department badges on matching titles. "Show More" button expands from top-10 preview to full list. Each name links to LinkedIn profile. "+ Track" button promotes a LinkedIn connection into active `pf_connections` tracking. Kanban cards show combined connection count (tracked + LinkedIn). Fuzzy company matching handles variants like "Amazon" matching "Amazon Ads". Python parser script normalizes company names (JPMorganChase → JPMorgan Chase). |
 | v2.6.0 | 2026-03-12 | **Remove Demo Mode — single-user architecture** — Deleted `data-switcher.js` and removed Demo/Personal toggle from all 11 modules. App now operates exclusively with real user data (no demo seed). Pipeline, Research Brief, Calendar, and Resume Builder no longer inject demo companies/roles/events on first load. Job Feed Listener reads from `pf_feed_queue` (localStorage, populated by Sync Hub) instead of hardcoded demo items. Empty-state banner updated. Bullet bank starter content preserved for new users. New architectural principle: localStorage will be backed by MCP server (coming in v3.0.0). |
 | v2.5.0 | 2026-03-12 | **Pipeline side panel restructure** — Renamed "Resume Sent" to "Artifacts" section with type badges (resume, research, document). Added "Generate Research Brief" button that deep-links to Research Brief module with role pre-selected via URL params. Made Comms Log collapsible with accordion toggle (starts collapsed, shows entry count + latest date summary). Added `role.artifacts` array to data model for non-resume files. Research Brief module now supports `?roleId=X` URL parameter for deep-linking. |
 | v2.4.0 | 2026-03-12 | **MCP pipeline backup system** — Added `pf_backup_pipeline` and `pf_restore_pipeline` MCP tools. Backups write timestamped JSON snapshots of all `pf_*` localStorage keys to `~/.pathfinder/backups/` with SHA-256 checksums. Restore tool supports listing all backups and restoring from a specific one. HTTP bridge endpoints added (`POST /backup`, `POST /restore`, `GET /backups`). Sync Hub auto-backs up after every `Sync All` run with localStorage fallback when MCP is unavailable. Max 50 backups with automatic pruning. |
