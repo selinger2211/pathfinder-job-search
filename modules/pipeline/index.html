@@ -600,12 +600,11 @@
     }
 
     .company-card-logo {
-      width: 48px;
-      height: 48px;
-      border-radius: var(--radius-md);
-      background: #ffffff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
       object-fit: contain;
-      padding: 4px;
+      background: transparent;
     }
 
     .company-card-name {
@@ -1022,11 +1021,10 @@
     .company-lookup-logo {
       width: 24px;
       height: 24px;
-      border-radius: var(--radius-sm);
-      background: #ffffff;
+      border-radius: 50%;
       object-fit: contain;
       flex-shrink: 0;
-      padding: 2px;
+      background: transparent;
     }
 
     /* ================================================================
@@ -2498,7 +2496,7 @@
         const companies = DEMO_COMPANIES.map(c => ({
           ...c,
           url: `https://${c.domain}`,
-          logoUrl: `https://www.google.com/s2/favicons?domain=${c.domain}&sz=128`,
+          logoUrl: `https://logo.clearbit.com/${c.domain}`,
           enrichmentStatus: 'complete',
           dateAdded: Date.now()
         }));
@@ -2586,9 +2584,78 @@
      */
     function getCompanyLogoUrl(companyName, url) {
       const domain = getCompanyDomain(companyName, url);
-      // Google Favicons is the most reliable free logo API
-      // sz=128 requests high-res (actual max varies by site, typically 48–128px)
-      return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+      // Clearbit Logo API returns transparent-background PNGs (dark-theme friendly).
+      // Google Favicon API has white backgrounds baked in — avoid it.
+      return `https://logo.clearbit.com/${domain}`;
+    }
+
+    /**
+     * Generates a consistent color for a company's letter-initial avatar.
+     * Uses a hash of the company name to pick from a curated palette
+     * that looks good on dark backgrounds.
+     * INPUT: company name string
+     * RETURNS: hex color string
+     */
+    function getCompanyColor(name) {
+      const PALETTE = [
+        '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', // purples
+        '#ec4899', '#f43f5e', '#ef4444', '#f97316', // pinks/reds/orange
+        '#eab308', '#84cc16', '#22c55e', '#14b8a6', // greens
+        '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', // blues
+      ];
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return PALETTE[Math.abs(hash) % PALETTE.length];
+    }
+
+    /**
+     * Domains whose Clearbit logos have transparent backgrounds and
+     * look good on dark themes. All other companies get letter initials.
+     * To add a company: just add its domain to this set.
+     */
+    const LOGO_ALLOWLIST = new Set([
+      'apple.com', 'google.com', 'meta.com', 'amazon.com', 'yahoo.com',
+      'stripe.com', 'indeed.com', 'ebay.com', 'roku.com', 'okta.com',
+      'twilio.com', 'atlassian.com', 'workday.com', 'calendly.com',
+      'notion.so', 'rakuten.com', 'coupang.com', 'liveramp.com',
+      'yelp.com', 'inmobi.com', 'shutterfly.com', 'informatica.com',
+      'gilead.com', 'squareup.com',
+    ]);
+
+    /**
+     * Global handler: replaces an <img> with a colored letter circle.
+     */
+    function handleLogoError(img, companyName, cssClass) {
+      var letter = companyName.charAt(0);
+      var color = getCompanyColor(companyName);
+      var span = document.createElement('span');
+      span.className = cssClass + ' role-card-logo-fallback';
+      span.style.background = color;
+      span.textContent = letter;
+      img.replaceWith(span);
+    }
+
+    /**
+     * Returns HTML for a company logo. Uses Clearbit image for companies
+     * on the allowlist (known transparent-bg logos); colored letter-initial
+     * circle for everything else. No more white-background checkboxes.
+     * INPUT: company name, CSS class, optional URL
+     * RETURNS: HTML string
+     */
+    function companyLogoHtml(companyName, cssClass, url) {
+      var domain = getCompanyDomain(companyName, url);
+      if (LOGO_ALLOWLIST.has(domain)) {
+        var logoUrl = 'https://logo.clearbit.com/' + domain;
+        var safeName = companyName.replace(/'/g, "\\'");
+        return '<img src="' + logoUrl + '" alt="' + companyName + '" class="' + cssClass + '"'
+          + " onerror=\"handleLogoError(this,'" + safeName + "','" + cssClass + "')\">";
+      }
+      // Default: colored letter-initial circle
+      var letter = companyName.charAt(0);
+      var color = getCompanyColor(companyName);
+      return '<span class="' + cssClass + ' role-card-logo-fallback" style="background:' + color + '">' + letter + '</span>';
     }
 
     /**
@@ -2793,7 +2860,7 @@
           name: role.company,
           url: role.url || `https://${role.company.toLowerCase().replace(/\s+/g, '')}.com`,
           domain: new URL(role.url || `https://${role.company.toLowerCase().replace(/\s+/g, '')}.com`).hostname,
-          logoUrl: `https://www.google.com/s2/favicons?domain=${new URL(role.url || `https://${role.company.toLowerCase().replace(/\s+/g, '')}.com`).hostname}&sz=128`,
+          logoUrl: `https://logo.clearbit.com/${new URL(role.url || `https://${role.company.toLowerCase().replace(/\s+/g, '')}.com`).hostname}`,
           tier: role.tier || 'active',
           enrichmentStatus: 'pending',
           missionStatement: '',
@@ -2918,7 +2985,7 @@
         <div class="role-card ${isSelected ? 'selected' : ''} ${isBulkSelected ? 'selected' : ''} ${staleClass}" data-role-id="${role.id}" draggable="true" style="position: relative;">
           <input type="checkbox" class="role-card-checkbox" ${isBulkSelected ? 'checked' : ''} onchange="toggleRoleSelection('${role.id}', event)">
           <div class="role-card-company">
-            <img src="${logoUrl}" alt="${role.company}" class="role-card-logo" onerror="this.outerHTML='<span class=\'role-card-logo role-card-logo-fallback\'>${role.company.charAt(0)}</span>'">
+            ${companyLogoHtml(role.company, 'role-card-logo', role.url)}
             <span class="role-card-company-name">${role.company}</span>
           </div>
           <div class="role-card-title">${role.title}${role.title === 'Exploratory' ? ' <span style="font-size: 10px; opacity: 0.6;">🔍</span>' : ''}</div>
@@ -3198,7 +3265,7 @@
           <tr>
             <td>
               <div class="table-company">
-                <img src="${company?.logoUrl || getCompanyLogoUrl(role.company, role.url)}" alt="${role.company}" class="table-company-logo" onerror="this.outerHTML='<span class=\'role-card-logo role-card-logo-fallback\' style=\'width:32px;height:32px;\'>${role.company.charAt(0)}</span>'">
+                ${companyLogoHtml(role.company, 'table-company-logo', role.url)}
                 <div class="table-company-info">
                   <div class="table-company-name">${role.company}</div>
                 </div>
@@ -3351,7 +3418,7 @@
         lookup.style.display = 'block';
         lookup.innerHTML = matching.map(c => `
           <div class="company-lookup-item" data-company="${c.name}">
-            <img src="${c.logoUrl}" alt="${c.name}" class="company-lookup-logo" onerror="this.style.display='none'">
+            ${companyLogoHtml(c.name, 'company-lookup-logo', c.url)}
             <strong>${c.name}</strong>
           </div>
         `).join('');
@@ -5103,8 +5170,7 @@
         return `
           <div class="company-card" onclick="openCompanyView('${company.name.replace(/'/g, "\\'")}')">
             <div class="company-card-header">
-              <img src="${company.logoUrl || getCompanyLogoUrl(company.name, company.url)}"
-                   alt="${company.name}" class="company-card-logo" onerror="this.style.display='none'">
+              ${companyLogoHtml(company.name, 'company-card-logo', company.url)}
             </div>
             <div style="margin-bottom: var(--space-2);">
               <div class="company-card-name">${company.name}</div>
@@ -5385,8 +5451,7 @@
           <tr onclick="openRoleDetail('${role.id}'); closeRoleDetail();">
             <td>
               <div class="table-company">
-                <img src="${company?.logoUrl || getCompanyLogoUrl(role.company, role.url)}"
-                     alt="${role.company}" class="table-company-logo" onerror="this.style.display='none'">
+                ${companyLogoHtml(role.company, 'table-company-logo', role.url)}
                 <div class="table-company-info">
                   <div class="table-company-name">${role.company}</div>
                   <div class="table-role-title">${role.title}</div>
@@ -5484,7 +5549,7 @@
       existingCompanies.forEach(c => {
         if (c.logoUrl && c.logoUrl.includes('logo.clearbit.com')) {
           const domain = c.domain || c.logoUrl.replace('https://logo.clearbit.com/', '');
-          c.logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+          c.logoUrl = `https://logo.clearbit.com/${domain}`;
           migrated = true;
         }
       });
