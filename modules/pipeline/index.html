@@ -288,25 +288,29 @@
 
     /* Company logo in the card */
     .role-card-logo {
-      width: 28px;
-      height: 28px;
-      border-radius: var(--radius-sm);
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
       background: #ffffff;
       object-fit: contain;
       flex-shrink: 0;
-      padding: 3px;
+      padding: 4px;
+      border: 1px solid rgba(255,255,255,0.15);
     }
 
     /* Fallback when logo image fails to load — shows first letter */
     .role-card-logo-fallback {
+      width: 32px;
+      height: 32px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
-      color: var(--accent, #6366f1);
-      background: var(--bg-elevated, #1e1e2e);
-      border: 1px solid var(--border, #333);
+      color: #ffffff;
+      background: var(--accent, #6366f1);
+      border-radius: 6px;
+      flex-shrink: 0;
     }
 
     /* Company name text in card */
@@ -456,11 +460,12 @@
     .table-company-logo {
       width: 32px;
       height: 32px;
-      border-radius: var(--radius-sm);
+      border-radius: 6px;
       background: #ffffff;
       object-fit: contain;
       flex-shrink: 0;
-      padding: 3px;
+      padding: 4px;
+      border: 1px solid rgba(255,255,255,0.15);
     }
 
     /* Company info container in table */
@@ -2524,7 +2529,23 @@
      * INPUT: company name (string), optional URL (string)
      * RETURNS: domain string suitable for Clearbit logo API
      */
+    /** Known domain overrides for companies whose name doesn't map
+     *  cleanly to a domain (e.g., "Amazon Ads" → "amazon.com") */
+    const DOMAIN_OVERRIDES = {
+      'amazon ads': 'amazon.com',
+      'bounti.ai': 'bounti.ai',
+      'albertsons media': 'albertsons.com',
+      'activision blizzard': 'activisionblizzard.com',
+      'bc ventures': 'bcventures.com',
+      'enriches lab': 'enricheslab.com',
+      'notion': 'notion.so',
+    };
+
     function getCompanyDomain(companyName, url) {
+      // Check overrides first
+      const override = DOMAIN_OVERRIDES[companyName.toLowerCase()];
+      if (override) return override;
+
       if (url) {
         try {
           const hostname = new URL(url).hostname.toLowerCase();
@@ -3181,7 +3202,7 @@
           <tr>
             <td>
               <div class="table-company">
-                <img src="${company?.logoUrl || ''}" alt="${role.company}" class="table-company-logo" onerror="this.style.display='none'">
+                <img src="${company?.logoUrl || getCompanyLogoUrl(role.company, role.url)}" alt="${role.company}" class="table-company-logo" onerror="this.outerHTML='<span class=\'role-card-logo role-card-logo-fallback\' style=\'width:32px;height:32px;\'>${role.company.charAt(0)}</span>'">
                 <div class="table-company-info">
                   <div class="table-company-name">${role.company}</div>
                 </div>

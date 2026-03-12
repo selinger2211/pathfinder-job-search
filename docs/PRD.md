@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v2.1.8
+**Status:** v2.1.9
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v2.1.9 | 2026-03-11 | **Personal data integrity + logo polish**: Regenerated pf_roles.json with real outreach stages from spreadsheet (6 Outreach, 1 Screen, 38 Discovered) + personal notes from contact data. Fixed data-switcher to seed-once (backup/restore preserves user edits across mode switches). Polished logos to 32px with border-radius + domain overrides + letter-initial fallback. |
 | v2.1.8 | 2026-03-11 | **Logo visibility fix**: Increased Pipeline kanban card logos from 20px→28px with white background + padding so Google Favicon API icons are visible on dark theme. Added letter-initial fallback for broken images. Fixed all 4 logo CSS classes. |
 | v2.1.7 | 2026-03-11 | **Personal mode roles + Personal-first principle**: Generated `pf_roles.json` migration (45 roles from existing companies, one per company in "discovered" stage). Updated data-switcher to load roles alongside companies and connections. Fixed role data format to match Pipeline expectations (numeric timestamps, valid stage name, IC positioning). Added "Personal Mode Is the First-Class Citizen" as a core operating principle in build-with-ili skill — Personal mode is tested first, migration completeness is a ship-blocker, every feature must work with real data before it's considered done. |
 | v2.1.6 | 2026-03-11 | **Data contract + double-prefix fixes**: Fixed cross-module data contract violation — company objects have `name` but no `id`, roles have `company` (string name) but no `companyId`. Changed all `c.id` lookups to `c.name` across 4 modules (Outreach critical fix — dropdowns showed "undefined"; Debrief, Calendar, Pipeline latent fixes). Fixed Calendar double-prefix bug — `getStorageData()`/`saveStorageData()` prepend `pf_` but all callers also passed `pf_`-prefixed keys, creating `pf_pf_*` keys that were never read back. Fixed dozens of call sites. Added selection restore in Outreach after sidebar rebuild. |

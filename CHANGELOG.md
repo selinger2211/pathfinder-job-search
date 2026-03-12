@@ -4,6 +4,24 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.1.9 — 2026-03-11
+
+### What Changed — Personal Data Integrity + Logo Polish
+
+**Root Cause:** `pf_roles.json` was generated with generic placeholder data (all "discovered" stage, "Open Role" title, no notes). The data-switcher overwrote localStorage on every Demo→Personal switch, destroying any user edits (moved stages, added notes, new roles).
+
+**Fixes:**
+1. **Real migration data**: Regenerated `pf_roles.json` from Contact-Outreach.xlsx with actual outreach statuses mapped to Pipeline stages: 6 in Outreach (LinkedIn messages sent), 1 in Screen (meeting scheduled), 38 in Discovered. Personal notes populated from spreadsheet contact notes (per-contact with name and title).
+2. **Seed-once data-switcher**: `loadPersonalData()` now only writes migration data if the localStorage key doesn't already exist. Added backup/restore system: switching Personal→Demo backs up core data; switching Demo→Personal restores from backup first, then seeds any missing keys from files.
+3. **Logo polish**: Increased to 32px with 6px border-radius, subtle border, purple letter-initial fallback. Added `DOMAIN_OVERRIDES` map for companies whose name doesn't map to a domain (e.g., "Amazon Ads" → amazon.com, "Bounti.ai" → bounti.ai). Table view logos also get letter fallback on error.
+
+**Files Modified:**
+- `scripts/migration-output/pf_roles.json` — regenerated with real stages, notes, connection counts
+- `modules/shared/data-switcher.js` — seed-once logic, backup/restore functions
+- `modules/pipeline/index.html` — logo CSS (32px, border, fallback), DOMAIN_OVERRIDES map, table onerror
+
+---
+
 ## v2.1.8 — 2026-03-11
 
 ### What Changed — Logo Visibility Fix

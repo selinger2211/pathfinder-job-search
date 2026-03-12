@@ -6,13 +6,17 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "IC",
     "source": "migration",
-    "stage": "discovered",
+    "stage": "outreach",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
+      },
+      {
+        "stage": "outreach",
+        "date": 1772512642199
       }
     ],
     "salary": {
@@ -20,103 +24,34 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772512642199,
+    "connections": 6,
+    "tier": "hot",
+    "personalNotes": "Denys Kim (SVP Eng): Owns DSP engineering; very high leverage.\nChandrala Malkood (VP Product): Strong AI + identity + activation leader; posted hiring roles.\nGiovanni Gardelli (Head Product DSP): Strong DSP + agentic AI leverage; good intro source.\nShaopeng Wang (Director Eng): Ads infra + ML platform alignment.\nGeetika Sandhu (Sr Director, Product): Deep DSP + measurement overlap; strong internal Yahoo leverage.\nAgoston Malchacker (Senior SDE): Strong engineer but minimal influence."
   },
   {
     "id": "role-migrated-002",
-    "company": "Meta",
-    "title": "Open Role",
-    "url": "",
-    "jdText": "",
-    "positioning": "ic",
-    "targetLevel": "",
-    "source": "migration",
-    "stage": "discovered",
-    "stageHistory": [
-      {
-        "stage": "discovered",
-        "date": 1773288735225
-      }
-    ],
-    "salary": {
-      "min": "",
-      "max": "",
-      "currency": "USD"
-    },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
-  },
-  {
-    "id": "role-migrated-003",
-    "company": "Cardlytics",
-    "title": "Open Role",
-    "url": "",
-    "jdText": "",
-    "positioning": "ic",
-    "targetLevel": "",
-    "source": "migration",
-    "stage": "discovered",
-    "stageHistory": [
-      {
-        "stage": "discovered",
-        "date": 1773288735225
-      }
-    ],
-    "salary": {
-      "min": "",
-      "max": "",
-      "currency": "USD"
-    },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
-  },
-  {
-    "id": "role-migrated-004",
-    "company": "Google",
-    "title": "Open Role",
-    "url": "",
-    "jdText": "",
-    "positioning": "ic",
-    "targetLevel": "",
-    "source": "migration",
-    "stage": "discovered",
-    "stageHistory": [
-      {
-        "stage": "discovered",
-        "date": 1773288735225
-      }
-    ],
-    "salary": {
-      "min": "",
-      "max": "",
-      "currency": "USD"
-    },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
-  },
-  {
-    "id": "role-migrated-005",
     "company": "Amazon Ads",
     "title": "Open Role",
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Sr Leader",
     "source": "migration",
-    "stage": "discovered",
+    "stage": "screen",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
+      },
+      {
+        "stage": "outreach",
+        "date": 1772512642199
+      },
+      {
+        "stage": "screen",
+        "date": 1772685442199
       }
     ],
     "salary": {
@@ -124,25 +59,26 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772685442199,
+    "connections": 1,
+    "tier": "hot",
+    "personalNotes": "Sam Blum (Head Performance+): Leads AI-driven ad performance systems; strong leverage."
   },
   {
-    "id": "role-migrated-006",
+    "id": "role-migrated-003",
     "company": "Apple",
     "title": "Open Role",
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Director",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -150,25 +86,30 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "hot",
+    "personalNotes": "Ravi Nudurupati (Product Director Ads): Direct auctions/predictions/privacy hiring; high priority."
   },
   {
-    "id": "role-migrated-007",
+    "id": "role-migrated-004",
     "company": "Bounti.ai",
     "title": "Open Role",
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "VP",
     "source": "migration",
-    "stage": "discovered",
+    "stage": "outreach",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
+      },
+      {
+        "stage": "outreach",
+        "date": 1772512642199
       }
     ],
     "salary": {
@@ -176,25 +117,84 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772512642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Garrett Scott (VP Marketing): AI startup exposure; good exec access."
   },
   {
-    "id": "role-migrated-008",
+    "id": "role-migrated-005",
+    "company": "Cardlytics",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "VP",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1772080642199
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 2,
+    "tier": "hot",
+    "personalNotes": "Peter Chan (CTO): CTO-level hiring authority; strong ML + ads marketplace overlap.\nIlya Slain (VP Architecture): Architecture + privacy + patents; strong AI infra credibility."
+  },
+  {
+    "id": "role-migrated-006",
+    "company": "Google",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "Sr Manager",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1772080642199
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 2,
+    "tier": "hot",
+    "personalNotes": "Sneha Thomas (Director, Product Management): Direct Ads alignment at Google; major org influence; shared Yahoo background. High priority.\nParag Bhattacharjee (Sr Eng Manager): Good Google referral path; moderate exec reach."
+  },
+  {
+    "id": "role-migrated-007",
     "company": "GoodLeap",
     "title": "Open Role",
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "VP",
     "source": "migration",
-    "stage": "discovered",
+    "stage": "outreach",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
+      },
+      {
+        "stage": "outreach",
+        "date": 1772512642199
       }
     ],
     "salary": {
@@ -202,25 +202,30 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772512642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Alison Bellach (VP Eng): VP hiring authority; fintech crossover."
   },
   {
-    "id": "role-migrated-009",
+    "id": "role-migrated-008",
     "company": "Singular",
     "title": "Open Role",
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "GM",
     "source": "migration",
-    "stage": "discovered",
+    "stage": "outreach",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
+      },
+      {
+        "stage": "outreach",
+        "date": 1772512642199
       }
     ],
     "salary": {
@@ -228,25 +233,30 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772512642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Justin Fibich (GM Americas): Attribution + MarTech exec leverage."
   },
   {
-    "id": "role-migrated-010",
+    "id": "role-migrated-009",
     "company": "Captiv8",
     "title": "Open Role",
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Exec Eng",
     "source": "migration",
-    "stage": "discovered",
+    "stage": "outreach",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
+      },
+      {
+        "stage": "outreach",
+        "date": 1772512642199
       }
     ],
     "salary": {
@@ -254,25 +264,26 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772512642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Dave Hampton (Head Eng): AI + privacy + acquisition context; strong referral leverage."
   },
   {
-    "id": "role-migrated-011",
+    "id": "role-migrated-010",
     "company": "Stripe",
     "title": "Open Role",
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Exec",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -280,25 +291,26 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Stephanie J. Neill (Head of Product): High leverage fintech + infra leader; good referral path."
   },
   {
-    "id": "role-migrated-012",
+    "id": "role-migrated-011",
     "company": "Epsilon",
     "title": "Open Role",
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "VP",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -306,25 +318,26 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Rodney Webster (VP Platform): Identity + platform monetization leverage."
   },
   {
-    "id": "role-migrated-013",
+    "id": "role-migrated-012",
     "company": "Best Buy",
     "title": "Open Role",
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "VP",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -332,25 +345,26 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "hot",
+    "personalNotes": "Milena Krasteva (VP Product \u2013 AdTech): Elite retail media + ML optimization background; strong exec leverage."
   },
   {
-    "id": "role-migrated-014",
+    "id": "role-migrated-013",
     "company": "Enriches Lab",
     "title": "Open Role",
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Founder",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -358,25 +372,26 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Chloe Chen (Founder / CEO): Strong ML/PhD credibility; high responsiveness; startup angle leverage."
   },
   {
-    "id": "role-migrated-015",
+    "id": "role-migrated-014",
     "company": "Yelp",
     "title": "Open Role",
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Sr Leader",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -384,10 +399,38 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "hot",
+    "personalNotes": "Swati Lal (Group PM): High warmth + deep ads leadership overlap; strong advocate potential."
+  },
+  {
+    "id": "role-migrated-015",
+    "company": "Meta",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "Manager",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1772080642199
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 4,
+    "tier": "active",
+    "personalNotes": "Steve In (PM Leader): Deep ad monetization lineage; strong referral path.\nSanhita Ganguly (PM Ads): Strong ad marketplace overlap; credible referral.\nMitali Paintal (Product Manager): Peer referral value; limited hiring power.\nPeter Wojciechowski (Engineering Manager): Infra depth; good Meta referral path; limited exec scope."
   },
   {
     "id": "role-migrated-016",
@@ -396,13 +439,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Sr Director",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -410,10 +453,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Narayan Bhamidipati (DSP Science Lead): ML + DSP hiring activity; strong alignment."
   },
   {
     "id": "role-migrated-017",
@@ -422,13 +466,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Founder",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -436,10 +480,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Amit Jain (Founder / CEO): Direct hiring authority; startup AI infra potential."
   },
   {
     "id": "role-migrated-018",
@@ -448,13 +493,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "VP",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -462,10 +507,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Peter Farago (VP Marketing): AI B2B SaaS leverage; marketing lens on ML products."
   },
   {
     "id": "role-migrated-019",
@@ -474,13 +520,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Sr Director",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -488,10 +534,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Curt Collins (Sr Director): Strong platform + ecosystem leverage."
   },
   {
     "id": "role-migrated-020",
@@ -500,13 +547,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "VP",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -514,10 +561,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Joe Mendoza (VP Eng): Strong ads infra leadership; hiring authority."
   },
   {
     "id": "role-migrated-021",
@@ -526,13 +574,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "VP",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -540,10 +588,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Sean Quick (VP Strategy): Retail media exec; strong monetization org access."
   },
   {
     "id": "role-migrated-022",
@@ -552,13 +601,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Former VP",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -566,10 +615,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "hot",
+    "personalNotes": "Guy Levit (Founder / Advisor): Meta + Verizon exec pedigree; strong VC/startup network leverage."
   },
   {
     "id": "role-migrated-023",
@@ -578,13 +628,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Sr Manager",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -592,10 +642,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Ashish Dobhal (Senior Engineering Manager): Strong shared Yahoo history; solid engineering leader. Good referral path, moderate AI alignment."
   },
   {
     "id": "role-migrated-024",
@@ -604,13 +655,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Director",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -618,10 +669,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Raghavan Sethuraman (Director Eng): Execution-heavy leader; good referral value; less AI-centric."
   },
   {
     "id": "role-migrated-025",
@@ -630,13 +682,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Director",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -644,10 +696,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Iris Wang (Director Eng): Strong eng org influence; good ML adjacency."
   },
   {
     "id": "role-migrated-026",
@@ -656,13 +709,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Director",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -670,10 +723,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Aldi Tjahjadi (Director Eng): Strong ML/data infra; regional leverage."
   },
   {
     "id": "role-migrated-027",
@@ -682,13 +736,17 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Head",
     "source": "migration",
-    "stage": "discovered",
+    "stage": "outreach",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
+      },
+      {
+        "stage": "outreach",
+        "date": 1772512642199
       }
     ],
     "salary": {
@@ -696,10 +754,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772512642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Gregg Dessen (Head Product Privacy): Privacy/compliance; moderate hiring scope."
   },
   {
     "id": "role-migrated-028",
@@ -708,13 +767,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Director",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -722,10 +781,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Benu Shroff (Product \u2013 Ads): DSP, CTV, attribution depth; strong monetization signal."
   },
   {
     "id": "role-migrated-029",
@@ -734,13 +794,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Board",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -748,10 +808,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Jim Gochee (Investor): Strong enterprise SaaS + board network; indirect hiring leverage."
   },
   {
     "id": "role-migrated-030",
@@ -760,13 +821,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Principal",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -774,10 +835,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Dave Westbrook (Principal PM): Platform + privacy alignment; solid strategic value."
   },
   {
     "id": "role-migrated-031",
@@ -786,13 +848,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "VP",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -800,10 +862,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Lindsay Hoffman (VP Corp Dev): Corp dev lens; potential VC intro path."
   },
   {
     "id": "role-migrated-032",
@@ -812,13 +875,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Sr Director",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -826,10 +889,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Amelia Jones (Sr Director, Product Eng): Strong org builder; moderate AI alignment."
   },
   {
     "id": "role-migrated-033",
@@ -838,13 +902,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "VP",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -852,10 +916,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "William Creekbaum (VP Product): Cloud trust + platform leader; enterprise AI adjacency."
   },
   {
     "id": "role-migrated-034",
@@ -864,13 +929,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "SVP",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -878,10 +943,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Anjanette Hill Mendoza (SVP CX): SaaS CX exec; good operator insight, less AI alignment."
   },
   {
     "id": "role-migrated-035",
@@ -890,13 +956,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Manager",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -904,10 +970,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Divya Sankaran (Eng Manager): Moderate Amazon referral leverage."
   },
   {
     "id": "role-migrated-036",
@@ -916,13 +983,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Lead PM",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -930,10 +997,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Garima Mehta (Lead PM T&S): Trust & Safety alignment; IC scope."
   },
   {
     "id": "role-migrated-037",
@@ -942,13 +1010,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Senior PM",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -956,10 +1024,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Mikael Rudolfsen (Product Strategy): Platform strategy; moderate hiring scope."
   },
   {
     "id": "role-migrated-038",
@@ -968,13 +1037,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "PM",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -982,10 +1051,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Gary Yuen (Product Manager): Strong peer referral; limited authority."
   },
   {
     "id": "role-migrated-039",
@@ -994,13 +1064,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "C-Level",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -1008,10 +1078,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Brandon Zell (Chief Accounting Officer): Exec-level but finance domain."
   },
   {
     "id": "role-migrated-040",
@@ -1020,13 +1091,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "VP/Dir",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -1034,10 +1105,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Ramji Pilapakam (VP/Dir Product): Strong systems PM; moderate AI leverage."
   },
   {
     "id": "role-migrated-041",
@@ -1046,13 +1118,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Sr PM",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -1060,10 +1132,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "active",
+    "personalNotes": "Christopher Smith (Sr PM): Healthcare marketing; peripheral AI alignment."
   },
   {
     "id": "role-migrated-042",
@@ -1072,13 +1145,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Principal",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -1086,10 +1159,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "watching",
+    "personalNotes": "Tim Auger (Principal PM): Limited AI and hiring leverage."
   },
   {
     "id": "role-migrated-043",
@@ -1098,13 +1172,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "SVP",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -1112,10 +1186,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "watching",
+    "personalNotes": "Alan Smith (SVP Corporate): Legal/corp focus; weak AI/product alignment."
   },
   {
     "id": "role-migrated-044",
@@ -1124,13 +1199,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "Lead",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -1138,10 +1213,11 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "watching",
+    "personalNotes": "Michael Klawansky (Ad Ops Lead): Tactical ad ops; limited hiring scope."
   },
   {
     "id": "role-migrated-045",
@@ -1150,13 +1226,13 @@
     "url": "",
     "jdText": "",
     "positioning": "ic",
-    "targetLevel": "",
+    "targetLevel": "IC",
     "source": "migration",
     "stage": "discovered",
     "stageHistory": [
       {
         "stage": "discovered",
-        "date": 1773288735225
+        "date": 1772080642199
       }
     ],
     "salary": {
@@ -1164,9 +1240,10 @@
       "max": "",
       "currency": "USD"
     },
-    "dateAdded": 1773288735225,
-    "lastActivity": 1773288735225,
-    "connections": [],
-    "tier": "active"
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772080642199,
+    "connections": 1,
+    "tier": "watching",
+    "personalNotes": "Kristof Nagel (Sr SWE): Limited influence."
   }
 ]

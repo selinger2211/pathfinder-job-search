@@ -61,13 +61,51 @@
 
   /* ── Data switching logic ──────────────────────────────── */
 
-  /** Clear all Pathfinder data keys so modules re-seed demo data.
-   *  Dynamically finds all pf_* keys to ensure nothing is missed. */
-  function clearAllData() {
-    getAllPfKeys().forEach(key => localStorage.removeItem(key));
+  /** Backup personal data before clearing for demo mode.
+   *  Stores copies with a _personal_backup suffix so they survive
+   *  a round-trip through demo mode. */
+  function backupPersonalData() {
+    const keysToBackup = ['pf_connections', 'pf_companies', 'pf_roles'];
+    keysToBackup.forEach(key => {
+      const val = localStorage.getItem(key);
+      if (val) {
+        localStorage.setItem(key + '_personal_backup', val);
+      }
+    });
   }
 
-  /** Fetch personal data from migration output and write to localStorage.
+  /** Restore personal data from backup (after returning from demo mode).
+   *  Returns true if backups were found and restored. */
+  function restorePersonalBackup() {
+    const keysToRestore = ['pf_connections', 'pf_companies', 'pf_roles'];
+    let restored = false;
+    keysToRestore.forEach(key => {
+      const backup = localStorage.getItem(key + '_personal_backup');
+      if (backup) {
+        localStorage.setItem(key, backup);
+        restored = true;
+      }
+    });
+    return restored;
+  }
+
+  /** Clear all Pathfinder data keys so modules re-seed demo data.
+   *  Dynamically finds all pf_* keys to ensure nothing is missed.
+   *  Preserves _personal_backup keys so user edits survive. */
+  function clearAllData() {
+    getAllPfKeys().forEach(key => {
+      if (!key.endsWith('_personal_backup')) {
+        localStorage.removeItem(key);
+      }
+    });
+  }
+
+  /** Seed personal data from migration output files.
+   *  IMPORTANT: This ONLY writes data that doesn't already exist in localStorage.
+   *  If the user has already edited roles, stages, notes, etc., those edits are
+   *  preserved. To force a re-import, clear localStorage first (or use the
+   *  "Re-import" button if available).
+   *
    *  INPUT: reads pf_connections.json, pf_companies.json, pf_roles.json
    *  OUTPUT: populates localStorage with personal data, returns counts */
   async function loadPersonalData() {
@@ -86,18 +124,27 @@
       const companies = await compRes.json();
 
       // Roles file is optional — if it doesn't exist, default to empty array.
-      // Users can always add more roles via Pipeline "+ New Role" button.
       const roles = rolesRes.ok ? await rolesRes.json() : [];
 
-      // Clear existing data first
-      clearAllData();
+      // SEED-ONCE strategy: Only write migration data if the key doesn't
+      // already exist. This preserves user edits (moved stages, added notes,
+      // new roles, etc.) across Demo→Personal switches.
+      if (!localStorage.getItem('pf_connections')) {
+        localStorage.setItem('pf_connections', JSON.stringify(connections));
+      }
+      if (!localStorage.getItem('pf_companies')) {
+        localStorage.setItem('pf_companies', JSON.stringify(companies));
+      }
+      if (!localStorage.getItem('pf_roles')) {
+        localStorage.setItem('pf_roles', JSON.stringify(roles));
+      }
 
-      // Write personal data
-      localStorage.setItem('pf_connections', JSON.stringify(connections));
-      localStorage.setItem('pf_companies', JSON.stringify(companies));
-      localStorage.setItem('pf_roles', JSON.stringify(roles));
+      // Return what's actually in localStorage now
+      const currentConns = JSON.parse(localStorage.getItem('pf_connections') || '[]');
+      const currentComps = JSON.parse(localStorage.getItem('pf_companies') || '[]');
+      const currentRoles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
 
-      return { connections: connections.length, companies: companies.length, roles: roles.length };
+      return { connections: currentConns.length, companies: currentComps.length, roles: currentRoles.length };
     } catch (err) {
       console.error('[DataSwitcher]', err.message);
       throw err;
@@ -196,13 +243,22 @@
 
     try {
       if (newMode === 'personal') {
+        // First try to restore from backup (preserves user edits from last Personal session)
+        clearAllData();
+        const restoredFromBackup = restorePersonalBackup();
+        if (restoredFromBackup) {
+          console.log('[DataSwitcher] Restored personal data from backup (user edits preserved)');
+        }
+        // Then seed any missing data from migration files
         const result = await loadPersonalData();
         setMode('personal');
-        console.log(`[DataSwitcher] Loaded ${result.connections} connections, ${result.companies} companies, ${result.roles} roles`);
+        console.log(`[DataSwitcher] Personal mode: ${result.connections} connections, ${result.companies} companies, ${result.roles} roles`);
       } else {
+        // Backup personal data before switching to demo
+        backupPersonalData();
         clearAllData();
         setMode('demo');
-        console.log('[DataSwitcher] Cleared data → modules will re-seed demo data');
+        console.log('[DataSwitcher] Backed up personal data → modules will re-seed demo data');
       }
 
       // Reload so modules pick up the new data
