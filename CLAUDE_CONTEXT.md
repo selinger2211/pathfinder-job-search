@@ -96,7 +96,7 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v2.1.3
+**Current Version:** v2.1.4
 **Last Updated:** 2026-03-11
 
 ### Implementation Status
@@ -122,7 +122,11 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 - Sync Hub has duplicate localStorage keys (`pf_pf_roles`, `pf_pf_companies`) — double-prefixing bug
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
-### Recently Fixed (v2.1.3)
+### Recently Fixed (v2.1.4)
+- Calendar Add Event modal invisible → modal CSS class mismatch (`active` vs shared `open`); changed all 8 references to `open`
+- Calendar Sync Log "undefined" → data shape mismatch between Sync Hub writer (`source`) and Calendar reader (`action`); now handles both
+
+### Previously Fixed (v2.1.3)
 - Clearbit logo API dead (HubSpot acquisition) → replaced with Google Favicon API across 6 files
 - Pipeline view toggle buttons destroyed on click → removed conflicting parent handler
 - Research Brief "MCP bridge not running" scare notice → removed (direct API is default)

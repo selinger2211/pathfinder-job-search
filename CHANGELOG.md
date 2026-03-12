@@ -4,6 +4,24 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.1.4 — 2026-03-11
+
+### What Changed — Calendar Bug Fixes (Interactive QA)
+
+Two bugs found during the first Interactive QA pass across all 11 modules.
+
+#### Calendar Add Event Modal Invisible (Bug Fix)
+- Clicking "+ Add Event" button did nothing — modal appeared to not open
+- Root cause: Shared `pathfinder.css` defines `.modal-overlay` with `opacity: 0` and expects `.modal-overlay.open` to set `opacity: 1`. Calendar module used `.modal-overlay.active` class instead, which only set `display: flex` but never overrode the `opacity: 0` from shared CSS. The modal was technically open but fully transparent
+- Fix: Changed all modal class references from `active` to `open` across 8 locations (openModal, closeModal, openAddEventModal, openEventDetail, openCommandPalette, handleOutsideClick, keyboard Escape handler, overlay click handler). Updated local CSS `.modal-overlay.active` to `.modal-overlay.open` with explicit `opacity: 1` and `pointer-events: auto`
+
+#### Calendar Sync Log Shows "undefined" (Bug Fix)
+- Sync Log tab displayed "⚠ undefined" for all 3 sync entries instead of the source name
+- Root cause: `loadSyncLog()` rendered `entry.action` and `entry.status`, but Sync Hub writes entries with `entry.source` (gcal/indeed/gmail) and no `status` field. Data shape mismatch between writer and reader
+- Fix: Renderer now falls back to `entry.source` when `entry.action` is missing, derives `status` from `entry.added > 0`, and builds detail rows from flat entry fields (Added, Skipped, Updated, Errors) when no explicit `details` object exists
+
+---
+
 ## v2.1.3 — 2026-03-11
 
 ### What Changed — User-Reported Bug Fixes + Pipeline View Architecture Fix

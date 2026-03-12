@@ -562,6 +562,11 @@ If user has connection data for an interviewer, Research Brief can reference pri
 - [ ] Company interview process insights (typical number of rounds, duration)
 - [ ] Trend analysis dashboard (interview volume by week, offer rate)
 
+### Bug Fixes (v2.1.4)
+
+- [x] **Add Event modal invisible:** Modal CSS class mismatch — Calendar used `active` class but shared `pathfinder.css` requires `open` class for `opacity: 1`. Modal was `display: flex` but `opacity: 0` (transparent). Fixed all 8 references (openModal, closeModal, openAddEventModal, openEventDetail, openCommandPalette, handleOutsideClick, Escape handler, overlay click handler).
+- [x] **Sync Log "undefined" for sync type:** `loadSyncLog()` rendered `entry.action` and `entry.status`, but Sync Hub writes entries with `entry.source` and no `status` field. Fixed renderer to fall back to `entry.source`, derive status from `entry.added`, and build detail rows from flat entry fields.
+
 ---
 
 ## 10. Integration Points with Other Modules
