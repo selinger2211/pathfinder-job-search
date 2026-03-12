@@ -1,19 +1,124 @@
-// HTTP Bridge Server for Pathfinder Research Brief
+// HTTP Bridge Server for Pathfinder
 // ================================================================
 // The browser module can't talk to the MCP server via stdio directly.
-// This lightweight HTTP server exposes the brief generation endpoint
-// so the browser can POST requests and receive generated sections.
+// This lightweight HTTP server exposes endpoints so the browser can
+// POST/GET requests and receive responses.
+//
+// v3.0.0: Added key-level data persistence endpoints (/data/*).
+// Every pf_* localStorage key is now also stored on disk at
+// ~/.pathfinder/data/{key}.json. The browser's data-layer.js
+// intercepts localStorage writes and syncs them here automatically.
 //
 // Runs alongside the MCP server on localhost:3456
-// CORS enabled for local development (localhost origins only)
+// CORS enabled for local development (all origins)
 // ================================================================
 
 import http from "http";
+import fs from "fs";
+import path from "path";
+import os from "os";
 import { handleGenerateBriefSection, GenerateBriefSectionInputSchema } from "./tools/generate-brief.js";
 import { handleBackupPipeline, BackupPipelineInputSchema } from "./tools/backup.js";
 import { handleRestorePipeline, RestorePipelineInputSchema } from "./tools/restore.js";
 import { storageService } from "./services/storage.js";
 import { SECTION_PROMPTS } from "./services/claude.js";
+
+// ================================================================
+// Key-Level Data Persistence (v3.0.0)
+// ================================================================
+// Each pf_* key is stored as a separate JSON file in ~/.pathfinder/data/
+// This allows granular sync: when the browser writes to localStorage,
+// it also POSTs the value here. On startup, if localStorage is empty,
+// the browser fetches all keys from here to recover.
+// ================================================================
+
+const DATA_DIR = path.join(os.homedir(), ".pathfinder", "data");
+
+/**
+ * Ensures the data directory exists. Called once on server start.
+ */
+function ensureDataDir(): void {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+}
+
+/**
+ * Sanitizes a key name for use as a filename.
+ * Only allows alphanumeric, underscore, hyphen characters.
+ * INPUT: key = string (e.g., "pf_roles")
+ * RETURNS: sanitized string safe for filesystem
+ */
+function sanitizeKey(key: string): string {
+  return key.replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+/**
+ * Writes a single key-value pair to disk.
+ * INPUT: key = string, value = string (raw JSON string from localStorage)
+ * SIDE EFFECTS: writes to ~/.pathfinder/data/{key}.json
+ */
+function writeDataKey(key: string, value: string): void {
+  ensureDataDir();
+  const filePath = path.join(DATA_DIR, `${sanitizeKey(key)}.json`);
+  const wrapper = {
+    key,
+    value,
+    updatedAt: new Date().toISOString(),
+    sizeBytes: Buffer.byteLength(value, "utf8"),
+  };
+  fs.writeFileSync(filePath, JSON.stringify(wrapper), "utf8");
+}
+
+/**
+ * Reads a single key from disk.
+ * INPUT: key = string
+ * RETURNS: { key, value, updatedAt } or null if not found
+ */
+function readDataKey(key: string): { key: string; value: string; updatedAt: string } | null {
+  const filePath = path.join(DATA_DIR, `${sanitizeKey(key)}.json`);
+  if (!fs.existsSync(filePath)) return null;
+  try {
+    const raw = fs.readFileSync(filePath, "utf8");
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Reads ALL keys from disk.
+ * RETURNS: object mapping key names to their values
+ */
+function readAllDataKeys(): Record<string, string> {
+  ensureDataDir();
+  const result: Record<string, string> = {};
+  const files = fs.readdirSync(DATA_DIR).filter((f) => f.endsWith(".json"));
+  for (const file of files) {
+    try {
+      const raw = fs.readFileSync(path.join(DATA_DIR, file), "utf8");
+      const parsed = JSON.parse(raw);
+      if (parsed.key && parsed.value !== undefined) {
+        result[parsed.key] = parsed.value;
+      }
+    } catch {
+      // Skip corrupted files
+    }
+  }
+  return result;
+}
+
+/**
+ * Deletes a single key from disk.
+ * INPUT: key = string
+ * RETURNS: true if deleted, false if not found
+ */
+function deleteDataKey(key: string): boolean {
+  const filePath = path.join(DATA_DIR, `${sanitizeKey(key)}.json`);
+  if (!fs.existsSync(filePath)) return false;
+  fs.unlinkSync(filePath);
+  return true;
+}
 
 const PORT = parseInt(process.env.PF_BRIDGE_PORT || "3456");
 
@@ -44,7 +149,7 @@ function sendJSON(res: http.ServerResponse, statusCode: number, data: unknown): 
     "Content-Type": "application/json",
     // CORS: allow browser requests from localhost (any port)
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+    "Access-Control-Allow-Methods": "POST, GET, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   });
   res.end(JSON.stringify(data));
@@ -56,7 +161,7 @@ function sendJSON(res: http.ServerResponse, statusCode: number, data: unknown): 
 function handleCORS(res: http.ServerResponse): void {
   res.writeHead(204, {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+    "Access-Control-Allow-Methods": "POST, GET, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "86400",
   });
@@ -231,6 +336,71 @@ export function startHttpBridge(): http.Server {
       }
 
       // ============================================================
+      // PUT /data/:key — Write a single key to persistent storage
+      // Used by data-layer.js to sync localStorage writes to disk.
+      // Body: { value: "..." } where value is the raw JSON string.
+      // ============================================================
+      if (req.method === "PUT" && url.pathname.startsWith("/data/")) {
+        const key = decodeURIComponent(url.pathname.slice(6)); // strip "/data/"
+        if (!key) {
+          sendJSON(res, 400, { error: "Key is required in URL path" });
+          return;
+        }
+        const body = await parseBody(req) as { value?: string };
+        if (!body || body.value === undefined) {
+          sendJSON(res, 400, { error: "Request body must include 'value' field" });
+          return;
+        }
+        writeDataKey(key, body.value);
+        sendJSON(res, 200, { ok: true, key, sizeBytes: Buffer.byteLength(body.value, "utf8") });
+        return;
+      }
+
+      // ============================================================
+      // GET /data/:key — Read a single key from persistent storage
+      // Returns the stored value, or 404 if key doesn't exist.
+      // ============================================================
+      if (req.method === "GET" && url.pathname.startsWith("/data/") && url.pathname !== "/data/") {
+        const key = decodeURIComponent(url.pathname.slice(6));
+        const result = readDataKey(key);
+        if (!result) {
+          sendJSON(res, 404, { error: "Key not found", key });
+          return;
+        }
+        sendJSON(res, 200, result);
+        return;
+      }
+
+      // ============================================================
+      // GET /data — Read ALL keys from persistent storage
+      // Returns an object mapping all stored keys to their values.
+      // Used by data-layer.js on startup to recover from empty localStorage.
+      // ============================================================
+      if (req.method === "GET" && (url.pathname === "/data" || url.pathname === "/data/")) {
+        const allKeys = readAllDataKeys();
+        sendJSON(res, 200, {
+          keys: allKeys,
+          count: Object.keys(allKeys).length,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // ============================================================
+      // DELETE /data/:key — Remove a single key from persistent storage
+      // ============================================================
+      if (req.method === "DELETE" && url.pathname.startsWith("/data/")) {
+        const key = decodeURIComponent(url.pathname.slice(6));
+        if (!key) {
+          sendJSON(res, 400, { error: "Key is required in URL path" });
+          return;
+        }
+        const deleted = deleteDataKey(key);
+        sendJSON(res, 200, { ok: true, key, deleted });
+        return;
+      }
+
+      // ============================================================
       // 404 — Unknown route
       // ============================================================
       sendJSON(res, 404, { error: "Not found", path: url.pathname });
@@ -243,7 +413,7 @@ export function startHttpBridge(): http.Server {
   });
 
   server.listen(PORT, () => {
-    console.error(`Pathfinder HTTP Bridge running on http://localhost:${PORT}`);
+    console.error(`Pathfinder HTTP Bridge v3.0.0 running on http://localhost:${PORT}`);
     console.error(`Endpoints:`);
     console.error(`  POST /api/generate-section  — Generate a brief section`);
     console.error(`  GET  /api/section-defs      — Section definitions`);
@@ -252,6 +422,11 @@ export function startHttpBridge(): http.Server {
     console.error(`  POST /backup               — Backup pipeline data to disk`);
     console.error(`  POST /restore              — Restore pipeline data from backup`);
     console.error(`  GET  /backups              — List all available backups`);
+    console.error(`  PUT  /data/:key            — Write a key to persistent storage`);
+    console.error(`  GET  /data/:key            — Read a key from persistent storage`);
+    console.error(`  GET  /data                 — Read ALL keys (recovery endpoint)`);
+    console.error(`  DELETE /data/:key          — Delete a key from persistent storage`);
+    console.error(`Data directory: ${DATA_DIR}`);
   });
 
   return server;

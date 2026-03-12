@@ -4,6 +4,36 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.0.0 — 2026-03-12
+
+### What Changed — MCP-Backed Data Layer + Unified Connections
+
+**User requested:** "Everything in localStorage also has MCP backup / reads from MCP server" and "how shall we collapse these into one section?" (re: separate Connections and LinkedIn Network sections)
+
+**Changes:**
+
+#### MCP-Backed Data Persistence
+1. **Created `modules/shared/data-layer.js`** — Core data persistence layer. Monkey-patches `localStorage.setItem` and `localStorage.removeItem` to transparently sync all `pf_*` keys to the MCP HTTP bridge. 22 data keys synced with 1-second debounce. Excludes API keys and UI-only keys for security.
+2. **Added HTTP bridge data endpoints** — 4 new endpoints on the MCP bridge (`PUT /data/:key`, `GET /data/:key`, `GET /data`, `DELETE /data/:key`). Key-value files stored at `~/.pathfinder/data/{key}.json`.
+3. **Auto-recovery on startup** — If core localStorage keys are empty (fresh browser, cleared cache), the data layer attempts to recover from MCP bridge automatically. Checks `pf_roles`, `pf_companies`, `pf_connections` as sentinel keys.
+4. **Graceful degradation** — If MCP bridge is unavailable, app works via localStorage alone. Console message: `[DataLayer] MCP bridge not available — localStorage only mode`.
+5. **Script tag added to all 11 modules** — Every module now loads `data-layer.js` before any other scripts, ensuring all localStorage writes are intercepted.
+
+#### Unified Connections Section
+6. **Merged Connections + LinkedIn Network** — The detail panel now shows ONE "Connections (N)" section instead of two. Tracked connections (from `pf_connections`) appear at the top, LinkedIn network connections below, separated by a subtle divider. Total count = tracked + LinkedIn.
+7. **De-duplication** — LinkedIn connections that are already in your tracked connections list are automatically filtered out, preventing duplicate display.
+8. **Cross-company contacts** — The "Add External Contact" form now includes a Company field so you can add contacts from other companies (e.g., a recruiter at Agency X representing Company Y). Defaults to the role's company if left blank.
+9. **Removed redundant Notes field** — Simplified the add contact form by removing the inline notes field (comms log handles note-taking).
+
+**Files changed:**
+- `modules/shared/data-layer.js` (NEW — MCP sync layer)
+- `mcp-servers/pathfinder-artifacts-mcp/src/http-bridge.ts` (data endpoints)
+- All 11 module HTML files (added `data-layer.js` script tag)
+- `modules/pipeline/index.html` (merged connections section, de-duplication, cross-company contacts)
+- `docs/PRD.md` (version bump + history)
+
+---
+
 ## v2.7.0 — 2026-03-12
 
 ### What Changed — LinkedIn Network Import

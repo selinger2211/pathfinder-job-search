@@ -2794,8 +2794,16 @@
                target.includes(liCompany);
       });
 
+      // De-duplicate: remove anyone already in tracked connections (pf_connections)
+      const tracked = getConnectionsForCompany(companyName);
+      const trackedNames = new Set(tracked.map(c => (c.name || '').toLowerCase().trim()));
+      const deduped = matches.filter(c => {
+        const name = (c.name || `${c.firstName} ${c.lastName}`).toLowerCase().trim();
+        return !trackedNames.has(name);
+      });
+
       // Sort by relevance: Product/Engineering first, then by seniority
-      return sortLinkedInConnections(matches);
+      return sortLinkedInConnections(deduped);
     }
 
     /**
@@ -4447,48 +4455,24 @@
           </div>
         </div>
 
-        <!-- Connections section -->
-        <div class="detail-section">
-          <div class="detail-section-title">Connections (${getConnectionsForCompany(role.company).length})</div>
-          <div id="detail-connections-list">
-            ${buildConnectionsList(role.company)}
-          </div>
-          <div id="detail-add-connection-form" style="display:none;">
-            <div class="connection-form">
-              <input type="text" id="conn-name" placeholder="Name (e.g., Sarah Chen)">
-              <input type="text" id="conn-title" placeholder="Title (e.g., Staff PM)">
-              <input type="url" id="conn-linkedin" placeholder="LinkedIn URL (e.g., linkedin.com/in/sarahchen)">
-              <select id="conn-relationship">
-                <option value="linkedin_1st">LinkedIn 1st-degree</option>
-                <option value="linkedin_2nd">LinkedIn 2nd-degree</option>
-                <option value="former_colleague">Former colleague</option>
-                <option value="recruiter">Recruiter</option>
-                <option value="hiring_manager">Hiring manager</option>
-                <option value="cold_outreach">Cold outreach</option>
-              </select>
-              <input type="text" id="conn-notes" placeholder="Notes (optional)">
-              <div class="connection-form-actions">
-                <button class="btn btn-ghost" onclick="document.getElementById('detail-add-connection-form').style.display='none';" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2);">Cancel</button>
-                <button class="btn btn-primary" onclick="addConnectionFromDetail('${escapeHtml(role.company)}')" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2);">Add</button>
-              </div>
-            </div>
-          </div>
-          <button class="add-connection-btn" onclick="document.getElementById('detail-add-connection-form').style.display='block'; this.style.display='none';">
-            + Add Connection
-          </button>
-        </div>
-
-        <!-- LinkedIn Network — shows 1st-degree LinkedIn connections at this company,
-             sorted by seniority with Product/Engineering people surfaced first -->
+        <!-- ============================================================
+             Unified Connections Section
+             Shows tracked connections (from pf_connections) at the top,
+             then LinkedIn network connections (de-duped) below.
+             Total count = tracked + LinkedIn (no duplicates).
+             Supports cross-company contacts (e.g., recruiter at Firm A
+             representing Company B).
+             ============================================================ -->
         ${(() => {
+          const trackedConns = getConnectionsForCompany(role.company);
           const linkedinConns = getLinkedInConnectionsForCompany(role.company);
-          if (linkedinConns.length === 0) return '';
-          const INITIAL_SHOW = 10; // Show top 10 by default (sorted by seniority)
+          const totalCount = trackedConns.length + linkedinConns.length;
+          const INITIAL_SHOW = 10;
           const displayConns = linkedinConns.slice(0, INITIAL_SHOW);
           const remaining = linkedinConns.length - INITIAL_SHOW;
           const sectionId = 'linkedin-list-' + role.id;
 
-          // Render a single connection card (reused for initial + expanded)
+          /* Render a single LinkedIn connection card */
           const renderConn = (c) => {
             const dept = getLinkedInDeptCategory(c.position);
             const deptBadge = dept ? `<span class="linkedin-dept-badge ${dept}">${dept === 'product' ? 'Product' : 'Eng'}</span>` : '';
@@ -4507,20 +4491,54 @@
 
           return `
           <div class="detail-section">
-            <div class="detail-section-title collapsible" onclick="toggleCollapsible(this)">
-              <span>LinkedIn Network (${linkedinConns.length})</span>
-              <svg class="collapse-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            </div>
-            <div class="collapsible-content">
-              <div class="linkedin-network-section" id="${sectionId}">
-                ${displayConns.map(renderConn).join('')}
+            <div class="detail-section-title">Connections (${totalCount})</div>
+
+            <!-- Tracked connections — people you're actively engaging with -->
+            ${trackedConns.length > 0 ? `
+              <div id="detail-connections-list">
+                ${buildConnectionsList(role.company)}
               </div>
-              ${remaining > 0 ? `
-                <button class="linkedin-show-more-btn" id="btn-${sectionId}" onclick="expandLinkedInList('${escapeHtml(role.company)}', '${sectionId}', this)">
-                  Show ${remaining} more connections
-                </button>
-              ` : ''}
+            ` : ''}
+
+            <!-- Add external contact form (for recruiters, referrals, people not in LinkedIn) -->
+            <div id="detail-add-connection-form" style="display:none;">
+              <div class="connection-form">
+                <input type="text" id="conn-name" placeholder="Name (e.g., Sarah Chen)">
+                <input type="text" id="conn-title" placeholder="Title (e.g., Staff PM)">
+                <input type="text" id="conn-company" placeholder="Company (leave blank for ${escapeHtml(role.company)})" value="">
+                <input type="url" id="conn-linkedin" placeholder="LinkedIn URL (optional)">
+                <select id="conn-relationship">
+                  <option value="recruiter">Recruiter</option>
+                  <option value="hiring_manager">Hiring manager</option>
+                  <option value="former_colleague">Former colleague</option>
+                  <option value="linkedin_1st">LinkedIn 1st-degree</option>
+                  <option value="linkedin_2nd">LinkedIn 2nd-degree</option>
+                  <option value="cold_outreach">Cold outreach</option>
+                </select>
+                <div class="connection-form-actions">
+                  <button class="btn btn-ghost" onclick="document.getElementById('detail-add-connection-form').style.display='none'; document.querySelector('.add-connection-btn').style.display='';" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2);">Cancel</button>
+                  <button class="btn btn-primary" onclick="addConnectionFromDetail('${escapeHtml(role.company)}')" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2);">Add</button>
+                </div>
+              </div>
             </div>
+            <button class="add-connection-btn" onclick="document.getElementById('detail-add-connection-form').style.display='block'; this.style.display='none';">
+              + Add External Contact
+            </button>
+
+            <!-- LinkedIn network — 1st-degree connections at this company (de-duped against tracked) -->
+            ${linkedinConns.length > 0 ? `
+              <div style="margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--bg-subtle);">
+                <div style="font-size: var(--text-xs); color: var(--text-tertiary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2);">LinkedIn Network (${linkedinConns.length})</div>
+                <div class="linkedin-network-section" id="${sectionId}">
+                  ${displayConns.map(renderConn).join('')}
+                </div>
+                ${remaining > 0 ? `
+                  <button class="linkedin-show-more-btn" id="btn-${sectionId}" onclick="expandLinkedInList('${escapeHtml(role.company)}', '${sectionId}', this)">
+                    Show ${remaining} more connections
+                  </button>
+                ` : ''}
+              </div>
+            ` : ''}
           </div>`;
         })()}
 
@@ -4832,12 +4850,16 @@
      * Creates a connection record in pf_connections and refreshes the UI.
      * INPUT: companyName = string (the company to associate with)
      */
-    function addConnectionFromDetail(companyName) {
+    function addConnectionFromDetail(roleCompany) {
       const name = document.getElementById('conn-name').value.trim();
       const title = document.getElementById('conn-title').value.trim();
       const linkedinUrl = document.getElementById('conn-linkedin').value.trim();
       const relationship = document.getElementById('conn-relationship').value;
-      const notes = document.getElementById('conn-notes').value.trim();
+      /* Company field — allows cross-company contacts (e.g., recruiter at
+         Recruiting Firm A who represents Company B). Falls back to the
+         role's company if left blank. */
+      const companyField = document.getElementById('conn-company');
+      const company = (companyField && companyField.value.trim()) || roleCompany;
 
       if (!name) {
         showToast('Connection name is required', 'error');
@@ -4848,12 +4870,12 @@
       const newConn = {
         id: `conn-${Date.now()}`,
         name: name,
-        company: companyName,
+        company: company,
         title: title,
         linkedinUrl: linkedinUrl,
         relationship: relationship,
-        notes: notes,
-        linkedRoles: [],
+        notes: '',
+        linkedRoles: [activeDetailRoleId].filter(Boolean),
         outreachLog: [],
         referralStatus: 'none',
         source: 'manual',
@@ -4863,24 +4885,15 @@
       connections.push(newConn);
       saveConnections(connections);
 
-      // Refresh the connections list in the detail panel
-      const listEl = document.getElementById('detail-connections-list');
-      if (listEl) listEl.innerHTML = buildConnectionsList(companyName);
-
-      // Hide the form and show the add button again
-      document.getElementById('detail-add-connection-form').style.display = 'none';
-      const addBtn = document.querySelector('.add-connection-btn');
-      if (addBtn) addBtn.style.display = '';
-
-      // Update the section title with new count
-      const connCount = getConnectionsForCompany(companyName).length;
-      const sectionTitle = listEl?.closest('.detail-section')?.querySelector('.detail-section-title');
-      if (sectionTitle) sectionTitle.textContent = `Connections (${connCount})`;
+      // Refresh the entire detail panel to pick up new counts + de-duplication
+      if (activeDetailRoleId) {
+        openRoleDetail(activeDetailRoleId);
+      }
 
       // Re-render kanban to update card connection counts
       renderKanban();
 
-      showToast(`Added ${name} as connection at ${companyName}`, 'success');
+      showToast(`Added ${name} as connection${company !== roleCompany ? ` (${company})` : ''}`, 'success');
     }
 
     /**
@@ -5929,6 +5942,6 @@
     // Render icons from Lucide icon library
     lucide.createIcons();
   </script>
-  <!-- data-switcher removed in v2.6.0 — single-user mode -->
+  <script src="../shared/data-layer.js"></script> <!-- v3.0.0: MCP-backed data persistence -->
 </body>
 </html>

@@ -82,15 +82,18 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 
 ### 5. File Storage Architecture
 - **localStorage** — All structured data (roles, companies, preferences, sessions)
+- **MCP data layer** — `modules/shared/data-layer.js` monkey-patches localStorage to sync `pf_*` keys to MCP HTTP bridge. 22 keys synced with 1-second debounce. Auto-recovery on startup if localStorage is empty. Graceful degradation when bridge is unavailable.
+- **MCP data files** — `~/.pathfinder/data/{key}.json` — persistent key-value store via HTTP bridge endpoints (`PUT/GET/DELETE /data/:key`)
 - **IndexedDB** (`pf_resumes` database) — Resume file blobs (PDF, DOCX, DOC)
 - **MCP filesystem** — Research briefs, artifacts (text-based)
+- **MCP backups** — `~/.pathfinder/backups/` — timestamped full snapshots (from v2.4.0)
 
 ### 6. Claude API Pattern
 - All modules use `modules/shared/claude-api.js` for Claude API calls
 - Direct browser-to-Anthropic API via `anthropic-dangerous-direct-browser-access` header
 - API key stored in `pf_anthropic_key`
 - Model stored in `pf_claude_model` (default: `claude-sonnet-4-20250514`)
-- MCP HTTP bridge (localhost:3456) is optional fallback, not required
+- MCP HTTP bridge (localhost:3456) provides data sync + backup endpoints
 
 ---
 
@@ -182,7 +185,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v2.7.0
+**Current Version:** v3.0.0
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -206,8 +209,12 @@ These are the actual field shapes for objects stored in shared localStorage keys
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
+### Recently Fixed (v3.0.0)
+- **MCP-Backed Data Layer**: Created `modules/shared/data-layer.js` that monkey-patches localStorage to sync 22 `pf_*` keys to MCP HTTP bridge with 1-second debounce. Added 4 new HTTP bridge endpoints (`PUT/GET/DELETE /data/:key`, `GET /data`). Files stored at `~/.pathfinder/data/`. Auto-recovery on startup, graceful degradation when bridge unavailable. Script tag added to all 11 modules.
+- **Unified Connections Section**: Merged "Connections" and "LinkedIn Network" into one section in Pipeline detail panel. Tracked connections at top, LinkedIn below (de-duplicated). Total count excludes duplicates. New "Add External Contact" form supports cross-company contacts (e.g., recruiters at other firms). Removed redundant Notes field from add contact form.
+
 ### Recently Fixed (v2.7.0)
-- **LinkedIn Network Import**: Parsed 2,687 LinkedIn 1st-degree connections into `pf_linkedin_network`. Pipeline detail panel shows "LinkedIn Network (N)" section sorted by seniority (VP → Director → Senior) with Product/Engineering people surfaced first. Purple "Product" and blue "Eng" department badges. "Show More" button expands from top-10 preview to full list. "+ Track" promotes to active connection. Kanban cards show combined tracked + LinkedIn connection counts.
+- **LinkedIn Network Import**: Parsed 2,687 LinkedIn 1st-degree connections into `pf_linkedin_network`. Pipeline detail panel shows LinkedIn connections sorted by seniority (VP → Director → Senior) with Product/Engineering people surfaced first. Purple "Product" and blue "Eng" department badges. "Show More" button expands from top-10 preview to full list. "+ Track" promotes to active connection. Kanban cards show combined tracked + LinkedIn connection counts.
 
 ### Previously Fixed (v2.6.0)
 - **Demo Mode removed**: Deleted `data-switcher.js`, removed Demo/Personal toggle from all 11 modules. App is now single-user (Ili only). No more demo seed data in Pipeline, Research Brief, Calendar, Resume Builder. Job Feed reads from `pf_feed_queue` localStorage instead of hardcoded demo items. New principle: localStorage backed by MCP (v3.0.0).
