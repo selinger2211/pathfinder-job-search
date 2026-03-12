@@ -1532,5 +1532,61 @@
     "lastOutreachDate": "2026-02-19",
     "dateConnected": null,
     "lastContact": "2026-02-19"
+  },
+  {
+    "id": "conn-1773298665723",
+    "name": "Manoj Kumar",
+    "company": "LiveRamp",
+    "title": "Principal Solutions Engineer",
+    "linkedinUrl": "https://www.linkedin.com/in/mkumarisw/",
+    "relationship": "linkedin_1st",
+    "notes": "",
+    "linkedRoles": [],
+    "outreachLog": [],
+    "referralStatus": "none",
+    "source": "manual",
+    "dateAdded": 1773298665723
+  },
+  {
+    "id": "conn-1773299696874",
+    "name": "Apoorv Chaudhary",
+    "company": "RingCentral",
+    "title": "Director, AI/ML Engineering",
+    "linkedinUrl": "https://www.linkedin.com/in/apoorvc/",
+    "relationship": "linkedin_1st",
+    "notes": "",
+    "linkedRoles": [],
+    "outreachLog": [],
+    "referralStatus": "none",
+    "source": "manual",
+    "dateAdded": 1773299696874
+  },
+  {
+    "id": "conn-1773301992027",
+    "name": "Jing Wang",
+    "company": "Intuit",
+    "title": "Director of Engineering",
+    "linkedinUrl": "https://www.linkedin.com/in/jingjw/",
+    "relationship": "linkedin_1st",
+    "notes": "",
+    "linkedRoles": [],
+    "outreachLog": [],
+    "referralStatus": "none",
+    "source": "manual",
+    "dateAdded": 1773301992027
+  },
+  {
+    "id": "conn-1773302810475",
+    "name": "Michael Yavonditte",
+    "company": "Yieldmo",
+    "title": "CEO",
+    "linkedinUrl": "https://www.linkedin.com/in/michael-yavonditte-3b69193a/",
+    "relationship": "linkedin_1st",
+    "notes": "yavo@yieldmo.com",
+    "linkedRoles": [],
+    "outreachLog": [],
+    "referralStatus": "none",
+    "source": "manual",
+    "dateAdded": 1773302810475
   }
 ]

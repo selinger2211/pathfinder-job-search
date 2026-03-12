@@ -164,8 +164,8 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v2.3.1
-**Last Updated:** 2026-03-11
+**Current Version:** v2.3.2
+**Last Updated:** 2026-03-12
 
 ### Implementation Status
 
@@ -188,7 +188,10 @@ These are the actual field shapes for objects stored in shared localStorage keys
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
-### Recently Fixed (v2.3.1)
+### Recently Fixed (v2.3.2)
+- **Migration data sync**: Updated all 3 migration JSON files to match browser localStorage: 7 real roles (full JDs, comms logs, resumes), 50 companies (fixed ATS→real domains), 63 connections (4 new manual). Bumped MIGRATION_VERSION to 4. Replaced Clearbit logoUrls with Google Favicon API in migration data.
+
+### Previously Fixed (v2.3.1)
 - **Sibling roles in detail panel**: Role detail slide-out now shows "Other Roles at [Company]" section when a company has multiple roles. Each sibling shows stage pill, tier, level, last activity. Clicking navigates directly to that role's detail. Uses IIFE in template literal to compute sibling list.
 
 ### Previously Fixed (v2.3.0)

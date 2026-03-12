@@ -4,6 +4,38 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.3.2 — 2026-03-12
+
+### What Changed — Migration Data Sync
+
+**User requested:** "before we push anything i want to make sure you capture the current pipeline configuration"
+
+**Changes:**
+1. **Updated all 3 migration JSON files** to match the current browser localStorage state:
+   - `pf_roles.json`: 3 → 7 roles with real titles, full JD text, comms logs, and resume metadata
+   - `pf_companies.json`: 45 → 50 companies with corrected domains and Google Favicon logoUrls
+   - `pf_connections.json`: 59 → 63 connections (4 new manual connections added)
+2. **Fixed ATS domains** on new companies: LiveRamp (liveramp.com), RingCentral (ringcentral.com), Intuit (intuit.com) — were incorrectly set to Workday/ATS subdomains
+3. **Replaced Clearbit logoUrl** references with Google Favicon API in all migration company data
+4. **Bumped MIGRATION_VERSION** from 3 → 4 in `data-switcher.js`
+
+**Roles now tracked:**
+- Yahoo — Sr. Director Consumer Data Product - Activation (applied/hot)
+- LiveRamp — Sr. Director Product Management: Addressability (applied/hot)
+- Amazon Ads — Principal Product Manager - Tech, Sponsored Ads (applied/hot)
+- RingCentral — Sr. Director of Product (screen/active)
+- VectorOne — Head of Product (screen/active)
+- Intuit — Principal Product Manager - Agentic Conversational Experiences (outreach/active)
+- Yieldmo — Head of Product (researching/hot)
+
+**Files Modified:**
+- `scripts/migration-output/pf_roles.json` — complete rewrite (3 → 7 roles)
+- `scripts/migration-output/pf_companies.json` — updated (45 → 50, fixed domains + logoUrls)
+- `scripts/migration-output/pf_connections.json` — appended 4 new connections (59 → 63)
+- `modules/shared/data-switcher.js` — MIGRATION_VERSION 3 → 4
+
+---
+
 ## v2.3.1 — 2026-03-11
 
 ### What Changed — Sibling Roles in Detail Panel

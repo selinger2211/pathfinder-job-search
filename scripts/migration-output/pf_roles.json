@@ -1,68 +1,250 @@
 [
   {
-    "id": "role-migrated-001",
+    "id": "role-1773297969070",
     "company": "Yahoo",
-    "title": "Open Role",
-    "url": "",
-    "jdText": "",
-    "positioning": "ic",
-    "targetLevel": "IC",
-    "source": "migration",
-    "stage": "applied",
-    "stageHistory": [
-      { "stage": "discovered", "date": 1772080642199 },
-      { "stage": "outreach", "date": 1772512642199 },
-      { "stage": "applied", "date": 1772685442199 }
-    ],
-    "salary": { "min": "", "max": "", "currency": "USD" },
-    "dateAdded": 1772080642199,
-    "lastActivity": 1772512642199,
-    "connections": 6,
+    "title": "Sr. Director Consumer Data Product - Activation",
+    "url": "https://ouryahoo.wd5.myworkdayjobs.com/en-US/careers/job/Sr-Director-Consumer-Data-Product---Activation_JR0026917-1",
+    "jdText": "Yahoo serves as a trusted guide for hundreds of millions of people globally, helping them achieve their goals online through our portfolio of iconic products. For advertisers, Yahoo Advertising offers omnichannel solutions and powerful data to engage with our brands and deliver results.\nA Little About Us\nYahoo's Consumer Data team enables consumer data capabilities across Yahoo verticals. As a result, they can leverage advanced capabilities that any independent vertical could not buy or build cost effectively. The team has two focus areas: Domain Enablement, which publishes shared data as a product for use across multiple business units, and Data Activation, which creates outsized data leverage across business units. As the leader of the Data Activation team, you will be responsible for defining and executing the mission and vision for this product area. In addition, you will work closely with Data Science and Engineering teams throughout the product lifecycle to empower your team.\n\nA Lot About You\nWe're looking for an impressive individual who is passionate about all aspects of product management, is highly organized, and communicates well with internal and external stakeholders. At Yahoo, PMs are responsible for creating a team culture that conceives, designs, and ships excellent products. You do this by modeling ownership and accountability, superb team leadership skills, humility, and curiosity. As a PM, you understand, inspire, and focus your team(s) using excellent listening skills, influence abilities, and crisp, effective communication. You complement these skills with technical knowledge that informs your judgment regarding timelines, scope, quality, priorities, and trade-offs. Ultimately, you are the expert on how products are designed, used, measured, improved, and generate business value. You support this expertise with a keen ability to break down large, complex problems into well-defined, manageable problems and an ability to use data to inform your judgment.\n\nYour Day\nDefining and driving data activation strategies that create measurable business impact across Yahoo verticals\n\nIdentifying high-leverage opportunities to apply consumer data insights to drive growth, engagement, and monetization\n\nCommunicating with internal and external stakeholders & customers about product ideas and feature requirements\n\nAligning with cross-functional leaders to create high-velocity product execution\n\nPartnering with business units to understand their needs and translate data capabilities into business outcomes\n\nSetting the mission and vision for the Data Activation product area and defining a product strategy to achieve the vision\n\nExecuting the strategy with the team\n\nBuilding relationships with stakeholders across the organization to ensure data activation initiatives align with business priorities\n\nCreating an environment for your team to be passionate about solving customer problems\n\nProviding coaching and mentorship to grow and motivate the team\n\nYou Must Have\n15+ years experience in a tech company in a related position (PM, Engineering, Project Mgmt, Technical Support, Technical Sales, Technical / Professional Services or Consulting, etc.)\n\nProven track record of leveraging data and analytics to drive business outcomes and create measurable impact\n\nDemonstrated ability to leverage AI-driven tools to drive product impact, with experience influencing and coaching teams to adopt AI effectively in their workflows and decision-making.\n\nDeep understanding of data activation strategies including audience segmentation, personalization, targeting, and experimentation\n\nAn ability to multitask, organize & lead complex projects, detail orientation, and be able to summarize\n\nExperience managing teams of product managers\n\nExperience delivering products using Agile / Scrum software development & Engineering practices\n\nEmpower a product team and manage their performance\n\nGuide team members by providing coaching and mentoring at desired levels\n\nProvide support to recruit talent for the organization and team\n\nExcellent problem-solving skills and the ability to think independently\n\nExceptional listening and communication skills (written, verbal)\n\nMedia data expertise and understanding of consumer behavior patterns\n\nStrong business acumen with ability to translate technical capabilities into business value\n\nNice To Have\nExperience using ML and AI techniques that drive product features and data activation use cases\n\nSQL and data analysis skills\n\nGoogle Cloud Platform expertise\n\nBackground in digital advertising, personalization, or recommendation systems\n\nTrack record of building cross-functional partnerships and driving org-wide initiatives\n\nThe material job duties and responsibilities of this role include those listed above as well as adhering to Yahoo policies; exercising sound judgment; working effectively, safely and inclusively with others; exhibiting trustworthiness and meeting expectations; and safeguarding business operations and brand integrity.\n\nAt Yahoo, we offer flexible hybrid work options that our employees love! While most roles don't require regular office attendance, you may occasionally be asked to attend in-person events or team sessions. You'll always get notice to make arrangements. Your recruiter will let you know if a specific job requires regular attendance at a Yahoo office or facility. If you have any questions about how this applies to the role, just ask the recruiter!\n\nYahoo is proud to be an equal opportunity workplace. All qualified applicants will receive consideration for employment without regard to, and will not be discriminated against based on age, race, gender, color, religion, national origin, sexual orientation, gender identity, veteran status, disability or any other protected category. Yahoo will consider for employment qualified applicants with criminal histories in a manner consistent with applicable law. Yahoo is dedicated to providing an accessible environment for all candidates during the application process and for employees during their employment. If you need accessibility assistance and/or a reasonable accommodation due to a disability, please submit a request via the Accommodation Request Form (www.yahooinc.com/careers/contact-us.html) or call +1.866.772.3182. Requests and calls received for non-disability related issues, such as following up on an application, will not receive a response.\n\nWe believe that a diverse and inclusive workplace strengthens Yahoo and deepens our relationships. When you support everyone to be their best selves, they spark discovery, innovation and creativity. Among other efforts, our 11 employee resource groups (ERGs) enhance a culture of belonging with programs, events and fellowship that help educate, support and create a workplace where all feel welcome.\n\nThe compensation for this position ranges from $172,645.00 - $375,285.00/yr and will vary depending on factors such as your location, skills and experience.The compensation package may also include incentive compensation opportunities in the form of discretionary annual bonus or commissions, in addition to equity incentives. Our comprehensive benefits include healthcare, a great 401k, backup childcare, education stipends and much (much) more.\nCurrently work for Yahoo? Please apply on our internal career site.",
+    "positioning": "management",
     "tier": "hot",
-    "personalNotes": "Denys Kim (SVP Eng): Owns DSP engineering; very high leverage.\nChandrala Malkood (VP Product): Strong AI + identity + activation leader; posted hiring roles.\nGiovanni Gardelli (Head Product DSP): Strong DSP + agentic AI leverage; good intro source.\nShaopeng Wang (Director Eng): Ads infra + ML platform alignment.\nGeetika Sandhu (Sr Director, Product): Deep DSP + measurement overlap; strong internal Yahoo leverage.\nAgoston Malchacker (Senior SDE): Strong engineer but minimal influence."
-  },
-  {
-    "id": "role-migrated-002",
-    "company": "Amazon Ads",
-    "title": "Open Role",
-    "url": "",
-    "jdText": "",
-    "positioning": "ic",
-    "targetLevel": "Sr Leader",
-    "source": "migration",
     "stage": "applied",
-    "stageHistory": [
-      { "stage": "discovered", "date": 1772080642199 },
-      { "stage": "outreach", "date": 1772512642199 },
-      { "stage": "applied", "date": 1772685442199 }
-    ],
-    "salary": { "min": "", "max": "", "currency": "USD" },
-    "dateAdded": 1772080642199,
-    "lastActivity": 1772685442199,
-    "connections": 1,
-    "tier": "hot",
-    "personalNotes": "Sam Blum (Head Performance+): Leads AI-driven ad performance systems; strong leverage."
-  },
-  {
-    "id": "role-migrated-046",
-    "company": "LiveRamp",
-    "title": "Open Role",
-    "url": "",
-    "jdText": "",
-    "positioning": "ic",
-    "targetLevel": "Director",
-    "source": "manual",
-    "stage": "applied",
-    "stageHistory": [
-      { "stage": "discovered", "date": 1772080642199 },
-      { "stage": "outreach", "date": 1772512642199 },
-      { "stage": "applied", "date": 1772685442199 }
-    ],
-    "salary": { "min": "", "max": "", "currency": "USD" },
-    "dateAdded": 1772080642199,
-    "lastActivity": 1772685442199,
+    "recruiterSource": "",
+    "knownContext": [],
+    "confidential": {
+      "company": false,
+      "role": false
+    },
+    "dateAdded": 1772755200000,
+    "lastActivity": 1773273600000,
+    "stageHistory": [],
     "connections": 0,
+    "personalNotes": "",
+    "commsLog": [
+      {
+        "date": "2026-03-12T06:49:20.720Z",
+        "note": "spoke about state of DSP, recommended I pursue Supply side.",
+        "link": "",
+        "channel": "video",
+        "contactId": "Giovanni Gardelli",
+        "contactName": "Giovanni Gardelli"
+      },
+      {
+        "date": "2026-03-12T06:50:44.487Z",
+        "note": "Spoke w/ Denys on 3/8, recommended I pursue Supply side.",
+        "link": "",
+        "channel": "email",
+        "contactId": "Denys Kim",
+        "contactName": "Denys Kim"
+      }
+    ],
+    "resumesSent": [
+      {
+        "filename": "Ili_Selinger_Resume.pdf",
+        "size": 99548,
+        "type": "application/pdf",
+        "date": 1773298454569,
+        "notes": "",
+        "indexedDbKey": "resume-role-1773297969070-0"
+      }
+    ]
+  },
+  {
+    "id": "role-1773298583153",
+    "company": "LiveRamp",
+    "title": "Sr. Director Product Management: Addressability",
+    "url": "https://liveramp.wd5.myworkdayjobs.com/LiveRampCareers/job/San-Francisco/Sr-Director-Product-Management--Addressability_JR011930-1?shared_id=YmI4MDk3ODAtZmI4Zi00Yjk3LTgyNGItMDA1YWYxNzBiNzIy",
+    "jdText": "LiveRamp is the data collaboration platform of choice for the world's most innovative companies. A groundbreaking leader in consumer privacy, data ethics, and foundational identity, LiveRamp is setting the new standard for building a connected customer view with unmatched clarity and context while protecting precious brand and consumer trust. LiveRamp offers complete flexibility to collaborate wherever data lives to support the widest range of data collaboration use cases—within organizations, between brands, and across its premier global network of top-quality partners.\n\nHundreds of global innovators, from iconic consumer brands and tech giants to banks, retailers, and healthcare leaders turn to LiveRamp to build enduring brand and business value by deepening customer engagement and loyalty, activating new partnerships, and maximizing the value of their first-party data while staying on the forefront of rapidly evolving compliance and privacy requirements.\n\n\nThe Addressability PM will be responsible for creating the vision and strategy for an entire suite of addressability related products, to enable targeted advertising in a safe, privacy compliant, and future-proofed way. This person will act as a customer advocate, documenting core jobs to be done and leading discovery across teams. This PM will focus on enabling use cases for brands, publishers, and platforms across LiveRamp's product suite.\n\nTo be successful, candidates must be comfortable with ambiguity and possess working knowledge of the ad tech ecosystem, programmatic bidding, privacy law, and the systems that enable advertising on the web, in mobile, and across display. The ability to effectively context switch is critical as you could be on a call with a VP of Marketing and diving deep into acceptance criteria with a senior engineer within the span of an hour. It is key that this Product Manager is hands on with internal teams and customers. We work in a fast-paced environment in which you are empowered to make decisions in a small team setting. We are looking for a self-starter that welcomes challenges and has fun solving complex problems to join us.\n\nYou will:\n\nContribute to the prioritization and roadmap of Addressability products and capabilities by working closely with commercial and business developments teams to ensure that we have the scale and customer demand to support the needs of the market and our customers.\n\nWork closely with Commercial, Legal, Product and Engineering leadership to ensure our Addressability products are staying ahead of privacy and partner requirements.\n\nWork closely with operations and product intelligence teams to provide the right level of visibility into key 3rd party metrics and usage patterns to shape future product decisions.\n\nWork on multiple complex initiatives at once, across different phases of the Product Development Lifecycle.\n\nMeet with customers to understand their needs and communicate how the roadmap will address them such as marketers, publishers, and platforms.\n\nWrite clear, concise requirements documents, RFCs, and user stories for engineers to be able to easily understand the what and why of a product or feature idea.\n\nManage prioritization and trade-offs within your product area, working closely with the engineering team(s) and other stakeholders.\n\nEnsure that all products that you create adhere to our stringent data ethics standards and follow the requirements of the privacy law.\n\nAnalyze the competitive landscape of your product area including uptake in new markets to find gaps and opportunities for LiveRamp to explore.\n\nCollaborate with Commercialization, Sales Enablement, and Operational teams to educate and drive the roll out of new products that you build through product development lifecycle (PDLC) gates.\n\nYour team will:\n\nSupport you and collaborate with you on complex problems with you\n\nProvide all of the Tools and Training you need to understand our methodology and workflows\n\nGive guidance and timely feedback on questions that you have\n\nOffer you opportunities to build your skillset and provide plenty of growth opportunities\n\nAbout you:\n\n4-6+ Years of experience in a Product Management role\n\nExperience in the online advertising vertical and understanding of industry.\n\nFirm understanding of the Product Development Lifecycle (PDLC)\n\nYou love highly technical problems and diving in deep with Engineering on solutions.\n\nFull stack product developer: you can research, build, and defend business cases for new product development with little guidance.\n\nExcellent written, presentation, and verbal communication skills.\n\nGreat problem solver - you thrive on finding creative solutions to poorly defined problems that impact customers.\n\nCustomer obsessed - you love working closely with customers to develop solutions and new products to solve their deepest challenges.\n\nExperience with Agile software development\n\nReady to work in a culture that values collaboration, dependability, positivity, and knowledge-seeking above all else.\n\nBonus Points:\n\nPrior experience in Identity Resolution/digital targeting/digital measurement\n\nFirm understanding of Privacy regulations within the US\n\nDeep technical background\n\nThe approximate annual base compensation range is $210,000 to $309,500. The actual offer, reflecting the total compensation package and benefits, will be determined by a number of factors including the applicant's experience, knowledge, skills, and abilities, geography, as well as internal equity among our team.",
+    "positioning": "management",
     "tier": "hot",
+    "stage": "applied",
+    "recruiterSource": "",
+    "knownContext": [],
+    "confidential": {
+      "company": false,
+      "role": false
+    },
+    "dateAdded": 1773014400000,
+    "lastActivity": 1773273600000,
+    "stageHistory": [],
+    "connections": 0,
+    "personalNotes": "",
+    "resumesSent": [
+      {
+        "filename": "Ili_Selinger_Resume.pdf",
+        "size": 135130,
+        "type": "application/pdf",
+        "date": 1773298808953,
+        "notes": "",
+        "indexedDbKey": "resume-role-1773298583153-0"
+      }
+    ]
+  },
+  {
+    "id": "role-1773298980557",
+    "company": "Amazon Ads",
+    "title": "Principal Product Manager - Tech, Sponsored Ads",
+    "url": "https://amazon.jobs/en/jobs/3160194/principal-product-manager-tech-sponsored-ads",
+    "jdText": "Description\nWe're looking for an entrepreneurial product leader who will define and execute all aspects of our advertiser product development and go-to-market strategies for a new agentic ad product. Amazon's ad offerings enables customers to discover new products they love while empowering brands to find new customers and grow revenues.\n\nKey job responsibilities\nResponsibilities:\n- Define product needs across ad systems and models that power sponsored ads\n- Surface qualitative and quantitative insights as the voice of the advertisers to shape product direction and ensure product-market fit\n- Scale ad product adoption across advertisers, agencies, and tool providers\n- Collaborate with and leverage the expertise of analytics, legal, PR, sales, and marketing teams to drive product definition and adoption\n\nYour contributions will be highly visible and instrumental in hitting goals carried by Amazon's leadership team (S-Team). A diverse group of stakeholders will rely on your vision and messaging, including advertisers, agencies, and internal ad sales and operations teams.\n\nBasic Qualifications\n- 4+ years of end to end product delivery experience\n- 4+ years of technical product or program management experience\n- Bachelor's degree\n- Experience with feature delivery and tradeoffs of a product\n- Experience owning/driving roadmap strategy and definition\n- Experience leading engineering discussions around technology decisions and strategy related to a product\n- Experience technical product management\n\nPreferred Qualifications\n- Experience working directly with Engineers on product enhancements\n- Experience in project management methodologies, business analysis, or process improvement\n- Ad Tech Experience\n\nAmazon is an equal opportunity employer and does not discriminate on the basis of protected veteran status, disability, or other legally protected status.\n\nUSA, CA, Sunnyvale - 206,900.00 - 279,900.00 USD annually\nUSA, WA, Seattle - 179,900.00 - 243,400.00 USD annually",
+    "positioning": "ic",
+    "tier": "hot",
+    "stage": "applied",
+    "recruiterSource": "",
+    "knownContext": [],
+    "confidential": {
+      "company": false,
+      "role": false
+    },
+    "dateAdded": 1773273600000,
+    "lastActivity": 1773273600000,
+    "stageHistory": [],
+    "connections": 0,
+    "resumesSent": [
+      {
+        "filename": "Ili_Selinger_Resume.pdf",
+        "size": 133952,
+        "type": "application/pdf",
+        "date": 1773299147270,
+        "notes": "",
+        "indexedDbKey": "resume-role-1773298980557-0"
+      }
+    ],
     "personalNotes": ""
+  },
+  {
+    "id": "role-1773299592691",
+    "company": "RingCentral",
+    "title": "Sr. Director of Product",
+    "url": "https://ringcentral.wd1.myworkdayjobs.com/en-US/RingCentral_Careers/job/Telecom-Product-Manager-AI_R077308?locations=c363b02dbefb018989435c2f1a01612d",
+    "jdText": "Role is Director, Sr. Director, or perhaps VP, it's not listed, see below for posting of AIML Product Manager for context: Say hello to opportunities.\n\nIt's not everyday that you consider starting a new career. We're RingCentral, and we're happy that someone as talented as you is considering this role. First, a little about us, we're a $2 Billion annual revenue company with double digit Annual Recurring Revenue (ARR) and a $93 Billion market opportunity in UCaaS, Contact Center and AI-powered adjacencies. We invest more than $250 million annually to ensure our AI-enabled technology and platforms meet or exceed the needs of our customers.\n\nRingCentral AIR receptionist (AIR) is our proprietary AI solution. It's designed to fit the business needs of our customers, orchestrated to be accurate and precise, and built on the same open platform principles we apply to our core software solutions.\n\nRingCentral is seeking a Product Manager to help manage and scale the RingCentral AI product family. This role sits at the intersection of cloud telephony, UCaaS/CCaaS, and agentic AI, and will be responsible for driving product roadmap, execution, and outcomes across rapidly growing, customer-facing telecommunication AI products.\n\nKey Responsibilities\n\nProduct Strategy & Ownership\n\nOwn and evolve major portions of the product roadmap and milestones, aligned with company strategy and customer needs.\n\nTranslate high-level strategy and customer and business asks into clear product requirements, milestones, and success metrics.\n\nBalance short-term execution (features, fixes, enablement) with long-term differentiation.\n\nTelecom & Platform Expertise\n\nGood understanding of AI and cloud telephony, including call flows, behavior, integration, SIP, PSTN, DIDs, routing, transfers, IVR, PBX features, UCaaS, CCaaS, and contact center.\n\nGood understanding of global carrier partners (GSPs) environment and requirements for branding, provisioning, metering, analytics, and compliance.\n\nAI technology knowledge: NLU, ACR, prompt engineering, speech, agentic workflows, AI skills, autonomy, and learning loops while maintaining guardrails. AI analytics, scalability, agent building frameworks, enterprise compliance.\n\nRequired Qualifications\n\n4-6+ years of product management experience, with a deep telecom/UCC/AI background.\n\nProven experience delivering products in Cloud telephony, UCaaS, CCaaS, or network-based services\n\nHands-on experience with AI-powered products, ideally customer-facing (chatbots, voice AI, assistants).\n\nIf you are hired in Belmont, the compensation range for this position is between $111,650 and $159,500 for full-time employees, in addition to eligibility for variable pay, equity, and benefits.",
+    "positioning": "management",
+    "tier": "active",
+    "stage": "screen",
+    "recruiterSource": "",
+    "knownContext": [],
+    "confidential": {
+      "company": false,
+      "role": false
+    },
+    "dateAdded": 1773273600000,
+    "lastActivity": 1773273600000,
+    "stageHistory": [],
+    "connections": 0,
+    "personalNotes": "",
+    "resumesSent": [
+      {
+        "filename": "Ili_Selinger_Resume.pdf",
+        "size": 62473,
+        "type": "application/pdf",
+        "date": 1773299794819,
+        "notes": "",
+        "indexedDbKey": "resume-role-1773299592691-0"
+      }
+    ],
+    "commsLog": [
+      {
+        "date": "2026-03-12T07:18:20.770Z",
+        "note": "Apoorv: \n- Ring Central - 25 year old company \n- Phone company \n- Messaging App \n- AI receptionist product \n - Voice Agents reply \n - Call Transfer (think dentist)\n- Appointment booking\n- Lead capture \n- Really good distribution \n - Use for making / receiving calls\n - Easy to package new feature and add ons \n - Looking at a platform approach, enables users to build whatever agents\n - Calling a pharmacy\n - Steps for auth\n - Get order\n - Get prescription \n - Integrations w/ vendors health care\n - Conversation flow / Skilll \n - Skill - Check order, authenticate etc. \n - Contact Center business \n - Goal is a platform that can handle \n - Focus on Healthcare vertical \n - Goal is build and extensible platform from other \n - Conversation al AI, Multi-agent frame \n\nDay in the life;\n- Starts are later 9AM \n- AM meetings \n- Managing folks and deliverables \n- Evening Syncs w/ China \n- China team is self sufficient \n\nHybrid \n- 4 days in office and one from home \n\nRay Chang\n\nAntonio Nucci is Chief Info Officer \n- Leaning into experience with financial instititution \n- Heavily regulated \n- Aligning vision to outcomes cross-functionally \n\nTech Stack \n- Speech to Text Google ASR\n- LLM - Flexible using OpenAI\n - Tried Claude, \n- They are cost sensitive in the sense that you're building out the agent by minutes\n - Need to be mindfull of margins \n - Cost per call \n - 80 - 90% SaaS \n- Work with 11 Labs \n- Python and typescript \n- Financial Services (Credit Union) \n\nValue from Apoorv\n- Everything that's shipping is being used, \n - Close collab w/ sales & marketing \n- ARR for AI reception is 10MM ARR, growing to 30MM ARR\n\nOperating / Dev process: \n- Quarterly objectives \n- PM is responsible for quarterly deliverables \n- Work closely with china PMs to delivery \n- Align leadership vision with/ China \n\nCulture \n- Collaborative \n- People are nice \n- Some casual layoffs due to bloat\n- Finally profitable \n\nCore Telephony Business is strong but not growing \n- Lots of opportunities with Agents\n\nLeadership\n- Lot's of changes \n- Founder CTO, and CEO, great COO \n- Gary Chevsky\n* \n* Antonio Nucci Chief AI Officer",
+        "link": "",
+        "channel": "video",
+        "contactId": "Apoorv Chaudhary",
+        "contactName": "Apoorv Chaudhary"
+      }
+    ]
+  },
+  {
+    "id": "role-1773300331004",
+    "company": "VectorOne",
+    "title": "Head of Product",
+    "url": "",
+    "jdText": "No job description available (see attached for interview prep)",
+    "positioning": "management",
+    "tier": "active",
+    "stage": "screen",
+    "recruiterSource": "",
+    "knownContext": [],
+    "confidential": {
+      "company": false,
+      "role": false
+    },
+    "dateAdded": 1773100800000,
+    "lastActivity": 1773273600000,
+    "stageHistory": [],
+    "connections": 0,
+    "personalNotes": "interesting opportunity! 0 to 1",
+    "resumesSent": [
+      {
+        "filename": "Ili_Selinger_Resume.pdf",
+        "size": 61186,
+        "type": "application/pdf",
+        "date": 1773300579769,
+        "notes": "",
+        "indexedDbKey": "resume-role-1773300331004-0"
+      },
+      {
+        "filename": "VectorOne_Interview_Prep.docx - Google Docs.pdf",
+        "size": 202114,
+        "type": "application/pdf",
+        "date": 1773300585947,
+        "notes": "",
+        "indexedDbKey": "resume-role-1773300331004-1"
+      }
+    ]
+  },
+  {
+    "id": "role-1773301780042",
+    "company": "Intuit",
+    "title": "Principal Product Manager - Agentic Conversational Experiences",
+    "url": "https://jobs.intuit.com/job/mountain-view/principal-product-manager-agentic-conversational-experiences/27595/91064494400?cid=seo_google",
+    "jdText": "Company Overview\nIntuit is the global financial technology platform that powers prosperity for the people and communities we serve. With approximately 100 million customers worldwide using products such as TurboTax, Credit Karma, QuickBooks, and Mailchimp, we believe that everyone should have the opportunity to prosper. We never stop working to find new, innovative ways to make that possible.\n\nJob Overview\n\nIn a world where AI is disrupting Fintech and our customers are increasingly coming from a generation that takes fast information for granted, QuickBooks is best positioned to provide critical insights and automate complex tasks for small and medium business owners by transforming into an AI-powered platform. Come join the QuickBooks Customer Success Digital team as a Principal Product Manager, responsible for building AI-powered, customer-facing conversational experiences like chat and voice assistants.\n\nResponsibilities\n\nLead the initiative to re-imagine the digital help experiences across multiple channels and products with Gen AI\n\nConduct customer and market research to understand the evolving AI landscape and identify opportunities to serve customers\n\nCreate a bold vision, strategy and prioritized roadmap clearly mapped to customer benefits and business goals\n\nEvangelize the AI vision and strategy with senior leadership and engineering partners to inspire action\n\nDrive execution by motivating and coordinating across a matrix organization of cross-functional partners\n\nObsess over success metrics, customer behavior data, product usage funnel and performance of the products and features\n\nQualifications\n\n8+ years experience as a product manager\nComfortable working in a fast-paced, matrix environment.\nFluent in leveraging data and voice of the customer to uncover big opportunities and make decisions\nDemonstrated prior success in creating innovative products that delivered customer and business outcomes.\nTrack record of leading initiatives across an organization involving multiple product teams.\nExcellent verbal and written communication skills.\nExperience working with AI and GenAI capabilities to deliver customer-facing experiences\nExperience working with chat or voice assistants\n\nPay range: $236,000 to $319,000.",
+    "positioning": "ic",
+    "tier": "active",
+    "stage": "outreach",
+    "recruiterSource": "",
+    "knownContext": [],
+    "confidential": {
+      "company": false,
+      "role": false
+    },
+    "dateAdded": 1773273600000,
+    "lastActivity": 1773273600000,
+    "stageHistory": [],
+    "connections": 0,
+    "personalNotes": ""
+  },
+  {
+    "id": "role-1773302661743",
+    "company": "Yieldmo",
+    "title": "Head of Product",
+    "url": "https://yieldmo.com/",
+    "jdText": "Note from CEO: there isn't anything about this project out on web. Its a vertical ai project in sports with a very nice ui and very good relevancy",
+    "positioning": "ic",
+    "tier": "hot",
+    "stage": "researching",
+    "recruiterSource": "",
+    "knownContext": [],
+    "confidential": {
+      "company": false,
+      "role": false
+    },
+    "dateAdded": 1772755200000,
+    "lastActivity": 1773302889330,
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773273600000
+      }
+    ],
+    "connections": 0,
+    "personalNotes": "",
+    "commsLog": [
+      {
+        "date": "2026-03-12T08:07:59.059Z",
+        "note": "yavo@yieldmo.com is email, he contaced me on 3/6, I emailed him on 3/6, no response.",
+        "link": "",
+        "channel": "email",
+        "contactId": "Michael Yavonditte",
+        "contactName": "Michael Yavonditte"
+      }
+    ]
   }
 ]
