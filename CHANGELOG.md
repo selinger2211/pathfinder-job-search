@@ -4,6 +4,18 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.1.8 — 2026-03-11
+
+### What Changed — Logo Visibility Fix
+
+Company logos on Pipeline kanban cards were nearly invisible — 20x20px favicon images with a dark background that blended into the dark card theme. Fixed across all 4 logo CSS classes:
+
+- Increased `.role-card-logo` from 20px→28px with white background + 3px padding
+- Added white background to `.table-company-logo`, `.company-card-logo`, `.company-lookup-logo`
+- Added letter-initial fallback (`.role-card-logo-fallback`) when favicon fails to load — shows first letter of company name in accent color instead of hiding the image
+
+---
+
 ## v2.1.7 — 2026-03-11
 
 ### What Changed — Personal Mode Roles + Personal-First Principle

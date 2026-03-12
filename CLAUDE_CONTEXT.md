@@ -164,7 +164,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v2.1.7
+**Current Version:** v2.1.8
 **Last Updated:** 2026-03-11
 
 ### Implementation Status
@@ -188,7 +188,10 @@ These are the actual field shapes for objects stored in shared localStorage keys
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
-### Recently Fixed (v2.1.7)
+### Recently Fixed (v2.1.8)
+- **Logo visibility fix**: Increased kanban card logos from 20px→28px with white background + padding so favicons pop against dark theme. Added letter-initial fallback for broken images. Fixed all logo classes (role-card, table, company-card, company-lookup).
+
+### Previously Fixed (v2.1.7)
 - **Personal mode roles now load**: Generated `pf_roles.json` (45 roles from existing companies, stage="discovered"). Updated data-switcher to fetch and load roles file. Fixed data format: numeric timestamps (not ISO strings), valid Pipeline stage name, IC positioning default.
 - **Personal-first principle**: Added to build-with-ili skill as a core operating principle. QA always starts in Personal mode. Migration completeness is a ship-blocker.
 

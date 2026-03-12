@@ -288,12 +288,25 @@
 
     /* Company logo in the card */
     .role-card-logo {
-      width: 20px;
-      height: 20px;
+      width: 28px;
+      height: 28px;
       border-radius: var(--radius-sm);
-      background: var(--bg-elevated);
+      background: #ffffff;
       object-fit: contain;
       flex-shrink: 0;
+      padding: 3px;
+    }
+
+    /* Fallback when logo image fails to load — shows first letter */
+    .role-card-logo-fallback {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent, #6366f1);
+      background: var(--bg-elevated, #1e1e2e);
+      border: 1px solid var(--border, #333);
     }
 
     /* Company name text in card */
@@ -444,9 +457,10 @@
       width: 32px;
       height: 32px;
       border-radius: var(--radius-sm);
-      background: var(--bg-elevated);
+      background: #ffffff;
       object-fit: contain;
       flex-shrink: 0;
+      padding: 3px;
     }
 
     /* Company info container in table */
@@ -588,8 +602,9 @@
       width: 48px;
       height: 48px;
       border-radius: var(--radius-md);
-      background: var(--bg-elevated);
+      background: #ffffff;
       object-fit: contain;
+      padding: 4px;
     }
 
     .company-card-name {
@@ -1007,9 +1022,10 @@
       width: 24px;
       height: 24px;
       border-radius: var(--radius-sm);
-      background: var(--bg-elevated);
+      background: #ffffff;
       object-fit: contain;
       flex-shrink: 0;
+      padding: 2px;
     }
 
     /* ================================================================
@@ -2885,7 +2901,7 @@
         <div class="role-card ${isSelected ? 'selected' : ''} ${isBulkSelected ? 'selected' : ''} ${staleClass}" data-role-id="${role.id}" draggable="true" style="position: relative;">
           <input type="checkbox" class="role-card-checkbox" ${isBulkSelected ? 'checked' : ''} onchange="toggleRoleSelection('${role.id}', event)">
           <div class="role-card-company">
-            <img src="${logoUrl}" alt="${role.company}" class="role-card-logo" onerror="this.style.display='none'">
+            <img src="${logoUrl}" alt="${role.company}" class="role-card-logo" onerror="this.outerHTML='<span class=\'role-card-logo role-card-logo-fallback\'>${role.company.charAt(0)}</span>'">
             <span class="role-card-company-name">${role.company}</span>
           </div>
           <div class="role-card-title">${role.title}${role.title === 'Exploratory' ? ' <span style="font-size: 10px; opacity: 0.6;">🔍</span>' : ''}</div>
