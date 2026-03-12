@@ -51,6 +51,20 @@ Every screen, every interaction, every empty state — design matters as much as
 
 When presenting design decisions, show the user what they'll get — not just describe it. If building HTML/CSS, create the component and let them see it. Screenshots beat paragraphs.
 
+### Personal Mode Is the First-Class Citizen
+
+This is the single most important principle. We are building tools for Ili to use — with real data, in real workflows, to get a real job. Demo mode is a showroom for presentations. Personal mode is the product.
+
+**What this means in practice:**
+
+- **QA starts in Personal mode.** Always. If you verify something works in Demo and call it done, you haven't verified anything. Test with real data first, then confirm Demo still works.
+- **Migration completeness is a ship-blocker.** If a data type exists in the schema (roles, companies, connections) but has no migration path into Personal mode, that's a P0 bug — not a "design choice" or "the user can add it manually."
+- **Every feature must work with real data before it's considered done.** Not 13 demo companies — 45 real companies. Not synthetic names — actual connections the user has. If the feature only works with demo data, it doesn't work.
+- **Data shape mismatches between Demo and Personal are bugs.** If Demo roles use numeric timestamps but the migration generates ISO strings, that's a data contract violation. Same schema, same types, always.
+- **When in doubt, ask: "Does this help Ili get a job today?"** If the answer is no, reprioritize.
+
+This rule exists because we learned the hard way — across multiple sessions — that treating Personal mode as secondary led to the user's real data being broken while we polished docs and wrote analysis reports. Never again.
+
 ### Sweat the Last 10%
 
 Nothing ships at 90%. The last 10% is where quality lives. Error handling, empty states, accessibility, transitions, validation — these are requirements, not nice-to-haves. If you wouldn't ship it to a paying customer, it's not done.
@@ -237,7 +251,7 @@ The reason this matters: in Pathfinder, every module passed "visual rendering" c
 - After every major batch (same as before)
 - After any fix to a module — verify the fix actually works AND that it didn't break adjacent workflows
 - Before any commit that touches UI code
-- **If the app has multiple data modes (Demo/Personal, staging/production, etc.), run every workflow in EACH mode.** Bugs that only surface in one mode are common — e.g., Demo data might have fields that Personal data doesn't, or vice versa. The Calendar double-prefix bug only broke Personal mode because Demo mode re-seeded data on every page load, masking the bad keys.
+- **If the app has multiple data modes (Demo/Personal, staging/production, etc.), run every workflow in EACH mode — starting with Personal mode.** Personal mode is the first-class citizen (see Operating Principles). Always QA Personal first, then Demo. Bugs that only surface in one mode are common — e.g., Demo data might have fields that Personal data doesn't, or vice versa. The Calendar double-prefix bug only broke Personal mode because Demo mode re-seeded data on every page load, masking the bad keys. The roles-not-loading bug went unnoticed for multiple sessions because we always tested Demo first and treated Personal as an afterthought.
 
 *The bottom line:* A module is not QA'd until you've personally performed every core user workflow and verified the outcome. Taking a screenshot of a page that loaded is step zero — the real QA starts when you start clicking.
 
@@ -484,6 +498,8 @@ These are real mistakes from real projects. They're here so they don't happen ag
 **Helper functions that silently transform inputs will burn you.** Calendar had `getStorageData(key)` which prepended `pf_` to the key internally. Every caller also included `pf_` in the key name: `getStorageData('pf_roles')` → `localStorage.getItem('pf_pf_roles')`. The module was writing to and reading from keys that no other module used, so Calendar appeared empty in Personal mode. The fix was mechanical (strip `pf_` from all callers), but the lesson is structural: if a helper modifies its input, that behavior must be screaming-obvious at every call site, not buried in a function definition 2000 lines away. Now: storage helpers must document their convention at the top of the file, and the convention must be verified when copying patterns between modules.
 
 **Test every data mode, not just the default.** The Calendar double-prefix bug only surfaced in Personal mode. Demo mode masked it because data was re-seeded fresh on every page load (overwriting the bad keys). QA ran in Demo mode first, everything looked fine, and the bug shipped. Now: if the app has multiple data modes, every QA workflow must be tested in each mode.
+
+**Personal mode is the product. Demo mode is the showroom.** This one took multiple sessions to learn. The data-switcher was built to load companies and connections in Personal mode, but roles were set to `[]` by design — meaning the Pipeline kanban (the single most important view for a job search tool) was completely empty for real data. Meanwhile, we spent sessions writing analysis documents and polishing skill files. The user told us "nothing works" more than once before we fixed it. The root cause was a mindset bug: Demo mode was the default testing path, and Personal mode was an afterthought. Now: Personal mode is tested first, every time. Migration completeness is a ship-blocker. If a data type exists in the schema but isn't in the migration, that's a P0 bug. And before doing any "nice to have" work (docs, analysis, skill updates), ask: "Does Personal mode fully work?"
 
 ---
 

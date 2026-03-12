@@ -1,0 +1,1172 @@
+[
+  {
+    "id": "role-migrated-001",
+    "company": "Yahoo",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-002",
+    "company": "Meta",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-003",
+    "company": "Cardlytics",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-004",
+    "company": "Google",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-005",
+    "company": "Amazon Ads",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-006",
+    "company": "Apple",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-007",
+    "company": "Bounti.ai",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-008",
+    "company": "GoodLeap",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-009",
+    "company": "Singular",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-010",
+    "company": "Captiv8",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-011",
+    "company": "Stripe",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-012",
+    "company": "Epsilon",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-013",
+    "company": "Best Buy",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-014",
+    "company": "Enriches Lab",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-015",
+    "company": "Yelp",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-016",
+    "company": "InMobi",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-017",
+    "company": "Reflectivity",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-018",
+    "company": "RunLLM",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-019",
+    "company": "eBay",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-020",
+    "company": "Conversant",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-021",
+    "company": "Albertsons Media",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-022",
+    "company": "AskEffi",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-023",
+    "company": "Atlassian",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-024",
+    "company": "Shutterfly",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-025",
+    "company": "Indeed",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-026",
+    "company": "Coupang",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-027",
+    "company": "Rakuten",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-028",
+    "company": "Activision Blizzard",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-029",
+    "company": "Platformr",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-030",
+    "company": "Twilio",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-031",
+    "company": "BC Ventures",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-032",
+    "company": "Clever",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-033",
+    "company": "Informatica",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-034",
+    "company": "Canopy",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-035",
+    "company": "Amazon",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-036",
+    "company": "Calendly",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-037",
+    "company": "Workday",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-038",
+    "company": "Square",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-039",
+    "company": "Notion",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-040",
+    "company": "Blendid",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-041",
+    "company": "Gilead",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-042",
+    "company": "EBSCO",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-043",
+    "company": "Okta",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-044",
+    "company": "Pandora",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  },
+  {
+    "id": "role-migrated-045",
+    "company": "Roku",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "",
+    "source": "migration",
+    "stage": "discovered",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1773288735225
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1773288735225,
+    "lastActivity": 1773288735225,
+    "connections": [],
+    "tier": "active"
+  }
+]

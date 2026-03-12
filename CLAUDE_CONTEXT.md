@@ -164,7 +164,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v2.1.6
+**Current Version:** v2.1.7
 **Last Updated:** 2026-03-11
 
 ### Implementation Status
@@ -188,7 +188,11 @@ These are the actual field shapes for objects stored in shared localStorage keys
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
-### Recently Fixed (v2.1.6)
+### Recently Fixed (v2.1.7)
+- **Personal mode roles now load**: Generated `pf_roles.json` (45 roles from existing companies, stage="discovered"). Updated data-switcher to fetch and load roles file. Fixed data format: numeric timestamps (not ISO strings), valid Pipeline stage name, IC positioning default.
+- **Personal-first principle**: Added to build-with-ili skill as a core operating principle. QA always starts in Personal mode. Migration completeness is a ship-blocker.
+
+### Previously Fixed (v2.1.6)
 - **Data contract fix (c.id → c.name)**: Company objects have `name` but no `id` field; roles have `company` (string) but no `companyId`. Fixed all lookups across 4 modules: Outreach (critical — dropdown values were all "undefined"), Debrief, Calendar, Pipeline
 - **Calendar double-prefix bug (pf_pf_*)**: `getStorageData()` / `saveStorageData()` helpers prepend `pf_` to keys, but all callers were passing keys already prefixed with `pf_` (e.g., `getStorageData('pf_roles')` → `localStorage.getItem('pf_pf_roles')`). Fixed dozens of call sites. This was why Calendar appeared empty in Personal mode.
 - **Outreach selection restore**: After `renderSidebar()` rebuilds dropdown HTML, selected values are now restored from AppState

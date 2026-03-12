@@ -4,6 +4,31 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.1.7 — 2026-03-11
+
+### What Changed — Personal Mode Roles + Personal-First Principle
+
+Personal mode Pipeline was showing 0 roles because no `pf_roles.json` migration file existed — the data-switcher explicitly set `pf_roles = []`. This meant the most important view in the entire app (the job search kanban) was completely empty when using real data. Fixed across three layers:
+
+#### Migration: Generated pf_roles.json
+- Created `scripts/migration-output/pf_roles.json` — one role per company (45 total), all in "discovered" stage
+- Used numeric timestamps (matching `Date.now()` format that Pipeline expects) — ISO strings caused "NaN d" display
+- Set `positioning: 'ic'` — empty string was falling through to "Mgmt" badge
+- Set `stage: 'discovered'` — original `'saved'` value was not in Pipeline's `STAGES` array, causing roles to be invisible
+
+#### Data Switcher: Load Roles File
+- Updated `loadPersonalData()` to fetch `pf_roles.json` alongside companies and connections
+- Made roles file optional (graceful fallback to `[]` if file doesn't exist)
+- Updated console log to include roles count
+- Updated header comments to reflect three-file loading
+
+#### Skill: Personal-First Operating Principle
+- Added "Personal Mode Is the First-Class Citizen" as a core operating principle in build-with-ili skill
+- Updated QA checklist to enforce Personal-first testing order
+- Added lesson learned documenting the multi-session pattern of Demo-first testing that left Personal mode broken
+
+---
+
 ## v2.1.6 — 2026-03-11
 
 ### What Changed — Data Contract Fixes + Calendar Double-Prefix Bug

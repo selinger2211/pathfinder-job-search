@@ -12,8 +12,8 @@
  *   2. Injects a small toggle pill into the nav bar
  *   3. On switch:
  *      - "Demo": clears all pf_* keys → modules re-seed demo data on reload
- *      - "Personal": fetches migration JSON → writes to pf_connections
- *        and pf_companies → reloads so modules pick up the real data
+ *      - "Personal": fetches migration JSON → writes to pf_connections,
+ *        pf_companies, and pf_roles → reloads so modules pick up the real data
  *
  * USAGE
  *   Just include this script in any module's HTML:
@@ -67,12 +67,15 @@
     getAllPfKeys().forEach(key => localStorage.removeItem(key));
   }
 
-  /** Fetch personal data from migration output and write to localStorage */
+  /** Fetch personal data from migration output and write to localStorage.
+   *  INPUT: reads pf_connections.json, pf_companies.json, pf_roles.json
+   *  OUTPUT: populates localStorage with personal data, returns counts */
   async function loadPersonalData() {
     try {
-      const [connRes, compRes] = await Promise.all([
+      const [connRes, compRes, rolesRes] = await Promise.all([
         fetch(MIGRATION_BASE + '/pf_connections.json'),
-        fetch(MIGRATION_BASE + '/pf_companies.json')
+        fetch(MIGRATION_BASE + '/pf_companies.json'),
+        fetch(MIGRATION_BASE + '/pf_roles.json')
       ]);
 
       if (!connRes.ok || !compRes.ok) {
@@ -82,19 +85,19 @@
       const connections = await connRes.json();
       const companies = await compRes.json();
 
+      // Roles file is optional — if it doesn't exist, default to empty array.
+      // Users can always add more roles via Pipeline "+ New Role" button.
+      const roles = rolesRes.ok ? await rolesRes.json() : [];
+
       // Clear existing data first
       clearAllData();
 
       // Write personal data
       localStorage.setItem('pf_connections', JSON.stringify(connections));
       localStorage.setItem('pf_companies', JSON.stringify(companies));
+      localStorage.setItem('pf_roles', JSON.stringify(roles));
 
-      // Set empty pf_roles so modules don't re-seed demo data.
-      // The user adds real roles via the Pipeline "New Role" button,
-      // and their personal companies will appear in the dropdown.
-      localStorage.setItem('pf_roles', JSON.stringify([]));
-
-      return { connections: connections.length, companies: companies.length };
+      return { connections: connections.length, companies: companies.length, roles: roles.length };
     } catch (err) {
       console.error('[DataSwitcher]', err.message);
       throw err;
@@ -195,7 +198,7 @@
       if (newMode === 'personal') {
         const result = await loadPersonalData();
         setMode('personal');
-        console.log(`[DataSwitcher] Loaded ${result.connections} connections, ${result.companies} companies`);
+        console.log(`[DataSwitcher] Loaded ${result.connections} connections, ${result.companies} companies, ${result.roles} roles`);
       } else {
         clearAllData();
         setMode('demo');
