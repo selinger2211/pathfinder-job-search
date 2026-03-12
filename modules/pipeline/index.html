@@ -489,90 +489,7 @@
       gap: var(--space-1);
     }
 
-    /* ================================================================
-       BULK ACTIONS & SELECTION TOOLBAR
-       ================================================================ */
-
-    /* Checkbox on kanban cards for bulk selection —
-       hidden by default, shown on hover or when checked */
-    .role-card-checkbox {
-      position: absolute;
-      top: var(--space-2);
-      left: var(--space-2);
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-      accent-color: var(--accent);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 150ms ease;
-    }
-    .role-card:hover .role-card-checkbox,
-    .role-card-checkbox:checked {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    /* Bulk actions toolbar that appears when items selected */
-    .bulk-actions-toolbar {
-      position: fixed;
-      bottom: 40px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--bg-elevated);
-      border: 1px solid var(--bg-subtle);
-      border-radius: var(--radius-lg);
-      padding: var(--space-3) var(--space-4);
-      box-shadow: var(--shadow-lg);
-      z-index: 170;
-      display: flex;
-      align-items: center;
-      gap: var(--space-4);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity var(--duration-normal) var(--ease-default);
-    }
-
-    .bulk-actions-toolbar.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .bulk-actions-label {
-      font-size: var(--text-sm);
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
-
-    .bulk-actions-buttons {
-      display: flex;
-      gap: var(--space-2);
-    }
-
-    .bulk-action-btn {
-      padding: var(--space-1) var(--space-3);
-      font-size: var(--text-xs);
-      border: none;
-      border-radius: var(--radius-sm);
-      background: var(--bg-subtle);
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: all var(--duration-fast) var(--ease-default);
-    }
-
-    .bulk-action-btn:hover {
-      background: var(--accent);
-      color: white;
-    }
-
-    .bulk-action-btn.delete {
-      background: var(--status-rejected);
-      color: white;
-    }
-
-    .bulk-action-btn.delete:hover {
-      background: #bb2124;
-    }
+    /* (Bulk actions removed — checkbox and toolbar deleted in v2.3.0) */
 
     /* ================================================================
        COMPANIES VIEW (Grid Layout)
@@ -1967,34 +1884,7 @@
     </div>
   </div>
 
-  <!-- Section: Bulk Actions Toolbar -->
-  <div class="bulk-actions-toolbar" id="bulk-actions-toolbar">
-    <span class="bulk-actions-label">
-      <strong id="selected-count">0</strong> selected
-    </span>
-    <div class="bulk-actions-buttons">
-      <select id="bulk-move-stage" class="bulk-action-btn" style="padding: var(--space-1) var(--space-2); cursor: pointer;">
-        <option value="">Move to Stage...</option>
-        <option value="discovered">Discovered</option>
-        <option value="researching">Researching</option>
-        <option value="outreach">Outreach</option>
-        <option value="applied">Applied</option>
-        <option value="screen">Screen</option>
-        <option value="interviewing">Interviewing</option>
-        <option value="offer">Offer</option>
-        <option value="closed">Closed</option>
-      </select>
-      <select id="bulk-change-tier" class="bulk-action-btn" style="padding: var(--space-1) var(--space-2); cursor: pointer;">
-        <option value="">Change Tier...</option>
-        <option value="hot">Hot</option>
-        <option value="active">Active</option>
-        <option value="watching">Watching</option>
-        <option value="dormant">Dormant</option>
-      </select>
-      <button id="bulk-export-btn" class="bulk-action-btn">Export Selected</button>
-      <button id="bulk-delete-btn" class="bulk-action-btn delete">Delete</button>
-    </div>
-  </div>
+  <!-- Bulk actions toolbar removed in v2.3.0 -->
 
   <!-- Section: Add Role Modal Dialog -->
   <div class="modal-overlay" id="add-role-modal">
@@ -2587,15 +2477,15 @@
     }
 
     /**
-     * Gets the logo URL for a company, using Clearbit's logo API.
+     * Gets the logo URL for a company, using Google's Favicon API.
+     * Clearbit is deprecated/unreliable (fails from localhost).
+     * Google Favicon API returns high-res favicons reliably.
      * INPUT: company name, optional URL
      * RETURNS: URL string for the company logo
      */
     function getCompanyLogoUrl(companyName, url) {
       const domain = getCompanyDomain(companyName, url);
-      // Clearbit Logo API returns transparent-background PNGs (dark-theme friendly).
-      // Google Favicon API has white backgrounds baked in — avoid it.
-      return `https://logo.clearbit.com/${domain}`;
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
     }
 
     /**
@@ -2620,21 +2510,8 @@
     }
 
     /**
-     * Domains whose Clearbit logos have transparent backgrounds and
-     * look good on dark themes. All other companies get letter initials.
-     * To add a company: just add its domain to this set.
-     */
-    const LOGO_ALLOWLIST = new Set([
-      'apple.com', 'google.com', 'meta.com', 'amazon.com', 'yahoo.com',
-      'stripe.com', 'indeed.com', 'ebay.com', 'roku.com', 'okta.com',
-      'twilio.com', 'atlassian.com', 'workday.com', 'calendly.com',
-      'notion.so', 'rakuten.com', 'coupang.com', 'liveramp.com',
-      'yelp.com', 'inmobi.com', 'shutterfly.com', 'informatica.com',
-      'gilead.com', 'squareup.com',
-    ]);
-
-    /**
-     * Global handler: replaces an <img> with a colored letter circle.
+     * Global handler: replaces an <img> with a colored letter circle
+     * when the Clearbit logo fails to load (CORS, 404, etc.).
      */
     function handleLogoError(img, companyName, cssClass) {
       var letter = companyName.charAt(0);
@@ -2647,24 +2524,17 @@
     }
 
     /**
-     * Returns HTML for a company logo. Uses Clearbit image for companies
-     * on the allowlist (known transparent-bg logos); colored letter-initial
-     * circle for everything else. No more white-background checkboxes.
+     * Returns HTML for a company logo. Uses Google Favicon API (128px)
+     * with a colored letter-initial circle as fallback on error.
      * INPUT: company name, CSS class, optional URL
-     * RETURNS: HTML string
+     * RETURNS: HTML string (<img> tag with onerror fallback)
      */
     function companyLogoHtml(companyName, cssClass, url) {
       var domain = getCompanyDomain(companyName, url);
-      if (LOGO_ALLOWLIST.has(domain)) {
-        var logoUrl = 'https://logo.clearbit.com/' + domain;
-        var safeName = companyName.replace(/'/g, "\\'");
-        return '<img src="' + logoUrl + '" alt="' + companyName + '" class="' + cssClass + '"'
-          + " onerror=\"handleLogoError(this,'" + safeName + "','" + cssClass + "')\">";
-      }
-      // Default: colored letter-initial circle
-      var letter = companyName.charAt(0);
-      var color = getCompanyColor(companyName);
-      return '<span class="' + cssClass + ' role-card-logo-fallback" style="background:' + color + '">' + letter + '</span>';
+      var logoUrl = 'https://www.google.com/s2/favicons?domain=' + domain + '&sz=128';
+      var safeName = companyName.replace(/'/g, "\\'");
+      return '<img src="' + logoUrl + '" alt="' + companyName + '" class="' + cssClass + '"'
+        + " onerror=\"handleLogoError(this,'" + safeName + "','" + cssClass + "')\">";
     }
 
     /**
@@ -2978,7 +2848,6 @@
       const company = getCompanies().find(c => c.name === role.company);
       const daysInStage = getDaysInStage(role);
       const isSelected = selectedCardId === role.id;
-      const isBulkSelected = selectedRoleIds.has(role.id);
       const logoUrl = getCompanyLogoUrl(role.company, role.url);
       const connectionCount = getConnectionsForCompany(role.company).length || role.connections || 0;
 
@@ -2991,8 +2860,7 @@
       const staleBadgeHtml = isStale ? `<span class="stale-badge" title="Last updated ${daysSinceUpdate} days ago">Stale — ${daysSinceUpdate}d</span>` : '';
 
       return `
-        <div class="role-card ${isSelected ? 'selected' : ''} ${isBulkSelected ? 'selected' : ''} ${staleClass}" data-role-id="${role.id}" draggable="true" style="position: relative;">
-          <input type="checkbox" class="role-card-checkbox" ${isBulkSelected ? 'checked' : ''} onchange="toggleRoleSelection('${role.id}', event)">
+        <div class="role-card ${isSelected ? 'selected' : ''} ${staleClass}" data-role-id="${role.id}" draggable="true" style="position: relative;">
           <div class="role-card-company">
             ${companyLogoHtml(role.company, 'role-card-logo', role.url)}
             <span class="role-card-company-name">${role.company}</span>
@@ -4951,124 +4819,8 @@
       }
     });
 
-    /* ================================================================
-       BULK SELECTION & ACTIONS
-       ================================================================ */
-
-    let selectedRoleIds = new Set();
-
-    /**
-     * Toggles selection of a role card
-     */
-    function toggleRoleSelection(roleId, event) {
-      event?.stopPropagation();
-      if (selectedRoleIds.has(roleId)) {
-        selectedRoleIds.delete(roleId);
-      } else {
-        selectedRoleIds.add(roleId);
-      }
-      updateBulkActionsToolbar();
-      render();
-    }
-
-    /**
-     * Selects all roles in the current column
-     */
-    function selectAllInColumn(stage) {
-      const roles = getRoles().filter(r => r.stage === stage);
-      roles.forEach(r => selectedRoleIds.add(r.id));
-      updateBulkActionsToolbar();
-      render();
-    }
-
-    /**
-     * Updates visibility and content of bulk actions toolbar
-     */
-    function updateBulkActionsToolbar() {
-      const toolbar = document.getElementById('bulk-actions-toolbar');
-      const count = selectedRoleIds.size;
-      if (count > 0) {
-        document.getElementById('selected-count').textContent = count;
-        toolbar.classList.add('visible');
-      } else {
-        toolbar.classList.remove('visible');
-      }
-    }
-
-    /**
-     * Executes bulk move to stage
-     */
-    function bulkMoveToStage(stage) {
-      if (!stage || selectedRoleIds.size === 0) return;
-      const roles = getRoles();
-      let moved = 0;
-      selectedRoleIds.forEach(roleId => {
-        const role = roles.find(r => r.id === roleId);
-        if (role) {
-          role.stage = stage;
-          if (!role.stageHistory) role.stageHistory = [];
-          role.stageHistory.push({
-            from: role.stage,
-            to: stage,
-            timestamp: new Date().toISOString(),
-            reason: 'Bulk move'
-          });
-          role.lastActivity = Date.now();
-          moved++;
-        }
-      });
-      saveRoles(roles);
-      selectedRoleIds.clear();
-      updateBulkActionsToolbar();
-      showToast(`Moved ${moved} role(s) to ${stage}`, 'success');
-      render();
-    }
-
-    /**
-     * Executes bulk change of tier
-     */
-    function bulkChangeTier(tier) {
-      if (!tier || selectedRoleIds.size === 0) return;
-      const roles = getRoles();
-      let changed = 0;
-      selectedRoleIds.forEach(roleId => {
-        const role = roles.find(r => r.id === roleId);
-        if (role) {
-          role.tier = tier;
-          role.lastActivity = Date.now();
-          changed++;
-        }
-      });
-      saveRoles(roles);
-      selectedRoleIds.clear();
-      updateBulkActionsToolbar();
-      showToast(`Changed tier for ${changed} role(s)`, 'success');
-      render();
-    }
-
-    /**
-     * Executes bulk delete with confirmation
-     */
-    function bulkDeleteRoles() {
-      if (selectedRoleIds.size === 0) return;
-      if (!confirm(`Delete ${selectedRoleIds.size} role(s)? This cannot be undone.`)) return;
-      const roles = getRoles();
-      const filtered = roles.filter(r => !selectedRoleIds.has(r.id));
-      saveRoles(filtered);
-      selectedRoleIds.clear();
-      updateBulkActionsToolbar();
-      showToast(`Deleted ${roles.length - filtered.length} role(s)`, 'success');
-      render();
-    }
-
-    /**
-     * Exports selected roles to CSV
-     */
-    function exportSelectedRoles() {
-      if (selectedRoleIds.size === 0) return;
-      const roles = getRoles().filter(r => selectedRoleIds.has(r.id));
-      exportRolesToCSV(roles);
-    }
+    /* (Bulk selection & actions removed in v2.3.0 — checkbox was causing
+       white-square visual artifacts on kanban cards) */
 
     /* ================================================================
        CSV EXPORT FUNCTIONS
@@ -5523,20 +5275,6 @@
     // Set up view mode class
     const page = document.querySelector('.page');
     page.classList.add(`${currentViewMode}-view`);
-
-    // Wire up bulk action buttons
-    document.getElementById('bulk-move-stage').addEventListener('change', (e) => {
-      bulkMoveToStage(e.target.value);
-      e.target.value = '';
-    });
-
-    document.getElementById('bulk-change-tier').addEventListener('change', (e) => {
-      bulkChangeTier(e.target.value);
-      e.target.value = '';
-    });
-
-    document.getElementById('bulk-export-btn').addEventListener('click', exportSelectedRoles);
-    document.getElementById('bulk-delete-btn').addEventListener('click', bulkDeleteRoles);
 
     // Wire up view toggle buttons
     document.getElementById('view-toggle-kanban').addEventListener('click', () => switchView('kanban'));

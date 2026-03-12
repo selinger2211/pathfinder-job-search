@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v2.2.2
+**Status:** v2.3.0
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v2.3.0 | 2026-03-11 | **Remove bulk-select + restore logos** — Deleted checkbox element and all bulk-select code (CSS, toolbar, JS functions). Switched from dead Clearbit API to Google Favicon API for reliable company logos. Letter-initial fallback for missing favicons. |
 | v2.2.2 | 2026-03-11 | **Fix: checkbox white square** — The "checkbox in front of logos" was a literal `<input type="checkbox">` for bulk selection, always visible on every kanban card. Hidden by default now; shows on hover and when checked. |
 | v2.2.0 | 2026-03-11 | **Personal data accuracy + logo fix + migration versioning**: Fixed logo "checkbox" appearance (removed white background boxes, switched to circular transparent logos). Corrected pipeline stages: Yahoo and Amazon Ads moved to "applied". Added LiveRamp to companies and roles (applied stage). Added migration version system to data-switcher — bumping `MIGRATION_VERSION` forces re-seed of personal data on next load, solving stale data problem. |
 | v2.1.9 | 2026-03-11 | **Personal data integrity + logo polish**: Regenerated pf_roles.json with real outreach stages from spreadsheet (6 Outreach, 1 Screen, 38 Discovered) + personal notes from contact data. Fixed data-switcher to seed-once (backup/restore preserves user edits across mode switches). Polished logos to 32px with border-radius + domain overrides + letter-initial fallback. |

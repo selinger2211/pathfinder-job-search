@@ -164,14 +164,14 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v2.2.2
+**Current Version:** v2.3.0
 **Last Updated:** 2026-03-11
 
 ### Implementation Status
 
 | Module | % Complete | What Works | What's Missing (External APIs) |
 |--------|-----------|------------|-------------------------------|
-| Pipeline | ~100% | Kanban, CRUD, drag-drop, IndexedDB resume, comms log, URL import, bulk actions, CSV export, company view, fit assessment, keyboard shortcuts, **Clay enrichment display**, **enrichment badges**, **stage analytics + funnel chart**, **stale role detection (14d)** | — |
+| Pipeline | ~100% | Kanban, CRUD, drag-drop, IndexedDB resume, comms log, URL import, CSV export, company view, fit assessment, keyboard shortcuts, **Clay enrichment display**, **enrichment badges**, **stage analytics + funnel chart**, **stale role detection (14d)**, **Google Favicon logos** | — |
 | Dashboard | ~100% | 12-rule nudge engine, streak, action queue, feed review, interview intelligence, pipeline funnel, activity feed, weekly stats, real-time storage listener, **GCal card (next 3 events + countdown)**, **sync status indicator**, **quick actions row**, **debrief pending badge**, **outreach queue indicator** | — |
 | Job Feed | ~100% | Scoring engine, preference editor, manual entry, dedup, quick-check filter, auto-pipeline, analytics, snooze, career page URL import, Sources tab, **error handling, a11y, visual polish** | — |
 | Research Brief | ~100% | Claude API, 14 section prompts, caching, citation system, localStorage artifact save, saved briefs panel, **error handling, a11y, visual polish** | — |
@@ -188,8 +188,9 @@ These are the actual field shapes for objects stored in shared localStorage keys
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
-### Recently Fixed (v2.2.2)
-- **Checkbox "white square" fix**: The "checkbox in front of logos" was a literal `<input type="checkbox">` (`.role-card-checkbox`) always visible on every kanban card for bulk selection. Now hidden by default, shown on card hover and when checked.
+### Recently Fixed (v2.3.0)
+- **Removed bulk-select checkbox entirely**: The `<input type="checkbox">` on every kanban card (and all associated bulk-select CSS, toolbar HTML, JS functions) has been deleted. This was the "white square" reported across 3+ sessions.
+- **Restored company logos**: Switched from dead Clearbit API to Google Favicon API (`/s2/favicons?domain=X&sz=128`). Logos load reliably. Letter-initial colored circles as fallback. New companies get logos automatically via domain resolution (`getCompanyDomain`).
 
 ### Previously Fixed (v2.2.0)
 - **Real pipeline data from spreadsheet**: Regenerated `pf_roles.json` with actual outreach statuses mapped to Pipeline stages (6 in Outreach, 1 in Screen, 38 in Discovered). Personal notes now populated from spreadsheet contact notes.

@@ -4,6 +4,24 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.3.0 — 2026-03-11
+
+### What Changed — Remove Bulk-Select Checkbox + Restore Logos
+
+**Issues reported by user:**
+1. Logos missing from kanban cards (Clearbit API is dead/unreliable)
+2. Checkbox element not wanted — remove entirely
+
+**Fixes:**
+1. **Removed bulk-select checkbox**: Deleted `<input type="checkbox">` from every kanban card, along with all bulk-select CSS, toolbar HTML, and JS functions. This was the "white square" the user saw across 3+ sessions.
+2. **Restored logos**: Switched from dead Clearbit API to Google Favicon API (`/s2/favicons?domain=X&sz=128`). Logos load reliably. Letter-initial fallback still works.
+3. **New company logos auto-resolve**: When adding a new company, domain is derived from name/URL via `getCompanyDomain`, and Google Favicon fetches the icon automatically.
+
+**Files Modified:**
+- `modules/pipeline/index.html` — removed all bulk-select code; switched logo API to Google Favicon
+
+---
+
 ## v2.2.2 — 2026-03-11
 
 ### What Changed — Fix: Hidden Bulk-Select Checkbox Was the "White Square"
