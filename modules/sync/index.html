@@ -2042,7 +2042,7 @@
 
     /* ====== THEME TOGGLE ====== */
     function toggleTheme() {
-        const current = localStorage.getItem('pf_theme') || 'dark';
+        const current = localStorage.getItem('pf_theme') || 'light';
         const next = current === 'dark' ? 'light' : 'dark';
         localStorage.setItem('pf_theme', next);
         document.documentElement.setAttribute('data-theme', next);
@@ -2051,7 +2051,7 @@
     /* ====== INITIALIZE ====== */
     document.addEventListener('DOMContentLoaded', () => {
         // Apply theme
-        const theme = localStorage.getItem('pf_theme') || 'dark';
+        const theme = localStorage.getItem('pf_theme') || 'light';
         document.documentElement.setAttribute('data-theme', theme);
 
         // Render previews

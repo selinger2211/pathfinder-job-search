@@ -99,24 +99,23 @@ img {
 
 :root {
   /* -------- BACKGROUND LAYERS --------
-     Websites often have multiple layers (a dark page, lighter cards on top,
+     Websites often have multiple layers (a page background, lighter cards on top,
      even lighter popovers on top of that). These colors create that depth.
-     We go from darkest (--bg-base, the page background) to lightest (--bg-subtle,
-     the most elevated UI elements). This is "dark mode" by default. */
+     LIGHT MODE is the default (v3.3.1). Dark mode available via user toggle. */
 
-  --bg-base:        #09090b;   /* The darkest; used for the page background */
-  --bg-surface:     #18181b;   /* Cards and panels sit on this layer */
-  --bg-elevated:    #27272a;   /* Things hovering above cards (dropdowns, etc.) */
-  --bg-subtle:      #3f3f46;   /* The lightest background; used for borders and accents */
+  --bg-base:        #ffffff;   /* Pure white page background */
+  --bg-surface:     #f4f4f5;   /* Light gray for cards and panels */
+  --bg-elevated:    #e4e4e7;   /* Slightly darker gray for elevated elements */
+  --bg-subtle:      #d4d4d8;   /* Medium gray for borders and accents */
 
   /* -------- TEXT COLORS --------
      Three levels: primary (main text that's easy to read),
      secondary (labels, hints), tertiary (barely noticeable, very dim).
      This helps create a visual hierarchy so users know what's important. */
 
-  --text-primary:   #fafafa;   /* Bright white; for all main content */
-  --text-secondary: #a1a1aa;   /* Medium gray; for labels and secondary info */
-  --text-tertiary:  #71717a;   /* Dim gray; for hints and very minor text */
+  --text-primary:   #09090b;   /* Near-black; for all main content */
+  --text-secondary: #52525b;   /* Medium gray; for labels and secondary info */
+  --text-tertiary:  #a1a1aa;   /* Light gray; for hints and very minor text */
 
   /* -------- ACCENT COLOR --------
      This is the "brand" color used for buttons, links, and interactive elements.
@@ -202,9 +201,9 @@ img {
      Small shadow = slightly raised. Big shadow = hovering high.
      The glow is a special effect: a thin colored outline + a blurry glow underneath. */
 
-  --shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.3);        /* Subtle shadow; barely noticeable */
-  --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.25);      /* Medium shadow; used on hover */
-  --shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.35);      /* Large shadow; for popups and modals */
+  --shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.06);        /* Subtle shadow; barely noticeable */
+  --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.08);      /* Medium shadow; used on hover */
+  --shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.12);      /* Large shadow; for popups and modals */
   --shadow-glow: 0 0 0 1px var(--accent), 0 0 12px var(--accent-subtle);  /* Glowing outline effect when selected */
 
   /* -------- BORDER RADIUS --------
@@ -247,26 +246,26 @@ img {
 
 
 /* ============================================================
-   LIGHT MODE
+   DARK MODE
 
-   By default, we're in dark mode (dark backgrounds, light text).
-   But if the user switches to light mode (by setting data-theme="light"
-   on the <html> element), we override these token values to light versions.
+   By default, we're in light mode (white backgrounds, dark text).
+   When the user toggles to dark mode (setting data-theme="dark"
+   on the <html> element), we override to dark values.
    ============================================================ */
 
-[data-theme="light"] {
-  /* Light mode inverses everything: light backgrounds, dark text, softer shadows */
-  --bg-base:       #ffffff;     /* Pure white page background */
-  --bg-surface:    #f4f4f5;     /* Light gray for cards */
-  --bg-elevated:   #e4e4e7;     /* Slightly darker gray for elevated elements */
-  --bg-subtle:     #d4d4d8;     /* Medium gray for borders and accents */
-  --text-primary:  #09090b;     /* Dark text for good contrast */
-  --text-secondary:#52525b;     /* Medium gray for secondary text */
-  --text-tertiary: #a1a1aa;     /* Light gray for barely-visible text */
-  /* Shadows are much softer in light mode because it's brighter overall */
-  --shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.12);
+[data-theme="dark"] {
+  /* Dark mode: dark backgrounds, light text, heavier shadows */
+  --bg-base:       #09090b;     /* Very dark page background */
+  --bg-surface:    #18181b;     /* Cards and panels */
+  --bg-elevated:   #27272a;     /* Elevated elements (dropdowns, etc.) */
+  --bg-subtle:     #3f3f46;     /* Borders and accents */
+  --text-primary:  #fafafa;     /* Bright white text */
+  --text-secondary:#a1a1aa;     /* Medium gray for labels */
+  --text-tertiary: #71717a;     /* Dim gray for hints */
+  /* Heavier shadows in dark mode to maintain depth perception */
+  --shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 
@@ -277,8 +276,8 @@ img {
    ============================================================ */
 
 body {
-  background: var(--bg-base);      /* Use the base dark background */
-  color: var(--text-primary);      /* Text is bright by default */
+  background: var(--bg-base);      /* Use the base background (light by default) */
+  color: var(--text-primary);      /* Main text color */
   font-size: var(--text-base);     /* Normal-sized text (16px) */
   line-height: 1.6;                /* Space between lines; makes text readable */
   min-height: 100vh;               /* Page is at least as tall as the viewport (full screen) */

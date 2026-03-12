@@ -4,6 +4,37 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.3.1 — 2026-03-12
+
+### What Changed — Salary Intelligence, Light Theme Default, Score Transparency, Built In Email Source
+
+**User requested:** "let's start w/ salary, push it and then go to resume builder, one thing to note is the pipeline should be salary aware, if it's known to be below my threshold, we should not add to pipeline, if it's unknown say so and I can decide. currently min salary is 250K, target salary is 300K - 450" + "also some tabs are in dark mode and others in light, let's default to light mode and only go to dark mode on user initiated" + "on the feed, can we have transparency on the match score, why is it a 70 vs 30?" + "also for the email feed are you capturing these from Built In?"
+
+**Changes:**
+
+1. **Pipeline: Salary extraction from JDs** — New `extractSalaryFromJD(jdText)` engine with 3 regex patterns: dollar ranges ($172,645 - $375,285), K ranges (192K-330K), and single amounts near salary context words. Sanity checks: $50K-$2M range, min ≤ max. Salary displayed on Pipeline kanban cards with color coding: green (in-range/above), red with ⚠️ (below $250K floor), italic gray (unknown). `evaluateSalary()` returns 'below' | 'in-range' | 'above' | 'unknown'.
+
+2. **Salary preferences system** — New `pf_salary_prefs` localStorage key stores `{ minSalary: 250000, targetMin: 300000, targetMax: 450000 }`. Shared between Pipeline and Feed. `loadSalaryPrefs()` reads with defaults. Seeded on Pipeline init.
+
+3. **Feed: Salary gate on acceptance** — `acceptRole()` checks salary before adding to Pipeline. If listed salary max is below $250K floor, shows confirm dialog warning the user. Unknown salary always allowed through. Feed comp defaults updated: minBase 285K→250K, targetBase 350K→300K.
+
+4. **Theme: Light mode default** — Swapped `pathfinder.css` so `:root` = light mode values (was dark). `[data-theme="dark"]` = dark override. All modules with `initTheme()` now default to `'light'` (Pipeline, Dashboard, Sync, Calendar). Modules without theme code (Feed, Research, Resume, etc.) automatically get light mode from `:root`.
+
+5. **Feed: Score breakdown transparency** — Replaced hidden hover tooltip with visible inline color-coded dimension chips on both feed cards and snoozed cards. Each dimension (Title, Domain, Keywords, Location, Network, Stage, Comp) shows its score with tier coloring: green (70+), yellow (40-69), red (0-39).
+
+6. **Feed: Built In email source** — Parsed `support@builtin.com` job alert emails and added 5 new roles to `gmail-seed.json`: GEICO ($146K-$230K), Amplitude ($200K-$301K), Zendesk ($183K-$275K), DIRECTV ($122K-$222K), Autodesk ($125K-$224K). Built In added as active source in FEED_SOURCES. Source badge shows "Gmail / Built In".
+
+**Files changed:**
+- `modules/pipeline/index.html` (salary extraction engine, salary CSS, card rendering, prefs seeding, theme default)
+- `modules/job-feed-listener/index.html` (comp defaults, salary gate, score breakdown CSS+HTML, Built In source)
+- `modules/job-feed-listener/gmail-seed.json` (16 → 22 items: +5 Built In + 1 Zendesk dedup)
+- `modules/shared/pathfinder.css` (theme swap: `:root` light, `[data-theme="dark"]` dark)
+- `modules/dashboard/index.html` (theme default)
+- `modules/sync/index.html` (theme default)
+- `modules/calendar/index.html` (theme swap: inline CSS light default)
+
+---
+
 ## v3.3.0 — 2026-03-12
 
 ### What Changed — LinkedIn Network Prioritization, Pipeline Dedup, Dashboard Overhaul, Fuzzy Match Fix

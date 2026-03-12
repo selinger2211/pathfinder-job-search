@@ -394,5 +394,125 @@
       "subject": "Senior Product Manager: OpenAI - PM, API Model Behavior and more",
       "referredBy": null
     }
+  },
+  {
+    "id": "gmail-builtin-geico-19ce3e72",
+    "company": "GEICO",
+    "logo": "🦎",
+    "title": "Principal Product Manager - GEICO.com",
+    "domain": "Fintech",
+    "location": "Multiple Locations",
+    "remote": false,
+    "posted": "Mar 12, 2026",
+    "source": "Gmail / Built In",
+    "jd": "Principal Product Manager - GEICO.com. In Office. Posted via Built In job alert.",
+    "salary": "$146,575-$229,600",
+    "stage": "Public",
+    "headcount": 40000,
+    "feedMetadata": {
+      "sourceType": "job_alert",
+      "sourceId": "19ce3e72f4c7c6d4",
+      "sourceUrl": "https://mail.google.com/mail/u/0/#all/19ce3e72f4c7c6d4",
+      "extractedAt": "2026-03-12T22:30:00Z",
+      "from": "Built In <support@builtin.com>",
+      "subject": "New Principal Product Manager Job Matches",
+      "referredBy": null
+    }
+  },
+  {
+    "id": "gmail-builtin-amplitude-19ce3e72",
+    "company": "Amplitude",
+    "logo": "📈",
+    "title": "Principal Product Manager, AI - People & Places",
+    "domain": "Analytics",
+    "location": "San Francisco, CA",
+    "remote": false,
+    "posted": "Mar 12, 2026",
+    "source": "Gmail / Built In",
+    "jd": "Principal Product Manager, AI - People & Places. In Office, San Francisco, CA. Posted via Built In job alert.",
+    "salary": "$200,000-$301,000",
+    "stage": "Public",
+    "headcount": 700,
+    "feedMetadata": {
+      "sourceType": "job_alert",
+      "sourceId": "19ce3e72f4c7c6d4",
+      "sourceUrl": "https://mail.google.com/mail/u/0/#all/19ce3e72f4c7c6d4",
+      "extractedAt": "2026-03-12T22:30:00Z",
+      "from": "Built In <support@builtin.com>",
+      "subject": "New Principal Product Manager Job Matches",
+      "referredBy": null
+    }
+  },
+  {
+    "id": "gmail-builtin-zendesk-19ce3e72",
+    "company": "Zendesk",
+    "logo": "🎧",
+    "title": "Principal Data Product Manager",
+    "domain": "Enterprise SaaS",
+    "location": "Multiple Locations",
+    "remote": false,
+    "posted": "Mar 12, 2026",
+    "source": "Gmail / Built In",
+    "jd": "Principal Data Product Manager. In Office, Multiple Locations. Posted via Built In job alert.",
+    "salary": "$183,000-$275,000",
+    "stage": "Public",
+    "headcount": 6000,
+    "feedMetadata": {
+      "sourceType": "job_alert",
+      "sourceId": "19ce3e72f4c7c6d4",
+      "sourceUrl": "https://mail.google.com/mail/u/0/#all/19ce3e72f4c7c6d4",
+      "extractedAt": "2026-03-12T22:30:00Z",
+      "from": "Built In <support@builtin.com>",
+      "subject": "New Principal Product Manager Job Matches",
+      "referredBy": null
+    }
+  },
+  {
+    "id": "gmail-builtin-directv-19ce3e72",
+    "company": "DIRECTV",
+    "logo": "📺",
+    "title": "Technical Product Manager - Principal 2",
+    "domain": "Media & Entertainment",
+    "location": "Remote",
+    "remote": true,
+    "posted": "Mar 12, 2026",
+    "source": "Gmail / Built In",
+    "jd": "Technical Product Manager - Principal 2. Remote, Multiple Locations. Posted via Built In job alert.",
+    "salary": "$122,194-$221,818",
+    "stage": "Public",
+    "headcount": 13000,
+    "feedMetadata": {
+      "sourceType": "job_alert",
+      "sourceId": "19ce3e72f4c7c6d4",
+      "sourceUrl": "https://mail.google.com/mail/u/0/#all/19ce3e72f4c7c6d4",
+      "extractedAt": "2026-03-12T22:30:00Z",
+      "from": "Built In <support@builtin.com>",
+      "subject": "New Principal Product Manager Job Matches",
+      "referredBy": null
+    }
+  },
+  {
+    "id": "gmail-builtin-autodesk-19cd99a0",
+    "company": "Autodesk",
+    "logo": "🏗️",
+    "title": "Sr. Principal Product Manager, Services",
+    "domain": "Enterprise SaaS",
+    "location": "Remote",
+    "remote": true,
+    "posted": "Mar 10, 2026",
+    "source": "Gmail / Built In",
+    "jd": "Sr. Principal Product Manager, Services. Remote, Multiple Locations. Posted via Built In job alert.",
+    "salary": "$125,000-$223,850",
+    "stage": "Public",
+    "headcount": 13000,
+    "feedMetadata": {
+      "sourceType": "job_alert",
+      "sourceId": "19cd99a0de3c1209",
+      "sourceUrl": "https://mail.google.com/mail/u/0/#all/19cd99a0de3c1209",
+      "extractedAt": "2026-03-10T22:30:00Z",
+      "from": "Built In <support@builtin.com>",
+      "subject": "New Principal Product Manager Job Matches",
+      "referredBy": null
+    }
   }
 ]

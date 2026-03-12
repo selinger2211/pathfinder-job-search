@@ -345,6 +345,35 @@
       margin-bottom: var(--space-2);
     }
 
+    /* Salary range display on card */
+    .role-card-salary {
+      font-size: var(--text-xs);
+      font-family: var(--font-mono);
+      font-weight: 500;
+      margin-bottom: var(--space-1);
+    }
+
+    /* Salary within target range — green */
+    .role-card-salary.in-range {
+      color: var(--success);
+    }
+
+    /* Salary below minimum threshold — red with warning */
+    .role-card-salary.below {
+      color: var(--danger);
+    }
+
+    /* Salary above target — also green (great!) */
+    .role-card-salary.above {
+      color: var(--success);
+    }
+
+    /* Salary unknown — muted */
+    .role-card-salary.unknown {
+      color: var(--text-tertiary);
+      font-style: italic;
+    }
+
     /* Bottom section of card with days in stage and connection count */
     .role-card-footer {
       display: flex;
@@ -2359,7 +2388,7 @@
 
     /* Application state variables that track what the user is doing */
     let currentViewMode = localStorage.getItem('pf_view_mode') || 'kanban';
-    let currentTheme = localStorage.getItem('pf_theme') || 'dark';
+    let currentTheme = localStorage.getItem('pf_theme') || 'light';
     let selectedCardId = null;
     let sortColumn = null;
     let sortAsc = true;
@@ -2650,6 +2679,15 @@
           })
           .catch(err => console.warn('[Pipeline] LinkedIn network not available:', err.message));
       }
+
+      // Seed salary preferences if not yet set (v3.3.1)
+      if (!localStorage.getItem('pf_salary_prefs')) {
+        localStorage.setItem('pf_salary_prefs', JSON.stringify({
+          minSalary: 250000,
+          targetMin: 300000,
+          targetMax: 450000
+        }));
+      }
     }
 
     /**
@@ -2749,6 +2787,123 @@
         hash = name.charCodeAt(i) + ((hash << 5) - hash);
       }
       return PALETTE[Math.abs(hash) % PALETTE.length];
+    }
+
+    // ================================================================
+    // SALARY EXTRACTION ENGINE
+    // Parses salary/compensation ranges from job description text.
+    // Handles formats like "$172,645 - $375,285", "$210,000 to $309,500",
+    // "192K-330K", "base salary range $150,000–$200,000/yr", etc.
+    // ================================================================
+
+    /**
+     * Extract salary range from a job description text string.
+     * Tries multiple regex patterns to find compensation data.
+     * INPUT: jdText = the raw job description string (can be long)
+     * RETURNS: { min: number, max: number, raw: string } or null if no salary found
+     *   - min/max are annual base in whole dollars (e.g., 172645, 375285)
+     *   - raw is the original matched text for display
+     */
+    function extractSalaryFromJD(jdText) {
+      if (!jdText || jdText.length < 20) return null;
+
+      // Pattern 1: "$172,645.00 - $375,285.00" or "$210,000 to $309,500"
+      // Matches dollar amounts with optional decimals, separated by -, –, —, or "to"
+      const dollarRange = jdText.match(
+        /\$\s*([\d,]+(?:\.\d{2})?)\s*(?:[-–—]|to)\s*\$?\s*([\d,]+(?:\.\d{2})?)/i
+      );
+      if (dollarRange) {
+        const min = parseFloat(dollarRange[1].replace(/,/g, ''));
+        const max = parseFloat(dollarRange[2].replace(/,/g, ''));
+        // Sanity check: salary should be between $50K and $2M
+        if (min >= 50000 && max <= 2000000 && min <= max) {
+          return { min: Math.round(min), max: Math.round(max), raw: dollarRange[0].trim() };
+        }
+      }
+
+      // Pattern 2: "192K-330K" or "192k - 330k"
+      const kRange = jdText.match(
+        /(\d{2,4})\s*[kK]\s*(?:[-–—]|to)\s*(\d{2,4})\s*[kK]/
+      );
+      if (kRange) {
+        const min = parseInt(kRange[1]) * 1000;
+        const max = parseInt(kRange[2]) * 1000;
+        if (min >= 50000 && max <= 2000000 && min <= max) {
+          return { min, max, raw: kRange[0].trim() };
+        }
+      }
+
+      // Pattern 3: Single dollar amount near "salary" or "compensation" context
+      // e.g., "base salary of $200,000" — use as both min and max
+      const singleDollar = jdText.match(
+        /(?:salary|compensation|base\s*pay|pay\s*range)[^$\n]{0,40}\$\s*([\d,]+(?:\.\d{2})?)/i
+      );
+      if (singleDollar) {
+        const amount = parseFloat(singleDollar[1].replace(/,/g, ''));
+        if (amount >= 50000 && amount <= 2000000) {
+          return { min: Math.round(amount), max: Math.round(amount), raw: `$${singleDollar[1]}` };
+        }
+      }
+
+      return null;
+    }
+
+    /**
+     * Format a salary number into a human-readable string.
+     * INPUT: amount = number (e.g., 172645)
+     * RETURNS: formatted string (e.g., "$173K")
+     */
+    function formatSalary(amount) {
+      if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
+      if (amount >= 1000) return `$${Math.round(amount / 1000)}K`;
+      return `$${amount}`;
+    }
+
+    /**
+     * Format a salary range into a compact display string.
+     * INPUT: salaryData = { min, max } from extractSalaryFromJD
+     * RETURNS: formatted string like "$173K–$375K" or "$210K" if min === max
+     */
+    function formatSalaryRange(salaryData) {
+      if (!salaryData) return null;
+      if (salaryData.min === salaryData.max) return formatSalary(salaryData.min);
+      return `${formatSalary(salaryData.min)}–${formatSalary(salaryData.max)}`;
+    }
+
+    // ================================================================
+    // SALARY PREFERENCES
+    // User's compensation requirements — stored in localStorage.
+    // Used to flag roles as below-threshold or in-range on cards.
+    // ================================================================
+
+    /**
+     * Load salary preferences from localStorage.
+     * RETURNS: { minSalary: number, targetMin: number, targetMax: number }
+     */
+    function loadSalaryPrefs() {
+      const defaults = { minSalary: 250000, targetMin: 300000, targetMax: 450000 };
+      try {
+        const stored = localStorage.getItem('pf_salary_prefs');
+        return stored ? { ...defaults, ...JSON.parse(stored) } : defaults;
+      } catch (e) { return defaults; }
+    }
+
+    /**
+     * Evaluate a salary range against user preferences.
+     * INPUT: salaryData = { min, max }, prefs = { minSalary, targetMin, targetMax }
+     * RETURNS: 'below' | 'in-range' | 'above' | 'unknown'
+     *   - 'below': max salary is under user's minimum threshold
+     *   - 'in-range': salary range overlaps with user's target range
+     *   - 'above': min salary exceeds user's target max (great problem to have!)
+     *   - 'unknown': no salary data available
+     */
+    function evaluateSalary(salaryData, prefs) {
+      if (!salaryData) return 'unknown';
+      if (salaryData.max < prefs.minSalary) return 'below';
+      if (salaryData.min > prefs.targetMax) return 'above';
+      if (salaryData.max >= prefs.targetMin && salaryData.min <= prefs.targetMax) return 'in-range';
+      // Falls between minSalary and targetMin — acceptable but not ideal
+      return 'in-range';
     }
 
     /**
@@ -3321,6 +3476,17 @@
       const staleClass = isStale ? 'stale' : '';
       const staleBadgeHtml = isStale ? `<span class="stale-badge" title="Last updated ${daysSinceUpdate} days ago">Stale — ${daysSinceUpdate}d</span>` : '';
 
+      // Extract salary from JD text if available
+      const salaryData = extractSalaryFromJD(role.jdText);
+      const salaryPrefs = loadSalaryPrefs();
+      const salaryEval = evaluateSalary(salaryData, salaryPrefs);
+      const salaryDisplay = salaryData
+        ? formatSalaryRange(salaryData)
+        : 'Salary unknown';
+      const salaryTitle = salaryData
+        ? `Base: ${salaryData.raw}`
+        : 'No salary data in job description';
+
       return `
         <div class="role-card ${isSelected ? 'selected' : ''} ${staleClass}" data-role-id="${role.id}" draggable="true" style="position: relative;">
           <div class="role-card-company">
@@ -3328,6 +3494,7 @@
             <span class="role-card-company-name">${role.company}</span>
           </div>
           <div class="role-card-title">${role.title}${role.title === 'Exploratory' ? ' <span style="font-size: 10px; opacity: 0.6;">🔍</span>' : ''}</div>
+          <div class="role-card-salary ${salaryEval}" title="${salaryTitle}">${salaryEval === 'below' ? '⚠️ ' : ''}${salaryDisplay}</div>
           <div class="role-card-badges">
             <span class="badge badge-filled" style="background: ${getColorForTier(role.tier)}; color: white; font-size: var(--text-xs);">${role.tier}</span>
             ${role.title === 'Exploratory' ? '<span class="badge badge-outlined" style="border-color: var(--warning); color: var(--warning);">Inbound</span>' : `<span class="badge badge-outlined" style="border-color: ${role.positioning === 'ic' ? 'var(--info)' : 'var(--stage-screen)'}; color: ${role.positioning === 'ic' ? 'var(--info)' : 'var(--stage-screen)'};">${role.positioning === 'ic' ? 'IC' : 'Mgmt'}</span>`}

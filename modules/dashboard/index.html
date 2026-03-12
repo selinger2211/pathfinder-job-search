@@ -2377,7 +2377,7 @@
      * Load and apply saved theme preference
      */
     function initTheme() {
-      const savedTheme = localStorage.getItem('pf_theme') || 'dark';
+      const savedTheme = localStorage.getItem('pf_theme') || 'light';
       document.documentElement.setAttribute('data-theme', savedTheme);
       updateThemeIcon();
     }

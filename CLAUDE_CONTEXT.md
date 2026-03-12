@@ -185,7 +185,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.2.1
+**Current Version:** v3.3.1
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -208,6 +208,13 @@ These are the actual field shapes for objects stored in shared localStorage keys
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.3.1)
+- **Salary extraction from JDs**: Pipeline cards show extracted salary with color coding (green=in-range, red=below $250K floor, gray=unknown). 3-pattern regex engine (dollar ranges, K ranges, context amounts). `pf_salary_prefs` stores thresholds (min $250K, target $300K-$450K).
+- **Feed salary gate**: `acceptRole()` warns before adding below-threshold roles to Pipeline. Comp defaults updated (minBase 250K, targetBase 300K).
+- **Light mode default**: `pathfinder.css` `:root` now light, `[data-theme="dark"]` for dark. All modules default to light theme.
+- **Score breakdown transparency**: Feed cards show inline color-coded dimension chips (Title, Domain, Keywords, Location, Network, Stage, Comp) with tier coloring (green 70+, yellow 40-69, red 0-39).
+- **Built In email source**: 5 new roles from `support@builtin.com` alerts (GEICO, Amplitude, Zendesk, DIRECTV, Autodesk). Built In active in FEED_SOURCES.
 
 ### Recently Fixed (v3.2.1)
 - **LinkedIn Job Alert parsing**: Feed now extracts individual job listings from LinkedIn Job Alert emails (`jobalerts-noreply@linkedin.com`). 12 new roles added: Intuit, OpenAI, Stripe, Microsoft, SoFi, Salesforce, Adobe, Google, Sigma, Netflix, Uber, Harvey.

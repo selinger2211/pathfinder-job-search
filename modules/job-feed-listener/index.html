@@ -838,29 +838,38 @@
       background: var(--danger);
     }
 
-    /* Tooltip for score breakdown */
-    .score-tooltip {
-      position: absolute;
-      bottom: 100%;
-      left: 0;
-      margin-bottom: var(--space-2);
-      background: var(--bg-elevated);
-      border: 1px solid var(--bg-subtle);
-      border-radius: var(--radius-sm);
-      padding: var(--space-2) var(--space-3);
-      font-size: var(--text-xs);
-      color: var(--text-secondary);
-      white-space: nowrap;
-      z-index: 50;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity var(--duration-fast) var(--ease-default);
+    /* Score breakdown — visible inline below the score bar */
+    .score-breakdown {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px 6px;
+      margin-top: var(--space-1);
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--text-tertiary);
+      line-height: 1.4;
     }
 
-    .card-score-section:hover .score-tooltip {
-      opacity: 1;
-      pointer-events: auto;
+    /* Individual score dimension chip */
+    .score-dim {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
     }
+
+    /* Dimension label */
+    .score-dim-label {
+      opacity: 0.7;
+    }
+
+    /* Dimension value — color-coded by score quality */
+    .score-dim-val {
+      font-weight: 600;
+    }
+
+    .score-dim-val.high { color: var(--success); }     /* 70+ */
+    .score-dim-val.medium { color: var(--warning); }    /* 40-69 */
+    .score-dim-val.low { color: var(--danger); }        /* 0-39 */
 
     /* Location and details */
     .card-details {
@@ -1518,9 +1527,9 @@
             </div>
           </div>
           <label class="pref-label" for="minBase">Min Base ($K)</label>
-          <input type="number" class="pref-input" id="minBase" placeholder="285" value="285" aria-label="Minimum base salary in thousands">
+          <input type="number" class="pref-input" id="minBase" placeholder="250" value="250" aria-label="Minimum base salary in thousands">
           <label class="pref-label" for="targetTotal">Target Total ($K)</label>
-          <input type="number" class="pref-input" id="targetTotal" placeholder="350" value="350" aria-label="Target total compensation in thousands">
+          <input type="number" class="pref-input" id="targetTotal" placeholder="300" value="300" aria-label="Target total compensation in thousands">
           <label class="pref-label" for="maxTotal">Max Total ($K)</label>
           <input type="number" class="pref-input" id="maxTotal" placeholder="450" value="450" aria-label="Maximum total compensation in thousands">
         </div>
@@ -1890,7 +1899,7 @@
       minHeadcount: 100,
       locations: ['Remote', 'Hybrid (SF Bay)', 'San Francisco'],
       excludedLocations: [],
-      compRange: { minBase: 285000, targetBase: 350000, maxTotal: 450000 },
+      compRange: { minBase: 250000, targetBase: 300000, maxTotal: 450000 },
       mustHaveKeywords: ['product manager', 'strategy'],
       boostKeywords: ['AdTech', 'targeting', 'LLM', 'agents', 'real-time', 'decisioning'],
       excludeKeywords: ['junior', 'associate', 'intern', 'contract']
@@ -1901,6 +1910,7 @@
       { id: 'manual', name: 'Manual Entry', status: 'active', lastChecked: 'Always available' },
       { id: 'gmail', name: 'Gmail', status: 'active', lastChecked: 'Synced via Pathfinder agent' },
       { id: 'linkedin', name: 'LinkedIn Alerts', status: 'active', lastChecked: 'Synced via Pathfinder agent' },
+      { id: 'builtin', name: 'Built In', status: 'active', lastChecked: 'Synced via Pathfinder agent' },
       { id: 'indeed', name: 'Indeed', status: 'inactive', lastChecked: 'Not connected' },
       { id: 'career-pages', name: 'Career Pages', status: 'inactive', lastChecked: 'Not connected' }
     ];
@@ -2840,9 +2850,24 @@
               </div>
               <div class="score-bar">
                 <div class="score-bar-fill" style="width: 0%;" data-target="${scorePercent}"></div>
-                <div class="score-tooltip">
-                  Title: ${item.scoring.title}pt | Domain: ${item.scoring.domain}pt | Keywords: ${item.scoring.keywords}pt | Location: ${item.scoring.location}pt | Network: ${item.scoring.network || 0}pt | Stage: ${item.scoring.stage}pt
-                </div>
+              </div>
+              <div class="score-breakdown">
+                ${(() => {
+                  // Build color-coded score dimension chips
+                  const dims = [
+                    { label: 'Title', val: item.scoring.title, weight: 20 },
+                    { label: 'Domain', val: item.scoring.domain, weight: 20 },
+                    { label: 'Keywords', val: item.scoring.keywords, weight: 15 },
+                    { label: 'Location', val: item.scoring.location, weight: 15 },
+                    { label: 'Network', val: item.scoring.network || 0, weight: 15 },
+                    { label: 'Stage', val: item.scoring.stage, weight: 10 },
+                    { label: 'Comp', val: item.scoring.comp || 0, weight: 5 },
+                  ];
+                  return dims.map(d => {
+                    const tier = d.val >= 70 ? 'high' : d.val >= 40 ? 'medium' : 'low';
+                    return `<span class="score-dim"><span class="score-dim-label">${d.label}</span> <span class="score-dim-val ${tier}">${d.val}</span></span>`;
+                  }).join('');
+                })()}
               </div>
             </div>
 
@@ -3093,6 +3118,29 @@
       const role = state.feedItems.find(r => r.id === roleId);
       if (!role) return;
 
+      // ====== SALARY GATE ======
+      // If the role has a listed salary that's below the user's minimum,
+      // warn them before adding to pipeline. Unknown salary = always allow.
+      const salaryText = role.salary || '';
+      const salaryMatch = salaryText.match(/\$(\d+)[kK]?\s*[-–—]\s*\$?(\d+)[kK]?/i);
+      if (salaryMatch) {
+        let maxSalary = parseInt(salaryMatch[2]);
+        // If numbers are small (e.g., 172 not 172000), they're already in K
+        if (maxSalary < 1000) maxSalary *= 1000;
+        const MIN_SALARY = 250000; // User's hard floor
+        if (maxSalary < MIN_SALARY) {
+          const proceed = confirm(
+            `⚠️ Salary Warning\n\n` +
+            `${role.title} at ${role.company}\n` +
+            `Listed salary: ${salaryText}\n` +
+            `Your minimum: $250K\n\n` +
+            `This role appears to be below your minimum salary threshold.\n` +
+            `Add to pipeline anyway?`
+          );
+          if (!proceed) return;
+        }
+      }
+
       const card = document.querySelector(`[data-role-id="${roleId}"]`);
       if (card) {
         card.classList.add('accepted');
@@ -3269,6 +3317,20 @@
               <div class="score-bar">
                 <div class="score-bar-fill" style="width: 0%;" data-target="${scorePercent}"></div>
               </div>
+              ${item.scoring ? `<div class="score-breakdown">
+                ${[
+                  { label: 'Title', val: item.scoring.title, weight: 20 },
+                  { label: 'Domain', val: item.scoring.domain, weight: 20 },
+                  { label: 'Keywords', val: item.scoring.keywords, weight: 15 },
+                  { label: 'Location', val: item.scoring.location, weight: 15 },
+                  { label: 'Network', val: item.scoring.network || 0, weight: 15 },
+                  { label: 'Stage', val: item.scoring.stage, weight: 10 },
+                  { label: 'Comp', val: item.scoring.comp || 0, weight: 5 },
+                ].map(d => {
+                  const tier = d.val >= 70 ? 'high' : d.val >= 40 ? 'medium' : 'low';
+                  return `<span class="score-dim"><span class="score-dim-label">${d.label}</span> <span class="score-dim-val ${tier}">${d.val}</span></span>`;
+                }).join('')}
+              </div>` : ''}
             </div>
 
             <div class="card-details">
