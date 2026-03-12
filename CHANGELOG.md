@@ -4,6 +4,19 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.2.2 — 2026-03-11
+
+### What Changed — Fix: Hidden Bulk-Select Checkbox Was the "White Square"
+
+**Root cause found:** The "checkbox in front of the logos" was a *literal* `<input type="checkbox">` element (`.role-card-checkbox`) rendered on every kanban card for bulk selection. It was always visible — an 18×18px white native checkbox at the top-left of each card, right next to the company logo. This is what the user had been reporting as "white squares" / "checkboxes" across three separate reports.
+
+**Fix:** Checkbox is now hidden by default (`opacity: 0; pointer-events: none`). It appears on card hover and when already checked, so bulk-selection still works.
+
+**Files Modified:**
+- `modules/pipeline/index.html` — `.role-card-checkbox` CSS updated
+
+---
+
 ## v2.2.0 — 2026-03-11
 
 ### What Changed — Personal Data Accuracy + Logo Fix + Migration Versioning

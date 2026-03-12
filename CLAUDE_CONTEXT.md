@@ -164,7 +164,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v2.2.0
+**Current Version:** v2.2.2
 **Last Updated:** 2026-03-11
 
 ### Implementation Status
@@ -188,7 +188,10 @@ These are the actual field shapes for objects stored in shared localStorage keys
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
-### Recently Fixed (v2.2.0)
+### Recently Fixed (v2.2.2)
+- **Checkbox "white square" fix**: The "checkbox in front of logos" was a literal `<input type="checkbox">` (`.role-card-checkbox`) always visible on every kanban card for bulk selection. Now hidden by default, shown on card hover and when checked.
+
+### Previously Fixed (v2.2.0)
 - **Real pipeline data from spreadsheet**: Regenerated `pf_roles.json` with actual outreach statuses mapped to Pipeline stages (6 in Outreach, 1 in Screen, 38 in Discovered). Personal notes now populated from spreadsheet contact notes.
 - **Data-switcher seed-once fix**: No longer overwrites user edits on every Demo→Personal switch. Backup/restore system preserves roles, connections, companies across mode switches. Core data only written if localStorage key doesn't exist.
 - **Logo polish**: Increased to 32px with 6px border-radius, subtle border, letter-initial fallback (purple badge). Added DOMAIN_OVERRIDES map for companies like "Amazon Ads" → amazon.com.

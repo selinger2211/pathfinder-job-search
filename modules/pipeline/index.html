@@ -493,7 +493,8 @@
        BULK ACTIONS & SELECTION TOOLBAR
        ================================================================ */
 
-    /* Checkbox on kanban cards for bulk selection */
+    /* Checkbox on kanban cards for bulk selection —
+       hidden by default, shown on hover or when checked */
     .role-card-checkbox {
       position: absolute;
       top: var(--space-2);
@@ -502,6 +503,14 @@
       height: 18px;
       cursor: pointer;
       accent-color: var(--accent);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 150ms ease;
+    }
+    .role-card:hover .role-card-checkbox,
+    .role-card-checkbox:checked {
+      opacity: 1;
+      pointer-events: auto;
     }
 
     /* Bulk actions toolbar that appears when items selected */
