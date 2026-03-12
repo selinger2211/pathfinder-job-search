@@ -8,7 +8,7 @@
     "positioning": "ic",
     "targetLevel": "IC",
     "source": "migration",
-    "stage": "outreach",
+    "stage": "applied",
     "stageHistory": [
       {
         "stage": "discovered",
@@ -17,6 +17,10 @@
       {
         "stage": "outreach",
         "date": 1772512642199
+      },
+      {
+        "stage": "applied",
+        "date": 1772685442199
       }
     ],
     "salary": {
@@ -39,7 +43,7 @@
     "positioning": "ic",
     "targetLevel": "Sr Leader",
     "source": "migration",
-    "stage": "screen",
+    "stage": "applied",
     "stageHistory": [
       {
         "stage": "discovered",
@@ -50,7 +54,7 @@
         "date": 1772512642199
       },
       {
-        "stage": "screen",
+        "stage": "applied",
         "date": 1772685442199
       }
     ],
@@ -1245,5 +1249,40 @@
     "connections": 1,
     "tier": "watching",
     "personalNotes": "Kristof Nagel (Sr SWE): Limited influence."
+  },
+  {
+    "id": "role-migrated-046",
+    "company": "LiveRamp",
+    "title": "Open Role",
+    "url": "",
+    "jdText": "",
+    "positioning": "ic",
+    "targetLevel": "Director",
+    "source": "manual",
+    "stage": "applied",
+    "stageHistory": [
+      {
+        "stage": "discovered",
+        "date": 1772080642199
+      },
+      {
+        "stage": "outreach",
+        "date": 1772512642199
+      },
+      {
+        "stage": "applied",
+        "date": 1772685442199
+      }
+    ],
+    "salary": {
+      "min": "",
+      "max": "",
+      "currency": "USD"
+    },
+    "dateAdded": 1772080642199,
+    "lastActivity": 1772685442199,
+    "connections": 0,
+    "tier": "hot",
+    "personalNotes": ""
   }
 ]

@@ -30,12 +30,21 @@
 
   const MODE_KEY = 'pf_data_mode';
 
+  /**
+   * MIGRATION VERSION — bump this number whenever pf_roles.json,
+   * pf_companies.json, or pf_connections.json change. When the
+   * stored version doesn't match, we force-reseed personal data
+   * on the next Personal mode load (clearing stale migration data).
+   */
+  const MIGRATION_VERSION = 2;
+  const MIGRATION_VERSION_KEY = 'pf_migration_version';
+
   /** All localStorage keys the Pathfinder app uses.
    *  When switching modes, we dynamically find all pf_* keys
-   *  (except pf_data_mode and pf_anthropic_key) so we never
-   *  miss a module's data. */
+   *  (except pf_data_mode, pf_anthropic_key, and migration version)
+   *  so we never miss a module's data. */
   function getAllPfKeys() {
-    const protected_keys = ['pf_data_mode', 'pf_anthropic_key', 'pf_claude_model'];
+    const protected_keys = ['pf_data_mode', 'pf_anthropic_key', 'pf_claude_model', MIGRATION_VERSION_KEY];
     const keys = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -44,6 +53,22 @@
       }
     }
     return keys;
+  }
+
+  /**
+   * Check if migration data needs a forced refresh.
+   * Returns true if the stored version doesn't match MIGRATION_VERSION.
+   */
+  function migrationNeedsRefresh() {
+    const stored = parseInt(localStorage.getItem(MIGRATION_VERSION_KEY) || '0', 10);
+    return stored < MIGRATION_VERSION;
+  }
+
+  /**
+   * Mark migration as current version after successful seed.
+   */
+  function markMigrationCurrent() {
+    localStorage.setItem(MIGRATION_VERSION_KEY, String(MIGRATION_VERSION));
   }
 
   /** Path to migration-output JSON files (relative to any module page) */
@@ -126,17 +151,27 @@
       // Roles file is optional — if it doesn't exist, default to empty array.
       const roles = rolesRes.ok ? await rolesRes.json() : [];
 
-      // SEED-ONCE strategy: Only write migration data if the key doesn't
-      // already exist. This preserves user edits (moved stages, added notes,
-      // new roles, etc.) across Demo→Personal switches.
-      if (!localStorage.getItem('pf_connections')) {
+      // SEED-ONCE strategy with MIGRATION VERSION check:
+      // If the migration version has changed (new data in JSON files),
+      // force-overwrite the three core keys so the user gets the latest data.
+      // Otherwise, only write if the key doesn't already exist (preserving
+      // user edits like moved stages, added notes, new roles).
+      const forceRefresh = migrationNeedsRefresh();
+
+      if (forceRefresh || !localStorage.getItem('pf_connections')) {
         localStorage.setItem('pf_connections', JSON.stringify(connections));
       }
-      if (!localStorage.getItem('pf_companies')) {
+      if (forceRefresh || !localStorage.getItem('pf_companies')) {
         localStorage.setItem('pf_companies', JSON.stringify(companies));
       }
-      if (!localStorage.getItem('pf_roles')) {
+      if (forceRefresh || !localStorage.getItem('pf_roles')) {
         localStorage.setItem('pf_roles', JSON.stringify(roles));
+      }
+
+      // Mark migration as current so we don't force-refresh again
+      if (forceRefresh) {
+        markMigrationCurrent();
+        console.log('[DataSwitcher] Migration data force-refreshed (version', MIGRATION_VERSION, ')');
       }
 
       // Return what's actually in localStorage now
@@ -271,12 +306,42 @@
     }
   }
 
+  /* ── Auto-seed personal data on page load if needed ───── */
+  /**
+   * If mode is "personal" but data is missing (e.g. cleared localStorage,
+   * or migration version bumped), auto-fetch and seed from migration files.
+   * This ensures the page always has data even after a hard refresh.
+   */
+  async function autoSeedIfNeeded() {
+    const mode = getMode();
+    if (mode !== 'personal') return;
+
+    const hasRoles = localStorage.getItem('pf_roles');
+    const hasCompanies = localStorage.getItem('pf_companies');
+    const needsRefresh = migrationNeedsRefresh();
+
+    if (!hasRoles || !hasCompanies || needsRefresh) {
+      try {
+        const result = await loadPersonalData();
+        console.log(`[DataSwitcher] Auto-seeded personal data on load: ${result.connections} connections, ${result.companies} companies, ${result.roles} roles`);
+        // Reload to pick up the freshly seeded data
+        window.location.reload();
+      } catch (err) {
+        console.error('[DataSwitcher] Auto-seed failed:', err.message);
+      }
+    }
+  }
+
   /* ── Init ──────────────────────────────────────────────── */
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', injectToggle);
+    document.addEventListener('DOMContentLoaded', () => {
+      injectToggle();
+      autoSeedIfNeeded();
+    });
   } else {
     injectToggle();
+    autoSeedIfNeeded();
   }
 
 })();

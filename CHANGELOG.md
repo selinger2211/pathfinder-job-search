@@ -4,6 +4,30 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.2.0 — 2026-03-11
+
+### What Changed — Personal Data Accuracy + Logo Fix + Migration Versioning
+
+**Issues reported by user:**
+1. Logo white background looked like checkboxes on dark theme
+2. Pipeline stages were wrong — Yahoo and Amazon Ads should be in "applied" (submitted)
+3. LiveRamp was missing entirely (not in spreadsheet data)
+4. Old data stuck in localStorage even after migration files updated
+
+**Fixes:**
+1. **Logo CSS**: Removed `background: #ffffff` and `border` from `.role-card-logo` and `.table-company-logo`. Switched to circular (`border-radius: 50%`), transparent background, 28px size. Fallback letter initials also circular now.
+2. **Stage corrections**: Yahoo moved from "outreach" → "applied". Amazon Ads moved from "screen" → "applied". Both with proper stageHistory entries.
+3. **LiveRamp added**: New entry in `pf_companies.json` (domain: liveramp.com) and `pf_roles.json` (role-migrated-046, stage: applied, tier: hot).
+4. **Migration version system**: Added `MIGRATION_VERSION` constant to data-switcher. When bumped, forces re-seed of personal data on next Personal mode load (clears stale migration data). Stored in `pf_migration_version` localStorage key. Version 2 = current.
+
+**Files Modified:**
+- `modules/pipeline/index.html` — logo CSS (circular, transparent, no border)
+- `modules/shared/data-switcher.js` — migration version system (MIGRATION_VERSION, migrationNeedsRefresh, markMigrationCurrent)
+- `scripts/migration-output/pf_roles.json` — Yahoo/Amazon stages fixed, LiveRamp added
+- `scripts/migration-output/pf_companies.json` — LiveRamp added
+
+---
+
 ## v2.1.9 — 2026-03-11
 
 ### What Changed — Personal Data Integrity + Logo Polish

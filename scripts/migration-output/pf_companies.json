@@ -358,5 +358,13 @@
     "missionStatement": "",
     "logoUrl": "https://logo.clearbit.com/roku.com",
     "contactCount": 1
+  },
+  {
+    "name": "LiveRamp",
+    "domain": "liveramp.com",
+    "tier": "active",
+    "missionStatement": "",
+    "logoUrl": "https://logo.clearbit.com/liveramp.com",
+    "contactCount": 0
   }
 ]
