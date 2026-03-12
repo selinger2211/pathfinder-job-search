@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v2.1.5
+**Status:** v2.1.6
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v2.1.6 | 2026-03-11 | **Data contract + double-prefix fixes**: Fixed cross-module data contract violation — company objects have `name` but no `id`, roles have `company` (string name) but no `companyId`. Changed all `c.id` lookups to `c.name` across 4 modules (Outreach critical fix — dropdowns showed "undefined"; Debrief, Calendar, Pipeline latent fixes). Fixed Calendar double-prefix bug — `getStorageData()`/`saveStorageData()` prepend `pf_` but all callers also passed `pf_`-prefixed keys, creating `pf_pf_*` keys that were never read back. Fixed dozens of call sites. Added selection restore in Outreach after sidebar rebuild. |
 | v2.1.5 | 2026-03-11 | **Data mode consistency**: Added Demo/Personal data-switcher toggle to 3 missing modules (Debrief, Comp Intel, Sync Hub) — all 11 modules now have the toggle. Made `clearAllData()` dynamically scan all `pf_*` localStorage keys instead of using a hardcoded list (protects API key + model). Fixed Resume Builder demo seeding to check `pf_resume_log` existence before overwriting. Removed false-positive double-prefix bug (`pf_pf_*`) from Known Issues — code was already correct. |
 | v2.1.4 | 2026-03-11 | **Calendar bug fixes**: Fixed Add Event modal not opening (modal CSS class mismatch — `active` vs shared CSS `open` convention; modal was `display:flex` but `opacity:0`). Fixed Sync Log showing "undefined" for sync type (renderer expected `entry.action` but Sync Hub writes `entry.source`; now handles both data shapes and shows Added/Skipped detail rows). Discovered via Interactive QA workflow testing. |
 | v2.1.3 | 2026-03-11 | **User-reported bug fixes + Pipeline view architecture fix**: Replaced dead Clearbit logo API (acquired by HubSpot) with Google Favicon API across 6 files + added one-time localStorage migration for existing data. Fixed Pipeline view toggle — removed conflicting parent-div click handler that destroyed child buttons via `textContent`. Removed scary "MCP bridge not running" notice from Research Brief (direct API works fine). Fixed `renderTable()` calling undefined `applyFilters()` → `filterRoles()`. Fixed Pipeline render/switchView architecture conflict — `render()` used CSS class selectors (`.kanban-view`) that collided with `.page` class, causing blank page. Changed init from `render()` to `switchView(currentViewMode)`, removed inline `display:none` from table-view and companies-view containers, let CSS rules handle visibility. |

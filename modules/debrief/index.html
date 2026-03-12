@@ -950,9 +950,8 @@
       },
 
       getCompanyName(role) {
-        if (role.company) return role.company;
-        const company = this.state.companies.find(c => c.id === role.companyId);
-        return company?.name || 'Unknown';
+        /* Roles store company name directly as role.company (string) */
+        return role.company || 'Unknown';
       },
 
       updateSidebar() {
@@ -972,7 +971,8 @@
       renderCompanyCard(role) {
         const container = document.getElementById('companyCardContainer');
         const companyName = this.getCompanyName(role);
-        const company = this.state.companies.find(c => c.id === role.companyId || c.name === companyName);
+        /* pf_companies objects use 'name' not 'id' — match by name */
+        const company = this.state.companies.find(c => c.name === companyName);
         const logo = company?.logo || companyName.charAt(0).toUpperCase();
 
         container.innerHTML = `

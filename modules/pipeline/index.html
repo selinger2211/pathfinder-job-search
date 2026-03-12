@@ -4175,7 +4175,7 @@
             <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-1);">
               <select class="form-select" id="comms-connection-select" style="font-size: var(--text-xs); flex: 1;">
                 <option value="">General (no contact)</option>
-                ${getConnectionsForCompany(role.company).map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('')}
+                ${getConnectionsForCompany(role.company).map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('')}
               </select>
               <select class="form-select" id="comms-channel-select" style="font-size: var(--text-xs); width: 120px;">
                 <option value="email">Email</option>
@@ -4694,11 +4694,11 @@
 
       if (!role.commsLog) role.commsLog = [];
 
-      // Resolve contact name from selected connection ID
+      /* Resolve contact name from selected connection (value = connection name) */
       let contactName = '';
       const connId = connSelect.value;
       if (connId) {
-        const conn = getConnections().find(c => c.id === connId);
+        const conn = getConnections().find(c => c.name === connId);
         if (conn) contactName = conn.name;
       }
 

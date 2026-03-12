@@ -4,6 +4,28 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.1.6 — 2026-03-11
+
+### What Changed — Data Contract Fixes + Calendar Double-Prefix Bug
+
+Interactive QA round 2 uncovered a systemic data contract violation across 4 modules and a critical double-prefix bug in Calendar that broke Personal mode.
+
+#### Cross-Module Data Contract Fix (c.id → c.name)
+- **Root cause:** Company objects in `pf_companies` have a `name` field but NO `id` field. Roles in `pf_roles` have a `company` field (string name) but NO `companyId` field. Connections have `name` but NO `id`. Multiple modules were using `c.id` or `role.companyId` for lookups, which always resolved to `undefined`.
+- **Outreach (CRITICAL):** Company dropdown option values were all `"undefined"` because `c.id` doesn't exist. Fixed all company and connection option values and find lookups to use `c.name`. Also added selection restore after `renderSidebar()` rebuilds dropdowns (AppState values were lost on re-render).
+- **Debrief:** Simplified `getCompanyName(role)` to return `role.company || 'Unknown'` (removed dead `c.id === role.companyId` fallback). Fixed `renderCompanyCard` lookup to use `c.name === companyName`.
+- **Calendar:** Fixed 4 locations where `companies.find(c => c.id === role.companyId)` was used — changed to direct `role.company` field access.
+- **Pipeline:** Fixed connection option values from `c.id` to `c.name`, and lookup in `addCommsEntry()`.
+
+#### Calendar Double-Prefix Bug (pf_pf_*)
+- **Root cause:** Calendar's `getStorageData(key)` and `saveStorageData(key, data)` helpers internally prepend `pf_` to the key parameter (e.g., `localStorage.getItem(\`pf_${key}\`)`). But ALL callers were passing keys that ALREADY included the `pf_` prefix (e.g., `getStorageData('pf_roles')` → `localStorage.getItem('pf_pf_roles')`).
+- **Impact:** Calendar module was reading from and writing to `pf_pf_calendar_events`, `pf_pf_roles`, `pf_pf_companies`, etc. — keys that were never populated by other modules. This made Calendar appear completely empty in Personal mode.
+- **Fix:** Stripped `pf_` prefix from ALL caller arguments (dozens of replacements): `getStorageData('pf_roles')` → `getStorageData('roles')`, `saveStorageData('pf_calendar_events', ...)` → `saveStorageData('calendar_events', ...)`, etc.
+- **Cleanup:** Removed 5 orphaned `pf_pf_*` keys from localStorage.
+- **Audit:** Verified all other modules with similar helper patterns (Sync Hub) — no other instances of this bug.
+
+---
+
 ## v2.1.5 — 2026-03-11
 
 ### What Changed — Data Mode Consistency (Demo/Personal Toggle)

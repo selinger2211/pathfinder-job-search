@@ -96,7 +96,7 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v2.1.5
+**Current Version:** v2.1.6
 **Last Updated:** 2026-03-11
 
 ### Implementation Status
@@ -120,11 +120,15 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
-### Recently Fixed (v2.1.5)
+### Recently Fixed (v2.1.6)
+- **Data contract fix (c.id → c.name)**: Company objects have `name` but no `id` field; roles have `company` (string) but no `companyId`. Fixed all lookups across 4 modules: Outreach (critical — dropdown values were all "undefined"), Debrief, Calendar, Pipeline
+- **Calendar double-prefix bug (pf_pf_*)**: `getStorageData()` / `saveStorageData()` helpers prepend `pf_` to keys, but all callers were passing keys already prefixed with `pf_` (e.g., `getStorageData('pf_roles')` → `localStorage.getItem('pf_pf_roles')`). Fixed dozens of call sites. This was why Calendar appeared empty in Personal mode.
+- **Outreach selection restore**: After `renderSidebar()` rebuilds dropdown HTML, selected values are now restored from AppState
+
+### Previously Fixed (v2.1.5)
 - Data-switcher (Demo/Personal toggle) added to Debrief, Comp Intel, Sync Hub — all 11 modules now have it
 - `clearAllData()` now dynamically scans all `pf_*` keys instead of hardcoded list (protects API key + model)
 - Resume Builder demo seeding now checks `pf_resume_log` existence before overwriting
-- Removed false-positive double-prefix bug from Known Issues — code was already correct
 
 ### Previously Fixed (v2.1.4)
 - Calendar Add Event modal invisible → modal CSS class mismatch (`active` vs shared `open`); changed all 8 references to `open`

@@ -769,7 +769,7 @@
       }
 
       const connections = getConnections();
-      const connection = connections.find(c => c.id === AppState.selectedConnectionId);
+      const connection = connections.find(c => c.name === AppState.selectedConnectionId);
 
       if (!connection || !connection.email) {
         showToast('This connection does not have an email address', 'error');
@@ -834,9 +834,9 @@
       }
 
       const connections = getConnections();
-      const connection = connections.find(c => c.id === AppState.selectedConnectionId);
+      const connection = connections.find(c => c.name === AppState.selectedConnectionId);
       const companies = getCompanies();
-      const company = companies.find(c => c.id === AppState.selectedCompanyId);
+      const company = companies.find(c => c.name === AppState.selectedCompanyId);
       const roles = getRoles();
       const role = roles.find(r => r.id === AppState.selectedRoleId);
 
@@ -1199,9 +1199,9 @@ Create a compelling, specific message that references at least one concrete deta
       const connections = getConnections();
       const bullets = getBulletBank();
 
-      const company = companies.find(c => c.id === companyId);
+      const company = companies.find(c => c.name === companyId);
       const role = roles.find(r => r.id === roleId);
-      const connection = connections.find(c => c.id === connectionId);
+      const connection = connections.find(c => c.name === connectionId);
 
       if (!company || !role || !connection) {
         showToast('Invalid selection', 'error');
@@ -1251,10 +1251,14 @@ Create a compelling, specific message that references at least one concrete deta
       companySelect.innerHTML = '<option value="">Select a company...</option>';
       companies.forEach(c => {
         const option = document.createElement('option');
-        option.value = c.id;
+        option.value = c.name;
         option.textContent = c.name;
         companySelect.appendChild(option);
       });
+      /* Restore selected company after rebuild */
+      if (AppState.selectedCompanyId) {
+        companySelect.value = AppState.selectedCompanyId;
+      }
 
       // Populate role selector (filtered by company)
       const roleSelect = document.getElementById('role-selector');
@@ -1268,6 +1272,10 @@ Create a compelling, specific message that references at least one concrete deta
           roleSelect.appendChild(option);
         });
         roleSelect.disabled = false;
+        /* Restore selected role after rebuild */
+        if (AppState.selectedRoleId) {
+          roleSelect.value = AppState.selectedRoleId;
+        }
       } else {
         roleSelect.innerHTML = '<option value="">Select a role...</option>';
         roleSelect.disabled = true;
@@ -1277,16 +1285,20 @@ Create a compelling, specific message that references at least one concrete deta
       // Populate connection selector (filtered by company)
       const connectionSelect = document.getElementById('connection-selector');
       if (AppState.selectedCompanyId) {
-        const company = companies.find(c => c.id === AppState.selectedCompanyId);
-        const companyConnections = connections.filter(c => c.company === company.name || c.companyId === AppState.selectedCompanyId);
+        const company = companies.find(c => c.name === AppState.selectedCompanyId);
+        const companyConnections = connections.filter(c => c.company === AppState.selectedCompanyId || c.companyId === AppState.selectedCompanyId);
         connectionSelect.innerHTML = '<option value="">Select a connection...</option>';
         companyConnections.forEach(c => {
           const option = document.createElement('option');
-          option.value = c.id;
+          option.value = c.name;
           option.textContent = `${c.name} (${c.title})`;
           connectionSelect.appendChild(option);
         });
         connectionSelect.disabled = false;
+        /* Restore selected connection after rebuild */
+        if (AppState.selectedConnectionId) {
+          connectionSelect.value = AppState.selectedConnectionId;
+        }
       } else {
         connectionSelect.innerHTML = '<option value="">Select a connection...</option>';
         connectionSelect.disabled = true;
@@ -1308,9 +1320,9 @@ Create a compelling, specific message that references at least one concrete deta
         return;
       }
 
-      const company = companies.find(c => c.id === AppState.selectedCompanyId);
+      const company = companies.find(c => c.name === AppState.selectedCompanyId);
       const role = roles.find(r => r.id === AppState.selectedRoleId);
-      const connection = connections.find(c => c.id === AppState.selectedConnectionId);
+      const connection = connections.find(c => c.name === AppState.selectedConnectionId);
 
       card.innerHTML = `
         <div class="context-card">
@@ -1539,7 +1551,7 @@ Create a compelling, specific message that references at least one concrete deta
       }
 
       const connections = getConnections();
-      const selectedConn = connections.find(c => c.id === AppState.selectedConnectionId);
+      const selectedConn = connections.find(c => c.name === AppState.selectedConnectionId);
 
       if (!selectedConn) {
         showToast('Connection not found', 'error');

@@ -1848,15 +1848,15 @@
             const roleSelect = document.getElementById('eventRoleId');
             if (!roleSelect) return;
 
-            const roles = getStorageData('pf_roles') || [];
-            const companies = getStorageData('pf_companies') || [];
+            const roles = getStorageData('roles') || [];
+            const companies = getStorageData('companies') || [];
 
             // Keep the default "-- No role --" option
             roleSelect.innerHTML = '<option value="">-- No role --</option>';
 
             roles.forEach(role => {
-                const company = companies.find(c => c.id === role.companyId);
-                const companyName = company ? company.name : 'Unknown';
+                /* pf_companies use 'name' not 'id'; roles use 'company' not 'companyId' */
+                const companyName = role.company || 'Unknown';
                 const option = document.createElement('option');
                 option.value = role.id;
                 option.textContent = `${role.title} at ${companyName}`;
@@ -1888,7 +1888,8 @@
                 return;
             }
 
-            const rolesAtCompany = roles.filter(r => r.companyId === matchedCompany.id);
+            /* Roles use role.company (name string), not companyId */
+            const rolesAtCompany = roles.filter(r => r.company === matchedCompany.name);
 
             if (rolesAtCompany.length === 0) {
                 document.getElementById('roleSuggestions').style.display = 'none';
@@ -1980,12 +1981,11 @@
             // Get company from input or role if linked
             let company = companyInput || 'Unknown';
             if (roleId) {
-                const roles = getStorageData('pf_roles') || [];
+                const roles = getStorageData('roles') || [];
                 const role = roles.find(r => r.id === roleId);
                 if (role) {
-                    const companies = getStorageData('pf_companies') || {};
-                    const comp = companies[role.companyId];
-                    if (comp && comp.name) company = comp.name;
+                    /* Roles store company name directly as role.company */
+                    if (role.company) company = role.company;
                 }
             }
 
@@ -2006,9 +2006,9 @@
             };
 
             // Save to localStorage
-            const allEvents = getStorageData('pf_calendar_events') || [];
+            const allEvents = getStorageData('calendar_events') || [];
             allEvents.push(newEvent);
-            if (!saveStorageData('pf_calendar_events', allEvents)) {
+            if (!saveStorageData('calendar_events', allEvents)) {
                 return; // Exit on save failure
             }
 
@@ -2035,42 +2035,42 @@
             if (localStorage.getItem('pf_data_mode') === 'personal') return;
 
             // Check if demo data already exists
-            let calendarEvents = getStorageData('pf_calendar_events');
+            let calendarEvents = getStorageData('calendar_events');
             if (!calendarEvents || calendarEvents.length === 0) {
                 calendarEvents = generateDemoCalendarEvents();
-                saveStorageData('pf_calendar_events', calendarEvents);
+                saveStorageData('calendar_events', calendarEvents);
             }
 
             // Ensure nudges exist
-            let nudges = getStorageData('pf_calendar_nudges');
+            let nudges = getStorageData('calendar_nudges');
             if (!nudges) {
                 nudges = [];
-                saveStorageData('pf_calendar_nudges', nudges);
+                saveStorageData('calendar_nudges', nudges);
             }
 
             // Ensure sync log exists
-            let syncLog = getStorageData('pf_sync_log');
+            let syncLog = getStorageData('sync_log');
             if (!syncLog) {
                 syncLog = [];
-                saveStorageData('pf_sync_log', syncLog);
+                saveStorageData('sync_log', syncLog);
             }
 
             // Load or create demo roles if they don't exist
-            let roles = getStorageData('pf_roles');
+            let roles = getStorageData('roles');
             if (!roles || roles.length === 0) {
                 roles = generateDemoRoles();
-                saveStorageData('pf_roles', roles);
+                saveStorageData('roles', roles);
             }
 
             // Load or create demo companies if they don't exist
-            let companies = getStorageData('pf_companies');
+            let companies = getStorageData('companies');
             if (!companies || companies.length === 0) {
                 companies = generateDemoCompanies();
-                saveStorageData('pf_companies', companies);
+                saveStorageData('companies', companies);
             }
 
             // Load theme preference
-            const theme = getStorageData('pf_theme');
+            const theme = getStorageData('theme');
             if (theme) {
                 document.documentElement.setAttribute('data-theme', theme);
                 updateThemeIcon(theme);
@@ -2453,8 +2453,8 @@
          * OUTPUT: number of pending debriefs
          */
         function countPendingDebriefs() {
-            const events = getStorageData('pf_calendar_events') || [];
-            const debriefs = getStorageData('pf_debriefs') || [];
+            const events = getStorageData('calendar_events') || [];
+            const debriefs = getStorageData('debriefs') || [];
             return events.filter(evt => eventNeedsDebrief(evt, debriefs)).length;
         }
 
@@ -2501,11 +2501,11 @@
          * OUTPUT: updates pf_calendar_events in localStorage
          */
         function linkDebriefToEvent(eventId, debriefId) {
-            const events = getStorageData('pf_calendar_events') || [];
+            const events = getStorageData('calendar_events') || [];
             const event = events.find(e => e.id === eventId);
             if (event) {
                 event.debriefId = debriefId;
-                saveStorageData('pf_calendar_events', events);
+                saveStorageData('calendar_events', events);
             }
         }
 
@@ -2536,7 +2536,7 @@
             const weekGrid = document.getElementById('weekGrid');
             weekGrid.innerHTML = '';
 
-            const calendarEvents = getStorageData('pf_calendar_events') || [];
+            const calendarEvents = getStorageData('calendar_events') || [];
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
@@ -2648,8 +2648,8 @@
             const eventList = document.getElementById('upcomingEventList');
             eventList.innerHTML = '';
 
-            const allEvents = getStorageData('pf_calendar_events') || [];
-            const debriefs = getStorageData('pf_debriefs') || [];
+            const allEvents = getStorageData('calendar_events') || [];
+            const debriefs = getStorageData('debriefs') || [];
             const now = new Date();
 
             // Filter events from next 7 days
@@ -2708,7 +2708,7 @@
                 company.className = 'event-item-company';
                 if (evt.company !== 'Unknown') {
                     // Try to find domain from company name
-                    const companies = getStorageData('pf_companies') || [];
+                    const companies = getStorageData('companies') || [];
                     const comp = companies.find(c => c.name === evt.company);
                     const domain = comp ? comp.domain : evt.company.toLowerCase().replace(/\s+/g, '') + '.com';
 
@@ -2759,8 +2759,8 @@
          * Update badge counts for filters and debrief status.
          */
         function updateFilterBadges() {
-            const allEvents = getStorageData('pf_calendar_events') || [];
-            const debriefs = getStorageData('pf_debriefs') || [];
+            const allEvents = getStorageData('calendar_events') || [];
+            const debriefs = getStorageData('debriefs') || [];
 
             const allCount = allEvents.length;
             const interviewCount = allEvents.filter(e => ['phone_screen', 'technical', 'behavioral', 'panel', 'hiring_manager'].includes(e.type)).length;
@@ -2835,8 +2835,8 @@
             detectionGrid.innerHTML = '';
 
             const allEvents = getStorageData('calendar_events') || [];
-            const roles = getStorageData('pf_roles') || [];
-            const companies = getStorageData('pf_companies') || [];
+            const roles = getStorageData('roles') || [];
+            const companies = getStorageData('companies') || [];
 
             // Only show events that are not yet linked or have low confidence
             const detectableEvents = allEvents.filter(evt => !evt.linkedRoleId);
@@ -2913,9 +2913,9 @@
 
                 // Suggested match
                 // Find matching role if company match exists
+                /* Match role to event by company name (roles store company as role.company) */
                 const matchedRole = roles.find(role => {
-                    const roleCompany = companies.find(c => c.id === role.companyId);
-                    return roleCompany && roleCompany.name === evt.company;
+                    return role.company && role.company === evt.company;
                 });
 
                 if (matchedRole) {
@@ -3017,8 +3017,8 @@
          */
         function generateNudges() {
             const nudges = [];
-            const allEvents = getStorageData('pf_calendar_events') || [];
-            const roles = getStorageData('pf_roles') || [];
+            const allEvents = getStorageData('calendar_events') || [];
+            const roles = getStorageData('roles') || [];
             const now = new Date();
 
             allEvents.forEach(evt => {
@@ -3085,7 +3085,7 @@
                 }
             });
 
-            saveStorageData('pf_calendar_nudges', nudges);
+            saveStorageData('calendar_nudges', nudges);
         }
 
         /**
@@ -3095,7 +3095,7 @@
             const nudgeList = document.getElementById('nudgeList');
             nudgeList.innerHTML = '';
 
-            const nudges = getStorageData('pf_calendar_nudges') || [];
+            const nudges = getStorageData('calendar_nudges') || [];
             const now = new Date();
 
             if (nudges.length === 0) {
@@ -3394,7 +3394,7 @@
 
             // Add events for this day if not from another month
             if (!isOtherMonth) {
-                const events = getStorageData('pf_calendar_events') || [];
+                const events = getStorageData('calendar_events') || [];
                 const cellDate = new Date(year, month, day);
                 const dayStart = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
                 const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
@@ -3430,7 +3430,7 @@
          */
         function showSelectedDayEvents(date) {
             const container = document.getElementById('selectedDayEvents');
-            const events = getStorageData('pf_calendar_events') || [];
+            const events = getStorageData('calendar_events') || [];
 
             const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
             const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
@@ -3507,7 +3507,7 @@
             const grid = document.getElementById('dayViewGrid');
             grid.innerHTML = '';
 
-            const events = getStorageData('pf_calendar_events') || [];
+            const events = getStorageData('calendar_events') || [];
 
             // Create 24 hourly slots (8am to 10pm)
             for (let hour = 8; hour < 22; hour++) {
@@ -3807,7 +3807,7 @@
             const newTheme = currentTheme === 'light' ? 'dark' : 'light';
 
             html.setAttribute('data-theme', newTheme);
-            saveStorageData('pf_theme', newTheme);
+            saveStorageData('theme', newTheme);
             updateThemeIcon(newTheme);
             lucide.createIcons();
         }
@@ -3926,7 +3926,7 @@
             `;
 
             if (event.roleId) {
-                const roles = getStorageData('pf_roles') || [];
+                const roles = getStorageData('roles') || [];
                 const role = roles.find(r => r.id === event.roleId);
                 if (role) {
                     html += `
@@ -3957,7 +3957,7 @@
             }
 
             // Check if this is a past interview event that needs debrief
-            const debriefs = getStorageData('pf_debriefs') || [];
+            const debriefs = getStorageData('debriefs') || [];
             if (eventNeedsDebrief(event, debriefs)) {
                 html += `
                     <div style="padding: 12px; background: var(--warning); border-radius: var(--radius-sm); color: var(--bg-base);">
