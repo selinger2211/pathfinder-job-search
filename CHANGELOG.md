@@ -4,6 +4,29 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.2.0 — 2026-03-12
+
+### What Changed — Live Gmail Feed + Source Linking
+
+**User requested:** "I'm not seeing any of the jobs that are in my inbox... nor do I see the source of where they are coming from, if it's an email I should be able to link back to the actual email so I can click in"
+
+**Changes:**
+1. **Removed all demo data** — Deleted `DEMO_FEED_ITEMS` (16 fake roles) and `DEMO_FEED_RUNS` (4 fake run records) from Feed module. Auto-cleanup on init purges any stale demo items with `feed-*` IDs from localStorage.
+2. **Real Gmail data seeding** — Created `gmail-seed.json` with 4 real job emails extracted from user's Gmail: RingCentral (interview), Amazon Ads (referral from Sam Blum), LiveRamp (referral from Manoj Kumar), Yahoo (referral from Giovanni Gardelli). Feed loads this on first open.
+3. **Clickable source badges** — Each feed card's source badge (e.g., "Gmail ↗") is now a link that opens the original email in Gmail. New `.card-badge-link` CSS with hover state.
+4. **Referral badges** — Cards show "🤝 Referred by {name}" when `feedMetadata.referredBy` is present. New `.referral-badge` CSS.
+5. **Auto-refresh timer** — Feed reloads from localStorage every 15 minutes to pick up items added by the MCP sync agent. Also syncs on initial page load (sync-on-open).
+6. **Honest "Check Now" button** — Replaced fake toast ("Found 3 new roles!") with actual feed reload and re-score.
+7. **Scheduled Gmail sync task** — Created hourly Cowork scheduled task (`pathfinder-gmail-sync`) that scans Gmail for job-related emails and updates `pf_feed_queue`.
+8. **Research Brief bridge fallback fix** — Removed blocking `showBridgeError()` + `return` in `generateBrief()`. Now calls `await checkBridgeHealth()` which sets `state.useFallbackAPI = true`, letting `generateSectionViaAPI()` automatically use the direct Claude API path.
+
+**Files changed:**
+- `modules/job-feed-listener/index.html` (removed demo constants, added seed loading, source linking, referral badges, auto-refresh, honest Check Now)
+- `modules/job-feed-listener/gmail-seed.json` (new — real Gmail feed items)
+- `modules/research-brief/index.html` (bridge fallback fix)
+
+---
+
 ## v3.1.0 — 2026-03-12
 
 ### What Changed — Inline Comms Per Contact

@@ -185,7 +185,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.1.0
+**Current Version:** v3.2.0
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -208,6 +208,14 @@ These are the actual field shapes for objects stored in shared localStorage keys
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.2.0)
+- **Live Gmail Feed**: Feed now shows real job emails from Gmail inbox. Removed all demo data (`DEMO_FEED_ITEMS`, `DEMO_FEED_RUNS`). Auto-cleanup purges stale demo items on init. Gmail seed data loaded from `gmail-seed.json` (4 real roles: RingCentral, Amazon, LiveRamp, Yahoo).
+- **Source URL linking**: Feed cards have clickable "Gmail ↗" badge linking to original email. New `.card-badge-link` CSS.
+- **Referral badges**: Cards show "🤝 Referred by X" when `feedMetadata.referredBy` is set.
+- **Auto-refresh timer**: Feed reloads from localStorage every 15 minutes + on page load. Picks up items added by MCP sync agent.
+- **Scheduled Gmail sync**: Hourly Cowork scheduled task scans Gmail and updates `pf_feed_queue`.
+- **Research Brief bridge fallback**: Removed blocking `showBridgeError()` — now falls through to direct Claude API when bridge is down.
 
 ### Recently Fixed (v3.1.0)
 - **Inline Comms Per Contact**: Tracked connection cards in Pipeline detail panel are now expandable — click to see comms history and quick-log input. Last activity date shown on collapsed cards. Standalone "Comms Log" section removed. General notes (non-contact comms) appear in their own collapsible section. New JS functions: `toggleConnCard()`, `quickLogComms()`.

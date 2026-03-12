@@ -1,0 +1,98 @@
+[
+  {
+    "id": "gmail-19ce292d1c38cedf",
+    "company": "RingCentral",
+    "logo": "📞",
+    "title": "Senior Product Manager, AI",
+    "domain": "Enterprise SaaS",
+    "location": "Remote",
+    "remote": true,
+    "posted": "Mar 12, 2026",
+    "source": "Gmail",
+    "jd": "Video Interview scheduled with Ray Chang, Director of Talent Acquisition. Senior Product Manager - AI Opportunity. Interview date: March 17, 2026 at 1:00 PM PST.",
+    "salary": "",
+    "stage": "Public",
+    "headcount": 8000,
+    "feedMetadata": {
+      "sourceType": "gmail",
+      "sourceId": "19ce292d1c38cedf",
+      "sourceUrl": "https://mail.google.com/mail/u/0/#all/19ce292d1c38cedf",
+      "extractedAt": "2026-03-12T15:03:12Z",
+      "from": "Annie Luna <annie.luna@ringcentral.com>",
+      "subject": "RingCentral – Video Interview for the Senior Product Manager, AI Opportunity",
+      "referredBy": null
+    }
+  },
+  {
+    "id": "gmail-19cdd51acfb1dfcb",
+    "company": "Amazon",
+    "logo": "📦",
+    "title": "Principal Product Manager - Tech, Sponsored Ads",
+    "domain": "AdTech",
+    "location": "Seattle, WA",
+    "remote": false,
+    "posted": "Mar 11, 2026",
+    "source": "Gmail",
+    "jd": "Referred by Sam Blum for Principal Product Manager - Tech, Sponsored Ads (ID: 3160194). Application submitted and under review.",
+    "salary": "",
+    "stage": "Public",
+    "headcount": 1500000,
+    "feedMetadata": {
+      "sourceType": "gmail",
+      "sourceId": "19cdd51acfb1dfcb",
+      "sourceUrl": "https://mail.google.com/mail/u/0/#all/19cdd51acfb1dfcb",
+      "extractedAt": "2026-03-11T14:34:02Z",
+      "from": "noreply@mail.amazon.jobs",
+      "subject": "You've been referred for a role at Amazon",
+      "referredBy": "Sam Blum"
+    }
+  },
+  {
+    "id": "gmail-19cd4c05fa6d1362",
+    "company": "LiveRamp",
+    "logo": "📊",
+    "title": "Sr. Director Product Management: Addressability",
+    "domain": "AdTech",
+    "location": "San Francisco, CA",
+    "remote": false,
+    "posted": "Mar 9, 2026",
+    "source": "Gmail",
+    "jd": "Application confirmed via Workday. Referred by Manoj Kumar. Sr. Director Product Management: Addressability (JR011930). LiveRamp recruiting team reviewing application.",
+    "salary": "",
+    "stage": "Pre-IPO",
+    "headcount": 1800,
+    "feedMetadata": {
+      "sourceType": "gmail",
+      "sourceId": "19cd4c05fa6d1362",
+      "sourceUrl": "https://mail.google.com/mail/u/0/#all/19cd4c05fa6d1362",
+      "extractedAt": "2026-03-09T22:38:22Z",
+      "from": "LiveRampEmail liveramp <liveramp@myworkday.com>",
+      "subject": "Job Application at LiveRamp",
+      "referredBy": "Manoj Kumar"
+    }
+  },
+  {
+    "id": "gmail-19cc5982317b52a4",
+    "company": "Yahoo",
+    "logo": "🟣",
+    "title": "Sr. Director Consumer Data Product - Activation",
+    "domain": "AdTech",
+    "location": "United States (Remote)",
+    "remote": true,
+    "posted": "Mar 7, 2026",
+    "source": "Gmail",
+    "jd": "Referred by Giovanni Gardelli. Sr. Director Consumer Data Product - Activation. Apply via Workday link. Yahoo Recruiting Team.",
+    "salary": "",
+    "stage": "Public",
+    "headcount": 8600,
+    "feedMetadata": {
+      "sourceType": "gmail",
+      "sourceId": "19cc5982317b52a4",
+      "sourceUrl": "https://mail.google.com/mail/u/0/#all/19cc5982317b52a4",
+      "extractedAt": "2026-03-07T00:00:07Z",
+      "from": "Workday@Yahoo <ouryahoo@myworkday.com>",
+      "subject": "Giovanni Gardelli referred you for a new role at Yahoo",
+      "referredBy": "Giovanni Gardelli"
+    }
+  }
+]

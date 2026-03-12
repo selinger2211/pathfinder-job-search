@@ -3406,12 +3406,10 @@ The HTML content should come first, followed by the citations block. Do not incl
       // Check API key
       if (!ensureApiKey()) return;
 
-      // Check bridge health
-      const bridgeUp = await checkBridgeHealth();
-      if (!bridgeUp) {
-        showBridgeError();
-        return;
-      }
+      // Check bridge health — if bridge is down, fall through to direct Claude API.
+      // The bridge is nice-to-have but NOT required; generateSectionViaAPI()
+      // automatically falls back to direct API when state.useFallbackAPI is true.
+      await checkBridgeHealth();
 
       state.isGenerating = true;
       state.generatedSections = {};

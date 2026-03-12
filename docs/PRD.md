@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v3.1.0
+**Status:** v3.2.0
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v3.2.0 | 2026-03-12 | **Live Gmail Feed + Source Linking** — Feed now shows real job emails from Gmail inbox instead of sample/demo data. Each feed card has a clickable "Gmail ↗" source badge that links directly to the original email. Referral badges ("🤝 Referred by X") shown on referred roles. Removed all demo data constants (`DEMO_FEED_ITEMS`, `DEMO_FEED_RUNS`). Auto-cleanup purges stale demo items (with `feed-*` IDs) on init. Gmail seed data loaded from `gmail-seed.json` when feed is empty. Auto-refresh timer reloads feed from localStorage every 15 minutes (picks up MCP sync agent updates). Hourly scheduled task scans Gmail for new job emails. "Check Now" button actually reloads and re-scores feed. Research Brief MCP bridge fallback fix: removed blocking check that prevented brief generation when bridge was down — now gracefully falls through to direct Claude API. |
 | v3.1.0 | 2026-03-12 | **Inline Comms Per Contact** — Tracked connection cards are now expandable: click to reveal the contact's comms history and a quick-log input. Each card shows last activity date on the collapsed view. Standalone "Comms Log" section removed — contact-specific notes live inside each card, general notes (not tied to a contact) appear in a collapsible "General Notes" section. Quick-log input per card (channel selector + note + log button) for fast note-taking. |
 | v3.0.0 | 2026-03-12 | **MCP-Backed Data Layer** — Major architectural change: localStorage is now a cache, MCP server is the source of truth. New shared `data-layer.js` (loaded in all 11 modules) monkey-patches `localStorage.setItem/removeItem` to transparently sync all `pf_*` data keys to the MCP HTTP bridge at `localhost:3456`. On startup, if core data (roles, companies, connections) is missing from localStorage, auto-recovers everything from MCP. HTTP bridge gains 4 new key-level endpoints: `PUT /data/:key`, `GET /data/:key`, `GET /data` (read all), `DELETE /data/:key`. Each key stored as individual JSON file in `~/.pathfinder/data/`. Graceful degradation: if bridge is down, app works via localStorage alone. 1-second debounce on sync writes to avoid flooding. Security: API keys (`pf_anthropic_key`) excluded from sync. UI-only keys (theme, view mode) excluded. 22 data keys synced. |
 | v2.7.0 | 2026-03-12 | **LinkedIn Network Import** — Parsed 2,687 LinkedIn 1st-degree connections from data export into `pf_linkedin_network` localStorage key. Pipeline detail panel shows "LinkedIn Network (N)" section with connections sorted by seniority (VP/Director/Senior) and department relevance (Product and Engineering surfaced first). Purple "Product" and blue "Eng" department badges on matching titles. "Show More" button expands from top-10 preview to full list. Each name links to LinkedIn profile. "+ Track" button promotes a LinkedIn connection into active `pf_connections` tracking. Kanban cards show combined connection count (tracked + LinkedIn). Fuzzy company matching handles variants like "Amazon" matching "Amazon Ads". Python parser script normalizes company names (JPMorganChase → JPMorgan Chase). |
