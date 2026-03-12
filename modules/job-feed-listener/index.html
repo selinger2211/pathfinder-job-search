@@ -748,6 +748,15 @@
       background: var(--accent);
       color: var(--bg-primary);
     }
+    /* Secondary badge (e.g., email icon next to LinkedIn link) */
+    .card-badge-secondary {
+      padding: 2px 6px;
+      font-size: 0.7rem;
+      opacity: 0.7;
+    }
+    .card-badge-secondary:hover {
+      opacity: 1;
+    }
 
     /* Match score section */
     .card-score-section {
@@ -1863,6 +1872,7 @@
     const FEED_SOURCES = [
       { id: 'manual', name: 'Manual Entry', status: 'active', lastChecked: 'Always available' },
       { id: 'gmail', name: 'Gmail', status: 'active', lastChecked: 'Synced via Pathfinder agent' },
+      { id: 'linkedin', name: 'LinkedIn Alerts', status: 'active', lastChecked: 'Synced via Pathfinder agent' },
       { id: 'indeed', name: 'Indeed', status: 'inactive', lastChecked: 'Not connected' },
       { id: 'career-pages', name: 'Career Pages', status: 'inactive', lastChecked: 'Not connected' }
     ];
@@ -2628,10 +2638,20 @@
                 <div class="card-company">${item.company}</div>
                 <div class="card-title">${item.title}</div>
                 <div class="card-meta">
-                  ${item.feedMetadata && item.feedMetadata.sourceUrl
-                    ? `<a href="${item.feedMetadata.sourceUrl}" target="_blank" class="card-badge card-badge-link" title="Open source: ${item.feedMetadata.sourceUrl}">${item.source} ↗</a>`
-                    : `<span class="card-badge">${item.source}</span>`
-                  }
+                  ${(() => {
+                    // LinkedIn alert items: link to the LinkedIn job posting
+                    // Gmail items: link to the original email in Gmail
+                    const linkedinUrl = item.feedMetadata && item.feedMetadata.linkedinJobUrl;
+                    const sourceUrl = item.feedMetadata && item.feedMetadata.sourceUrl;
+                    if (linkedinUrl) {
+                      return `<a href="${linkedinUrl}" target="_blank" class="card-badge card-badge-link" title="View on LinkedIn">${item.source} ↗</a>`
+                        + `<a href="${sourceUrl}" target="_blank" class="card-badge card-badge-link card-badge-secondary" title="View alert email">✉️</a>`;
+                    } else if (sourceUrl) {
+                      return `<a href="${sourceUrl}" target="_blank" class="card-badge card-badge-link" title="Open source: ${sourceUrl}">${item.source} ↗</a>`;
+                    } else {
+                      return `<span class="card-badge">${item.source}</span>`;
+                    }
+                  })()}
                   <span>Posted ${item.posted}</span>
                 </div>
               </div>

@@ -4,6 +4,25 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.2.1 — 2026-03-12
+
+### What Changed — LinkedIn Job Alert Feed Integration
+
+**User requested:** "is the feed pulling in job postings from my gmail? E.g., the Intuit role" + "also I want provenance, so I can go to the email and click in to get more information"
+
+**Changes:**
+1. **LinkedIn Job Alert parsing** — Scans `jobalerts-noreply@linkedin.com` emails, extracts individual job listings (title, company, location, LinkedIn job URL) from the structured email body.
+2. **12 new feed items from LinkedIn Alerts** — Intuit (Agentic AI), OpenAI (API Model Behavior), Stripe (ML/GenAI), Microsoft (Human Data), SoFi (AI SDLC), Salesforce (Agentforce), Adobe (AI Measurement), Google Cloud (GPM), Sigma (AI Builder), Netflix (Games), Uber (Consumer Platform), Harvey (Data & Retrieval).
+3. **Dual-link provenance badges** — LinkedIn items show "LinkedIn ↗" (links to job posting) + "✉️" (links to Gmail alert email). Gmail items still show "Gmail ↗" → original email.
+4. **LinkedIn active in FEED_SOURCES** — New source card in Sources tab.
+5. **Updated scheduled task** — `pathfinder-gmail-sync` now scans both direct recruiter emails AND LinkedIn Job Alert emails.
+
+**Files changed:**
+- `modules/job-feed-listener/index.html` (LinkedIn source, dual-link badges, secondary badge CSS)
+- `modules/job-feed-listener/gmail-seed.json` (4 → 16 items: 4 Gmail + 12 LinkedIn)
+
+---
+
 ## v3.2.0 — 2026-03-12
 
 ### What Changed — Live Gmail Feed + Source Linking

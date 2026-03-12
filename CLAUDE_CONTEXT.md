@@ -185,7 +185,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.2.0
+**Current Version:** v3.2.1
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -208,6 +208,12 @@ These are the actual field shapes for objects stored in shared localStorage keys
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.2.1)
+- **LinkedIn Job Alert parsing**: Feed now extracts individual job listings from LinkedIn Job Alert emails (`jobalerts-noreply@linkedin.com`). 12 new roles added: Intuit, OpenAI, Stripe, Microsoft, SoFi, Salesforce, Adobe, Google, Sigma, Netflix, Uber, Harvey.
+- **Dual-link provenance badges**: LinkedIn items show "LinkedIn ↗" (job posting) + "✉️" (Gmail alert email). Gmail items show "Gmail ↗" → original email. User can always trace back to the source.
+- **LinkedIn active in FEED_SOURCES**: Listed as active source alongside Gmail and Manual Entry.
+- **Updated scheduled task**: `pathfinder-gmail-sync` scans both direct recruiter emails and LinkedIn Job Alert emails.
 
 ### Recently Fixed (v3.2.0)
 - **Live Gmail Feed**: Feed now shows real job emails from Gmail inbox. Removed all demo data (`DEMO_FEED_ITEMS`, `DEMO_FEED_RUNS`). Auto-cleanup purges stale demo items on init. Gmail seed data loaded from `gmail-seed.json` (4 real roles: RingCentral, Amazon, LiveRamp, Yahoo).
