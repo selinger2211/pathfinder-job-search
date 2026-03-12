@@ -7,7 +7,7 @@ description: "Operating system for building software with Ili. Governs how Claud
 
 This is how we build software together. Read this before writing a single line of code.
 
-These patterns were extracted from a real project (Pathfinder — 12 modules, 30,000+ lines, v1.0 → v2.1.3 across multiple sessions). They are battle-tested. The lessons here come from actual mistakes that cost real time to fix.
+These patterns were extracted from a real project (Pathfinder — 12 modules, 30,000+ lines, v1.0 → v2.1.6 across multiple sessions). They are battle-tested. The lessons here come from actual mistakes that cost real time to fix.
 
 ---
 
@@ -226,6 +226,8 @@ The reason this matters: in Pathfinder, every module passed "visual rendering" c
 - Images/logos that show broken image icons (dead external APIs, wrong URLs)
 - Forms that silently fail (no validation feedback, no success confirmation)
 - Dropdowns or selects with missing options (hardcoded lists that don't match actual data)
+- Dropdowns where options RENDER but have wrong VALUES — open DevTools, inspect `<option value="...">`, verify the value matches an actual field on the data object. A dropdown can look populated but have every value be "undefined" if the code uses a field that doesn't exist (like `c.id` when the object only has `c.name`)
+- State that resets after DOM rebuild — if code uses `innerHTML` to rebuild a section (sidebar, dropdown, list), any user selections, scroll position, or focus state is destroyed. After any `innerHTML` rebuild, the code must restore state from the app's state object
 - Elements that visually overlap or disappear at certain states
 - Inline styles that override CSS class-based visibility (a common architecture bug)
 
@@ -235,6 +237,7 @@ The reason this matters: in Pathfinder, every module passed "visual rendering" c
 - After every major batch (same as before)
 - After any fix to a module — verify the fix actually works AND that it didn't break adjacent workflows
 - Before any commit that touches UI code
+- **If the app has multiple data modes (Demo/Personal, staging/production, etc.), run every workflow in EACH mode.** Bugs that only surface in one mode are common — e.g., Demo data might have fields that Personal data doesn't, or vice versa. The Calendar double-prefix bug only broke Personal mode because Demo mode re-seeded data on every page load, masking the bad keys.
 
 *The bottom line:* A module is not QA'd until you've personally performed every core user workflow and verified the outcome. Taking a screenshot of a page that loaded is step zero — the real QA starts when you start clicking.
 
@@ -276,6 +279,61 @@ Let the user pick the right level for their needs.
 ### Cross-Module Communication
 
 Modules talk to each other through shared localStorage keys with a namespace prefix. Every key gets a project prefix (e.g., `pf_` for Pathfinder, `xx_` for Project X). Always wrap reads in try/catch. Always document keys in CLAUDE_CONTEXT.md.
+
+### Data Contracts (CRITICAL)
+
+When multiple modules share data through localStorage, **document the shape of every shared object** in CLAUDE_CONTEXT.md — not just the key names, but the actual fields. This is the single most effective bug prevention rule in this skill.
+
+**Why this matters:** In Pathfinder, company objects had `name` but no `id` field. Four different modules independently assumed `c.id` existed and used it for dropdown values and lookups. Every one of them silently produced `undefined`. The bug wasn't in any single module — it was in the gap between modules. A data contract would have prevented all four bugs from ever being written.
+
+**What a data contract looks like in CLAUDE_CONTEXT.md:**
+
+```markdown
+## Data Contracts (Shared Object Shapes)
+
+### pf_companies — Company[]
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| name | string | YES | Primary identifier — use this for lookups, NOT id |
+| domain | string | yes | e.g., "stripe.com" |
+| tier | string | no | "hot" / "active" / "watching" |
+| ... | ... | ... | ... |
+
+### pf_roles — Role[]
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| id | string | YES | Format: "role-{timestamp}" |
+| company | string | YES | Company NAME (string), NOT a foreign key to company.id |
+| title | string | yes | Job title |
+| ... | ... | ... | ... |
+```
+
+**Rules:**
+- Before writing ANY code that reads from a shared localStorage key, check the data contract in CLAUDE_CONTEXT.md first
+- If the data contract doesn't exist yet, read the actual data (from localStorage, seed files, or migration output) and document it before writing code against it
+- When adding a new field to a shared object, update the contract immediately — don't leave it for later
+- Call out gotchas explicitly: if `name` is the lookup key and there is no `id`, say so in bold. Future sessions will thank you.
+
+### Storage Helper Conventions
+
+If a module has helper functions that transform localStorage keys (e.g., adding a prefix), the transformation must be obvious at every call site.
+
+**The bug this prevents:** Calendar had `getStorageData(key)` which internally did `localStorage.getItem('pf_' + key)`. But every caller passed keys that already had `pf_`: `getStorageData('pf_roles')` → `localStorage.getItem('pf_pf_roles')`. The helper's behavior was documented in its JSDoc 2000 lines away — nobody read it.
+
+**Rules:**
+- Helper function names must make the transformation obvious. `getStorageData('roles')` is good if the function adds the prefix. `getWithPrefix('pf_roles')` is a red flag.
+- When you create a storage helper, add a comment at the TOP of the file (not buried in the function) explaining the convention: `/* STORAGE CONVENTION: getStorageData('roles') → reads localStorage key 'pf_roles'. Pass BARE keys, not prefixed. */`
+- When copying storage patterns between modules, verify the target module's convention matches. Copy-paste drift between modules is how the Calendar bug happened.
+- When auditing a codebase, grep for the prefix pattern in both the helper AND all callers. If they both add the prefix, you have a double-prefix bug.
+
+### Demo Data Seeding Order
+
+If your app has shared data that gets seeded by a specific module (e.g., Pipeline seeds companies/roles/connections), document which module seeds what. Other modules that depend on this shared data should either:
+
+1. Seed it themselves if it's missing (defensive), or
+2. Show a clear "Visit [Module] first to initialize data" message
+
+Don't assume the user will visit modules in the right order.
 
 ### External API Bridge (Sync Hub Pattern)
 
@@ -342,6 +400,13 @@ Every project gets one. This is the first file Claude reads in any new session. 
 
 ## Mandatory Rules
 [Project-specific rules that must be followed in every session]
+
+---
+
+## Data Contracts (Shared Object Shapes)
+[For every localStorage key shared between modules, document the object shape:
+field name, type, required/optional, and any gotchas.
+This section prevents the #1 cross-module bug: assuming fields exist that don't.]
 
 ---
 
@@ -413,6 +478,12 @@ These are real mistakes from real projects. They're here so they don't happen ag
 **Git push can't happen from the Cowork VM.** The VM doesn't have git credentials. Don't waste time debugging it. Stack commits, push from Mac.
 
 **Screenshot QA is not QA.** In Pathfinder v2.1.3, every module "passed QA" — pages loaded, no console errors, layouts looked fine in screenshots. Then the user tested basic workflows and found bugs everywhere: Pipeline views didn't switch, buttons did nothing on click, data didn't persist. The root cause was that QA meant "take a screenshot and check the console." Real QA means performing actual user workflows — clicking buttons, filling forms, switching views, reloading, testing empty states. If you haven't interacted with it the way a user would, you haven't tested it. This lesson was expensive enough that it got its own section in the QA Audit Checklist above.
+
+**Shared data without a contract is a ticking bomb.** In Pathfinder v2.1.6, four modules used `c.id` to look up companies — but company objects don't have an `id` field (only `name`). The bug was in Outreach (dropdown values all "undefined"), Debrief, Calendar, and Pipeline. Each module was written independently, and each independently guessed wrong about the data shape. A 5-line data contract in CLAUDE_CONTEXT.md — listing the actual fields on each shared object — would have prevented all four bugs. Now: data contracts are mandatory for every shared object. See Part 5 for the format.
+
+**Helper functions that silently transform inputs will burn you.** Calendar had `getStorageData(key)` which prepended `pf_` to the key internally. Every caller also included `pf_` in the key name: `getStorageData('pf_roles')` → `localStorage.getItem('pf_pf_roles')`. The module was writing to and reading from keys that no other module used, so Calendar appeared empty in Personal mode. The fix was mechanical (strip `pf_` from all callers), but the lesson is structural: if a helper modifies its input, that behavior must be screaming-obvious at every call site, not buried in a function definition 2000 lines away. Now: storage helpers must document their convention at the top of the file, and the convention must be verified when copying patterns between modules.
+
+**Test every data mode, not just the default.** The Calendar double-prefix bug only surfaced in Personal mode. Demo mode masked it because data was re-seeded fresh on every page load (overwriting the bad keys). QA ran in Demo mode first, everything looked fine, and the bug shipped. Now: if the app has multiple data modes, every QA workflow must be tested in each mode.
 
 ---
 

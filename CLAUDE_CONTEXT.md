@@ -94,6 +94,74 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 
 ---
 
+## Data Contracts (Shared Object Shapes)
+
+These are the actual field shapes for objects stored in shared localStorage keys. **Check this section before writing any code that reads from these keys.** This prevents the most common cross-module bug: assuming fields exist that don't.
+
+### pf_companies — Company[]
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| **name** | string | **YES** | **Primary identifier — use this for all lookups. There is NO `id` field.** |
+| domain | string | yes | e.g., "stripe.com" — used for logo URLs |
+| tier | string | no | "hot" / "active" / "watching" |
+| missionStatement | string | no | Company mission/description |
+| headcount | string | no | e.g., "1000-5000" |
+| fundingStage | string | no | e.g., "Series C" |
+| remotePolicy | string | no | e.g., "hybrid" |
+| url | string | no | Company website URL |
+| logoUrl | string | no | Google Favicon URL |
+| enrichmentStatus | string | no | "enriched" / "pending" / null |
+| dateAdded | string | no | ISO date |
+| notes | string | no | Personal only — from migration |
+
+### pf_roles — Role[]
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| id | string | yes | Format: "role-{timestamp}" |
+| **company** | string | **YES** | **Company NAME (string match to company.name). There is NO `companyId` field.** |
+| title | string | yes | Job title |
+| url | string | no | Job posting URL |
+| jdText | string | no | Full job description text |
+| positioning | string | no | Why the user is a good fit |
+| targetLevel | string | no | e.g., "senior", "staff" |
+| source | string | no | e.g., "linkedin", "referral" |
+| stage | string | no | Pipeline stage: "saved" / "applied" / "interviewing" / "offer" / "rejected" / "outreach" |
+| stageHistory | array | no | Array of {stage, date} transitions |
+| salary | object | no | {min, max, currency} |
+| dateAdded | string | no | ISO date |
+| lastActivity | string | no | ISO date |
+| connections | array | no | Array of connection names linked to this role |
+| tier | string | no | Inherited from company tier |
+
+### pf_connections — Connection[]
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| id | string | yes | Format: "conn-{timestamp}" (manual) or "conn-001" (migration) |
+| **name** | string | **YES** | **Primary display field. Use `name` for dropdown values and lookups.** |
+| company | string | yes | Company NAME (string match) |
+| title | string | no | Job title at the company |
+| linkedinUrl | string | no | Full LinkedIn profile URL |
+| relationship | string | no | "hiring-manager" / "recruiter" / "peer" / "referral" / etc. |
+| notes | string | no | Free-text notes |
+| linkedRoles | array | no | Role IDs this connection is linked to |
+| outreachLog | array | no | Array of outreach entries |
+| referralStatus | string | no | "none" / "requested" / "received" |
+| source | string | no | "manual" / "migration" |
+| scores | object | no | Personal only — {aiRelevance, hiringInfluence, warmth, strategicLeverage, responseLikelihood} |
+| totalScore | number | no | Personal only — sum of scores |
+| tier | string | no | Personal only — "hot" / "warm" / "cold" |
+| tierLabel | string | no | Personal only — "A+" / "A" / "B" etc. |
+| outreachStatus | string | no | "none" / "sent" / "replied" |
+| outreachChannel | string | no | "linkedin" / "email" |
+| lastOutreachDate | string | no | ISO date |
+| connectionDegree | string | no | "1st" / "2nd" |
+| seniority | string | no | "SVP" / "Director" / etc. |
+
+---
+
 ## Current State (Update This After Major Changes)
 
 **Current Version:** v2.1.6
