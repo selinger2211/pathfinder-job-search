@@ -134,6 +134,9 @@ These are the actual field shapes for objects stored in shared localStorage keys
 | lastActivity | string | no | ISO date |
 | connections | array | no | Array of connection names linked to this role |
 | tier | string | no | Inherited from company tier |
+| resumesSent | array | no | Legacy: array of {filename, size, type, date, notes, indexedDbKey} |
+| artifacts | array | no | New (v2.5.0): array of {type, filename, size, date, notes, url?, indexedDbKey?}. Types: "resume", "research_brief", "document" |
+| commsLog | array | no | Array of {date, note, link, channel, contactId, contactName} |
 
 ### pf_connections — Connection[]
 
@@ -164,17 +167,17 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v2.4.0
+**Current Version:** v2.5.0
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
 
 | Module | % Complete | What Works | What's Missing (External APIs) |
 |--------|-----------|------------|-------------------------------|
-| Pipeline | ~100% | Kanban, CRUD, drag-drop, IndexedDB resume, comms log, URL import, CSV export, company view, fit assessment, keyboard shortcuts, **Clay enrichment display**, **enrichment badges**, **stage analytics + funnel chart**, **stale role detection (14d)**, **Google Favicon logos** | — |
+| Pipeline | ~100% | Kanban, CRUD, drag-drop, IndexedDB resume, comms log, URL import, CSV export, company view, fit assessment, keyboard shortcuts, **Clay enrichment display**, **enrichment badges**, **stage analytics + funnel chart**, **stale role detection (14d)**, **Google Favicon logos**, **collapsible comms log**, **Artifacts section (replaces Resume Sent)**, **Research Brief trigger button** | — |
 | Dashboard | ~100% | 12-rule nudge engine, streak, action queue, feed review, interview intelligence, pipeline funnel, activity feed, weekly stats, real-time storage listener, **GCal card (next 3 events + countdown)**, **sync status indicator**, **quick actions row**, **debrief pending badge**, **outreach queue indicator** | — |
 | Job Feed | ~100% | Scoring engine, preference editor, manual entry, dedup, quick-check filter, auto-pipeline, analytics, snooze, career page URL import, Sources tab, **error handling, a11y, visual polish** | — |
-| Research Brief | ~100% | Claude API, 14 section prompts, caching, citation system, localStorage artifact save, saved briefs panel, **error handling, a11y, visual polish** | — |
+| Research Brief | ~100% | Claude API, 14 section prompts, caching, citation system, localStorage artifact save, saved briefs panel, **error handling, a11y, visual polish**, **URL param deep-linking (`?roleId=X`)** | — |
 | Resume Builder | ~100% | Phase 1 JD analysis, Phase 2 streaming, cover letter, bullet bank, keyword gap, version history, DOCX/PDF export, **error handling, a11y, export validation** | — |
 | Outreach | ~100% | 8 message types, sequence scheduling, response tracking, templates, history/analytics, Gmail integration, Draft Queue, **email validation, a11y, error handling** | — |
 | Mock Interview | ~100% | Multi-turn Claude, 7 types, 100+ question bank (11 companies), session playback, performance trends, custom questions, practice tracking, company-calibrated sessions, **a11y, error handling, input sanitization** | — |
@@ -188,7 +191,10 @@ These are the actual field shapes for objects stored in shared localStorage keys
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
-### Recently Fixed (v2.4.0)
+### Recently Fixed (v2.5.0)
+- **Pipeline side panel restructure**: "Resume Sent" renamed to "Artifacts" with type badges (resume/research/document). Added "Generate Research Brief" button that deep-links to Research Brief module via `?roleId=X`. Comms Log now collapsible (starts collapsed, shows count + latest date). New `role.artifacts` array in data model. Reusable `.collapsible` CSS pattern.
+
+### Previously Fixed (v2.4.0)
 - **MCP pipeline backup system**: Added `pf_backup_pipeline` and `pf_restore_pipeline` MCP tools. Backups write timestamped JSON snapshots of all `pf_*` keys to `~/.pathfinder/backups/` with SHA-256 checksums and auto-pruning (max 50). HTTP bridge endpoints added (`POST /backup`, `POST /restore`, `GET /backups`). Sync Hub auto-backs up after every Sync All with localStorage fallback when MCP is unavailable.
 
 ### Previously Fixed (v2.3.2)

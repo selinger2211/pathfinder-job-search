@@ -1388,6 +1388,64 @@
       border-bottom: 1px solid var(--bg-subtle);
     }
 
+    /* ====== COLLAPSIBLE SECTION STYLES ======
+       Used for sections that can be long (Comms Log, Job Description, etc.)
+       The title gets a toggle chevron; content hides/shows with transition */
+    .detail-section-title.collapsible {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+      transition: color var(--duration-fast) var(--ease-default);
+    }
+    .detail-section-title.collapsible:hover {
+      color: var(--text-primary);
+    }
+    .detail-section-title.collapsible .collapse-chevron {
+      transition: transform var(--duration-normal) var(--ease-default);
+      flex-shrink: 0;
+    }
+    .detail-section-title.collapsible.collapsed .collapse-chevron {
+      transform: rotate(-90deg);
+    }
+    .collapsible-content {
+      overflow: hidden;
+      transition: max-height var(--duration-normal) var(--ease-default),
+                  opacity var(--duration-normal) var(--ease-default);
+      max-height: 2000px; /* large enough to fit any content */
+      opacity: 1;
+    }
+    .collapsible-content.collapsed {
+      max-height: 0;
+      opacity: 0;
+    }
+    /* Summary line shown when collapsed — e.g. "3 entries · last: Mar 10" */
+    .collapsed-summary {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      font-weight: 400;
+      margin-left: var(--space-2);
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    /* ====== ARTIFACT CARD STYLES ======
+       Used in the Role Artifacts section for resumes, research briefs, etc. */
+    .artifact-type-badge {
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 1px 6px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-subtle);
+      color: var(--text-tertiary);
+    }
+    .artifact-type-badge.resume { background: #dbeafe; color: #1e40af; }
+    .artifact-type-badge.research { background: #d1fae5; color: #047857; }
+    .artifact-type-badge.document { background: #fef3c7; color: #92400e; }
+
     /* Key-value rows in the detail panel */
     .detail-row {
       display: flex;
@@ -4168,37 +4226,59 @@
         </div>
         ` : ''}
 
-        <!-- Resume(s) sent section -->
+        <!-- Role Artifacts section — resumes, research briefs, and other associated files -->
         <div class="detail-section">
-          <div class="detail-section-title">Resume Sent (${(role.resumesSent || []).length})</div>
-          <div id="detail-resumes-list">
-            ${buildResumesList(role)}
+          <div class="detail-section-title">Artifacts (${getRoleArtifactCount(role)})</div>
+          <div id="detail-artifacts-list">
+            ${buildArtifactsList(role)}
           </div>
+          <!-- Generate Research Brief button — opens Research Brief module with this role pre-selected -->
+          <button class="btn btn-ghost" onclick="openResearchBrief('${role.id}')"
+                  style="width: 100%; display: flex; align-items: center; justify-content: center; gap: var(--space-2); font-size: var(--text-sm); padding: var(--space-2) var(--space-3); margin-bottom: var(--space-2); border: 1px dashed var(--accent); color: var(--accent);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Generate Research Brief
+          </button>
+          <!-- Resume upload drop zone (always available) -->
           <div class="resume-upload-zone" id="resume-upload-zone"
                ondragover="event.preventDefault(); this.classList.add('dragover');"
                ondragleave="this.classList.remove('dragover');"
                ondrop="event.preventDefault(); this.classList.remove('dragover'); handleResumeDrop(event, '${role.id}');">
             <input type="file" id="resume-file-input" accept=".pdf,.docx,.doc" onchange="handleResumeSelect(event, '${role.id}')">
             <div class="resume-upload-zone-text">
-              <strong>Drop a resume here</strong> or <a href="#" onclick="event.preventDefault(); document.getElementById('resume-file-input').click();">browse</a>
-              <div style="font-size: var(--text-xs); margin-top: var(--space-1);">PDF or DOCX — this is the resume you sent for this role</div>
+              <strong>Drop a file here</strong> or <a href="#" onclick="event.preventDefault(); document.getElementById('resume-file-input').click();">browse</a>
+              <div style="font-size: var(--text-xs); margin-top: var(--space-1);">PDF or DOCX — resumes, cover letters, or other role documents</div>
             </div>
           </div>
           <div id="resume-notes-form" style="display: none; margin-top: var(--space-2);">
             <input type="text" class="form-input" id="resume-notes-input" placeholder="Notes (e.g., tailored for data product focus)" style="font-size: var(--text-xs);">
             <div style="display: flex; gap: var(--space-2); justify-content: flex-end; margin-top: var(--space-1);">
               <button class="btn btn-ghost" onclick="cancelResumeUpload()" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2);">Cancel</button>
-              <button class="btn btn-primary" id="resume-confirm-btn" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2);">Attach Resume</button>
+              <button class="btn btn-primary" id="resume-confirm-btn" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2);">Attach File</button>
             </div>
           </div>
         </div>
 
-        <!-- Comms log section — timestamped notes tied to connections -->
+        <!-- Comms log section — COLLAPSIBLE, timestamped notes tied to connections -->
         <div class="detail-section">
-          <div class="detail-section-title">Comms Log</div>
-          <div id="detail-comms-log">
-            ${buildCommsLog(role)}
+          <div class="detail-section-title collapsible collapsed" onclick="toggleCollapsible(this)">
+            <span>
+              Comms Log (${(role.commsLog || []).length})
+              ${(() => {
+                const entries = role.commsLog || [];
+                if (entries.length === 0) return '';
+                const sorted = [...entries].sort((a, b) => new Date(b.date) - new Date(a.date));
+                const latest = new Date(sorted[0].date).toLocaleDateString();
+                return `<span class="collapsed-summary">latest: ${latest}</span>`;
+              })()}
+            </span>
+            <svg class="collapse-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg>
           </div>
+          <div class="collapsible-content collapsed" id="detail-comms-log-wrapper">
+            <div id="detail-comms-log" style="margin-top: var(--space-2);">
+              ${buildCommsLog(role)}
+            </div>
+          </div>
+          <!-- Add new entry form — always visible so you can log without expanding -->
           <div style="margin-top: var(--space-2);">
             <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-1);">
               <select class="form-select" id="comms-connection-select" style="font-size: var(--text-xs); flex: 1;">
@@ -4507,40 +4587,125 @@
      * INPUT: role object
      * RETURNS: HTML string
      */
-    function buildResumesList(role) {
-      const resumes = role.resumesSent || [];
-      if (resumes.length === 0) {
-        return '<div style="color: var(--text-tertiary); font-size: var(--text-sm);">No resume attached yet.</div>';
+    /**
+     * Gets the total count of all artifacts for a role.
+     * Combines legacy resumesSent + new artifacts array.
+     * INPUT: role object
+     * RETURNS: number — total artifact count
+     */
+    function getRoleArtifactCount(role) {
+      const legacyResumes = (role.resumesSent || []).length;
+      const newArtifacts = (role.artifacts || []).length;
+      return legacyResumes + newArtifacts;
+    }
+
+    /**
+     * Builds the unified artifacts list HTML — renders resumes (legacy + new)
+     * and any other artifacts (research briefs, documents) in one section.
+     * INPUT: role object
+     * RETURNS: HTML string showing all artifacts with type badges
+     */
+    function buildArtifactsList(role) {
+      // Merge legacy resumesSent and new artifacts array into one display list
+      const allArtifacts = [];
+
+      // Legacy resumes from resumesSent (backwards compatibility)
+      (role.resumesSent || []).forEach((r, idx) => {
+        allArtifacts.push({
+          type: 'resume',
+          filename: r.filename || 'Unknown file',
+          size: r.size,
+          date: r.date,
+          notes: r.notes,
+          indexedDbKey: r.indexedDbKey || `resume-${role.id}-${idx}`,
+          legacyIndex: idx, // Used for remove operations on legacy array
+          isLegacy: true
+        });
+      });
+
+      // New artifacts array (research briefs, documents, etc.)
+      (role.artifacts || []).forEach((a, idx) => {
+        allArtifacts.push({
+          type: a.type || 'document',
+          filename: a.filename || 'Unknown file',
+          size: a.size,
+          date: a.date,
+          notes: a.notes,
+          url: a.url, // For MCP-stored artifacts (e.g., research brief path)
+          indexedDbKey: a.indexedDbKey,
+          artifactIndex: idx,
+          isLegacy: false
+        });
+      });
+
+      if (allArtifacts.length === 0) {
+        return '<div style="color: var(--text-tertiary); font-size: var(--text-sm);">No artifacts yet. Upload a resume or generate a research brief.</div>';
       }
-      return resumes.map((r, idx) => {
-        const ext = (r.filename || '').split('.').pop().toLowerCase();
-        const iconClass = ext === 'pdf' ? 'pdf' : (ext === 'docx' || ext === 'doc') ? 'docx' : 'other';
-        const icon = ext === 'pdf' ? '📄' : (ext === 'docx' || ext === 'doc') ? '📝' : '📎';
-        const sizeStr = r.size ? (r.size < 1024 * 1024 ? Math.round(r.size / 1024) + ' KB' : (r.size / (1024 * 1024)).toFixed(1) + ' MB') : '';
-        const dateStr = r.date ? new Date(r.date).toLocaleDateString() : '';
-        const dbKey = r.indexedDbKey || `resume-${role.id}-${idx}`;
+
+      // Sort by date, newest first
+      allArtifacts.sort((a, b) => (b.date || 0) - (a.date || 0));
+
+      return allArtifacts.map(a => {
+        const ext = (a.filename || '').split('.').pop().toLowerCase();
+        const typeIcons = { resume: '📄', research_brief: '🔬', document: '📎' };
+        const icon = typeIcons[a.type] || '📎';
+        const typeBadge = a.type === 'resume' ? 'resume' : a.type === 'research_brief' ? 'research' : 'document';
+        const typeLabel = a.type === 'resume' ? 'Resume' : a.type === 'research_brief' ? 'Research' : 'Doc';
+        const sizeStr = a.size ? (a.size < 1024 * 1024 ? Math.round(a.size / 1024) + ' KB' : (a.size / (1024 * 1024)).toFixed(1) + ' MB') : '';
+        const dateStr = a.date ? new Date(a.date).toLocaleDateString() : '';
+
+        // Build action buttons based on artifact type
+        let actions = '';
+        if (a.indexedDbKey) {
+          // IndexedDB-stored file (resume, etc.) — can preview + download
+          actions = `
+            <button onclick="previewResume('${a.indexedDbKey}')" title="Preview">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <button onclick="downloadResume('${a.indexedDbKey}')" title="Download">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>`;
+        } else if (a.url) {
+          // URL-based artifact (MCP-stored research brief, etc.)
+          actions = `
+            <button onclick="window.open('${escapeHtml(a.url)}', '_blank')" title="Open">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </button>`;
+        }
+
+        // Remove button — different handler for legacy vs new artifacts
+        const removeHandler = a.isLegacy
+          ? `removeResume('${role.id}', ${a.legacyIndex}, '${a.indexedDbKey}')`
+          : `removeArtifact('${role.id}', ${a.artifactIndex})`;
+
         return `
           <div class="resume-card">
-            <div class="resume-card-icon ${iconClass}">${icon}</div>
+            <div class="resume-card-icon ${ext === 'pdf' ? 'pdf' : (ext === 'docx' || ext === 'doc') ? 'docx' : 'other'}">${icon}</div>
             <div class="resume-card-info">
-              <div class="resume-card-name">${escapeHtml(r.filename || 'Unknown file')}</div>
+              <div style="display: flex; align-items: center; gap: var(--space-2);">
+                <span class="artifact-type-badge ${typeBadge}">${typeLabel}</span>
+                <span class="resume-card-name">${escapeHtml(a.filename)}</span>
+              </div>
               <div class="resume-card-meta">${dateStr}${sizeStr ? ' · ' + sizeStr : ''}</div>
-              ${r.notes ? `<div class="resume-card-notes">${escapeHtml(r.notes)}</div>` : ''}
+              ${a.notes ? `<div class="resume-card-notes">${escapeHtml(a.notes)}</div>` : ''}
             </div>
             <div class="resume-card-actions">
-              <button onclick="previewResume('${dbKey}')" title="Preview">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              </button>
-              <button onclick="downloadResume('${dbKey}')" title="Download">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              </button>
-              <button onclick="removeResume('${role.id}', ${idx}, '${dbKey}')" title="Remove">
+              ${actions}
+              <button onclick="${removeHandler}" title="Remove">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
           </div>
         `;
       }).join('');
+    }
+
+    /**
+     * Legacy wrapper — kept for backwards compatibility.
+     * New code should use buildArtifactsList() instead.
+     */
+    function buildResumesList(role) {
+      return buildArtifactsList(role);
     }
 
     /**
@@ -4653,6 +4818,27 @@
       showToast('Resume removed', 'success');
     }
 
+    /**
+     * Removes a non-legacy artifact from the role.artifacts array.
+     * INPUT: roleId (string), artifactIndex (number) — index in role.artifacts
+     */
+    function removeArtifact(roleId, artifactIndex) {
+      const roles = getRoles();
+      const role = roles.find(r => r.id === roleId);
+      if (!role || !role.artifacts) return;
+
+      const removed = role.artifacts.splice(artifactIndex, 1);
+      saveRoles(roles);
+
+      // If the artifact had an IndexedDB key, clean it up (best-effort)
+      if (removed[0] && removed[0].indexedDbKey) {
+        deleteResumeFile(removed[0].indexedDbKey).catch(() => {});
+      }
+
+      openRoleDetail(roleId);
+      showToast('Artifact removed', 'success');
+    }
+
     // ================================================================
     // COMMS LOG: Timestamped notes tied to connections
     // ================================================================
@@ -4754,6 +4940,38 @@
       const div = document.createElement('div');
       div.textContent = str;
       return div.innerHTML;
+    }
+
+    // ================================================================
+    // RESEARCH BRIEF: Open the Research Brief module with a role pre-selected
+    // ================================================================
+
+    /**
+     * Opens the Research Brief module in a new tab with the role pre-selected.
+     * The Research Brief module reads the roleId from URL params and auto-selects it.
+     * INPUT: roleId (string) — the role ID to pre-select
+     */
+    function openResearchBrief(roleId) {
+      const url = `../research-brief/index.html?roleId=${encodeURIComponent(roleId)}`;
+      window.open(url, '_blank');
+    }
+
+    // ================================================================
+    // COLLAPSIBLE SECTIONS: Toggle accordion sections in the detail panel
+    // ================================================================
+
+    /**
+     * Toggles a collapsible section open/closed.
+     * The title element gets the .collapsed class toggled,
+     * and the next sibling .collapsible-content gets the same.
+     * INPUT: titleElement — the .detail-section-title.collapsible that was clicked
+     */
+    function toggleCollapsible(titleElement) {
+      titleElement.classList.toggle('collapsed');
+      const content = titleElement.nextElementSibling;
+      if (content && content.classList.contains('collapsible-content')) {
+        content.classList.toggle('collapsed');
+      }
     }
 
     /**

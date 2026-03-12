@@ -3165,7 +3165,23 @@ The HTML content should come first, followed by the citations block. Do not incl
         updateApiKeyUI();
       }
 
-      // Pre-load with first role if in demo mode
+      // Check for URL params — allows Pipeline to deep-link to a specific role
+      // e.g., research-brief/index.html?roleId=role-1234567890
+      const urlParams = new URLSearchParams(window.location.search);
+      const deepLinkRoleId = urlParams.get('roleId');
+
+      if (deepLinkRoleId) {
+        // Deep-link: pre-select the specified role
+        const roles = getRoles();
+        const targetRole = roles.find(r => r.id === deepLinkRoleId);
+        if (targetRole) {
+          document.getElementById('roleSelect').value = targetRole.id;
+          selectRole(targetRole.id);
+          return; // Skip default selection
+        }
+      }
+
+      // Default: pre-load with first role if any exist
       const roles = getRoles();
       if (roles.length > 0) {
         document.getElementById('roleSelect').value = roles[0].id;

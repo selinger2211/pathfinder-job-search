@@ -4,6 +4,23 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v2.5.0 — 2026-03-12
+
+### What Changed — Pipeline Side Panel Restructure
+
+**User requested:** "research does not need its own tab, it should be part of the Company → Role... also the Comms Log can be long, so we should be able to collapse the text... also in the Resume Storage, it should also allow for other artifacts"
+
+**Changes:**
+1. **"Resume Sent" → "Artifacts"** — Renamed the resume section to a general-purpose Artifacts section. Each artifact shows a colored type badge (blue = resume, green = research, yellow = document). New `role.artifacts` array in the data model supports non-resume files. Legacy `resumesSent` entries are merged at render time (backwards compatible, no migration needed).
+2. **"Generate Research Brief" button** — New button in the Artifacts section that opens the Research Brief module in a new tab with the role pre-selected via `?roleId=X` URL parameter. Research Brief module updated to read URL params on init.
+3. **Collapsible Comms Log** — Comms Log section starts collapsed with a summary showing entry count and latest date. Click the section title to expand/collapse with smooth CSS transitions. The "add new entry" form stays always visible below so you can log without expanding. Reusable `.collapsible` / `.collapsible-content` CSS classes added for future use on other sections.
+
+**Files changed:**
+- `modules/pipeline/index.html` (Artifacts section, collapsible comms log, research brief button, new CSS, new helper functions)
+- `modules/research-brief/index.html` (URL param deep-linking support)
+
+---
+
 ## v2.4.0 — 2026-03-12
 
 ### What Changed — MCP Pipeline Backup System
