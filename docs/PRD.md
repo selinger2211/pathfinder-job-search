@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v3.2.1
+**Status:** v3.3.0
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v3.3.0 | 2026-03-12 | **LinkedIn Network Prioritization + Dashboard Overhaul** — Feed scoring engine adds Network as 7th dimension (15% weight) using `pf_linkedin_network` (2,687 connections) and `pf_connections` (64 tracked). Purple network badges on cards. Pipeline dedup filters out roles already at active stages (5 filtered). Dashboard nudge cards now show company logo (Google Favicon API) and include both role title + company name in all nudge text. Fixed fuzzy company matching false positives (short names like "On"/"CT" no longer match inside "VectorOne" etc.) in Pipeline + Feed. |
 | v3.2.1 | 2026-03-12 | **LinkedIn Job Alert Feed Integration** — Feed now parses LinkedIn Job Alert emails (`jobalerts-noreply@linkedin.com`) to extract individual job listings. 12 new roles added from LinkedIn alerts (Intuit, OpenAI, Stripe, Microsoft, SoFi, Salesforce, Adobe, Google, Sigma, Netflix, Uber, Harvey). Dual-link provenance: LinkedIn items show "LinkedIn ↗" (links to job posting) + "✉️" (links to Gmail alert email for full context). Gmail items still show "Gmail ↗" → original email. LinkedIn listed as active source in FEED_SOURCES. Scheduled `pathfinder-gmail-sync` task updated to scan both direct recruiter emails and LinkedIn Job Alert emails. |
 | v3.2.0 | 2026-03-12 | **Live Gmail Feed + Source Linking** — Feed now shows real job emails from Gmail inbox instead of sample/demo data. Each feed card has a clickable "Gmail ↗" source badge that links directly to the original email. Referral badges ("🤝 Referred by X") shown on referred roles. Removed all demo data constants (`DEMO_FEED_ITEMS`, `DEMO_FEED_RUNS`). Auto-cleanup purges stale demo items (with `feed-*` IDs) on init. Gmail seed data loaded from `gmail-seed.json` when feed is empty. Auto-refresh timer reloads feed from localStorage every 15 minutes (picks up MCP sync agent updates). Hourly scheduled task scans Gmail for new job emails. "Check Now" button actually reloads and re-scores feed. Research Brief MCP bridge fallback fix: removed blocking check that prevented brief generation when bridge was down — now gracefully falls through to direct Claude API. |
 | v3.1.0 | 2026-03-12 | **Inline Comms Per Contact** — Tracked connection cards are now expandable: click to reveal the contact's comms history and a quick-log input. Each card shows last activity date on the collapsed view. Standalone "Comms Log" section removed — contact-specific notes live inside each card, general notes (not tied to a contact) appear in a collapsible "General Notes" section. Quick-log input per card (channel selector + note + log button) for fast note-taking. |

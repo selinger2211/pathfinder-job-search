@@ -2853,10 +2853,20 @@
       const matches = network.filter(c => {
         if (!c.company) return false;
         const liCompany = c.company.toLowerCase().trim();
-        // Exact match or substring containment in either direction
-        return liCompany === target ||
-               liCompany.includes(target) ||
-               target.includes(liCompany);
+        // Exact match always works
+        if (liCompany === target) return true;
+        // For substring matching, require minimum 4 chars on the shorter
+        // string to avoid false positives like "On" matching "VectorOne"
+        // or "CT" matching "VectorOne". Also check word-boundary alignment.
+        const MIN_SUBSTR_LEN = 4;
+        if (liCompany.length >= MIN_SUBSTR_LEN && liCompany.includes(target)) return true;
+        if (target.length >= MIN_SUBSTR_LEN && liCompany.length >= MIN_SUBSTR_LEN && target.includes(liCompany)) {
+          // Extra check: the LinkedIn company should match at a word boundary
+          // e.g., "Amazon Ads" contains "Amazon" ✓, but "VectorOne" contains "on" ✗
+          const regex = new RegExp(`\\b${liCompany.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+          return regex.test(target);
+        }
+        return false;
       });
 
       // De-duplicate: remove anyone already in tracked connections (pf_connections)

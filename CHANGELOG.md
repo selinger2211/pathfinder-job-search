@@ -4,6 +4,29 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.3.0 — 2026-03-12
+
+### What Changed — LinkedIn Network Prioritization, Pipeline Dedup, Dashboard Overhaul, Fuzzy Match Fix
+
+**User requested:** "on the Job Feed, make sure we are connecting my LinkedIn connections to see who I know and use it to prioritize the feed, also I see roles I already applied for in the feed, those should already be in an accepted state" + "Also in the action queue on the dashboard, you need to give both company name and role, I don't know what I'm looking at by role name alone, make sure you put company logo in the dashboard as well" + "There may be an issue with LinkedIn 1st connections being tied to a company — I know these two don't work at VectorOne"
+
+**Changes:**
+
+1. **Feed: LinkedIn network scoring (new 7th dimension)** — Feed scoring engine now loads `pf_linkedin_network` (2,687 connections) and `pf_connections` (64 tracked) to score network proximity. New 15% weight dimension: tracked connection at company = 100pts, 3+ LinkedIn connections = 80pts, 1-2 LinkedIn = 50pts, none = 0pts. Purple network badges on feed cards show connection count with tooltip listing names. Scoring weights rebalanced: Title 25→20%, Domain 25→20%, Keywords 20→15%, Location 15% (unchanged), Network 15% (NEW), Stage 10% (unchanged), Comp 5% (unchanged).
+
+2. **Feed: Pipeline dedup** — Feed items that match a role already in the Pipeline at an active stage (applied, screen, interviewing, offer, outreach) are filtered out entirely. Fuzzy company + title matching with "product" keyword fallback. On current data: 5 roles filtered (RingCentral screen, Amazon applied, LiveRamp applied, Yahoo applied, Intuit outreach), 11 remaining.
+
+3. **Dashboard: Action queue overhaul** — Nudge cards now show company logo (via Google Favicon API, with fallback domain guess), and ALL nudge text includes both role title AND company name. Updated 7 nudge rules (rules 2-6, 8-9) that were missing one or the other. Added `getCompanyLogoUrl()` helper that looks up domain from `pf_companies` first, falls back to guessing `companyname.com`.
+
+4. **Fuzzy matching fix (Pipeline + Feed)** — Fixed false positive matches where very short LinkedIn company names like "On" or "CT" would match inside longer company names like "VectorOne". Root cause: `target.includes(liCompany)` with no length guard. Fix: require minimum 4 characters for substring matching, plus word-boundary regex check. Applied to Pipeline `getLinkedInConnectionsForCompany()` and Feed `getNetworkAtCompany()` + `checkPipelineStatus()`.
+
+**Files changed:**
+- `modules/job-feed-listener/index.html` (network scoring, pipeline dedup, fuzzy match fix)
+- `modules/dashboard/index.html` (logos, company+role text, `getCompanyLogoUrl()`)
+- `modules/pipeline/index.html` (fuzzy match fix)
+
+---
+
 ## v3.2.1 — 2026-03-12
 
 ### What Changed — LinkedIn Job Alert Feed Integration

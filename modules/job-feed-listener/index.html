@@ -728,6 +728,34 @@
       color: var(--accent);
     }
     /* Referral badge — shows who referred you for the role */
+    /* Network badge: shows how many LinkedIn/tracked connections at this company */
+    .network-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 4px;
+      padding: 2px var(--space-2);
+      background: rgba(139, 92, 246, 0.15);
+      color: #a78bfa;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      font-weight: 500;
+    }
+
+    /* "Already in Pipeline" badge for roles matched but not yet filtered */
+    .pipeline-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 4px;
+      padding: 2px var(--space-2);
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      font-weight: 500;
+    }
+
     .referral-badge {
       display: inline-block;
       margin-top: 4px;
@@ -1942,6 +1970,134 @@
     }
 
     // ============================================================
+    // LINKEDIN NETWORK + PIPELINE CROSS-REFERENCE
+    // ============================================================
+
+    /**
+     * Load LinkedIn network connections (~2,687 1st-degree connections)
+     * INPUT: none
+     * RETURNS: array of LinkedIn connection objects {name, company, position, ...}
+     */
+    function loadLinkedInNetwork() {
+      try {
+        const stored = localStorage.getItem('pf_linkedin_network');
+        return stored ? JSON.parse(stored) : [];
+      } catch (e) {
+        console.warn('[Feed] Failed to load LinkedIn network:', e);
+        return [];
+      }
+    }
+
+    /**
+     * Load tracked connections from Pipeline
+     * INPUT: none
+     * RETURNS: array of tracked connection objects {name, company, title, ...}
+     */
+    function loadTrackedConnections() {
+      try {
+        const stored = localStorage.getItem('pf_connections');
+        return stored ? JSON.parse(stored) : [];
+      } catch (e) {
+        console.warn('[Feed] Failed to load tracked connections:', e);
+        return [];
+      }
+    }
+
+    /**
+     * Find people the user knows at a given company.
+     * Checks both tracked connections (higher signal) and LinkedIn network.
+     * Company name matching is fuzzy — normalizes common variations
+     * (e.g., "Amazon" matches "Amazon Ads", "Amazon Web Services", etc.)
+     *
+     * INPUT: companyName (string), linkedinNetwork (array), trackedConnections (array)
+     * RETURNS: { tracked: [...names], linkedin: [...names], total: number }
+     */
+    function getNetworkAtCompany(companyName, linkedinNetwork, trackedConnections) {
+      if (!companyName) return { tracked: [], linkedin: [], total: 0 };
+
+      const companyLower = companyName.toLowerCase().trim();
+
+      // Fuzzy company match: check if either name contains the other
+      // This handles "Amazon" matching "Amazon Ads", "Google" matching "Google Cloud", etc.
+      // IMPORTANT: requires min 4-char length on the shorter string to avoid
+      // false positives like "On" matching "VectorOne" or "CT" matching "VectorOne"
+      const MIN_SUBSTR_LEN = 4;
+      const fuzzyMatch = (connCompany) => {
+        if (!connCompany) return false;
+        const connLower = connCompany.toLowerCase().trim();
+        // Exact match always works
+        if (connLower === companyLower) return true;
+        // LinkedIn company name contains our target (e.g., "Amazon Ads" includes "Amazon")
+        if (connLower.length >= MIN_SUBSTR_LEN && connLower.includes(companyLower)) return true;
+        // Our target contains the LinkedIn company name — require word boundary match
+        // to prevent "VectorOne" matching "On" or "CT"
+        if (companyLower.length >= MIN_SUBSTR_LEN && connLower.length >= MIN_SUBSTR_LEN && companyLower.includes(connLower)) {
+          const regex = new RegExp(`\\b${connLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+          return regex.test(companyLower);
+        }
+        return false;
+      };
+
+      // Find tracked connections at this company (high signal — user actively tracks them)
+      const tracked = trackedConnections
+        .filter(c => fuzzyMatch(c.company))
+        .map(c => c.name);
+
+      // Find LinkedIn connections at this company (broader network signal)
+      const linkedin = linkedinNetwork
+        .filter(c => fuzzyMatch(c.company))
+        .map(c => c.name)
+        .filter(name => !tracked.includes(name)); // De-duplicate: exclude already-tracked
+
+      return {
+        tracked,
+        linkedin,
+        total: tracked.length + linkedin.length
+      };
+    }
+
+    /**
+     * Check if a feed item already exists in the Pipeline at an active stage.
+     * Matches on company name + similar title. Roles at these stages are filtered out:
+     * - "applied", "screen", "interviewing", "offer" (actively in progress)
+     *
+     * We keep "saved", "discovered", "rejected" — those are passive stages that
+     * shouldn't suppress the feed item.
+     *
+     * INPUT: feedItem (object), pipelineRoles (array)
+     * RETURNS: { inPipeline: boolean, stage: string|null, roleId: string|null }
+     */
+    function checkPipelineStatus(feedItem, pipelineRoles) {
+      const ACTIVE_STAGES = ['applied', 'screen', 'interviewing', 'offer', 'outreach'];
+      const companyLower = (feedItem.company || '').toLowerCase().trim();
+      const titleLower = (feedItem.title || '').toLowerCase().trim();
+
+      for (const role of pipelineRoles) {
+        const roleCompanyLower = (role.company || '').toLowerCase().trim();
+        const roleTitleLower = (role.title || '').toLowerCase().trim();
+
+        // Company must match (fuzzy — either contains the other, with min length guard)
+        const companyMatch = roleCompanyLower === companyLower ||
+                             (companyLower.length >= 4 && roleCompanyLower.includes(companyLower)) ||
+                             (roleCompanyLower.length >= 4 && companyLower.includes(roleCompanyLower));
+        if (!companyMatch) continue;
+
+        // Title match: either contains the other, or both contain "product manager"
+        const titleMatch = roleTitleLower.includes(titleLower) ||
+                           titleLower.includes(roleTitleLower) ||
+                           (titleLower.includes('product') && roleTitleLower.includes('product'));
+        if (!titleMatch) continue;
+
+        // Found a match — check if it's at an active stage
+        if (ACTIVE_STAGES.includes(role.stage)) {
+          return { inPipeline: true, stage: role.stage, roleId: role.id };
+        }
+      }
+
+      return { inPipeline: false, stage: null, roleId: null };
+    }
+
+    // ============================================================
     // UTILITY FUNCTIONS
     // ============================================================
 
@@ -2253,15 +2409,16 @@
     /**
      * Pure function: Score a role against preferences (0-100)
      *
-     * Scoring breakdown:
-     * - Title Match (25%): Exact title match = 100, adjacent = 50, no match = 0
-     * - Domain Match (25%): Primary = 100, secondary = 50, excluded = 0 (hard cap 39)
-     * - Keyword Relevance (20%): Boost keywords count, exclude keywords hard cap 39
+     * Scoring breakdown (v3.3.0 — added Network dimension):
+     * - Title Match (20%): Exact title match = 100, adjacent = 50, no match = 0
+     * - Domain Match (20%): Primary = 100, secondary = 50, excluded = 0 (hard cap 39)
+     * - Keyword Relevance (15%): Boost keywords count, exclude keywords hard cap 39
      * - Location Match (15%): Matches preference = 100, remote if preferred = 100
+     * - Network Signal (15%): Tracked connection = 100, 3+ LinkedIn = 80, 1-2 = 50
      * - Company Stage (10%): Matches preferred stages = 100, else = 30
      * - Comp Signal (5%): Overlaps range = 100, no data = 50, below min = 0
      *
-     * @param {Object} role - Role to score
+     * @param {Object} role - Role to score (must have .networkInfo if available)
      * @param {Object} prefs - User preferences
      * @returns {Object} { score: 0-100, breakdown: {...scores} }
      */
@@ -2285,7 +2442,7 @@
       } else {
         titleScore = 0;
       }
-      const titleDim = titleScore * 0.25;
+      const titleDim = titleScore * 0.20;
 
       // ===== DIMENSION 2: Domain Match (25% weight) =====
       let domainScore = 0;
@@ -2317,7 +2474,7 @@
           domainScore = 0;
         }
       }
-      const domainDim = domainScore * 0.25;
+      const domainDim = domainScore * 0.20;
 
       // ===== DIMENSION 3: Keyword Relevance (20% weight) =====
       let keywordScore = 0;
@@ -2346,7 +2503,7 @@
           keywordScore = Math.min(boostCount * 20, 100);
         }
       }
-      const keywordDim = keywordScore * 0.20;
+      const keywordDim = keywordScore * 0.15;
 
       // ===== DIMENSION 4: Location Match (15% weight) =====
       let locationScore = 0;
@@ -2413,8 +2570,26 @@
       }
       const compDim = compScore * 0.05;
 
+      // ===== DIMENSION 7: Network Signal (15% weight) =====
+      // Uses pre-computed networkInfo from init() — LinkedIn + tracked connections
+      let networkScore = 0;
+      const networkInfo = role.networkInfo;
+      if (networkInfo && networkInfo.total > 0) {
+        if (networkInfo.tracked.length > 0) {
+          // User has actively tracked connections at this company — strongest signal
+          networkScore = 100;
+        } else if (networkInfo.linkedin.length >= 3) {
+          // 3+ LinkedIn connections — strong passive signal
+          networkScore = 80;
+        } else {
+          // 1-2 LinkedIn connections — moderate signal
+          networkScore = 50;
+        }
+      }
+      const networkDim = networkScore * 0.15;
+
       // ===== FINAL SCORE =====
-      let finalScore = titleDim + domainDim + keywordDim + locationDim + stageDim + compDim;
+      let finalScore = titleDim + domainDim + keywordDim + locationDim + networkDim + stageDim + compDim;
       finalScore = Math.round(finalScore);
 
       // Hard caps
@@ -2432,6 +2607,7 @@
           domain: Math.round(domainScore),
           keywords: Math.round(keywordScore),
           location: Math.round(locationScore),
+          network: Math.round(networkScore),
           stage: Math.round(stageScore),
           comp: Math.round(compScore)
         },
@@ -2665,7 +2841,7 @@
               <div class="score-bar">
                 <div class="score-bar-fill" style="width: 0%;" data-target="${scorePercent}"></div>
                 <div class="score-tooltip">
-                  Title: ${item.scoring.title}pt | Domain: ${item.scoring.domain}pt | Keywords: ${item.scoring.keywords}pt | Location: ${item.scoring.location}pt | Stage: ${item.scoring.stage}pt
+                  Title: ${item.scoring.title}pt | Domain: ${item.scoring.domain}pt | Keywords: ${item.scoring.keywords}pt | Location: ${item.scoring.location}pt | Network: ${item.scoring.network || 0}pt | Stage: ${item.scoring.stage}pt
                 </div>
               </div>
             </div>
@@ -2677,6 +2853,19 @@
                 ? `<br><span class="referral-badge">🤝 Referred by ${item.feedMetadata.referredBy}</span>`
                 : ''
               }
+              ${(() => {
+                // Show network badge if user knows people at this company
+                const net = item.networkInfo;
+                if (!net || net.total === 0) return '';
+                const trackedCount = net.tracked.length;
+                const linkedinCount = net.linkedin.length;
+                const names = [...net.tracked, ...net.linkedin].slice(0, 3);
+                const namesStr = names.join(', ') + (net.total > 3 ? ` +${net.total - 3} more` : '');
+                const label = trackedCount > 0
+                  ? `👥 ${net.total} connection${net.total > 1 ? 's' : ''} (${trackedCount} tracked)`
+                  : `👥 ${net.total} LinkedIn connection${net.total > 1 ? 's' : ''}`;
+                return `<br><span class="network-badge" title="${namesStr}">${label}</span>`;
+              })()}
             </div>
 
             <div class="card-actions">
@@ -3089,6 +3278,15 @@
                 ? `<br><span class="referral-badge">🤝 Referred by ${item.feedMetadata.referredBy}</span>`
                 : ''
               }
+              ${(() => {
+                // Show network badge on snoozed cards too
+                const net = item.networkInfo;
+                if (!net || net.total === 0) return '';
+                const label = net.tracked.length > 0
+                  ? `👥 ${net.total} connection${net.total > 1 ? 's' : ''} (${net.tracked.length} tracked)`
+                  : `👥 ${net.total} LinkedIn connection${net.total > 1 ? 's' : ''}`;
+                return `<br><span class="network-badge">${label}</span>`;
+              })()}
             </div>
 
             <div class="card-actions">
@@ -3824,8 +4022,38 @@
         feedBanner.style.display = rawFeedItems.length === 0 ? 'block' : 'none';
       }
 
+      // ===== PIPELINE DEDUP: Filter out roles user has already applied to =====
+      // Roles at active pipeline stages (applied, interviewing, etc.) shouldn't
+      // clutter the feed — the user is already engaging with those companies.
+      const pipelineRoles = loadRoles();
+      const beforeCount = rawFeedItems.length;
+      rawFeedItems = rawFeedItems.filter(item => {
+        const status = checkPipelineStatus(item, pipelineRoles);
+        if (status.inPipeline) {
+          console.log(`[Feed] Filtered out "${item.title}" at ${item.company} — already in pipeline (stage: ${status.stage})`);
+          return false;
+        }
+        return true;
+      });
+      const filteredCount = beforeCount - rawFeedItems.length;
+      if (filteredCount > 0) {
+        console.log(`[Feed] Removed ${filteredCount} role(s) already in your pipeline`);
+      }
+
+      // ===== LINKEDIN NETWORK ENRICHMENT =====
+      // Load the user's LinkedIn network and tracked connections, then attach
+      // networkInfo to each feed item so the scoring engine can prioritize roles
+      // where the user knows people at the company.
+      const linkedinNetwork = loadLinkedInNetwork();
+      const trackedConnections = loadTrackedConnections();
+      const networkEnrichedItems = rawFeedItems.map(item => ({
+        ...item,
+        networkInfo: getNetworkAtCompany(item.company, linkedinNetwork, trackedConnections)
+      }));
+      console.log(`[Feed] LinkedIn network loaded: ${linkedinNetwork.length} connections, ${trackedConnections.length} tracked`);
+
       // Score all feed items against user preferences
-      const scored = rawFeedItems
+      const scored = networkEnrichedItems
         .map(role => {
           const scoring = scoreRole(role, state.preferences);
           if (!scoring) return null;
