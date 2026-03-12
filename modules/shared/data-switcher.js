@@ -36,7 +36,7 @@
    * stored version doesn't match, we force-reseed personal data
    * on the next Personal mode load (clearing stale migration data).
    */
-  const MIGRATION_VERSION = 2;
+  const MIGRATION_VERSION = 3;
   const MIGRATION_VERSION_KEY = 'pf_migration_version';
 
   /** All localStorage keys the Pathfinder app uses.
