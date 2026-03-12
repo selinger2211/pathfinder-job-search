@@ -1189,8 +1189,10 @@
     .linkedin-dept-badge.engineering { background: rgba(14, 165, 233, 0.12); color: #0ea5e9; }
 
     /* Connections section in detail panel */
+    /* ====== EXPANDABLE CONNECTION CARDS (v3.1.0) ====== */
     .connection-card {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: var(--space-3);
       padding: var(--space-2) var(--space-3);
@@ -1198,6 +1200,69 @@
       border-radius: var(--radius-md);
       border: 1px solid var(--bg-subtle);
       margin-bottom: var(--space-2);
+      cursor: pointer;
+      transition: border-color var(--duration-fast) var(--ease-default);
+    }
+    .connection-card:hover { border-color: var(--accent-muted, rgba(99, 102, 241, 0.3)); }
+    .connection-card.expanded { border-color: var(--accent); cursor: default; }
+    /* Inline comms history panel — slides open inside the card */
+    .conn-comms-panel {
+      display: none;
+      width: 100%;
+      padding-top: var(--space-2);
+      margin-top: var(--space-2);
+      border-top: 1px solid var(--bg-subtle);
+    }
+    .connection-card.expanded .conn-comms-panel { display: block; }
+    .conn-comms-entry {
+      display: flex;
+      gap: var(--space-2);
+      padding: var(--space-1) 0;
+      font-size: var(--text-xs);
+    }
+    .conn-comms-entry + .conn-comms-entry { border-top: 1px solid var(--bg-subtle); }
+    .conn-comms-entry .comms-icon { flex-shrink: 0; font-size: 14px; }
+    .conn-comms-entry .comms-body { flex: 1; min-width: 0; }
+    .conn-comms-entry .comms-date { color: var(--text-tertiary); flex-shrink: 0; }
+    .conn-comms-entry .comms-note { color: var(--text-primary); margin-top: 2px; white-space: pre-wrap; font-size: var(--text-xs); }
+    /* Quick-add comms input inside a card */
+    .conn-quick-log {
+      display: flex;
+      gap: var(--space-1);
+      margin-top: var(--space-2);
+      align-items: flex-start;
+    }
+    .conn-quick-log textarea {
+      flex: 1;
+      min-height: 32px;
+      max-height: 80px;
+      font-size: var(--text-xs);
+      padding: var(--space-1) var(--space-2);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      resize: vertical;
+    }
+    .conn-quick-log select {
+      font-size: var(--text-xs);
+      padding: var(--space-1);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      width: 90px;
+    }
+    .conn-quick-log button {
+      font-size: var(--text-xs);
+      padding: var(--space-1) var(--space-2);
+      white-space: nowrap;
+    }
+    /* Last activity badge on collapsed card */
+    .conn-last-activity {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      white-space: nowrap;
     }
     .connection-avatar {
       width: 32px;
@@ -4496,7 +4561,7 @@
             <!-- Tracked connections — people you're actively engaging with -->
             ${trackedConns.length > 0 ? `
               <div id="detail-connections-list">
-                ${buildConnectionsList(role.company)}
+                ${buildConnectionsList(role.company, role.id)}
               </div>
             ` : ''}
 
@@ -4618,49 +4683,52 @@
           </div>
         </div>
 
-        <!-- Comms log section — COLLAPSIBLE, timestamped notes tied to connections -->
-        <div class="detail-section">
-          <div class="detail-section-title collapsible collapsed" onclick="toggleCollapsible(this)">
-            <span>
-              Comms Log (${(role.commsLog || []).length})
-              ${(() => {
-                const entries = role.commsLog || [];
-                if (entries.length === 0) return '';
-                const sorted = [...entries].sort((a, b) => new Date(b.date) - new Date(a.date));
-                const latest = new Date(sorted[0].date).toLocaleDateString();
-                return `<span class="collapsed-summary">latest: ${latest}</span>`;
-              })()}
-            </span>
-            <svg class="collapse-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg>
-          </div>
-          <div class="collapsible-content collapsed" id="detail-comms-log-wrapper">
-            <div id="detail-comms-log" style="margin-top: var(--space-2);">
-              ${buildCommsLog(role)}
+        <!-- General Notes — comms entries NOT tied to a specific contact.
+             Contact-specific comms now live inside the expandable connection cards above. -->
+        ${(() => {
+          const generalComms = (role.commsLog || []).filter(e => !e.contactName);
+          if (generalComms.length === 0) return '';
+          const sorted = [...generalComms].sort((a, b) => new Date(b.date) - new Date(a.date));
+          const channelIcons = { email: '✉️', linkedin: '💼', phone: '📞', video: '🎥', 'in-person': '🤝', other: '💬' };
+          return `
+          <div class="detail-section">
+            <div class="detail-section-title collapsible collapsed" onclick="toggleCollapsible(this)">
+              <span>
+                General Notes (${generalComms.length})
+                <span class="collapsed-summary">latest: ${new Date(sorted[0].date).toLocaleDateString()}</span>
+              </span>
+              <svg class="collapse-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg>
             </div>
-          </div>
-          <!-- Add new entry form — always visible so you can log without expanding -->
-          <div style="margin-top: var(--space-2);">
-            <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-1);">
-              <select class="form-select" id="comms-connection-select" style="font-size: var(--text-xs); flex: 1;">
-                <option value="">General (no contact)</option>
-                ${getConnectionsForCompany(role.company).map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('')}
+            <div class="collapsible-content collapsed">
+              ${sorted.map(entry => {
+                const icon = channelIcons[entry.channel] || '💬';
+                const dateStr = new Date(entry.date).toLocaleString();
+                return `
+                  <div style="display: flex; gap: var(--space-2); padding: var(--space-2) 0; border-bottom: 1px solid var(--bg-subtle);">
+                    <span style="font-size: 14px; flex-shrink: 0;">${icon}</span>
+                    <div style="flex: 1; min-width: 0;">
+                      <div style="font-size: var(--text-xs); color: var(--text-primary); white-space: pre-wrap;">${escapeHtml(entry.note)}</div>
+                      ${entry.link ? `<a href="${escapeHtml(entry.link)}" target="_blank" style="font-size: 10px; color: var(--accent);">🔗 link</a>` : ''}
+                    </div>
+                    <span style="font-size: var(--text-xs); color: var(--text-tertiary); flex-shrink: 0;">${dateStr}</span>
+                  </div>`;
+              }).join('')}
+            </div>
+            <!-- Quick-add general note -->
+            <div style="display: flex; gap: var(--space-2); margin-top: var(--space-2); align-items: flex-start;">
+              <select class="form-select" id="comms-channel-select" style="font-size: var(--text-xs); width: 100px;">
+                <option value="email">✉️ Email</option>
+                <option value="linkedin">💼 LinkedIn</option>
+                <option value="phone">📞 Phone</option>
+                <option value="video">🎥 Video</option>
+                <option value="in-person">🤝 In Person</option>
+                <option value="other">💬 Other</option>
               </select>
-              <select class="form-select" id="comms-channel-select" style="font-size: var(--text-xs); width: 120px;">
-                <option value="email">Email</option>
-                <option value="linkedin">LinkedIn</option>
-                <option value="phone">Phone</option>
-                <option value="video">Video Call</option>
-                <option value="in-person">In Person</option>
-                <option value="other">Other</option>
-              </select>
+              <textarea class="form-textarea" id="comms-note-input" placeholder="General note (not tied to a contact)..." style="min-height: 40px; font-size: var(--text-xs); flex: 1;"></textarea>
+              <button class="btn btn-primary" onclick="addCommsEntry('${role.id}')" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-2); white-space: nowrap;">+ Log</button>
             </div>
-            <textarea class="form-textarea" id="comms-note-input" placeholder="Log a note — call summary, email sent, recruiter update..." style="min-height: 60px; font-size: var(--text-sm);"></textarea>
-            <div style="display: flex; gap: var(--space-2); align-items: center; margin-top: var(--space-1);">
-              <input type="url" class="form-input" id="comms-link-input" placeholder="Link (email, calendar invite, LinkedIn thread...)" style="font-size: var(--text-xs); flex: 1;">
-              <button class="btn btn-primary" onclick="addCommsEntry('${role.id}')" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-3); white-space: nowrap;">+ Log</button>
-            </div>
-          </div>
-        </div>
+          </div>`;
+        })()}
 
         <!-- Fit & Notes section -->
         <div class="detail-section">
@@ -4805,11 +4873,27 @@
      * INPUT: companyName = string
      * RETURNS: HTML string
      */
-    function buildConnectionsList(companyName) {
+    /**
+     * Builds expandable tracked connection cards with inline comms history.
+     * Each card is clickable to expand — shows comms tied to that contact,
+     * plus a quick-add input to log new interactions.
+     * INPUT: companyName (string), roleId (string) — for comms lookup
+     * RETURNS: HTML string of connection cards
+     */
+    function buildConnectionsList(companyName, roleId) {
       const connections = getConnectionsForCompany(companyName);
       if (connections.length === 0) {
-        return '<div style="color: var(--text-tertiary); font-size: var(--text-xs); padding: var(--space-2) 0;">No connections at this company yet.</div>';
+        return '<div style="color: var(--text-tertiary); font-size: var(--text-xs); padding: var(--space-2) 0;">No tracked connections yet. Use "+ Track" on LinkedIn contacts below, or "+ Add External Contact".</div>';
       }
+
+      /* Grab comms log for the active role so we can show per-contact history */
+      const role = getRoles().find(r => r.id === roleId);
+      const allComms = (role && role.commsLog) || [];
+
+      const channelIcons = {
+        email: '✉️', linkedin: '💼', phone: '📞',
+        video: '🎥', 'in-person': '🤝', other: '💬'
+      };
 
       return connections.map((conn, idx) => {
         const initials = (conn.name || '??').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -4824,22 +4908,70 @@
         const relLabel = relLabels[conn.relationship] || conn.relationship || '';
         const linkedinUrl = conn.linkedinUrl || '';
         const nameHtml = linkedinUrl
-          ? `<a href="${escapeHtml(linkedinUrl)}" target="_blank" title="View on LinkedIn">${escapeHtml(conn.name)}</a>`
+          ? `<a href="${escapeHtml(linkedinUrl)}" target="_blank" title="View on LinkedIn" onclick="event.stopPropagation();">${escapeHtml(conn.name)}</a>`
           : escapeHtml(conn.name);
 
+        /* Comms entries for THIS contact, sorted newest first */
+        const contactComms = allComms
+          .filter(e => e.contactName === conn.name)
+          .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        /* Last activity date for the collapsed card preview */
+        const lastDate = contactComms.length > 0
+          ? new Date(contactComms[0].date).toLocaleDateString()
+          : '';
+
+        /* Build inline comms entries HTML */
+        const commsHtml = contactComms.length > 0
+          ? contactComms.map(entry => {
+              const icon = channelIcons[entry.channel] || '💬';
+              const dateStr = new Date(entry.date).toLocaleDateString();
+              return `
+                <div class="conn-comms-entry">
+                  <span class="comms-icon">${icon}</span>
+                  <div class="comms-body">
+                    <div class="comms-note">${escapeHtml(entry.note)}</div>
+                    ${entry.link ? `<a href="${escapeHtml(entry.link)}" target="_blank" style="color: var(--accent); font-size: 10px;" onclick="event.stopPropagation();">🔗 link</a>` : ''}
+                  </div>
+                  <span class="comms-date">${dateStr}</span>
+                </div>`;
+            }).join('')
+          : '<div style="color: var(--text-tertiary); font-size: var(--text-xs); padding: var(--space-1) 0;">No interactions logged yet.</div>';
+
+        /* Unique ID for this card's quick-log elements */
+        const cardId = `conn-card-${idx}`;
+
         return `
-          <div class="connection-card">
+          <div class="connection-card" id="${cardId}" onclick="toggleConnCard(this)">
             <div class="connection-avatar">${initials}</div>
             <div class="connection-info">
               <div class="connection-name">${nameHtml}</div>
               <div class="connection-title">${escapeHtml(conn.title || '')}</div>
             </div>
+            ${lastDate ? `<span class="conn-last-activity">${lastDate}</span>` : ''}
             ${relLabel ? `<span class="connection-relationship">${relLabel}</span>` : ''}
             ${linkedinUrl ? `
-              <a href="${escapeHtml(linkedinUrl)}" target="_blank" class="connection-linkedin" title="LinkedIn Profile">
+              <a href="${escapeHtml(linkedinUrl)}" target="_blank" class="connection-linkedin" title="LinkedIn Profile" onclick="event.stopPropagation();">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
               </a>
             ` : ''}
+
+            <!-- Expandable comms panel — hidden until card is clicked -->
+            <div class="conn-comms-panel" onclick="event.stopPropagation();">
+              ${commsHtml}
+              <!-- Quick-add comms input -->
+              <div class="conn-quick-log">
+                <select id="ql-channel-${cardId}" onclick="event.stopPropagation();">
+                  <option value="email">✉️</option>
+                  <option value="linkedin">💼</option>
+                  <option value="phone">📞</option>
+                  <option value="video">🎥</option>
+                  <option value="in-person">🤝</option>
+                </select>
+                <textarea id="ql-note-${cardId}" placeholder="Log a note..." onclick="event.stopPropagation();"></textarea>
+                <button class="btn btn-primary" onclick="event.stopPropagation(); quickLogComms('${escapeHtml(conn.name)}', '${cardId}');">Log</button>
+              </div>
+            </div>
           </div>
         `;
       }).join('');
@@ -5245,13 +5377,58 @@
      * and refreshes the detail panel.
      * INPUT: roleId (string)
      */
+    /**
+     * Toggles a tracked connection card between collapsed and expanded states.
+     * When expanded, shows the contact's comms history and quick-log input.
+     * INPUT: cardEl (DOM element) — the .connection-card element
+     */
+    function toggleConnCard(cardEl) {
+      cardEl.classList.toggle('expanded');
+    }
+
+    /**
+     * Quick-logs a comms entry for a specific contact from the inline card input.
+     * Reads the channel select and note textarea from the card, creates a commsLog
+     * entry on the active role, and refreshes the detail panel.
+     * INPUT: contactName (string), cardId (string) — for DOM element lookup
+     */
+    function quickLogComms(contactName, cardId) {
+      const noteEl = document.getElementById('ql-note-' + cardId);
+      const channelEl = document.getElementById('ql-channel-' + cardId);
+      const note = noteEl ? noteEl.value.trim() : '';
+      if (!note) { showToast('Please enter a note', 'error'); return; }
+
+      const roles = getRoles();
+      const role = roles.find(r => r.id === activeDetailRoleId);
+      if (!role) return;
+
+      if (!role.commsLog) role.commsLog = [];
+      role.commsLog.push({
+        date: new Date().toISOString(),
+        note: note,
+        link: '',
+        channel: channelEl ? channelEl.value : 'other',
+        contactId: contactName,
+        contactName: contactName
+      });
+      role.lastActivity = Date.now();
+      saveRoles(roles);
+
+      // Refresh detail panel to show the new entry
+      openRoleDetail(activeDetailRoleId);
+      showToast(`Logged note for ${contactName}`, 'success');
+    }
+
+    /**
+     * Adds a GENERAL comms entry (not tied to a specific contact).
+     * For contact-specific logging, use quickLogComms() from the card.
+     * INPUT: roleId (string)
+     */
     function addCommsEntry(roleId) {
       const noteInput = document.getElementById('comms-note-input');
-      const linkInput = document.getElementById('comms-link-input');
-      const connSelect = document.getElementById('comms-connection-select');
       const channelSelect = document.getElementById('comms-channel-select');
 
-      const note = noteInput.value.trim();
+      const note = noteInput ? noteInput.value.trim() : '';
       if (!note) {
         showToast('Please enter a note', 'error');
         return;
@@ -5263,27 +5440,19 @@
 
       if (!role.commsLog) role.commsLog = [];
 
-      /* Resolve contact name from selected connection (value = connection name) */
-      let contactName = '';
-      const connId = connSelect.value;
-      if (connId) {
-        const conn = getConnections().find(c => c.name === connId);
-        if (conn) contactName = conn.name;
-      }
-
       role.commsLog.push({
         date: new Date().toISOString(),
         note: note,
-        link: linkInput.value.trim() || '',
-        channel: channelSelect.value,
-        contactId: connId || '',
-        contactName: contactName
+        link: '',
+        channel: channelSelect ? channelSelect.value : 'other',
+        contactId: '',
+        contactName: ''   /* empty = general note, shown in General Notes section */
       });
       role.lastActivity = Date.now();
       saveRoles(roles);
 
       openRoleDetail(roleId);
-      showToast('Comms entry logged', 'success');
+      showToast('General note logged', 'success');
     }
 
     /**

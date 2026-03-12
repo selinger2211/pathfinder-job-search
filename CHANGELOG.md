@@ -4,6 +4,24 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.1.0 — 2026-03-12
+
+### What Changed — Inline Comms Per Contact
+
+**User requested:** "is there an opportunity to tie the notes in w/ the contacts section? Like should the comms log be associated w/ the contact instead of it's own section?"
+
+**Changes:**
+1. **Expandable tracked connection cards** — Each tracked contact card is now clickable. Clicking expands to reveal that contact's comms history (from `role.commsLog`) and a quick-log input. Cards show a purple border when expanded.
+2. **Last activity date on cards** — Each collapsed card shows the date of the most recent comms entry, so you can see at a glance when you last interacted with someone.
+3. **Quick-log per contact** — Inside each expanded card: a channel selector (email/LinkedIn/phone/video/in-person) + note textarea + "Log" button. Notes are automatically tagged with the contact name in `role.commsLog`.
+4. **Removed standalone Comms Log section** — The separate "Comms Log" section is gone. Contact-specific comms live inside the cards. General notes (not tied to a contact) appear in a collapsible "General Notes" section only when they exist.
+5. **General Notes section** — Non-contact comms entries are shown in their own collapsible section below Artifacts, with a quick-add input for logging general role notes.
+
+**Files changed:**
+- `modules/pipeline/index.html` (CSS: expandable cards, comms panel, quick-log. JS: `toggleConnCard()`, `quickLogComms()`, updated `buildConnectionsList()`, updated `addCommsEntry()`. Template: removed standalone Comms Log, added General Notes.)
+
+---
+
 ## v3.0.0 — 2026-03-12
 
 ### What Changed — MCP-Backed Data Layer + Unified Connections

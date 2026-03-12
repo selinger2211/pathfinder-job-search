@@ -185,7 +185,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.0.0
+**Current Version:** v3.1.0
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -208,6 +208,9 @@ These are the actual field shapes for objects stored in shared localStorage keys
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.1.0)
+- **Inline Comms Per Contact**: Tracked connection cards in Pipeline detail panel are now expandable — click to see comms history and quick-log input. Last activity date shown on collapsed cards. Standalone "Comms Log" section removed. General notes (non-contact comms) appear in their own collapsible section. New JS functions: `toggleConnCard()`, `quickLogComms()`.
 
 ### Recently Fixed (v3.0.0)
 - **MCP-Backed Data Layer**: Created `modules/shared/data-layer.js` that monkey-patches localStorage to sync 22 `pf_*` keys to MCP HTTP bridge with 1-second debounce. Added 4 new HTTP bridge endpoints (`PUT/GET/DELETE /data/:key`, `GET /data`). Files stored at `~/.pathfinder/data/`. Auto-recovery on startup, graceful degradation when bridge unavailable. Script tag added to all 11 modules.

@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v3.0.0
+**Status:** v3.1.0
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v3.1.0 | 2026-03-12 | **Inline Comms Per Contact** — Tracked connection cards are now expandable: click to reveal the contact's comms history and a quick-log input. Each card shows last activity date on the collapsed view. Standalone "Comms Log" section removed — contact-specific notes live inside each card, general notes (not tied to a contact) appear in a collapsible "General Notes" section. Quick-log input per card (channel selector + note + log button) for fast note-taking. |
 | v3.0.0 | 2026-03-12 | **MCP-Backed Data Layer** — Major architectural change: localStorage is now a cache, MCP server is the source of truth. New shared `data-layer.js` (loaded in all 11 modules) monkey-patches `localStorage.setItem/removeItem` to transparently sync all `pf_*` data keys to the MCP HTTP bridge at `localhost:3456`. On startup, if core data (roles, companies, connections) is missing from localStorage, auto-recovers everything from MCP. HTTP bridge gains 4 new key-level endpoints: `PUT /data/:key`, `GET /data/:key`, `GET /data` (read all), `DELETE /data/:key`. Each key stored as individual JSON file in `~/.pathfinder/data/`. Graceful degradation: if bridge is down, app works via localStorage alone. 1-second debounce on sync writes to avoid flooding. Security: API keys (`pf_anthropic_key`) excluded from sync. UI-only keys (theme, view mode) excluded. 22 data keys synced. |
 | v2.7.0 | 2026-03-12 | **LinkedIn Network Import** — Parsed 2,687 LinkedIn 1st-degree connections from data export into `pf_linkedin_network` localStorage key. Pipeline detail panel shows "LinkedIn Network (N)" section with connections sorted by seniority (VP/Director/Senior) and department relevance (Product and Engineering surfaced first). Purple "Product" and blue "Eng" department badges on matching titles. "Show More" button expands from top-10 preview to full list. Each name links to LinkedIn profile. "+ Track" button promotes a LinkedIn connection into active `pf_connections` tracking. Kanban cards show combined connection count (tracked + LinkedIn). Fuzzy company matching handles variants like "Amazon" matching "Amazon Ads". Python parser script normalizes company names (JPMorganChase → JPMorgan Chase). |
 | v2.6.0 | 2026-03-12 | **Remove Demo Mode — single-user architecture** — Deleted `data-switcher.js` and removed Demo/Personal toggle from all 11 modules. App now operates exclusively with real user data (no demo seed). Pipeline, Research Brief, Calendar, and Resume Builder no longer inject demo companies/roles/events on first load. Job Feed Listener reads from `pf_feed_queue` (localStorage, populated by Sync Hub) instead of hardcoded demo items. Empty-state banner updated. Bullet bank starter content preserved for new users. New architectural principle: localStorage will be backed by MCP server (coming in v3.0.0). |
