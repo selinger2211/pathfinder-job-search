@@ -4,6 +4,22 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.8.5 — 2026-03-12
+
+### What Changed — Apify Credit Conservation
+
+**User asked:** "let's make sure we're being prudent with the apify calls"
+
+**Changes:**
+
+1. **Reduced maxItems from 10 → 1** — Each enrichment call now requests only 1 result. We only enrich once if we can get it. If the top result doesn't match with 40%+ confidence, fetching more won't help. Saves ~90% on credits per call.
+
+2. **Re-enrich guard** — `enrichRoleJD()` now skips roles that already have `jdEnriched: true` with a full JD. Prevents wasting credits on double-enrichment.
+
+3. **Batch early-abort on auth errors** — Batch "Enrich JDs" now also breaks on 401/403/not-rented errors (previously only broke on 402 billing errors).
+
+---
+
 ## v3.8.4 — 2026-03-12
 
 ### What Changed — Pipeline Logo System + Feed Stats Bar

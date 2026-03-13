@@ -2556,13 +2556,21 @@
      * SIDE EFFECTS: Updates the role's jd field in state and localStorage
      */
     async function enrichRoleJD(role) {
+      // Skip roles that already have a full JD (prevents wasting Apify credits)
+      if (role.jdEnriched && role.jd && role.jd.length >= MIN_FULL_JD_LENGTH) {
+        console.log(`[Enrich] Skipping "${role.title}" at ${role.company} — already enriched`);
+        return role.jd;
+      }
+
       const token = getApifyToken();
       if (!token) throw new Error('No Apify token. Add your token in the sidebar settings.');
 
       console.log(`[Enrich] Searching Apify (${getApifyActorId()}) for "${role.title}" at ${role.company}...`);
 
       // Call the Apify actor with title, company, and location
-      const results = await callApifyLinkedInScraper(role.title, role.company, role.location, token, 10);
+      // Request only 1 result — we only need 1 match. If the top result
+      // doesn't match with 40%+ confidence, trying more won't help (v3.8.5)
+      const results = await callApifyLinkedInScraper(role.title, role.company, role.location, token, 1);
 
       if (!results || results.length === 0) {
         console.warn(`[Enrich] No results from Apify for "${role.title}" at ${role.company}`);
@@ -2714,9 +2722,13 @@
         } catch (err) {
           console.error(`[Enrich] Failed for ${role.company}:`, err);
           failed++;
-          // If it's a quota error, stop the batch
+          // Stop batch on billing, auth, or rental errors — no point trying more roles
           if (err.message.includes('free tier limit') || err.message.includes('402')) {
-            showToast('Apify free tier limit reached — try again next month', 'error');
+            showToast('Apify credit limit reached', 'error');
+            break;
+          }
+          if (err.message.includes('401') || err.message.includes('403') || err.message.includes('not-rented')) {
+            showToast('Apify auth error — check token in settings', 'error');
             break;
           }
           if (badge) {

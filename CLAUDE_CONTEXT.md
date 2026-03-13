@@ -195,7 +195,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.8.4
+**Current Version:** v3.8.5
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -218,6 +218,9 @@ These are the actual field shapes for objects stored in shared localStorage keys
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.8.5)
+- **Apify credit conservation**: maxItems 10→1 (only enrich once if we can get it). Re-enrich guard skips already-enriched roles. Batch early-abort on auth errors.
 
 ### Recently Fixed (v3.8.4)
 - **Feed card logos**: Ported full Pipeline logo system — `DOMAIN_OVERRIDES`, `getCompanyDomain(name, url)` with ATS-aware extraction, `getCompanyColor(name)` for colorful letter fallbacks, `handleLogoError()` for graceful degradation.

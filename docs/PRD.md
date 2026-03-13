@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v3.8.4
+**Status:** v3.8.5
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v3.8.5 | 2026-03-12 | **Apify credit conservation** — maxItems 10→1 (only enrich once if we can get it). Re-enrich guard skips already-enriched roles. Batch early-abort on 401/403/not-rented errors. |
 | v3.8.4 | 2026-03-12 | **Pipeline logo system + feed stats bar** — Ported full logo system from Pipeline: ATS-aware domain extraction, DOMAIN_OVERRIDES, colorful letter-initial fallbacks. Stats bar shows total roles, unique companies, stage breakdown. Logo pattern documented as Rule 7 in CLAUDE_CONTEXT. |
 | v3.8.2 | 2026-03-12 | **On-demand enrichment only** — Disabled auto-enrich on page load to conserve Apify credits. Per-card "⚡ Enrich" and batch "Enrich JDs" buttons still work. Page load shows stub count instead. Auto-enrich code preserved as commented block for easy re-enable. |
 | v3.8.1 | 2026-03-12 | **Async Apify enrichment + billing early-abort** — Replaced sync Apify API call (hard 300s timeout) with async 3-step pattern: start run → poll status every 15s (up to 10 min) → fetch dataset on success. Fixes happitap actor timeouts (browser-based scraping takes 5+ min). Auto-enrich loop now breaks immediately on 402 billing errors instead of trying all remaining roles. |
