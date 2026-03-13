@@ -925,6 +925,39 @@ The Outreach Message Generator embodies four principles from the main Pathfinder
 
 ---
 
+## 14. Risk / Failure Modes / Guardrails
+
+Outreach generates personalized messages sent under the user's real name. Failure modes are reputation-damaging.
+
+**Risk 1: Hallucinated recipient facts** (High impact)
+- Example: Message says "I know you led the Platform Rewrite at Stripe" when the recipient didn't.
+- Mitigation: Generator output must cite every specific claim about the recipient. Unverified claims prefixed with hedging language ("I understand you may be involved in..."). User reviews and edits before sending.
+- Guardrail: If context data is incomplete (no connection details, no company intel), show warning: "This draft has limited personalization. Review carefully before sending."
+- Acceptance: ≥2 of 4 personalization pillars must be present: (1) specific initiative/product, (2) recipient's role/background, (3) user's relevant experience, (4) mutual connection or shared context.
+
+**Risk 2: Generic template masquerading as personal** (Medium impact)
+- Example: Message looks personalized but is actually a template with "[Company]" swapped in.
+- Mitigation: All messages generated from specific context (JD, company intel, connection data). If generator returns placeholder text (e.g., "[Your background here]"), show error and ask user to add context.
+- Guardrail: Scan output for bracket placeholders `[...]` before allowing send.
+
+**Risk 3: Message sent to wrong recipient** (High impact)
+- Mitigation: If recipient email is not in `pf_connections`, show confirmation: "This person isn't in your tracked connections. Email: {email}. Correct?"
+- Guardrail: Draft Queue feature — messages saved as drafts with 24h window before user manually triggers send. No auto-send ever.
+
+**Risk 4: Email bounces silently** (Medium impact)
+- Mitigation: If using Gmail integration, check for bounce-back emails within 24h. If detected, surface in Dashboard: "Email to {name} bounced. Try LinkedIn instead?"
+- Guardrail: Log all outreach send events with delivery status.
+
+**Risk 5: Spam filter triggers** (Low impact)
+- Mitigation: If user queues 5+ messages in one session, show warning: "Sending many emails at once may trigger spam filters. Consider spacing them 1-2 hours apart."
+- Guardrail: Draft Queue supports scheduled sends with configurable delays.
+
+**Risk 6: Tone mismatch** (Medium impact)
+- Example: Casual tone for a formal C-suite outreach, or overly formal for a peer connection.
+- Mitigation: Message type selector (cold email, warm intro, LinkedIn request, etc.) sets tone parameters in prompt. User selects recipient seniority/relationship before generation.
+
+---
+
 ## Conclusion
 
 The Outreach Message Generator is the voice of Pathfinder's networking engine. By combining real data (company profiles, your background, interview notes) with a personalization engine that forbids generic patterns, it produces messages that sound like you and land with recipients. Messages are never auto-sent — you review, edit, and send them manually, maintaining control and authenticity. Together with the Pipeline's connection tracking and the Dashboard's nudges, the Outreach module turns networking from a painful chore into a structured, trackable workflow.

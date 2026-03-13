@@ -50,6 +50,18 @@ Every module has a standalone PRD in `docs/`:
 - `docs/calendar-prd.md`
 - `docs/artifacts-mcp-prd.md`
 
+### System-Level Policy Docs (added v3.11.0)
+
+- `docs/ai-evaluation-framework.md` — Prompt versioning, model versioning, grounding requirements, hallucination taxonomy, acceptance thresholds, regression testing for all 5 Claude-powered modules
+- `docs/instrumentation-event-taxonomy.md` — Canonical event schema, 33-event catalog, derived metrics formulas, `logEvent()` pattern
+- `docs/architecture-decisions-and-invariants.md` — 6 ADRs (standalone HTML, localStorage, MCP, direct API, nav pattern, favicon API) + 10 system invariants
+- `docs/domain-model-and-glossary.md` — Canonical definitions for "positioning" (3 meanings), "tier", "stage", "enrichment", "brief", "nudge", "artifact" + data ownership table + role lifecycle state machine
+- `docs/integrations-and-compliance.md` — 13 external services with auth, rate limits, freshness policy, fallback behavior + compliance notes
+- `docs/confidence-provenance-and-citation-policy.md` — 3-tier confidence system (High/Medium/Low), provenance tracking requirements, citation policy per AI module, staleness visual treatment
+- `docs/testing-strategy.md` — Unit/integration/E2E approach, golden datasets for 5 AI modules, failure injection scenarios, performance benchmarks, execution schedule
+- `docs/bugs-and-improvements.md` — Tracked backlog items
+- `docs/documentation-review-v3.11.md` — Full docs audit with coverage scorecard
+
 ---
 
 ## Mandatory Rules

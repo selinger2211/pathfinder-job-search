@@ -761,6 +761,40 @@ The Pipeline Tracker is the hub. Every other module consumes its data. The Job F
 
 ---
 
+## 16. Confidence & Provenance Handling
+
+Define which fields are authoritative vs. inferred, when data goes stale, and what provenance to log.
+
+| Field | Source | Confidence | Staleness Threshold | Provenance Logged |
+|-------|--------|-----------|--------------------|--------------------|
+| `role.title` | User input or feed import | High | Never stale | `{ enteredBy: "user" or "feed", enteredAt }` |
+| `role.stage` | User manual transition | High | Never stale | `{ changedBy: "user", changedAt, fromStage, reason }` |
+| `role.salary` | JD extraction (regex) | Medium | ≥30 days | `{ source: "jd-extraction", extractedAt, extractedFrom: URL, method }` |
+| `role.salaryOverride` | User manual entry | High | Never stale | `{ enteredBy: "user", enteredAt }` |
+| `company.fundingStage` | Enrichment (Clay, web) | Medium | ≥90 days | `{ source, enrichedAt, dataPoint }` |
+| `company.missionStatement` | Enrichment | Medium | ≥90 days | `{ source, enrichedAt }` |
+| `company.headcount` | Enrichment | Medium | ≥90 days | `{ source, enrichedAt }` |
+| `role.jdText` | Feed import or enrichment | Medium | ≥60 days (job may be filled) | `{ source: "linkedin" or "ats-api" or "web-search", fetchedAt, confidence }` |
+| `role.connections[]` | User manual linking | High | Never stale | `{ linkedBy: "user", linkedAt }` |
+| `company.logoUrl` | Google Favicon API | High (structural) | Never stale | Auto-generated, no logging needed |
+
+**Staleness indicators:**
+- When displaying data past its staleness threshold: show subtle clock icon + tooltip "Last updated {N} days ago"
+- When data is >2x staleness threshold: show warning badge "Data may be outdated"
+- Future: "Refresh" button per field calls relevant enrichment source
+
+---
+
+## 17. Risk / Failure Modes / Guardrails
+
+- **Data corruption recovery:** If `pf_roles` or `pf_companies` is corrupted (unparseable JSON), attempt auto-recovery from MCP bridge (`GET /data/pf_roles`). If MCP unavailable, show "Data recovery needed" modal with option to restore from backup (`~/.pathfinder/backups/`).
+- **Bulk operation rollback:** Bulk stage transitions, bulk tier changes, and CSV imports create a snapshot in `pf_pipeline_undo` before executing. "Undo" button available for 30 seconds after bulk action.
+- **Concurrent editing:** If user has Pipeline open in two tabs and edits the same role, last-write-wins (localStorage is single-threaded). Future: `storage` event listener detects external changes and prompts merge.
+- **localStorage quota exceeded:** If `setItem` throws `QuotaExceededError`, show warning: "Storage full. Export data and clear old roles to free space." Suggest archiving closed/rejected roles.
+- **Drag-drop failures:** If drag-drop stage transition fails (DOM event lost), show toast "Stage change didn't save. Try again." Log error for debugging.
+
+---
+
 ## Conclusion
 
 The Pipeline Tracker is the information backbone of the job search system. By centralizing companies, roles, contacts, and interaction history, every downstream module can operate on current, reliable data. The kanban board is the cognitive model — you see your entire pipeline at a glance, understand where things are stuck, and move roles forward with intention.

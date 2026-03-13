@@ -899,6 +899,27 @@ The Dashboard embodies five principles from the main Pathfinder spec:
 
 ---
 
+## 14. Nudge Engine Safeguards & Cooldowns
+
+- **Max nudges per load:** Display at most 5 nudges per page load. Prioritize by severity: Critical (offer expiring, interview tomorrow) > Important (follow-up overdue, stale role) > Suggested (new role to research, prep nudge).
+- **Cooldown periods:** Once dismissed, a nudge rule doesn't fire again for 24 hours for that specific role. Critical nudges (offer/interview) re-fire after 6 hours. Global cooldown: if user dismisses 3+ nudges in one session, pause nudge generation until next page load.
+- **Suppression chains:** Dismissing "Prep for interview at {company}" suppresses "Generate research brief for {company}" for 48 hours. Dismissing "Follow up with {contact}" suppresses "Outreach needed for {role}" for 24 hours.
+- **Nudge logging:** Every nudge trigger logs to `pf_nudge_log`: `{ ruleId, roleId, firedAt, dismissed, dismissedAt, reason }`. Dashboard analytics can show nudge effectiveness (fired vs acted on).
+- **Per-rule disable:** Future: sidebar "Nudge Preferences" allows user to disable specific rule IDs entirely. Disabled rules stored in `pf_nudge_disabled: string[]`.
+
+---
+
+## 15. Error Handling & Edge Cases
+
+- **Deleted role referenced:** If a nudge references a role that no longer exists in `pf_roles`, filter it out silently. Don't fire, don't show error.
+- **Malformed calendar event:** If a calendar event has no title or no linked roleId, skip it in the "Upcoming Interviews" section. Log warning to console for debugging.
+- **Corrupted localStorage:** If `pf_roles` can't be parsed (invalid JSON), show graceful degradation: "Unable to load pipeline data. Try refreshing." Don't crash the entire dashboard.
+- **Missing external data:** If Google Calendar API is unavailable, show "Calendar sync unavailable" in the GCal card instead of an error. If feed data hasn't loaded yet, show skeleton loading state.
+- **Empty states:** If no nudges fire (new user, everything up to date), show encouraging message: "You're all caught up! No actions needed right now." Not a blank section.
+- **Stale metrics:** If `pf_roles` hasn't been updated in >24 hours, show subtle indicator on Dashboard metrics: "Last synced {time ago}."
+
+---
+
 ## Conclusion
 
 The Dashboard is the hub of Pathfinder's daily workflow. By synthesizing state from all agents into a single, scannable view with prioritized nudges, it turns a fragmented job search into a focused, intentional process. The nudge engine is the engine that keeps critical actions from falling through cracks. The streak is the thread that turns isolated actions into a practice. Together, they answer the user's daily question: "What should I do today?" — and make doing it frictionless.

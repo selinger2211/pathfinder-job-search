@@ -519,3 +519,26 @@ Research Brief ◄───────┤
 ```
 
 The Resume Builder is the central conversion point in Pathfinder. Everything upstream (Pipeline, Research Brief, Feed) prepares context. Everything downstream (Outreach, Interview Prep) uses the resume as a reference artifact.
+
+---
+
+## 13. Confidence & Provenance
+
+- **Bullet bank traceability:** Every bullet selected for a resume is tagged with its `pf_bullet_bank` entry ID. Generated resumes log: `{ bulletIds: [], model, promptVersion, generatedAt, roleId, positioning }`.
+- **Skill sourcing:** Every skill listed in the generated resume must map to either: (a) a bullet bank entry, (b) the user's stated experience in their profile, or (c) a skill explicitly mentioned in the JD (marked as "gap" if user doesn't have it). Skills from source (c) are flagged as "stretch" and shown with a visual indicator.
+- **Generation metadata:** Each resume generation logs: model version, prompt version, JD hash, selected positioning (IC/leader), bullet bank version hash, generation timestamp. Stored in `pf_resume_log`.
+- **Version history:** User can view prior resume versions for any role. Diff view highlights what changed between versions (bullets added/removed, phrasing changes).
+
+---
+
+## 14. Testing Strategy
+
+- **Golden test cases:** Maintain 5 roles in `docs/eval/resume-builder/` with hand-curated "correct" resumes:
+  1. FAANG Staff PM role (IC positioning, technical emphasis)
+  2. Growth-stage Head of Product (leader positioning, team-building emphasis)
+  3. AI/ML PM role (technical + domain expertise)
+  4. Enterprise SaaS PM (GTM + customer-facing)
+  5. Early-stage founding PM (generalist, zero-to-one)
+- **Regression protocol:** Before prompt changes, generate all 5 resumes and compare: bullet selection accuracy (did it pick the right bullets?), keyword coverage (does it hit JD keywords?), no hallucinated skills, formatting intact.
+- **Acceptance criteria:** ≥80% of selected bullets are relevant to the JD. Zero invented skills or accomplishments. Keyword gap coverage ≥70% (at least 70% of JD keywords addressed).
+- **Edge cases:** Role with no JD (stub only), role with extremely long JD (>5000 words), empty bullet bank, bullet bank with 100+ entries.

@@ -755,3 +755,33 @@ A v2 Research Brief is successful when:
 4. **Every factual claim has a citation** — with source type, link, and date.
 5. **The brief is useful enough that you'd actually read it before an interview** — the bar is: does this save you 2+ hours of manual research?
 6. **Missing data is called out, not worked around** — if we don't have your resume bullets, we say so.
+
+---
+
+## 11. Success Metrics
+
+- Citation accuracy: ≥95% of factual claims must be sourceable to JD, enriched company data, or user input. Unsourceable claims must be flagged as "inferred."
+- Section completeness: all 14 sections generated in <60 seconds total. If any section fails, show partial brief with clear "Section unavailable" placeholder.
+- Staleness detection: if company data is >30 days old, show subtle indicator ("Data last refreshed X days ago"). If >90 days, show warning.
+- Cache hit rate: target ≥70% of brief views served from cache (measures efficiency of caching strategy).
+- User satisfaction proxy: track regeneration rate — if users regenerate >40% of briefs immediately, prompts need tuning.
+
+---
+
+## 12. Testing Strategy
+
+- Golden test cases: maintain 10 hand-curated roles (mix of FAANG, growth-stage, early-stage, unusual industries) with known-good brief outputs in `docs/eval/research-brief/`.
+- Regression protocol: before any prompt change, generate briefs for all 10 golden cases. Compare section-by-section against prior output. Flag: factual changes, tone shifts, missing sections, new hallucinations.
+- Automated checks: validate that every `<citation>` tag resolves to a real data source. Check section headers match expected 14. Check company name appears in first 100 words of company section.
+- Freshness validation: for each golden case, verify cited URLs are live (HTTP 200).
+- Edge cases to test: role with no JD text, company with no enrichment data, role at company with zero LinkedIn connections, extremely long JD (>5000 words).
+
+---
+
+## 13. Risk / Failure Modes / Guardrails
+
+- **Company confusion** (High): Brief mixes up Company A and Company B data. Mitigation: system prompt declares `<company>` tag as authoritative truth; first 500 chars of JD validated against company name; mismatch triggers warning banner.
+- **Stale data cited as current** (Medium): Brief cites funding round from 2 years ago as "recent." Mitigation: date-stamp all enrichment data; show freshness indicator; brief intro states "Based on data as of {date}."
+- **Generation timeout** (Medium): Claude API takes >60s or errors out. Mitigation: show progress bar per section; allow cancel; serve cached brief if available; retry once with shorter prompt.
+- **JD mismatch** (Medium): Enriched JD doesn't match the actual role (wrong company). Mitigation: `getCompanyDomain()` validates JD source; mismatch guard prepends warning; system prompt ignores mismatched company references.
+- **API key invalid/exhausted** (Low): Mitigation: clear error message with link to settings; don't retry on 401/403.

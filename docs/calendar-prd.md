@@ -722,6 +722,15 @@ Calendar Integration module writes to `pf_calendar_links` and `pf_nudge_queue` e
 
 ## 14. Error Handling & Edge Cases
 
+### Error Handling & Edge Cases (Expanded)
+
+- **Google Calendar API unavailable:** Show "Calendar sync unavailable" in the calendar view header. Fall back to manually-entered events only. Don't show error modal — just degrade gracefully.
+- **Deleted calendar event:** If a Google Calendar event is deleted but Pipeline still references it (via `calendarEventId`), show "Event no longer found" in the role's timeline. Don't delete the Pipeline reference — user may want the historical record.
+- **Sync delay >24h:** If last successful GCal sync was >24 hours ago, show subtle indicator: "Calendar last synced {time ago}." Suggest: "Check Sync Hub for sync status."
+- **Duplicate events:** If sync imports an event that already exists (same title + time + roleId), skip silently. Don't create duplicates.
+- **Malformed event data:** If event has no title, no start time, or unparseable date, skip with console warning. Don't crash the calendar view.
+- **Timezone handling:** Store all times in UTC internally. Display in user's local timezone. If timezone can't be determined, default to America/New_York with subtle indicator.
+
 ### Case: Event Has No External Attendees
 
 **Scenario:** Internal team sync scheduled, not an interview
@@ -774,6 +783,21 @@ Calendar Integration module writes to `pf_calendar_links` and `pf_nudge_queue` e
 - Calendar Integration converts to user's local timezone for nudge scheduling
 - Nudge displays both event time and user's local time
 - Morning-of nudge fires at 8am in user's timezone, not event timezone
+
+### Section: Testing Strategy
+
+- **Manual test cases:**
+  1. Create event → verify it appears in calendar view and links to correct role
+  2. Sync from GCal → verify imported events match source (title, time, description)
+  3. Delete event → verify historical reference preserved in Pipeline
+  4. Create overlapping events → verify display handles conflicts
+  5. Sync with >50 events → verify performance (page load <2s)
+- **Edge cases:**
+  - Event spanning midnight (multi-day interview)
+  - Event with no linked role (personal calendar event mixed in)
+  - GCal sync with 0 events (no interviews scheduled)
+  - Rapid-fire event creation (5 events in 10 seconds)
+- **Nudge testing:** Verify pre-interview nudge fires 24h before scheduled event. Verify post-interview nudge fires within 2h after event end time. Verify nudge doesn't fire for cancelled events.
 
 ---
 
