@@ -3476,8 +3476,11 @@
       const staleClass = isStale ? 'stale' : '';
       const staleBadgeHtml = isStale ? `<span class="stale-badge" title="Last updated ${daysSinceUpdate} days ago">Stale — ${daysSinceUpdate}d</span>` : '';
 
-      // Extract salary from JD text if available
-      const salaryData = extractSalaryFromJD(role.jdText);
+      // Extract salary: check manual override first, then parse JD text.
+      // salaryOverride with null min/max means "explicitly unknown" (e.g., wrong JD).
+      const salaryData = role.salaryOverride
+        ? (role.salaryOverride.min ? role.salaryOverride : null)
+        : extractSalaryFromJD(role.jdText);
       const salaryPrefs = loadSalaryPrefs();
       const salaryEval = evaluateSalary(salaryData, salaryPrefs);
       const salaryDisplay = salaryData
