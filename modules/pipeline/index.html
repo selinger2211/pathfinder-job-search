@@ -4841,12 +4841,21 @@
           <div id="detail-artifacts-list">
             ${buildArtifactsList(role)}
           </div>
-          <!-- Generate Research Brief button — opens Research Brief module with this role pre-selected -->
+          <!-- Research Brief button — shows "View" if brief exists, "Generate" if not (v3.9.0) -->
+          ${role.briefArtifactId ? `
+          <button class="btn btn-ghost" onclick="openResearchBrief('${role.id}')"
+                  style="width: 100%; display: flex; align-items: center; justify-content: center; gap: var(--space-2); font-size: var(--text-sm); padding: var(--space-2) var(--space-3); margin-bottom: var(--space-2); border: 1px solid var(--accent); color: var(--accent); background: rgba(99, 102, 241, 0.08);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            View Research Brief
+            <span style="font-size: 10px; color: var(--text-tertiary); margin-left: var(--space-1);">${role.briefGeneratedAt ? new Date(role.briefGeneratedAt).toLocaleDateString() : ''}</span>
+          </button>
+          ` : `
           <button class="btn btn-ghost" onclick="openResearchBrief('${role.id}')"
                   style="width: 100%; display: flex; align-items: center; justify-content: center; gap: var(--space-2); font-size: var(--text-sm); padding: var(--space-2) var(--space-3); margin-bottom: var(--space-2); border: 1px dashed var(--accent); color: var(--accent);">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             Generate Research Brief
           </button>
+          `}
           <!-- Resume upload drop zone (always available) -->
           <div class="resume-upload-zone" id="resume-upload-zone"
                ondragover="event.preventDefault(); this.classList.add('dragover');"
