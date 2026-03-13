@@ -4,6 +4,32 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.19.3 — 2026-03-13
+
+### Feed: Duplicate Cards & Layout Fixes
+
+**Within-feed deduplication (v3.19.3)**
+- Same role from multiple sources (Gmail + LinkedIn + Built In) now merged into single card
+- Keeps the entry with the richest JD, merges metadata from other sources
+- Case-insensitive matching on company name + title
+- Deduped queue persisted to localStorage so duplicates don't reappear
+- Gmail scan also uses case-insensitive dedup for consistency
+
+**Card height consistency (v3.19.3)**
+- Added `align-items: start` to feed grid so cards size to their own content
+- Previously CSS grid stretched every card to match the tallest card in its row
+- Cards now have consistent, compact heights regardless of neighbors
+
+### Feed: Preference Pills Save & Re-score (v3.19.2)
+
+**Pill changes now persist and re-score immediately**
+- `addPill()` and `removePill()` now call `savePreferences()` + `rescoreAndRenderFeed()`
+- Previously pill changes only took effect after clicking "Save Preferences"
+- Created shared `rescoreAndRenderFeed(prefs)` helper to eliminate code duplication
+- Refactored stage checkbox, comp slider, and "Check Now" button to use same helper
+
+---
+
 ## v3.19.1 — 2026-03-13
 
 ### Feed: Scoring Transparency & Accuracy Overhaul

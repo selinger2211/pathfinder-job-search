@@ -674,6 +674,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
       gap: var(--space-4);
+      align-items: start;       /* v3.19.3: Cards size to their own content instead of stretching to row height */
       flex: 1;
       overflow-y: auto;
       padding: var(--space-4);
@@ -4050,6 +4051,25 @@
     }
 
     /**
+     * v3.19.2: Re-score all feed items with updated preferences and re-render.
+     * Shared helper so pill changes, stage toggles, and comp sliders all
+     * use the same re-score logic instead of duplicating it.
+     * @param {Object} prefs - The updated preferences to score against
+     */
+    function rescoreAndRenderFeed(prefs) {
+      const freshItems = loadFeedQueue();
+      state.feedItems = freshItems
+        .map(role => {
+          const scoring = scoreRole(role, prefs);
+          if (!scoring) return null;
+          return { ...role, score: scoring.score, scoring: scoring.breakdown, hasFullJD: scoring.hasFullJD };
+        })
+        .filter(item => item !== null)
+        .sort((a, b) => b.score - a.score);
+      renderFeedCards();
+    }
+
+    /**
      * Load feed queue items from localStorage.
      * These are roles synced from Indeed, Gmail, or added manually.
      * INPUT: none
@@ -5128,6 +5148,8 @@
       if (key) {
         prefs[key] = prefs[key].filter(item => item !== value);
         state.preferences = prefs;
+        savePreferences(prefs);           // v3.19.2: Persist immediately
+        rescoreAndRenderFeed(prefs);       // v3.19.2: Re-score immediately
         renderPreferences();
       }
     }
@@ -5160,6 +5182,8 @@
         prefs[key].push(value);
         state.preferences = prefs;
         input.value = '';
+        savePreferences(prefs);           // v3.19.2: Persist immediately
+        rescoreAndRenderFeed(prefs);       // v3.19.2: Re-score immediately
         renderPreferences();
       }
     }
@@ -5219,17 +5243,7 @@
             prefs.companyStage = selected;
             state.preferences = prefs;
             savePreferences(prefs);
-            // Re-score all items with updated preferences
-            const freshItems = loadFeedQueue();
-            state.feedItems = freshItems
-              .map(role => {
-                const scoring = scoreRole(role, prefs);
-                if (!scoring) return null;
-                return { ...role, score: scoring.score, scoring: scoring.breakdown };
-              })
-              .filter(item => item !== null)
-              .sort((a, b) => b.score - a.score);
-            renderFeedCards();
+            rescoreAndRenderFeed(prefs);   // v3.19.2: Use shared re-score helper
             showToast('Stage preferences updated', 'success');
           };
         }
@@ -6669,7 +6683,9 @@
         // Add to feed
         const queue = loadFeedQueue();
         jobs.forEach(job => {
-          if (!queue.some(q => q.company === job.company && q.title === job.title)) {
+          // v3.19.3: Case-insensitive dedup to match init-time dedup logic
+          if (!queue.some(q => (q.company || '').toLowerCase().trim() === (job.company || '').toLowerCase().trim()
+              && (q.title || '').toLowerCase().trim() === (job.title || '').toLowerCase().trim())) {
             queue.push({
               ...job,
               id: `gmail-${Date.now()}-${Math.random()}`,
@@ -7560,6 +7576,37 @@
         feedBanner.style.display = rawFeedItems.length === 0 ? 'block' : 'none';
       }
 
+      // ===== WITHIN-FEED DEDUP: Merge duplicate company+title entries =====
+      // The same role can appear from multiple sources (Gmail alert + LinkedIn alert +
+      // Built In sync). We keep the entry with the richest JD and merge metadata.
+      // v3.19.3: Prevents duplicate cards in the feed.
+      const dedupMap = new Map();
+      for (const item of rawFeedItems) {
+        const key = `${(item.company || '').toLowerCase().trim()}::${(item.title || '').toLowerCase().trim()}`;
+        const existing = dedupMap.get(key);
+        if (!existing) {
+          dedupMap.set(key, item);
+        } else {
+          // Keep whichever has the longer (richer) JD
+          const existingJDLen = (existing.jd || '').length;
+          const newJDLen = (item.jd || '').length;
+          if (newJDLen > existingJDLen) {
+            // New item has better JD — keep it but preserve network/metadata from existing
+            const merged = { ...item };
+            if (existing.feedMetadata && !merged.feedMetadata) merged.feedMetadata = existing.feedMetadata;
+            dedupMap.set(key, merged);
+          }
+          console.log(`[Feed] Deduped "${item.title}" at ${item.company} (kept entry with longer JD)`);
+        }
+      }
+      const dedupedCount = rawFeedItems.length - dedupMap.size;
+      rawFeedItems = Array.from(dedupMap.values());
+      if (dedupedCount > 0) {
+        console.log(`[Feed] Removed ${dedupedCount} duplicate(s) from feed queue`);
+        // Persist the deduped queue so duplicates don't reappear on next load
+        saveFeedQueue(rawFeedItems);
+      }
+
       // ===== PIPELINE DEDUP: Filter out roles user has already applied to =====
       // Roles at active pipeline stages (applied, interviewing, etc.) shouldn't
       // clutter the feed — the user is already engaging with those companies.
@@ -7760,19 +7807,7 @@
         };
 
         savePreferences(updated);
-
-        // Re-score all items from localStorage feed queue
-        const freshItems = loadFeedQueue();
-        state.feedItems = freshItems
-          .map(role => {
-            const scoring = scoreRole(role, updated);
-            if (!scoring) return null;
-            return { ...role, score: scoring.score, scoring: scoring.breakdown };
-          })
-          .filter(item => item !== null)
-          .sort((a, b) => b.score - a.score);
-
-        renderFeedCards();
+        rescoreAndRenderFeed(updated);     // v3.19.2: Use shared re-score helper
         showToast('Preferences updated', 'success');
       }
 
@@ -7821,17 +7856,7 @@
       // Check Now button — re-loads feed from localStorage (updated by MCP sync agent)
       document.getElementById('checkNowBtn').addEventListener('click', async () => {
         showToast('Re-loading feed from sources...', 'success');
-        // Reload feed queue (may have been updated by MCP sync agent or manual entry)
-        const freshItems = loadFeedQueue();
-        state.feedItems = freshItems
-          .map(role => {
-            const scoring = scoreRole(role, state.preferences);
-            if (!scoring) return null;
-            return { ...role, score: scoring.score, scoring: scoring.breakdown };
-          })
-          .filter(item => item !== null)
-          .sort((a, b) => b.score - a.score);
-        renderFeedCards();
+        rescoreAndRenderFeed(state.preferences);  // v3.19.2: Use shared re-score helper
         const feedBanner = document.getElementById('feedBanner');
         if (feedBanner) {
           feedBanner.style.display = state.feedItems.length === 0 ? 'block' : 'none';
