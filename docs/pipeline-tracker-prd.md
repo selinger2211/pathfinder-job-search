@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/pipeline/`
-**Version:** v1.0.0
-**Last Updated:** 2026-03-10
-**Status:** Draft — pending approval
+**Version:** v3.11
+**Last Updated:** 2026-03-13
+**Status:** Active — core features and advanced views implemented
 
 ---
 
@@ -141,18 +141,22 @@ Career page monitoring happens at these frequencies (see Job Feed PRD for detail
 
 ### Auto-Enrichment on Company Entry
 
-When a company is added (manually or by Job Feed), the system runs auto-enrichment:
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
+When a company is added (manually or by Job Feed), the system should run auto-enrichment:
 
 1. **Logo fetch** (Clearbit API) — attempt to get company logo
 2. **Basic profile** — scrape LinkedIn for funding, headcount, mission
 3. **News scan** — Google News API for recent articles
 4. **Glassdoor lookup** — fetch Glassdoor profile URL and rating
 
-Enrichment happens async; the UI shows a spinner while loading. Failed enrichments don't block entry.
+Enrichment would happen async; the UI would show a spinner while loading. Failed enrichments wouldn't block entry.
 
 ### Company Lookup & Web Search
 
-When manually adding a company, the UI provides web search suggestions:
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
+When manually adding a company, the UI should provide web search suggestions:
 - User types company name
 - System suggests matching results from cached company list
 - For new companies, shows Google search results
@@ -248,7 +252,7 @@ interface StageTransition {
   from: string;                 // Previous stage (or null if initial)
   to: string;                   // New stage
   timestamp: string;            // ISO timestamp
-  reason?: string;              // Why the change (user-provided)
+  reason?: string;              // **Status: Planned** — Optional reason field for why stage changed (user-provided)
 }
 
 interface CommLogEntry {
@@ -286,6 +290,10 @@ Backward transitions allowed at any point (e.g., revert from SCREEN to APPLIED i
 
 **Substate Details:**
 
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
+Interview and offer substages allow fine-grained tracking within those stages:
+
 Within `interviewing`:
 - `prep` — You're preparing, interview not yet scheduled
 - `in_loop` — Currently in the interview process (scheduling or completed rounds)
@@ -298,7 +306,7 @@ Within `offer`:
 - `negotiating` — Back-and-forth on terms
 - `decision_pending` — Waiting on company response to your counter, or ready to decide
 
-All substates are optional. Use them if helpful; omit if not needed.
+Interview and offer substages would complement the 8-stage pipeline. All substates are optional. Use them if helpful; omit if not needed.
 
 ### Stage Transition Rules
 
@@ -460,6 +468,8 @@ In the role detail panel, the Comms Log appears as a scrollable timeline:
 ---
 
 ## 8. Opaque Recruiter Outreach
+
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
 
 Some recruiter emails mention opportunities without revealing the company or role details upfront. The Pipeline supports "opaque" entries that can later be revealed:
 
@@ -646,6 +656,111 @@ Separate "Companies" tab shows all companies in a card layout:
 - Click card to view company profile + all roles at company
 - Drag card to change tier
 
+### 10.7 Default Score Sort (v3.11)
+
+Table view defaults to sorting by score column in descending order (`sortColumn = 'score'`, `sortAsc = false`). A new **Score** column displays fit assessment values with color-coded backgrounds:
+
+- **Green** (≥70): Strong fit
+- **Yellow** (40-69): Marginal fit
+- **Muted** (<40): Weak fit or no assessment
+
+Within kanban card views, roles in each stage column are automatically sorted by score descending, surfacing the strongest opportunities at the top of each stage.
+
+### 10.8 Company Visibility (v3.11)
+
+Company names in both kanban cards and table view are now **clickable links** that navigate to the Research Brief module, scoped to that company. On hover, a tooltip displays the company's mission statement (if available). Kanban cards also show a brief company description line below the role title, giving context at a glance.
+
+### 10.9 Compensation Display (v3.11)
+
+Compensation is now displayed in a structured format instead of a simple range:
+
+- **Posted Base:** $XK–$YK (from job description)
+- **Est. Total Comp:** ~$XK–$YK (including estimated equity and bonus)
+
+An info icon tooltip explains the difference between base salary and total compensation, helping users evaluate offers accurately.
+
+### 10.10 LinkedIn Network in Detail Panel
+
+A new **LinkedIn Network** section in the detail panel displays company connections sorted by seniority level (VP/Director/Senior first) and department relevance. Each connection shows:
+
+- Name, title, and relationship type
+- Purple **Product** badge and blue **Eng** badge for relevant department categorization
+- A **+ Track** button that promotes the contact to the `pf_connections` tracking list
+
+This allows quick identification of high-value referral targets without leaving the Pipeline.
+
+### 10.11 Command Palette (⌘K)
+
+A quick action palette accessible via the keyboard shortcut **⌘K** (Cmd+K on Mac, Ctrl+K on Windows/Linux) provides:
+
+- Search for roles by title, company, or stage
+- Quick actions: "Add Role", "Add Company", "Export", "View Companies"
+- Fuzzy search across role and company names
+- Navigate to any open role or company detail in one keystroke
+
+### 10.12 CSV Export
+
+An **Export** button in the toolbar allows users to download their entire pipeline as a CSV file, including:
+
+- All role details (title, company, stage, salary, dates)
+- All company data (name, tier, domain, headcount)
+- Timestamp of export for audit trails
+
+Exported CSV includes both kanban and list view formats depending on current view selection.
+
+### 10.13 Column Collapsing
+
+Kanban columns can be **collapsed** to minimize visual clutter:
+
+- Click the column header to toggle collapse state
+- Collapsed columns show only a count badge (e.g., "3 roles")
+- Column state is persisted in localStorage for the user's session
+- Useful for hiding completed stages or de-prioritized work
+
+### 10.14 Expandable Connection Cards
+
+Connection cards in the **Contacts & Outreach** tab are now **expandable**:
+
+- Click to reveal per-contact communication history (filtered from the comms log)
+- Quick-log input field allows adding interactions without navigating away
+- Shows timestamps, channel, and notes for each contact-specific interaction
+- Contacts can be sorted by last interaction date or by seniority
+
+### 10.15 Sibling Role Cards
+
+The detail panel now displays a **Sibling Roles** section showing other open roles at the same company:
+
+- Each sibling shows: title, stage badge, days in stage
+- Click a sibling card to instantly jump to that role's detail panel
+- Useful for evaluating multiple positions at the same target company
+
+### 10.16 Stale Role Detection (v3.11)
+
+Kanban cards display a **14-day stale badge** when a role has had no updates (comms log entry, stage change, or resume sent) in the last 14 days:
+
+- Badge appears in the top-right corner of the card
+- Subtle visual styling to avoid clutter
+- Helps identify roles that need follow-up or may be stuck
+
+### 10.17 Company View (Alternative View)
+
+A **Companies** tab in the main workspace shows an alternative view grouping by company instead of role:
+
+- Card layout with company logo, name, tier, domain
+- Role count per company (e.g., "3 roles: 1 screen, 2 applied")
+- Click to expand and see all roles at that company inline
+- Drag to change tier
+- Useful for companies with multiple opportunities or when prioritizing by company strategy
+
+### 10.18 Fit Assessment
+
+A **Fit Assessment** badge appears on role cards and in the detail panel, reflecting the candidate-to-role alignment:
+
+- Sourced from Research Brief analysis or manual evaluation
+- Displays as: "Strong Fit", "Marginal Fit", or "Weak Fit"
+- Color-coded: green (strong), yellow (marginal), red/muted (weak)
+- Tooltip shows assessment reasoning (gaps, experience alignment, etc.)
+
 ---
 
 ## 11. localStorage Keys
@@ -662,7 +777,7 @@ All three keys are read-accessible by other modules (Research Brief, Resume Buil
 
 ## 12. Implementation Phases
 
-### Phase 1: Core Pipeline UI (Current — v1.0)
+### Phase 1: Core Pipeline UI (Current — v3.11)
 What exists today:
 - [x] localStorage schema for companies, roles, connections
 - [x] Kanban board UI with 8 columns
@@ -672,21 +787,33 @@ What exists today:
 - [x] Role detail panel (slide-out) with tabs
 - [x] Filtering by tier, stage, source
 - [x] Search by company/title
-- [ ] Resume upload to IndexedDB (pf_resumes database)
-- [ ] Comms log UI in detail panel
+- [x] Resume upload to IndexedDB (pf_resumes database)
+- [x] Comms log UI in detail panel
+- [x] Default score sort with color-coded Score column (v3.11)
+- [x] Clickable company names linking to Research Brief (v3.11)
+- [x] Compensation display with Posted Base and Est. Total Comp (v3.11)
+- [x] LinkedIn Network section in detail panel (v3.11)
+- [x] Command Palette (⌘K) for quick search/actions (v3.11)
+- [x] CSV Export functionality (v3.11)
+- [x] Collapsible kanban columns (v3.11)
+- [x] Expandable connection cards with per-contact comms history (v3.11)
+- [x] Sibling role cards showing other roles at same company (v3.11)
+- [x] 14-day stale role detection badge (v3.11)
+- [x] Company View (alternative grouping by company) (v3.11)
+- [x] Fit Assessment badge on cards and detail panel (v3.11)
 
 ### Phase 2: Enrichment & Automation (v1.1)
-- [ ] Auto-enrichment on company entry (Clearbit logo, LinkedIn profile, Glassdoor lookup)
-- [ ] Company lookup web search on manual add
-- [ ] URL import for adding roles (CORS proxy)
+- [ ] Auto-enrichment on company entry (Clearbit logo, LinkedIn profile, Glassdoor lookup) — **Planned**
+- [ ] Company lookup web search on manual add — **Planned**
+- [x] URL import for adding roles (CORS proxy) (v3.11)
 - [ ] Tier management suggestions from Job Feed
 - [ ] Stage-based notifications ("interview in 2 days")
 - [ ] Bulk actions (move multiple roles, change tier for multiple companies)
 
 ### Phase 3: Feedback Loops & Intelligence (v1.2+)
-- [ ] Research Brief data writeback to role fitAssessment
-- [ ] Resume Builder fit assessment visible in Pipeline
-- [ ] Interview prep notes linkage
+- [x] Research Brief data writeback to role fitAssessment (v3.11)
+- [x] Fit assessment visible in Pipeline (v3.11)
+- [x] Interview prep notes linkage (v3.11)
 - [ ] Tier demotion suggestions (no activity, all roles closed, news alerts)
 - [ ] Historical analytics (funnel conversion rate by source, stage, tier)
 
@@ -695,7 +822,7 @@ What exists today:
 - [ ] Email tracking (when resume read, interview invite accepted)
 - [ ] LinkedIn message tracking (outreach follow-up reminders)
 - [ ] Salary data aggregation from multiple roles
-- [ ] Export to CSV / Google Sheets for analytics
+- [x] Export to CSV (v3.11)
 
 ---
 
@@ -704,11 +831,13 @@ What exists today:
 | Metric | Target | How Measured |
 |--------|--------|-------------|
 | Pipeline accuracy | 100% — all roles current | Manual audit, stale data reports |
-| Search speed | < 500ms | Performance monitoring |
+| Search speed (Command Palette) | < 200ms | Performance monitoring |
 | Drag-drop responsiveness | < 200ms | UX metrics |
 | Data consistency | 0 orphaned roles | Weekly integrity checks |
-| Enrichment coverage | 80%+ of companies have logo + domain | Enrichment success rate |
+| Stale role detection accuracy | 100% — all 14+ day roles flagged | Automated audit |
+| Score visibility | 100% of roles with fit assessment show color | UI audit |
 | User engagement | 3+ interactions per role | Analytics |
+| Export completeness | 100% of roles, companies, connections exportable | CSV validation |
 
 ---
 

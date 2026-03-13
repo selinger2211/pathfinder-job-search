@@ -759,6 +759,8 @@ Standalone settings view:
 
 ### Phase 2: Negotiation Support (v1.0.1)
 
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
 **What's coming:**
 - [ ] Offer stage detection and Negotiation Scorecard generation
 - [ ] Market percentile calculation
@@ -769,6 +771,8 @@ Standalone settings view:
 
 ### Phase 3: Positioning Intelligence (v1.1)
 
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
 **What's coming:**
 - [ ] Automated IC vs. Director comp comparison at same company
 - [ ] Cross-company positioning analysis
@@ -777,6 +781,8 @@ Standalone settings view:
 - [ ] Positioning recommendations based on comp data
 
 ### Phase 4: Advanced Analytics (v1.2+)
+
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
 
 **What's coming:**
 - [ ] Historical offer analysis (track comp trends across your search)

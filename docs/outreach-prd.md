@@ -324,6 +324,8 @@ Best,
 
 #### 3.3.5 InMail (3-5 sentences)
 
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
 **Purpose:** LinkedIn InMail to someone you haven't reached out to yet.
 
 **Structure:**
@@ -412,6 +414,8 @@ Best,
 ```
 
 **Constraints:** Pull specific details from the Debrief Agent's notes for this interview. Don't be generic.
+
+> **Status: Planned** — Debrief integration not yet implemented. Spec retained for future development.
 
 #### 3.3.8 Recruiter Response (3-5 sentences)
 
@@ -719,6 +723,8 @@ What will be implemented:
 
 ### Phase 2: Debrief Integration & Refinement (v1.1)
 
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
 - [ ] Read debrief notes and pull specific discussion points for interview thank-yous
 - [ ] Message quality scorer (checks for personalization signals, flags generic patterns)
 - [ ] Edit context sidebar (user can add research notes to enrich prompt)
@@ -727,6 +733,8 @@ What will be implemented:
 - [ ] Bulk messaging (generate multiple messages in one session)
 
 ### Phase 3: Intelligence & Optimization (v1.2+)
+
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
 
 - [ ] A/B testing framework (track response rates by message structure)
 - [ ] Response rate analytics by message type / company tier / connection type

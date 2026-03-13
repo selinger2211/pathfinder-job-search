@@ -144,8 +144,13 @@ The Feed monitors multiple channels. Each source has different signal quality, e
 | **Indeed API** | MCP connector | Medium | Full JD text, company, location, salary range, posting date | 3x/week |
 | **Dice API** | MCP connector | Medium (tech-focused) | Full JD text, company, tech requirements | 3x/week |
 | **LinkedIn Saved Searches** | Email alert parsing | Medium | Role title, company, link (JD requires click-through) | As alerts arrive |
-| **Company Career Pages** | RSS/scraping (Lever, Greenhouse, Ashby) | High (direct) | Full JD, team, level | Tiered by company priority |
+| **Company Career Pages** | URL import (Lever, Greenhouse, Ashby) | High (direct) | Full JD, team, level | On-demand via URL import |
 | **Manual Entry** | Feed UI | Highest | Full role details entered by user | On-demand |
+
+**Notes on status:**
+- **Gmail integration** is Planned for Phase 2 (see Section 12)
+- **Indeed API & Dice API** are Planned for Phase 3 (see Section 12)
+- **Career page RSS/monitoring** is Planned for Phase 4 (see Section 12) — currently supported via manual URL import only
 
 ### 4.2 Source Priority
 
@@ -157,6 +162,8 @@ Processing order matters. High-signal sources first:
 5. Job board APIs (broad, structured)
 
 ### 4.3 Career Page Monitoring (Tiered Cadence)
+
+> **Status: Planned** — Not yet implemented. Manual URL import is available now (Section 5.6.4). Scheduled automated monitoring is planned for Phase 4.
 
 Career pages are monitored on a schedule tied to company tier:
 
@@ -170,6 +177,8 @@ Career pages are monitored on a schedule tied to company tier:
 The Feed supports adding career page URLs in the source configuration. For companies using standard ATS platforms (Lever, Greenhouse, Ashby, Workday), the Feed can auto-detect the job listing format and extract structured data. For custom career pages, it falls back to general scraping with Claude-powered parsing.
 
 ### 4.4 Gmail Integration
+
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
 
 Gmail is the highest-value source because it captures inbound signal — recruiters reaching out to you, job alerts from saved searches, and networking follow-ups mentioning opportunities.
 
@@ -238,7 +247,52 @@ For signals that only have a link (e.g., LinkedIn alert emails), attempt to fetc
 
 Enrichment also attempts to resolve company identity — mapping email domains and company names to existing `pf_companies` records.
 
+#### 5.2.1 JD Enrichment Engine (v3.10)
+
+The system employs a **three-strategy approach** to fetch full job descriptions from a variety of sources:
+
+**Strategy 1: LinkedIn CORS Proxy Chain**
+- Uses an CORS proxy service (`allorigins.win`) to fetch LinkedIn job pages that are normally behind authentication
+- Extracts JD text from the page HTML via DOM parsing
+- Fallback when LinkedIn blocks requests
+
+**Strategy 2: ATS Public APIs**
+- **Greenhouse** — Public JSON API at `boards.greenhouse.io/{company}/api/v1/jobs` (no authentication required)
+- **Lever** — Public JSON API at `api.lever.co/v0/postings/{company}` (no authentication required)
+- **Ashby** — Public JSON API at `api.ashbyhq.com/postings` with filtering by company
+
+All three platforms expose their full job posting data via free public APIs, making them the preferred enrichment source.
+
+**Strategy 3: DuckDuckGo Web Search with ATS-First Extraction**
+- Performs a web search: `"{title}" "{company}" site:greenhouse.io OR site:lever.co OR site:ashbyhq.com`
+- Parses DuckDuckGo search results HTML to extract links
+- Prioritizes ATS platform URLs (Greenhouse/Lever/Ashby), then tries other sources (Built In, LinkedIn, etc.)
+- Falls back to generic web scraping with Claude-powered parsing if no ATS URL found
+
+**Stub JD Detection** (v3.10)
+- **Definition:** A stub JD is a job posting with fewer than 300 characters of descriptive text + matches generic email patterns
+- Indicates minimal effort / copy-pasted postings vs. well-developed job descriptions
+- Stub detection runs automatically on page load to flag enrichment candidates
+
+**Auto-Enrichment on Page Load** (v3.10)
+- Background async enrichment of all stub JDs after initial page load
+- **Delay strategy:** 1.5 seconds between successive fetches to avoid rate limiting
+- **Progress indicator:** Sidebar shows count of JDs needing enrichment (e.g., "JD Enrichment: 5 need JDs")
+- Does not block the feed UI — enrichment happens silently in the background
+- When enrichment completes, card displays update with full JD text and quality badge
+
+**JD Quality Badges** (v3.10)
+- **Yellow badge "📄 Stub JD"** — Posted posting with <300 chars; limited information
+- **Green badge "✅ Full JD"** — Complete job description from enrichment; suitable for detailed analysis
+
+**Company Name Validation** (v3.10)
+- Extracted JDs are validated to ensure the company name appears in the JD text (fuzzy matching)
+- Reduces false positives where an ATS search result belongs to the wrong company
+- Logs validation results for debugging
+
 ### 5.3 Stage 3: Deduplicate
+
+> **Status: Planned** — Automatic dedup vs. pipeline is planned for Phase 3. Currently, manual dedup review occurs at feed card level.
 
 Before scoring, check for duplicates against the existing pipeline:
 
@@ -262,9 +316,9 @@ Each extracted role is scored against the user profile. The scoring model produc
 | Domain Match | 20% | Uses `searchText` (full JD when available, title+company+domain when stub). `primaryDomains` = full points, `secondaryDomains` = half. `excludedDomains` = instant disqualify. |
 | Keyword Relevance | 15% | **Composite score (v3.5.0):** 60% `mustHaveKeywords` fulfillment ratio + 40% `boostKeywords` density. Both scan `searchText` (JD-first, title-fallback). Formula: `keywordScore = (mustHaveRatio × 100 × 0.6) + (boostScore × 0.4)`. |
 | Location Match | 15% | Role's location/remote policy matches preferences? Remote = full points if preferred, on-site in excluded location = 0 |
-| Network Signal | 10% | LinkedIn connections at the company (from `pf_linkedin_network`). 3+ = full, 1-2 = half, 0 = zero. |
+| Network Signal | 15% | LinkedIn connections at the company (from `pf_linkedin_network`). 3+ = full, 1-2 = half, 0 = zero. |
 | Company Stage | 10% | Company stage/size matches `companyStage` and `minHeadcount`? |
-| Comp Signal | 10% | If salary range disclosed, does it overlap with `compRange`? No disclosure = neutral (don't penalize) |
+| Comp Signal | 5% | If salary range disclosed, does it overlap with `compRange`? No disclosure = neutral (don't penalize) |
 
 **Score Interpretation:**
 
@@ -321,6 +375,165 @@ interface FeedCreatedRole {
 ```
 
 The Dashboard surfaces new discoveries in a **Feed Review** section, grouped by match quality. Each card shows the score with a breakdown tooltip, and one-click actions: **Accept** (confirms in pipeline), **Dismiss** (archives), or **Snooze** (hide for 7 days).
+
+#### 5.6.1 JD Sidebar Detail Panel (v3.11)
+
+Clicking **"View"** on any feed card opens a slide-out panel from the right edge of the screen:
+
+**Layout & Dimensions**
+- **Width:** 480px (fixed, responsive on mobile)
+- **Position:** Slides from right, overlaying the feed cards
+- **Header:** Sticky and always visible
+- **Close:** Click outside the panel or ✕ button dismisses it
+
+**Header (Sticky)**
+- **Company Logo** — Icon or first-letter badge (left-aligned)
+- **Company Name** (bold, medium size)
+- **Role Title** (gray text below company name)
+- **Close button (✕)** (right-aligned)
+
+**Main Content (Scrollable)**
+- **Full JD Text** — Complete job description with readable typography (comfortable line height, adequate margins)
+- **Source Badge** — Shows where the JD came from ("LinkedIn", "Greenhouse", "Lever", "Manual URL", etc.)
+- **Confidence Indicator** — Visual badge showing enrichment quality (green "✅ Full JD" vs. yellow "📄 Stub JD")
+- **"View Full JD" Button** — Links directly to the original posting URL (opens in new tab)
+
+#### 5.6.2 Compensation Labeling (v3.11)
+
+The Feed displays compensation in two tiers: **Posted Base** (extracted from JD) and **Estimated Total Comp** (calculated via archetype ratios).
+
+**Posted Base Display**
+- Format: `"Posted Base: $XK–$YK"` (e.g., "Posted Base: $285K–$310K")
+- Extracted directly from the job description by parsing salary ranges
+- If no salary disclosed: `"Posted Base: Not listed"`
+
+**Estimated Total Comp Display**
+- Format: `"Est. Total Comp: ~$XK–$YK"` (e.g., "Est. Total Comp: ~$350K–$450K")
+- Calculated using **archetype ratios** based on role level and company stage
+- Includes projected bonus (30–50% of base at larger companies), equity vesting value, and benefits
+- **Tilde (~)** prefix indicates this is an estimate, not a hard number
+
+**Methodology Info Tooltip**
+- Hovering over the compensation display shows a detailed tooltip with:
+  - Explanation that Posted Base is extracted from the JD
+  - Explanation that Estimated Total Comp includes bonus, equity, and benefits based on role level and company stage
+  - Link to compensation calculation methodology (if available)
+
+**Example on Feed Card**
+```
+Posted Base: $285K–$310K
+Est. Total Comp: ~$350K–$450K    ℹ️ (hover for details)
+```
+
+#### 5.6.3 Company Visibility (v3.11)
+
+The Feed elevates company information to support quick discovery and context.
+
+**Clickable Company Names**
+- Company name on each feed card is clickable
+- Clicking the company name opens a **Research Brief** (integration with the Research module)
+- Brief shows company profile, recent funding, headcount, mission statement, and career tier
+
+**Hover Tooltip with Mission Statement**
+- Hovering over the company name shows a tooltip with the company's mission statement
+- Mission statement is pulled from `pf_companies` records when available
+- If no mission statement available, shows company size and location instead
+
+**Brief Description Line**
+- Small gray text below the company name on feed cards
+- Shows company stage + location (e.g., "Series B • San Francisco")
+- Gives instant context without needing to hover
+
+#### 5.6.4 URL Import (v3.11)
+
+Users can import job postings directly from career pages by pasting the URL.
+
+**Supported Platforms**
+- **Lever** — `jobs.lever.co/{company}/{posting-id}`
+- **Greenhouse** — `boards.greenhouse.io/{company}/jobs/{id}`
+- **Ashby** — `jobs.ashbyhq.com/{company}/{posting-id}`
+- **Workday** — Employer-specific Workday career sites
+- **LinkedIn** — LinkedIn Jobs postings
+- **Generic URLs** — Any other career page (will extract what it can)
+
+**Auto-Detection**
+- URL parsing attempts to extract company name and source platform automatically
+- If parsing succeeds, pre-fills the company name and source fields
+- If parsing fails, user manually enters company name
+
+**Workflow**
+1. User pastes URL into "Import Job URL" input field
+2. System auto-detects company + platform
+3. Triggers JD enrichment immediately (fetches full JD)
+4. Creates a feed item with extracted/enriched data
+5. Role appears in the feed queue for scoring and review
+
+#### 5.6.5 Manual Role Add (v3.11)
+
+A form-based entry method for adding roles that don't have a URL or came from offline sources (conversations, recruiter calls, etc.).
+
+**Form Fields**
+- **Company Name** (required) — autocomplete from existing companies or create new
+- **Role Title** (required) — what you're applying for
+- **Posting URL** (optional) — link to the job posting if available
+- **Job Description** (optional) — paste JD text directly
+- **Location** (optional) — role location or "Remote"
+- **Compensation** (optional) — salary range if mentioned
+
+**Workflow**
+1. User fills in form fields
+2. Clicks "Add Role"
+3. System creates feed item with provided data
+4. If JD text is missing and URL exists, triggers enrichment
+5. Role appears in feed queue for scoring and review
+
+#### 5.6.6 Leader/IC Bonus Scoring (v3.11)
+
+The Feed applies a context-aware bonus for leadership vs. individual contributor roles based on company size.
+
+**Scoring Logic**
+- **Small companies** (startup/series A-b): +5 points for detected leadership signals, +0 for IC roles
+  - Rationale: At small companies, people-leader roles (build a team, own a function) offer more scope
+  - Example signals: "build the team", "player-coach", "people leader", "manage engineers", "manage designers"
+
+- **Larger companies** (series c+, public): +2 points for detected leadership signals, +0 for IC roles
+  - Rationale: At larger companies, both leader and IC roles have substantial scope; leadership has slight edge
+
+**Detection Signals**
+The system scans the JD title and description for keywords indicating leadership:
+- "build the team"
+- "player-coach"
+- "people leader"
+- "manage engineers"
+- "manage designers"
+- (and similar variants)
+
+**Display on Feed Cards**
+- Each card shows a badge with the detected signal (e.g., "Leader@Small", "IC", "Leader")
+- Helps users quickly identify role trajectory at a glance
+
+#### 5.6.7 Snoozed Tab (v3.11)
+
+Users can temporarily hide roles they're not ready to act on but want to revisit later.
+
+**Snooze Duration**
+- Roles snoozed for **7 days**
+- After 7 days, snoozed roles automatically resurface in the main feed
+
+**Snoozed Tab**
+- Dedicated tab in the Feed UI shows all currently snoozed roles
+- Displays when role was snoozed and when it will resurface (e.g., "Unsnoozed in 4 days")
+- Users can manually un-snooze a role to bring it back to the active feed immediately
+
+**Storage**
+- Snoozed roles are stored in localStorage as `pf_snoozed_roles`
+- Snooze state persists across sessions and browser refreshes
+- On page load, system checks for expired snoozes and automatically moves expired roles back to the feed
+
+**Use Cases**
+- Role is interesting but company is hiring slowly — snooze to reduce noise
+- Role is perfect but you're not ready to interview yet — snooze for later follow-up
+- Waiting for recruiter callback — snooze until they respond
 
 ---
 
@@ -408,6 +621,8 @@ New companies start at **Dormant** tier by default. The match score on the trigg
 
 ## 8. Tier Management Suggestions
 
+> **Status: Planned** — Tier promotion/demotion suggestions are planned for Phase 5. Currently, only manual tier management exists in the Pipeline module.
+
 The Feed actively manages the funnel by suggesting tier changes:
 
 ### Promotion Triggers
@@ -426,6 +641,8 @@ All suggestions are surfaced as nudges on the Dashboard. The Feed **never auto-c
 ---
 
 ## 9. Feed Analytics
+
+> **Status: Planned** — Not yet implemented. Analytics infrastructure is planned for Phase 5. Current implementation includes basic role counters.
 
 The Feed tracks its own performance to help tune the scoring model:
 
@@ -461,6 +678,8 @@ The analytics UI lives in the Feed sidebar as a collapsible summary, with a full
 
 ### 10.3 Run Logging
 
+> **Status: Planned** — Feed run logging to MCP is planned for Phase 5. Currently, runs are not logged.
+
 Every run is logged:
 
 ```typescript
@@ -482,71 +701,88 @@ interface FeedRun {
 
 ## 11. MCP Tools
 
+> **Status: Planned** — MCP tool integration is planned for Phase 5. The Feed currently operates as a scheduled Cowork skill.
+
 The Feed exposes tools for other agents to query:
 
-| Tool | Parameters | Returns | Description |
-|------|-----------|---------|-------------|
-| `check_feed` | `{sources?: string[]}` | `{discovered, processed, errors}` | Trigger a feed check |
-| `get_feed_status` | `{}` | `{lastRun, nextScheduled, sourceStatus[]}` | Source health overview |
-| `get_feed_queue` | `{minScore?, maxResults?}` | `FeedItem[]` | View pending weak matches |
-| `update_preferences` | `{...partial}` | `{updated}` | Modify scoring profile |
-| `get_feed_analytics` | `{dateRange?}` | Analytics object | Performance metrics |
+| Tool | Parameters | Returns | Description | Status |
+|------|-----------|---------|-------------|--------|
+| `pf_score_role` | `{title, company, jdText}` | `{score, breakdown}` | Score a role against preferences | Planned |
+| `check_feed` | `{sources?: string[]}` | `{discovered, processed, errors}` | Trigger a feed check | Planned |
+| `get_feed_status` | `{}` | `{lastRun, nextScheduled, sourceStatus[]}` | Source health overview | Planned |
+| `get_feed_queue` | `{minScore?, maxResults?}` | `FeedItem[]` | View pending weak matches | Planned |
+| `update_preferences` | `{...partial}` | `{updated}` | Modify scoring profile | Planned |
+| `get_feed_analytics` | `{dateRange?}` | Analytics object | Performance metrics | Planned |
 
 ---
 
 ## 12. Implementation Phases
 
-### Phase 1: Manual Feed + Preferences UI (Current)
-What exists today:
-- [x] Feed card UI shell with demo data
-- [x] Sidebar layout with preference sections
-- [x] Score display with color-coded bars
-- [ ] Preference editor (full form with save/load)
-- [ ] Feed card actions (Accept/Dismiss/Snooze)
-- [ ] Feed queue for weak matches
+### Phase 1: Manual Feed + Preferences UI (v3.0–3.1 — SHIPPED)
+Core feed UI and preference management:
+- [x] Feed card UI with live data
+- [x] Sidebar layout with preference sections (collapsible)
+- [x] Score display with color-coded bars (green/blue/yellow/gray by tier)
+- [x] Preference editor (full form with tag inputs, range sliders)
+- [x] Feed card actions (Accept/Dismiss/Snooze)
+- [x] Feed queue for weak matches (20-39 score range)
+- [x] Role acceptance flow (confirmed in pipeline)
+- [x] Role dismissal (archived with analytics)
+- [x] Scoring engine with 7 weighted dimensions
+- [x] Company auto-creation from new roles
+- [x] LinkedIn network signal detection and display
 
-### Phase 2: Gmail Integration (Next)
-- [ ] Gmail MCP connector for email classification
-- [ ] Recruiter outreach extraction (Claude-powered)
-- [ ] Job alert email parsing (LinkedIn, Indeed, Glassdoor templates)
-- [ ] Networking follow-up detection
-- [ ] Dedup against existing pipeline
-- [ ] Scoring engine with weighted dimensions
-- [ ] Auto-create pipeline entries for strong matches
-- [ ] Dashboard notifications for new discoveries
+### Phase 2: JD Enrichment Engine (v3.10–3.11 — SHIPPED)
+Three-strategy JD enrichment with quality badges:
+- [x] LinkedIn CORS proxy chain (fetches behind-auth job pages)
+- [x] ATS public APIs (Greenhouse, Lever, Ashby free JSON APIs)
+- [x] DuckDuckGo web search with ATS-first extraction
+- [x] Stub JD detection (<300 chars + email patterns)
+- [x] JD quality badges (yellow "Stub JD" / green "Full JD")
+- [x] Auto-enrichment on page load (async, 1.5s delay between fetches)
+- [x] Background progress indicator (sidebar shows enrichment status)
+- [x] Company name validation for extracted JDs
+- [x] JD detail panel (480px slide-from-right with sticky header, full text, source badge, confidence indicator)
+- [x] "View Full JD" button linking to original posting
+- [x] Compensation labeling ("Posted Base" + "Est. Total Comp" with methodology tooltip)
+- [x] URL import from career pages (Lever, Greenhouse, Ashby, Workday, LinkedIn)
+- [x] Manual role entry form (company, title, URL, JD text, location, comp)
+- [x] Company visibility features (clickable names → Research Brief, hover tooltips, brief description line)
+- [x] Leader/IC bonus scoring (context-aware: +5 at small cos, +2 at large cos)
+- [x] Snoozed tab with 7-day auto-resurface
 
-### Phase 2.5: Apify JD Enrichment (v3.4.0 — SHIPPED)
+### Phase 2.5: Earlier Apify Integration (v3.4.0 — SHIPPED)
+Legacy JD enrichment (now superseded by v3.10):
 - [x] Apify API token storage (`pf_apify_key`) + sidebar settings UI
 - [x] JD quality detection (`isStubJD()` — length + pattern-based)
 - [x] LinkedIn Jobs Scraper integration (`bebity/linkedin-jobs-scraper`)
 - [x] Fuzzy match engine (company name + title similarity, 40+ confidence threshold)
 - [x] Per-card "⚡ Enrich" button with loading state
 - [x] Batch "Enrich JDs" button with live progress counter
-- [x] JD quality badges (stub vs full) on feed cards
 - [x] Enriched JD snippet preview on cards
 - [x] Graceful error handling (quota limits, no matches, API errors)
-- [ ] Career page scraping fallback (Lever, Greenhouse, Ashby, Workday)
-- [ ] Auto-enrich on feed item creation (background enrichment)
 
-### Phase 3: Job Board APIs
+### Phase 3: Job Board APIs (Planned)
 - [ ] Indeed API integration via MCP connector
 - [ ] Dice API integration via MCP connector
 - [ ] Saved search management UI
 - [ ] Result dedup across sources (same role on Indeed + company page)
 
-### Phase 4: Career Page Monitoring
-- [ ] ATS-specific extractors (Lever, Greenhouse, Ashby, Workday)
+### Phase 4: Career Page Monitoring (Planned)
 - [ ] RSS feed support for career pages
-- [ ] Generic scraping with Claude-powered parsing fallback
-- [ ] Tiered cadence scheduling per company tier
+- [ ] Tiered cadence scheduling per company tier (3x/week for Tier 1, weekly for Tier 2, etc.)
 - [ ] Career page URL management in Source tab
+- [ ] Generic scraping with Claude-powered parsing fallback
 
-### Phase 5: Intelligence Layer
+### Phase 5: Intelligence Layer & Analytics (Planned)
 - [ ] Tier promotion/demotion suggestions
-- [ ] Feed analytics dashboard
+- [ ] Feed analytics dashboard (volume, quality, speed, conversion, source ROI)
 - [ ] Preference version tracking with A/B comparison
 - [ ] Company frequency signals
 - [ ] Repost detection and re-engagement prompts
+- [ ] MCP tool integration (`pf_score_role`, `check_feed`, `get_feed_status`, etc.)
+- [ ] Feed run logging to MCP for historical analytics
+- [ ] Automated tier promotion engine based on frequency signals
 
 ---
 

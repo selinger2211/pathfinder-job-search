@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/dashboard/`
-**Version:** v1.0.0
-**Last Updated:** 2026-03-10
-**Status:** Draft — pending approval
+**Version:** v3.11
+**Last Updated:** 2026-03-13
+**Status:** Active — v3.11 features live
 
 ---
 
@@ -206,6 +206,8 @@ Click any bar → opens Pipeline filtered to that stage.
 
 **Card 2: Conversion Funnel**
 
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
 Shows conversion rates from stage to stage (useful after you've closed 10+ roles):
 
 ```
@@ -246,6 +248,8 @@ Click to expand → shows daily breakdown with timestamps.
 
 **Card 4: Average Time-in-Stage**
 
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
 Shows how long roles typically spend at each stage:
 
 ```
@@ -261,9 +265,11 @@ Useful for identifying bottlenecks. Click any stage → shows roles currently in
 
 ### 3.4 Feed Review Section (Tertiary Zone)
 
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
 When the Job Feed Listener surfaces new matches, they appear here grouped by match score (if Job Feed is enabled). Hidden if Feed is not yet integrated.
 
-**Structure:**
+**Planned Structure:**
 
 ```
 New from Job Feed (3 roles matched today)
@@ -286,7 +292,7 @@ New from Job Feed (3 roles matched today)
    [Expand]
 ```
 
-**Actions:**
+**Planned Actions:**
 
 - **Accept** → Adds role to Pipeline in `discovered` stage, auto-tags Hot/Active/Watching based on match score
 - **Snooze** → Hides for 7 days, then re-surfaces if still not accepted
@@ -296,7 +302,9 @@ New from Job Feed (3 roles matched today)
 
 ### 3.5 Interview Intelligence Card (Appears After 10+ Debriefs)
 
-Once the Post-Interview Debrief Agent has accumulated 10+ interview records, a summary card appears showing patterns:
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
+Once the Post-Interview Debrief Agent has accumulated 10+ interview records, a summary card will appear showing patterns:
 
 ```
 Interview Intelligence (based on 12 debriefs)
@@ -329,17 +337,54 @@ One-click launchers to common workflows:
 
 ```
 ┌──────────────┬──────────────┬──────────────┬──────────────┐
-│   + Add      │  📋 Brief   │  📄 Resume   │  📂 View     │
-│   Role       │ Generate    │ Generate     │  Artifacts   │
+│   + Add      │  View        │  Practice    │  Research    │
+│   Role       │  Pipeline    │  Interview   │  Brief       │
 └──────────────┴──────────────┴──────────────┴──────────────┘
 ```
 
 **Actions:**
 
 - **+ Add Role** → Opens Pipeline with blank role creation form
-- **📋 Brief Generate** → Opens Research Brief agent with role selector dropdown
-- **📄 Resume Generate** → Opens Resume Tailor with role selector dropdown
-- **📂 View Artifacts** → Opens Artifacts browser (view all saved briefs, resumes, debriefs, JDs)
+- **View Pipeline** → Opens Pipeline main view
+- **Practice Interview** → Opens Mock Interview agent for interview preparation
+- **Research Brief** → Opens Research Brief agent with role selector dropdown
+
+Additional quick action buttons also available:
+- **Tailor Resume** → Opens Resume Tailor with role selector dropdown
+
+---
+
+### 3.7 v3.11 Features
+
+**3.7.1 Smart Outreach Nudges**
+
+Rules 3 and 9 now read comms log context to provide intelligent follow-up suggestions:
+
+- **If outbound email has gone dark (no response 7+ days):** Shows subject line, days elapsed, and "Draft Follow-up" button
+- **If inbound message pending:** Shows "Time to reply?" prompt to encourage timely responses
+- **Mutual connections surfacing:** Displays top 2 connections at target company by seniority (drawn from `pf_connections` + `pf_linkedin_network`)
+- **Last comms snippet:** Shows last 80 characters of communication on nudge card for quick context
+- **View Connections link:** Direct link to Pipeline connections section
+
+**3.7.2 Upcoming Calendar Events Card**
+
+A new card displays "Upcoming Calendar Events (Next 7 Days)" reading from Google Calendar integration (`pf_calendar_events` in localStorage):
+
+- Shows interview events scheduled in the next 7 days
+- Each event displays date/time, company, interview type tag (Phone Screen, Hiring Manager, etc.)
+- Quick action buttons: "Generate Brief" (opens Research Brief pre-loaded), "Practice" (opens Mock Interview)
+- Empty state when no interviews scheduled
+
+**3.7.3 Practice Interview Quick Action**
+
+New button in primary quick actions: "Practice Interview" → Opens Mock Interview agent for interview preparation and role-specific practice.
+
+**3.7.4 Sync Status Banner**
+
+Shows real-time MCP sync status by reading `pf_sync_log` from localStorage. Indicates:
+- Last sync timestamp
+- Sync health indicator (green = current, amber = stale >24h, red = error)
+- Quick link to resync if needed
 
 ---
 
@@ -471,13 +516,13 @@ On Dashboard Load:
 
 | Trigger | Timing | Priority | Text | Action |
 |---------|--------|----------|------|--------|
-| Role in `applied` stage | > 21 days since stage transition | Important | "No response from {company} for {days} days — mark as ghosted?" | Open role detail, show stage transition UI |
+| Role in `applied` stage | > 10 days since stage transition | Important | "No response from {company} for {days} days — mark as ghosted?" | Open role detail, show stage transition UI |
 
 **Implementation:**
 ```
 for each role where stage === 'applied':
   daysSinceApplied = now - role.stageHistory.find(sh => sh.to === 'applied').timestamp
-  if (daysSinceApplied > 21):
+  if (daysSinceApplied > 10):
     yield nudge(priority: 'important', triggerid: 'stalled_${roleId}')
 ```
 
@@ -500,21 +545,26 @@ for each role where stage === 'offer':
 
 ---
 
-**Rule 3: Outreach Sequence Due**
+**Rule 3: Outreach Follow-up Trigger**
 
 | Trigger | Timing | Priority | Text | Action |
 |---------|--------|----------|------|--------|
-| Connection with outreach log | Next step due (e.g., email due 5 days after initial message) | Important | "Send follow-up email to {contact} at {company}" | Open Outreach Message Generator |
+| Role in `outreach` stage | 7+ days in outreach stage | Important | "Follow up on your {title} outreach to {company}" | Open Outreach Message Generator |
 
 **Implementation:**
 ```
-for each connection in pf_connections:
-  for each entry in connection.outreachLog (sorted by date DESC):
-    nextStep = calculateNextStep(entry)  // e.g., "email", "call"
-    daysUntilDue = (nextStep.dueDate - now) / 86400
-    if (daysUntilDue <= 0):  // overdue or due today
-      yield nudge(priority: 'important', triggerid: 'outreach_${connectionId}')
+for each role where stage === 'outreach':
+  daysSinceOutreach = (now - role.stageHistory.find(sh => sh.to === 'outreach').timestamp) / 86400
+  if (daysSinceOutreach > 7):
+    yield nudge(priority: 'important', triggerid: 'outreach_followup_${roleId}')
 ```
+
+**v3.11 Enhancement:** Now reads comms log context and displays:
+- If outbound email has gone dark (no response 7+ days): shows subject line, days since, "Draft Follow-up" button
+- If inbound message pending: "Time to reply?" prompt
+- Mutual connections surfaced from `pf_connections` + `pf_linkedin_network` (top 2 by seniority)
+- Last comms snippet (80 chars) shown on nudge cards
+- "View Connections" link to Pipeline
 
 ---
 
@@ -569,11 +619,13 @@ for each event in gcal_events:
 
 **Rule 7: Company Profile Sparse**
 
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
 | Trigger | Timing | Priority | Text | Action |
 |---------|--------|----------|------|--------|
 | Company has < 50% enriched fields complete | On role advancement or company add | Informational | "{company} profile incomplete — add funding, tech stack, etc.?" | Open Pipeline company profile |
 
-**Implementation:**
+**Planned Implementation:**
 ```
 for each company in pf_companies:
   filledFields = count(company.[domain, funding, headcount, techStack, mission, linkedinUrl, glassdoorUrl])
@@ -588,7 +640,7 @@ for each company in pf_companies:
 
 | Trigger | Timing | Priority | Text | Action |
 |---------|--------|----------|------|--------|
-| Interview scheduled, but role has no debrief from previous round AND substage is not `awaiting_decision` | 72h, 48h, 24h before interview | Important | "Prep not started for {company} {round type} — review materials?" | Open Research Brief sections 9-10 |
+| Interview scheduled, but role has no debrief from previous round AND substage is not `awaiting_decision` | 72h or less before interview | Important | "Prep not started for {company} {round type} — review materials?" | Open Research Brief sections 9-10 |
 
 **Implementation:**
 ```
@@ -598,8 +650,101 @@ for each event in gcal_events matching a pipeline role:
   if (role.interviewing.substate !== 'awaiting_decision' AND
       no recent debrief for this round):
     hoursUntilInterview = (event.start - now) / 3600
-    if (hoursUntilInterview in [72, 48, 24]):
+    if (hoursUntilInterview < 72 && hoursUntilInterview > 0):
       yield nudge(priority: 'important', triggerid: 'prep_${roleId}_${hoursUntilInterview}h')
+```
+
+---
+
+**Rule 1a: Stale Discovered Roles**
+
+| Trigger | Timing | Priority | Text | Action |
+|---------|--------|----------|------|--------|
+| Role in `discovered` stage | > 3 days since stage transition | Suggested | "Still researching {title} at {company}?" | Open role detail |
+
+**Implementation:**
+```
+for each role where stage === 'discovered':
+  daysSinceDiscovered = (now - role.stageHistory.find(sh => sh.to === 'discovered').timestamp) / 86400
+  if (daysSinceDiscovered > 3):
+    yield nudge(priority: 'suggested', triggerid: 'stale_discovered_${roleId}')
+```
+
+---
+
+**Rule 2a: Researching Too Long**
+
+| Trigger | Timing | Priority | Text | Action |
+|---------|--------|----------|------|--------|
+| Role in `researching` stage | > 5 days in researching stage | Important | "Ready to apply to {title} at {company}?" | Open role detail, suggest apply action |
+
+**Implementation:**
+```
+for each role where stage === 'researching':
+  daysSinceAdded = (now - role.dateAdded) / 86400
+  if (daysSinceAdded > 5):
+    yield nudge(priority: 'important', triggerid: 'researching_long_${roleId}')
+```
+
+---
+
+**Rule 4a: Screen Prep Needed**
+
+| Trigger | Timing | Priority | Text | Action |
+|---------|--------|----------|------|--------|
+| Role in `screen` stage | On detection | Important | "Prep for your {title} screen at {company}" | Open Research Brief |
+
+**Implementation:**
+```
+for each role where stage === 'screen':
+  yield nudge(priority: 'important', triggerid: 'screen_prep_${roleId}')
+```
+
+---
+
+**Rule 7a: No New Roles This Week**
+
+| Trigger | Timing | Priority | Text | Action |
+|---------|--------|----------|------|--------|
+| Zero roles added in the last 7 days | On Dashboard load | Suggested | "No new roles this week — refresh your feed?" | Open Job Feed |
+
+**Implementation:**
+```
+weekAgo = now - (7 * 24 * 60 * 60 * 1000)
+rolesThisWeek = pf_roles.filter(r => new Date(r.dateAdded) > weekAgo)
+if (rolesThisWeek.length === 0):
+  yield nudge(priority: 'suggested', triggerid: 'no_new_roles_week')
+```
+
+---
+
+**Rule 8a: Empty Pipeline**
+
+| Trigger | Timing | Priority | Text | Action |
+|---------|--------|----------|------|--------|
+| Zero active roles in pipeline | On Dashboard load | Critical | "No active roles in pipeline — check Job Feed or add manually" | Open Job Feed or Pipeline add |
+
+**Implementation:**
+```
+activeRoles = pf_roles.filter(r => r.stage !== 'closed')
+if (activeRoles.length === 0):
+  yield nudge(priority: 'critical', triggerid: 'empty_pipeline')
+```
+
+---
+
+**Rule 9a: Streak Broken**
+
+| Trigger | Timing | Priority | Text | Action |
+|---------|--------|----------|------|--------|
+| No activity logged in the last 2+ days | On Dashboard load | Suggested | "No activity in {days} days — get back on track?" | Suggest adding role or applying |
+
+**Implementation:**
+```
+twoDaysAgo = now - (2 * 24 * 60 * 60 * 1000)
+lastActionDate = new Date(pf_streak.lastActionDate)
+if (lastActionDate < twoDaysAgo):
+  yield nudge(priority: 'suggested', triggerid: 'streak_broken')
 ```
 
 ---
@@ -624,23 +769,24 @@ for each company where tier === 'Hot':
 
 | Trigger | Timing | Priority | Text | Action |
 |---------|--------|----------|------|--------|
-| Connection marked as waiting for response > 3 days ago | On Dashboard load | Important | "Did {contact} respond to your {company} message?" | Open connection detail |
+| Outreach communication pending response | 7+ days awaiting response | Important | "Follow up on your {title} outreach to {company}" | Open connection detail |
 
 **Implementation:**
 ```
-for each connection in pf_connections:
-  lastOutreach = connection.outreachLog[0]  // most recent
-  if (lastOutreach.outcome === 'awaiting_response'):
-    daysSinceOutreach = (now - lastOutreach.date) / 86400
-    if (daysSinceOutreach > 3):
-      yield nudge(priority: 'important', triggerid: 'response_${connectionId}')
+for each role in outreach stage with active communication:
+  if (role.commsLog exists and last entry is outbound):
+    daysSinceComms = (now - last comms entry.date) / 86400
+    if (daysSinceComms >= 7):
+      yield nudge(priority: 'important', triggerid: 'response_${roleId}')
 ```
 
 ---
 
 ### 5.4 Nudge Deduplication
 
-If multiple rules would trigger for the same role/company (e.g., both "stalled role" and "company profile sparse"), only the highest-priority nudge surfaces. Secondary nudges are visible if the user expands "All suggestions" or dismisses the primary one.
+> **Status: Planned** — Advanced deduplication UI not yet implemented. Basic rule prioritization is in place.
+
+If multiple rules would trigger for the same role/company (e.g., both "stalled role" and "company profile sparse"), only the highest-priority nudge surfaces. Secondary nudges will be visible if the user expands "All suggestions" or dismisses the primary one.
 
 ### 5.5 Nudge Dismissal & Re-Surfacing
 
@@ -772,31 +918,41 @@ This allows bookmarking and browser back/forward navigation.
 
 ## 9. Implementation Phases
 
-### Phase 1: Core Dashboard UI (v1.0)
+### Phase 1: Core Dashboard UI (v3.11) ✅ COMPLETE
 
-What will be implemented:
+What has been implemented:
 
 - [x] Dashboard layout (greeting, streak, action queue, pipeline summary, quick actions)
 - [x] Streak tracking & storage in localStorage
-- [x] Action Queue card rendering (all 10 nudge rules)
+- [x] Action Queue card rendering with all nudge rules
 - [x] Nudge engine (rules execution, prioritization, filtering)
 - [x] Quick action buttons with navigation links
 - [x] Pipeline Summary: roles by stage (bar chart)
 - [x] Pipeline Summary: activity trend (this week vs. last week)
 - [x] Empty state messaging (when no urgent actions)
-- [ ] Feed Review section (requires Job Feed Listener integration)
+- [x] Upcoming Calendar Events card (next 7 days)
+- [x] Recent Discoveries card (Job Feed integration)
+- [x] Upcoming Interviews card with Practice button
+- [x] Smart Outreach Nudges with comms log context
+- [x] Mutual connections surfacing (pf_connections + pf_linkedin_network)
+- [x] Last comms snippet display (80 chars)
+- [x] Sync Status Banner (pf_sync_log integration)
+- [ ] Feed Review section with detailed match analysis
 - [ ] Interview Intelligence card (requires 10+ debriefs)
 
-### Phase 2: Nudge Refinement & Analytics (v1.1)
+### Phase 2: Nudge Refinement & Analytics (Planned)
 
+- [ ] Nudge deduplication UI with "All suggestions" expansion
 - [ ] Nudge dismissal UI improvements (undo option, snooze N hours)
-- [ ] Nudge rule tuning based on user feedback (e.g., "stuck after 21 days" → configurable threshold)
+- [ ] Nudge rule tuning based on user feedback
+- [ ] Suppression chains (cross-rule dismissal logic)
+- [ ] Nudge logging to `pf_nudge_log` for analytics
 - [ ] Conversion funnel metrics (after 10+ closed roles)
 - [ ] Average time-in-stage calculation & visualization
-- [ ] Integration with Calendar agent for real-time interview detection
-- [ ] Bulk actions from Dashboard (mark multiple as ghosted, etc.)
+- [ ] Cooldown differentiation by priority (Critical 6h vs others 24h)
+- [ ] Per-rule disable sidebar
 
-### Phase 3: Intelligence & Personalization (v1.2+)
+### Phase 3: Intelligence & Personalization (Planned)
 
 - [ ] Interview Intelligence card (pattern analysis from debriefs)
 - [ ] Predictive nudges (ML-based role recommendation)
@@ -804,7 +960,7 @@ What will be implemented:
 - [ ] Custom nudge rules (user-configurable rules via settings)
 - [ ] Dashboard widget for API integration (embed summary elsewhere)
 
-### Phase 4: Mobile & Beyond (Future)
+### Phase 4: Mobile & Beyond (Planned)
 
 - [ ] Mobile-optimized layout & touch interactions
 - [ ] Progressive Web App (PWA) — offline support
@@ -903,9 +1059,18 @@ The Dashboard embodies five principles from the main Pathfinder spec:
 
 - **Max nudges per load:** Display at most 5 nudges per page load. Prioritize by severity: Critical (offer expiring, interview tomorrow) > Important (follow-up overdue, stale role) > Suggested (new role to research, prep nudge).
 - **Cooldown periods:** Once dismissed, a nudge rule doesn't fire again for 24 hours for that specific role. Critical nudges (offer/interview) re-fire after 6 hours. Global cooldown: if user dismisses 3+ nudges in one session, pause nudge generation until next page load.
-- **Suppression chains:** Dismissing "Prep for interview at {company}" suppresses "Generate research brief for {company}" for 48 hours. Dismissing "Follow up with {contact}" suppresses "Outreach needed for {role}" for 24 hours.
-- **Nudge logging:** Every nudge trigger logs to `pf_nudge_log`: `{ ruleId, roleId, firedAt, dismissed, dismissedAt, reason }`. Dashboard analytics can show nudge effectiveness (fired vs acted on).
-- **Per-rule disable:** Future: sidebar "Nudge Preferences" allows user to disable specific rule IDs entirely. Disabled rules stored in `pf_nudge_disabled: string[]`.
+
+> **Status: Planned** — Suppression chains not yet implemented.
+
+- **Suppression chains:** Planned. Dismissing "Prep for interview at {company}" will suppress "Generate research brief for {company}" for 48 hours. Dismissing "Follow up with {contact}" will suppress "Outreach needed for {role}" for 24 hours.
+
+> **Status: Planned** — Nudge logging not yet implemented.
+
+- **Nudge logging:** Planned. Every nudge trigger will log to `pf_nudge_log`: `{ ruleId, roleId, firedAt, dismissed, dismissedAt, reason }`. Dashboard analytics will show nudge effectiveness (fired vs acted on).
+
+> **Status: Planned** — Per-rule disable sidebar not yet implemented.
+
+- **Per-rule disable:** Planned. Sidebar "Nudge Preferences" will allow user to disable specific rule IDs entirely. Disabled rules stored in `pf_nudge_disabled: string[]`.
 
 ---
 

@@ -472,6 +472,9 @@ What exists today:
 - [x] Version history tab
 
 ### Phase 2: MCP-Powered Generation (Next — v2.0)
+
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
 - [ ] `pf_generate_resume` MCP tool with Claude API integration
 - [ ] Server-side generation of summary, skills bar, subtitles, bullet selection
 - [ ] New bullet proposal flow (agent proposes → user approves → bank grows)
@@ -480,6 +483,9 @@ What exists today:
 - [ ] Research Brief data feed (fit assessment, Section 5 content)
 
 ### Phase 3: Feedback Loops & Intelligence (v2.1+)
+
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
 - [ ] Keyword gap analysis post-generation
 - [ ] Suggested Bullets section in Bullet Bank tab
 - [ ] Research Brief → Resume Builder automatic data flow

@@ -230,6 +230,8 @@ The agent scans Google Calendar events and classifies them using a weighted sign
 
 ### Classification Algorithm
 
+> **Status: Planned** — Confidence scoring with these thresholds not yet fully implemented. Spec retained for future development.
+
 1. **Parse event:** Extract title, description, attendee list, duration, start time
 2. **Company lookup:** Check if any attendee domain matches a company in pipeline
 3. **Role lookup:** If company found, scan all roles at company for keyword matches
@@ -337,6 +339,8 @@ For each CalendarLink.attendees:
 
 ### Step 4: Nudge Scheduling
 
+> **Status: Planned** — Specific nudge timing (72h, 48h, morning-of, 1h after) not yet fully implemented. Spec retained for future development.
+
 ```
 For each linked event:
   1. Calculate nudge fire times based on event start time:
@@ -388,6 +392,8 @@ If multiple interviews same day:
 ---
 
 ## 7. Post-Interview Triggers & Follow-Up
+
+> **Status: Planned** — Auto-detection and follow-up triggers including rejection signal detection not yet fully implemented. Spec retained for future development.
 
 After an interview event ends, the agent watches for patterns that signal next steps.
 
@@ -492,6 +498,8 @@ Nudges display in a chronological queue on the right sidebar of Dashboard:
 
 ### 8.3 Interviewer Linking
 
+> **Status: Planned** — Interviewer-connection linking and Research Brief auto-population not yet fully implemented. Spec retained for future development.
+
 **Research Brief Section 8 — Interviewer Insights**
 
 Once interviewers are extracted from calendar, they appear in Research Brief:
@@ -539,6 +547,8 @@ If user has connection data for an interviewer, Research Brief can reference pri
 
 ### Phase 2: Nudges & UX Polish (v1.1)
 
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
 - [ ] Implement full nudge display on Dashboard
 - [ ] Pre-interview nudges trigger at correct times
 - [ ] Nudge actions link to Research Brief, Debrief Agent
@@ -548,6 +558,8 @@ If user has connection data for an interviewer, Research Brief can reference pri
 
 ### Phase 3: Post-Event Triggers (v1.2)
 
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
 - [ ] Detect next round scheduled within 1-2 weeks
 - [ ] Auto-link follow-up events
 - [ ] No-follow-up nudge after 2 weeks
@@ -555,6 +567,8 @@ If user has connection data for an interviewer, Research Brief can reference pri
 - [ ] 30-day check-in for stalled roles
 
 ### Phase 4: Intelligence & Feedback Loops (v1.3+)
+
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
 
 - [ ] Interview outcome patterns (which types of questions, which companies)
 - [ ] Interviewer reputation scoring (how often leads to next round)

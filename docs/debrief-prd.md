@@ -746,6 +746,8 @@ When an interview ends (detected via Calendar), user receives a notification:
 
 ### Phase 2: Research Brief & Outreach Integration (Week 3–4)
 
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
 **MCP Tools:**
 - Enhanced `pf_finalize_debrief` — Trigger research brief refresh
 - `pf_refresh_research_brief` — Update sections 6 & 8 based on debrief
@@ -764,6 +766,8 @@ When an interview ends (detected via Calendar), user receives a notification:
 ---
 
 ### Phase 3: Pattern Analysis & Intelligence (Week 5–6)
+
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
 
 **MCP Tools:**
 - `pf_analyze_debrief_patterns` — Background job after 10+ debriefs, analyze trends

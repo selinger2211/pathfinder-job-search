@@ -929,6 +929,8 @@ interface CompanyInterviewQuestionCache {
 
 ### Phase 2: Intelligence & Calibration (Week 3–4)
 
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
+
 **MCP Tools:**
 - `pf_scrape_interview_questions` — Weekly background job to cache company questions
 - Enhanced `pf_generate_interview_question` — Use cached questions (60/40 split)
@@ -961,6 +963,8 @@ interface CompanyInterviewQuestionCache {
 ---
 
 ### Phase 4: Polish & Analytics (Week 7–8)
+
+> **Status: Planned** — Not yet implemented. Spec retained for future development.
 
 **MCP Tools:**
 - `pf_generate_session_summary` — Full summary with trend analysis
