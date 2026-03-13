@@ -2144,6 +2144,7 @@
               <th class="sortable" data-sort="positioning">Type</th>
               <th class="sortable" data-sort="stage">Stage</th>
               <th class="sortable" data-sort="tier">Tier</th>
+              <th class="sortable" data-sort="score">Score</th>
               <th class="sortable" data-sort="days">Days</th>
             </tr>
           </thead>
@@ -2394,8 +2395,9 @@
     let currentViewMode = localStorage.getItem('pf_view_mode') || 'kanban';
     let currentTheme = localStorage.getItem('pf_theme') || 'light';
     let selectedCardId = null;
-    let sortColumn = null;
-    let sortAsc = true;
+    /* Default sort: by score descending (highest first) */
+    let sortColumn = 'score';
+    let sortAsc = false;
     let draggedCard = null;
 
     /* ================================================================
@@ -2930,6 +2932,23 @@
      * INPUT: company name, CSS class, optional URL
      * RETURNS: HTML string (<img> tag with onerror fallback)
      */
+
+    /**
+     * Retrieves a company's mission statement from localStorage pf_companies.
+     * Safely handles missing or malformed data.
+     * @param {string} companyName - The company name to look up
+     * @returns {string} The mission statement, or empty string if not found
+     */
+    function getCompanyDescription(companyName) {
+      try {
+        const companies = JSON.parse(localStorage.getItem('pf_companies') || '[]');
+        const co = companies.find(c => c.name === companyName);
+        return co?.missionStatement || '';
+      } catch {
+        return '';
+      }
+    }
+
     function companyLogoHtml(companyName, cssClass, url) {
       var domain = getCompanyDomain(companyName, url);
       var logoUrl = 'https://www.google.com/s2/favicons?domain=' + domain + '&sz=128';
@@ -3493,12 +3512,16 @@
       const salaryTitle = salaryData
         ? `Base: ${salaryData.raw}`
         : 'No salary data in job description';
+      const companyDesc = getCompanyDescription(role.company);
 
       return `
         <div class="role-card ${isSelected ? 'selected' : ''} ${staleClass}" data-role-id="${role.id}" draggable="true" style="position: relative;">
           <div class="role-card-company">
             ${companyLogoHtml(role.company, 'role-card-logo', role.url)}
-            <span class="role-card-company-name">${role.company}</span>
+            <div style="flex: 1; min-width: 0;">
+              <a href="../research-brief/index.html?company=${encodeURIComponent(role.company)}" class="role-card-company-name" style="cursor: pointer; color: var(--accent); transition: opacity var(--duration-fast) var(--ease-default);" title="${companyDesc}" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">${role.company}</a>
+              ${companyDesc ? `<div style="font-size: var(--text-xs); color: var(--text-tertiary); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px;">${companyDesc}</div>` : ''}
+            </div>
           </div>
           <div class="role-card-title">${role.title}${role.title === 'Exploratory' ? ' <span style="font-size: 10px; opacity: 0.6;">🔍</span>' : ''}</div>
           <div class="role-card-salary ${salaryEval}" title="${salaryTitle}">${salaryEval === 'below' ? '⚠️ ' : ''}${salaryDisplay}</div>
@@ -3600,7 +3623,10 @@
       let html = '';
       // Create a column for each stage
       STAGES.forEach(stage => {
-        const stageRoles = filteredRoles.filter(r => r.stage === stage);
+        const stageRoles = filteredRoles
+          .filter(r => r.stage === stage)
+          /* Sort cards within this column by score descending (highest first) */
+          .sort((a, b) => (b.score || 0) - (a.score || 0));
         const stageColor = getColorForStage(stage);
         const isClosedStage = stage === 'closed';
 
@@ -3758,6 +3784,10 @@
           } else if (sortColumn === 'days') {
             aVal = getDaysInStage(a);
             bVal = getDaysInStage(b);
+          } else if (sortColumn === 'score') {
+            /* Extract score, defaulting to 0 if not present */
+            aVal = a.score || 0;
+            bVal = b.score || 0;
           }
 
           // Sort strings alphabetically, numbers numerically
@@ -3774,13 +3804,15 @@
       // Build table rows from filtered and sorted jobs
       tbody.innerHTML = filteredRoles.map(role => {
         const company = companies.find(c => c.name === role.company);
+        const companyDesc = getCompanyDescription(role.company);
         return `
           <tr>
             <td>
               <div class="table-company">
                 ${companyLogoHtml(role.company, 'table-company-logo', role.url)}
                 <div class="table-company-info">
-                  <div class="table-company-name">${role.company}</div>
+                  <a href="../research-brief/index.html?company=${encodeURIComponent(role.company)}" class="table-company-name" style="cursor: pointer; color: var(--accent); transition: opacity var(--duration-fast) var(--ease-default);" title="${companyDesc}" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">${role.company}</a>
+                  ${companyDesc ? `<div style="font-size: var(--text-xs); color: var(--text-tertiary); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${companyDesc}</div>` : ''}
                 </div>
               </div>
             </td>
@@ -3788,6 +3820,21 @@
             <td>${role.positioning === 'ic' ? 'IC' : 'Mgmt'}</td>
             <td><span class="badge badge-filled" style="background: ${getColorForStage(role.stage)}; color: ${role.stage === 'researching' || role.stage === 'interviewing' ? '#000' : '#fff'};">${role.stage}</span></td>
             <td><span class="badge badge-filled" style="background: ${getColorForTier(role.tier)}; color: white;">${role.tier}</span></td>
+            <td>
+              ${
+                (() => {
+                  /* Determine score color: green (70+), yellow (40-69), muted (<40) */
+                  const score = role.score || 0;
+                  let scoreColor = 'var(--text-tertiary)'; // muted gray for <40
+                  if (score >= 70) {
+                    scoreColor = '#22c55e'; // green for 70+
+                  } else if (score >= 40) {
+                    scoreColor = '#eab308'; // yellow for 40-69
+                  }
+                  return `<span style="color: ${scoreColor}; font-weight: 600;">${score}</span>`;
+                })()
+              }
+            </td>
             <td>${getDaysInStage(role)}d</td>
           </tr>
         `;
@@ -4607,7 +4654,22 @@
       const headerLogo = document.getElementById('detail-header-logo');
       headerLogo.src = logoUrl;
       headerLogo.style.display = '';
+      const companyDesc = getCompanyDescription(role.company);
       document.getElementById('detail-company').textContent = role.company || '';
+      document.getElementById('detail-company').title = companyDesc;
+      document.getElementById('detail-company').style.cursor = 'pointer';
+      document.getElementById('detail-company').style.color = 'var(--accent)';
+      document.getElementById('detail-company').style.transition = 'opacity var(--duration-fast) var(--ease-default)';
+      document.getElementById('detail-company').style.textDecoration = 'none';
+      document.getElementById('detail-company').onclick = () => {
+        window.location.href = `../research-brief/index.html?company=${encodeURIComponent(role.company)}`;
+      };
+      document.getElementById('detail-company').onmouseover = () => {
+        document.getElementById('detail-company').style.opacity = '0.7';
+      };
+      document.getElementById('detail-company').onmouseout = () => {
+        document.getElementById('detail-company').style.opacity = '1';
+      };
       document.getElementById('detail-title').textContent = role.title || '';
 
       // Build the body content
@@ -6216,6 +6278,10 @@
             const daysSinceB = Math.floor((now - (b.lastActivity || b.dateAdded)) / (1000 * 60 * 60 * 24));
             aVal = daysSinceA;
             bVal = daysSinceB;
+          } else if (sortColumn === 'score') {
+            /* Extract score, defaulting to 0 if not present */
+            aVal = a.score || 0;
+            bVal = b.score || 0;
           }
 
           if (aVal < bVal) return sortAsc ? -1 : 1;

@@ -4,6 +4,30 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.11.0 — 2026-03-13
+
+### What Changed — Bug Fixes + UX Improvements (6 Backlog Items)
+
+**User asked:** "let's fix the bugs and then to the docu review" — referring to the 6 items in `docs/bugs-and-improvements.md`.
+
+**Changes:**
+
+1. **Smart outreach nudges (Dashboard)** — Nudge engine Rule 3 (applied, no response) and Rule 9 (outreach follow-up) now read the most recent comms log entry for context-aware suggestions. If an outbound email has gone dark, the nudge shows the subject line, days since, and a "Draft Follow-up" button linking to Outreach with role pre-selected. Inbound messages get "Time to reply?" prompts. Mutual connections surfaced from `pf_connections` + `pf_linkedin_network` (top 2 by seniority). Nudge cards show last comms snippet (80 chars) and "View Connections" link.
+
+2. **Pipeline default sort by score** — Table view now defaults to `sortColumn = 'score'`, `sortAsc = false` (highest first). New Score column added to table headers with color-coded values (green 70+, yellow 40-69, muted <40). Kanban cards sort within each stage column by score descending.
+
+3. **Company visibility across surfaces** — Company names are now clickable (→ Research Brief) in Feed cards, Pipeline kanban cards, Pipeline table view, and Pipeline detail panel. Hover tooltip shows company mission statement. Brief company description (1 line, truncated) added below company name on Feed and Pipeline cards. New `getCompanyDescription()` helper reads `missionStatement` from `pf_companies`.
+
+4. **Full JD sidebar panel (Job Feed)** — New `.jd-detail-panel` (480px, slides from right with overlay) shows: company logo + name + title (sticky header), full JD text with readable typography (line-height 1.6), source badge, confidence indicator, close button. "View Full JD" button on each feed card with full JD.
+
+5. **Comp estimate labeling** — `renderCompDisplay()` rewritten. Now shows two clear lines: "Posted Base: $XK–$YK" (extracted from JD) and "Est. Total Comp: ~$XK–$YK" (calculated). Info icon (ℹ️) with tooltip explaining methodology. "Posted Base: Not listed" fallback when no salary data. Color-coded confidence retained.
+
+6. **Company description in Research Brief** — Added `companyDescription` div to company card, populated with `missionStatement`. Styled consistently with other surfaces.
+
+**Files changed:** `modules/job-feed-listener/index.html`, `modules/pipeline/index.html`, `modules/dashboard/index.html`, `modules/research-brief/index.html`
+
+---
+
 ## v3.10.0 — 2026-03-12
 
 ### What Changed — Free JD Enrichment Engine + Nav Reorder + Logo Fixes

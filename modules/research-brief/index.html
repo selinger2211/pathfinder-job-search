@@ -908,6 +908,7 @@
             <img id="companyLogo" src="" alt="Company logo">
           </div>
           <div class="company-card-name" id="companyName"></div>
+          <div class="company-card-description" id="companyDescription" style="font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.4; margin-top: var(--space-1);"></div>
           <div class="company-card-meta">
             <div><strong>Domain:</strong> <span id="companyDomain"></span></div>
             <div><strong>Stage:</strong> <span id="companyStage"></span></div>
@@ -3469,6 +3470,7 @@ The HTML content should come first, followed by the citations block. Do not incl
 
       // Populate company card
       document.getElementById('companyName').textContent = nc.name;
+      document.getElementById('companyDescription').textContent = nc.missionStatement || '';
       document.getElementById('companyDomain').textContent = nc.domain;
       document.getElementById('companyStage').textContent = nc.fundingStage;
       document.getElementById('companyHeadcount').textContent = nc.headcount;

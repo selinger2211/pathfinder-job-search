@@ -195,16 +195,16 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.10.0
-**Last Updated:** 2026-03-12
+**Current Version:** v3.11.0
+**Last Updated:** 2026-03-13
 
 ### Implementation Status
 
 | Module | % Complete | What Works | What's Missing (External APIs) |
 |--------|-----------|------------|-------------------------------|
-| Pipeline | ~100% | Kanban, CRUD, drag-drop, IndexedDB resume, comms log, URL import, CSV export, company view, fit assessment, keyboard shortcuts, **Clay enrichment display**, **enrichment badges**, **stage analytics + funnel chart**, **stale role detection (14d)**, **Google Favicon logos**, **collapsible comms log**, **Artifacts section (replaces Resume Sent)**, **Research Brief trigger button** | — |
-| Dashboard | ~100% | 12-rule nudge engine, streak, action queue, feed review, interview intelligence, pipeline funnel, activity feed, weekly stats, real-time storage listener, **GCal card (next 3 events + countdown)**, **sync status indicator**, **quick actions row**, **debrief pending badge**, **outreach queue indicator** | — |
-| Job Feed | ~100% | Scoring engine, preference editor, manual entry, dedup, quick-check filter, auto-pipeline, analytics, snooze, career page URL import, Sources tab, **error handling, a11y, visual polish**, **free direct JD enrichment (CORS proxy + ATS APIs + web search)**, **auto-enrich on page load**, **nav reorder** | — |
+| Pipeline | ~100% | Kanban, CRUD, drag-drop, IndexedDB resume, comms log, URL import, CSV export, company view, fit assessment, keyboard shortcuts, **Clay enrichment display**, **enrichment badges**, **stage analytics + funnel chart**, **stale role detection (14d)**, **Google Favicon logos**, **collapsible comms log**, **Artifacts section (replaces Resume Sent)**, **Research Brief trigger button**, **default score sort + Score column**, **clickable company names + descriptions** | — |
+| Dashboard | ~100% | 12-rule nudge engine, streak, action queue, feed review, interview intelligence, pipeline funnel, activity feed, weekly stats, real-time storage listener, **GCal card (next 3 events + countdown)**, **sync status indicator**, **quick actions row**, **debrief pending badge**, **outreach queue indicator**, **smart outreach nudges (comms-aware + mutual connections)** | — |
+| Job Feed | ~100% | Scoring engine, preference editor, manual entry, dedup, quick-check filter, auto-pipeline, analytics, snooze, career page URL import, Sources tab, **error handling, a11y, visual polish**, **free direct JD enrichment (CORS proxy + ATS APIs + web search)**, **auto-enrich on page load**, **nav reorder**, **JD detail sidebar panel**, **clickable company names**, **improved comp labeling** | — |
 | Research Brief | ~100% | Claude API, 14 section prompts, caching, citation system, localStorage artifact save, saved briefs panel, **error handling, a11y, visual polish**, **URL param deep-linking (`?roleId=X`)**, **auto-generate on first visit**, **brief attached to pipeline roles** | — |
 | Resume Builder | ~100% | Phase 1 JD analysis, Phase 2 streaming, cover letter, bullet bank, keyword gap, version history, DOCX/PDF export, **error handling, a11y, export validation** | — |
 | Outreach | ~100% | 8 message types, sequence scheduling, response tracking, templates, history/analytics, Gmail integration, Draft Queue, **email validation, a11y, error handling** | — |
@@ -220,6 +220,14 @@ These are the actual field shapes for objects stored in shared localStorage keys
 - JD enrichment: roles without LinkedIn URLs or ATS links rely on DuckDuckGo web search fallback — coverage is good but not 100%
 - CORS proxy 1 (allorigins.win) tends to timeout; proxy 2 (corsproxy.io) works reliably as fallback
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.11.0)
+- **Smart outreach nudges**: Dashboard nudge engine reads comms log for context-aware follow-up suggestions. Surfaces mutual connections. "Draft Follow-up" and "View Connections" buttons on nudge cards.
+- **Pipeline score sort**: Table view defaults to score descending. New Score column with color-coded values. Kanban sorts within columns by score.
+- **Company visibility**: Clickable company names → Research Brief across Feed, Pipeline. Hover tooltip with mission statement. Brief descriptions on cards.
+- **JD sidebar panel**: Feed gets slide-from-right detail panel (480px) with full JD, source badge, confidence indicator.
+- **Comp labeling**: "Posted Base" vs "Est. Total Comp" with info tooltip. "Not listed" fallback.
+- **Company description on Research Brief card**: missionStatement displayed.
 
 ### Recently Fixed (v3.9.0)
 - **Research Brief auto-generation + PDF persistence**: Briefs auto-generate on first visit (no manual "Generate" click needed). Cached briefs persist until explicit regeneration. After generation, a PDF is auto-rendered via `html2pdf.js` and stored in IndexedDB (`brief-{roleId}` key in `pf_resumes` DB). The role's `artifacts[]` entry has an `indexedDbKey` so Pipeline shows preview/download buttons for the PDF. Brief metadata (`briefArtifactId`, `briefGeneratedAt`) attached to pipeline roles. Generate button becomes "Regenerate" when brief exists. Pipeline sidebar shows "View Research Brief" when brief exists. "Clear Cache" renamed to "Clear & Regenerate" and auto-triggers fresh generation.

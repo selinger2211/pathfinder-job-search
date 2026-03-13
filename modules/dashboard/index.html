@@ -600,6 +600,52 @@
       height: 16px;
     }
 
+    /* Nudge subtext — for comms snippet or secondary info */
+    .nudge-subtext {
+      font-style: italic;
+      margin-top: var(--space-2);
+    }
+
+    /* Container for nudge action buttons */
+    .nudge-primary-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    /* Secondary action button on nudge card (icons only) */
+    .nudge-secondary-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .nudge-secondary-action:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .nudge-secondary-action svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Inline connection highlight in nudge text */
+    .nudge-connection {
+      color: var(--text-secondary);
+      font-size: var(--text-xs);
+      display: inline;
+    }
+
     /* Empty state when no nudges */
     .empty-state {
       display: flex;
@@ -1645,8 +1691,89 @@
       const connections = JSON.parse(localStorage.getItem('pf_connections') || '[]');
       const streak = JSON.parse(localStorage.getItem('pf_streak') || null);
       const dismissedNudges = JSON.parse(localStorage.getItem('pf_dismissed_nudges') || '[]');
+      const linkedinNetwork = JSON.parse(localStorage.getItem('pf_linkedin_network') || '[]');
 
-      return { companies, roles, connections, streak, dismissedNudges };
+      return { companies, roles, connections, streak, dismissedNudges, linkedinNetwork };
+    }
+
+    /**
+     * Get the most recent communication for a role from its comms log
+     * INPUT: roleId = string, roles = array of role objects
+     * RETURNS: latest comms entry object or null if no comms found
+     * STRUCTURE: { date, type, direction, subject, snippet, channel }
+     */
+    function getLatestCommsForRole(roleId, roles) {
+      const role = roles.find(r => r.id === roleId);
+      if (!role || !role.commsLog || role.commsLog.length === 0) return null;
+
+      // Sort by date descending (newest first) and return the first entry
+      const sorted = [...role.commsLog].sort((a, b) => new Date(b.date) - new Date(a.date));
+      return sorted[0];
+    }
+
+    /**
+     * Find mutual connections at a specific company
+     * Checks both pf_connections (actively tracked) and pf_linkedin_network (full export)
+     * INPUT: companyName = string, connections = array, linkedinNetwork = array
+     * RETURNS: array of connection objects sorted by seniority, limited to top 2
+     */
+    function getMutualConnections(companyName, connections, linkedinNetwork) {
+      if (!companyName) return [];
+
+      const targetLower = companyName.toLowerCase().trim();
+      const topConnections = [];
+
+      // Check tracked connections first (they have more data)
+      const trackedAtCompany = connections.filter(c => {
+        if (!c.company) return false;
+        return c.company.toLowerCase().trim() === targetLower;
+      });
+
+      topConnections.push(...trackedAtCompany);
+
+      // If we need more, check LinkedIn network (with fuzzy matching)
+      if (topConnections.length < 2 && linkedinNetwork.length > 0) {
+        const liConnectionsAtCompany = linkedinNetwork.filter(c => {
+          if (!c.company) return false;
+          const liCompany = c.company.toLowerCase().trim();
+          // Exact match
+          if (liCompany === targetLower) return true;
+          // Substring match with minimum length to avoid false positives
+          const MIN_SUBSTR_LEN = 4;
+          if (liCompany.length >= MIN_SUBSTR_LEN && liCompany.includes(targetLower)) return true;
+          if (targetLower.length >= MIN_SUBSTR_LEN && liCompany.length >= MIN_SUBSTR_LEN && targetLower.includes(liCompany)) {
+            const regex = new RegExp(`\\b${liCompany.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+            return regex.test(targetLower);
+          }
+          return false;
+        });
+
+        // Avoid duplicates with tracked connections
+        const trackedNames = new Set(trackedAtCompany.map(c => (c.name || '').toLowerCase().trim()));
+        const uniqueLiConnections = liConnectionsAtCompany.filter(c => {
+          const name = (c.name || `${c.firstName || ''} ${c.lastName || ''}`).toLowerCase().trim();
+          return !trackedNames.has(name);
+        });
+
+        topConnections.push(...uniqueLiConnections);
+      }
+
+      // Sort by seniority if available
+      topConnections.sort((a, b) => {
+        const getSeniority = (conn) => {
+          if (!conn.title) return 999;
+          const title = conn.title.toLowerCase();
+          if (/\b(ceo|cto|cpo|coo|cfo|chief)\b/.test(title)) return 0;
+          if (/\b(svp|evp|head of)\b/.test(title)) return 1;
+          if (/\b(vp|vice president)\b/.test(title)) return 2;
+          if (/\b(manager|lead)\b/.test(title)) return 3;
+          return 4;
+        };
+        return getSeniority(a) - getSeniority(b);
+      });
+
+      // Return top 2
+      return topConnections.slice(0, 2);
     }
 
     /**
@@ -1809,19 +1936,47 @@
       });
 
       // RULE 3: Applied, no response (>10 days in applied stage)
+      // Now reads comms log for context-aware follow-up suggestions
       roles.forEach(role => {
         if (role.stage === 'applied') {
           const daysSinceApplied = daysSince(role.lastActivity || role.dateAdded);
           if (daysSinceApplied > 10) {
             const nudgeId = generateNudgeId('applied_no_response', role.id);
             if (!isDismissed(nudgeId, dismissedNudges)) {
+              const lastComms = getLatestCommsForRole(role.id, roles);
+              let nudgeText = `<span class="nudge-highlight">${role.company}</span> hasn't responded to your <span class="nudge-highlight">${role.title}</span> application in ${daysSinceApplied} days`;
+
+              // Add comms context if available
+              if (lastComms) {
+                const commsDate = new Date(lastComms.date);
+                const daysSinceComms = Math.floor((now - commsDate) / (1000 * 60 * 60 * 24));
+                if (lastComms.direction === 'outbound' && lastComms.channel === 'email') {
+                  nudgeText += ` — last email sent ${daysSinceComms} days ago`;
+                }
+              }
+
+              const mutualConnections = getMutualConnections(role.company, connections, loadData().linkedinNetwork);
+              let connectionText = '';
+              if (mutualConnections.length > 0) {
+                if (mutualConnections.length === 1) {
+                  connectionText = ` You have a connection at ${role.company}: <span class="nudge-highlight">${mutualConnections[0].name || mutualConnections[0].firstName + ' ' + mutualConnections[0].lastName}</span>.`;
+                } else {
+                  const names = mutualConnections.slice(0, 2).map(c => c.name || `${c.firstName} ${c.lastName}`).join(', ');
+                  connectionText = ` You have ${mutualConnections.length} connections at ${role.company}: <span class="nudge-highlight">${names}</span>.`;
+                }
+              }
+
               nudges.push({
                 id: nudgeId,
                 priority: 'important',
                 trigger: 'applied_no_response',
                 roleId: role.id,
                 company: role.company || 'Unknown',
-                text: `<span class="nudge-highlight">${role.company}</span> hasn't responded to your <span class="nudge-highlight">${role.title}</span> application in ${daysSinceApplied} days`,
+                text: nudgeText + connectionText,
+                metadata: {
+                  lastComms: lastComms,
+                  mutualConnections: mutualConnections,
+                },
                 action: { label: 'Follow Up', href: `../pipeline/index.html?roleId=${role.id}` },
               });
             }
@@ -1926,20 +2081,64 @@
       });
 
       // RULE 9: Outreach follow-up needed (in outreach >7 days)
+      // Now reads comms log and suggests smart follow-ups based on last communication
       roles.forEach(role => {
         if (role.stage === 'outreach') {
           const daysSinceAdded = daysSince(role.dateAdded);
           if (daysSinceAdded > 7) {
             const nudgeId = generateNudgeId('outreach_followup', role.id);
             if (!isDismissed(nudgeId, dismissedNudges)) {
+              const lastComms = getLatestCommsForRole(role.id, roles);
+              let nudgeText = '';
+              let actionLabel = 'Follow Up';
+              let actionHref = `../outreach/index.html?roleId=${role.id}&action=followup`;
+
+              if (lastComms) {
+                const commsDate = new Date(lastComms.date);
+                const daysSinceComms = Math.floor((now - commsDate) / (1000 * 60 * 60 * 24));
+
+                if (lastComms.direction === 'outbound') {
+                  // Outbound: suggest follow-up if no response
+                  nudgeText = `Your email to <span class="nudge-highlight">${role.company}</span> about <span class="nudge-highlight">${role.title}</span> (${daysSinceComms} days ago) hasn't gotten a response. Draft a follow-up?`;
+                  if (lastComms.subject) {
+                    nudgeText += ` Subject was: "${lastComms.subject}"`;
+                  }
+                } else if (lastComms.direction === 'inbound') {
+                  // Inbound: suggest reply
+                  nudgeText = `<span class="nudge-highlight">${role.company}</span> reached out ${daysSinceComms} days ago about <span class="nudge-highlight">${role.title}</span>. Time to reply?`;
+                  actionLabel = 'Reply';
+                  actionHref = `../outreach/index.html?roleId=${role.id}&action=reply`;
+                }
+              }
+
+              // Fallback if no comms data
+              if (!nudgeText) {
+                nudgeText = `Follow up on your <span class="nudge-highlight">${role.title}</span> outreach to <span class="nudge-highlight">${role.company}</span>`;
+              }
+
+              // Add mutual connections context
+              const mutualConnections = getMutualConnections(role.company, connections, loadData().linkedinNetwork);
+              if (mutualConnections.length > 0) {
+                if (mutualConnections.length === 1) {
+                  nudgeText += ` <span class="nudge-connection">You and <span class="nudge-highlight">${mutualConnections[0].name || mutualConnections[0].firstName + ' ' + mutualConnections[0].lastName}</span> are both connected to ${role.company}.</span>`;
+                } else {
+                  const names = mutualConnections.slice(0, 2).map(c => c.name || `${c.firstName} ${c.lastName}`).join(', ');
+                  nudgeText += ` <span class="nudge-connection">You have ${mutualConnections.length} connections at ${role.company}: ${names}.</span>`;
+                }
+              }
+
               nudges.push({
                 id: nudgeId,
                 priority: 'important',
                 trigger: 'outreach_followup',
                 roleId: role.id,
                 company: role.company || 'Unknown',
-                text: `Follow up on your <span class="nudge-highlight">${role.title}</span> outreach to <span class="nudge-highlight">${role.company}</span>`,
-                action: { label: 'Follow Up', href: `../outreach/index.html?roleId=${role.id}` },
+                text: nudgeText,
+                metadata: {
+                  lastComms: lastComms,
+                  mutualConnections: mutualConnections,
+                },
+                action: { label: actionLabel, href: actionHref },
               });
             }
           }
@@ -2143,7 +2342,7 @@
 
     /**
      * Render nudge cards in the action queue
-     * Now includes company logos + both company name & role title in text
+     * Enhanced with company logos, comms context, mutual connections, and smart action buttons
      */
     function renderNudges() {
       const nudges = generateNudges();
@@ -2179,17 +2378,39 @@
           ? `<img class="nudge-logo" src="${logoUrl}" alt="${nudge.company} logo" onerror="this.style.display='none'">`
           : '';
 
+        // Build comms snippet (first 80 chars of last communication)
+        let commsSnippetHtml = '';
+        if (nudge.metadata && nudge.metadata.lastComms && nudge.metadata.lastComms.snippet) {
+          const snippet = nudge.metadata.lastComms.snippet.substring(0, 80);
+          const fullSnippet = nudge.metadata.lastComms.snippet.length > 80 ? snippet + '...' : snippet;
+          commsSnippetHtml = `<div class="nudge-subtext" style="color: var(--text-tertiary); font-size: var(--text-xs); margin-top: var(--space-2);">"${fullSnippet}"</div>`;
+        }
+
+        // Build secondary action buttons for outreach nudges
+        let secondaryActionsHtml = '';
+        if ((nudge.trigger === 'outreach_followup' || nudge.trigger === 'applied_no_response') && nudge.roleId) {
+          secondaryActionsHtml = `
+            <a href="../pipeline/index.html?roleId=${nudge.roleId}#connections" class="nudge-secondary-action" title="View connections at this company">
+              <svg data-lucide="users"></svg>
+            </a>
+          `;
+        }
+
         card.innerHTML = `
           ${logoHtml}
           <div class="nudge-content">
             <div class="nudge-badge ${nudge.priority}">${nudge.priority}</div>
             <div class="nudge-text">${nudge.text}</div>
+            ${commsSnippetHtml}
           </div>
           <div class="nudge-actions">
-            <a href="${nudge.action.href}" class="nudge-action-btn">
-              ${nudge.action.label}
-              <svg data-lucide="arrow-right"></svg>
-            </a>
+            <div class="nudge-primary-actions">
+              <a href="${nudge.action.href}" class="nudge-action-btn">
+                ${nudge.action.label}
+                <svg data-lucide="arrow-right"></svg>
+              </a>
+            </div>
+            ${secondaryActionsHtml}
             <button class="nudge-dismiss-btn" aria-label="Dismiss nudge">
               <svg data-lucide="x"></svg>
             </button>
