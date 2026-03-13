@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/comp-intel/`
-**Version:** v3.13
+**Version:** v3.15
 **Last Updated:** 2026-03-13
-**Status:** Active — v3.13.0 features live
+**Status:** Active — v3.15.0 features live
 
 ---
 
@@ -759,14 +759,14 @@ Standalone settings view:
 
 ### Phase 2: Negotiation Support (v1.0.1)
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.15.0)** — Negotiation scorecard, counter-offer wizard, equity valuation, multi-offer comparison.
 
-**What's coming:**
-- [ ] Offer stage detection and Negotiation Scorecard generation
-- [ ] Market percentile calculation
-- [ ] Counter-offer suggestion engine
-- [ ] Equity valuation context (funding stage → est. valuation → share value)
-- [ ] Multi-offer comparison table
+**Implemented:**
+- [x] Offer stage detection and Negotiation Scorecard generation
+- [x] Market percentile calculation
+- [x] Counter-offer suggestion engine with 4-step Claude wizard
+- [x] Equity valuation calculator (funding stage → est. valuation → share value)
+- [x] Multi-offer comparison table
 - [ ] Negotiation attempt tracking (track counter cycles)
 
 ### Phase 3: Positioning Intelligence (v1.1)

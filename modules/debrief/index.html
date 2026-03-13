@@ -658,6 +658,376 @@
       background: var(--accent-hover, #7c3aed);
     }
 
+    /* ================================================================
+       FEATURE 48: PATTERN ANALYSIS & INTELLIGENCE DASHBOARD
+       ================================================================ */
+    .patterns-container {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+    }
+
+    .patterns-title {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .patterns-progress {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+
+    .patterns-progress-bar {
+      flex: 1;
+      height: 8px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .patterns-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-primary), #7c3aed);
+      border-radius: 4px;
+      transition: width 300ms ease;
+    }
+
+    .patterns-progress-text {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      min-width: 100px;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--space-4);
+    }
+
+    .stat-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      transition: all 200ms;
+    }
+
+    .stat-card:hover {
+      border-color: var(--accent-primary);
+      background: var(--bg-secondary);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+    }
+
+    .stat-label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-2);
+      letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--accent-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .stat-detail {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      line-height: 1.4;
+    }
+
+    .chart-container {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+    }
+
+    .chart-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-4);
+      font-size: var(--text-sm);
+    }
+
+    .horizontal-bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .chart-bar-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .chart-bar-label {
+      min-width: 140px;
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .chart-bar-track {
+      flex: 1;
+      height: 24px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .chart-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-primary), #7c3aed);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: var(--space-2);
+      color: white;
+      font-size: var(--text-xs);
+      font-weight: 600;
+      transition: all 300ms ease;
+    }
+
+    .chart-bar-fill:hover {
+      filter: brightness(1.1);
+    }
+
+    .trend-line-container {
+      display: flex;
+      align-items: flex-end;
+      gap: var(--space-2);
+      height: 150px;
+      padding: var(--space-4) 0;
+    }
+
+    .trend-point {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      gap: var(--space-2);
+    }
+
+    .trend-bar {
+      width: 100%;
+      max-width: 40px;
+      background: linear-gradient(180deg, var(--accent-primary), var(--accent-primary));
+      border-radius: 4px 4px 0 0;
+      transition: all 200ms;
+      cursor: pointer;
+      opacity: 0.8;
+    }
+
+    .trend-bar:hover {
+      opacity: 1;
+      filter: brightness(1.2);
+    }
+
+    .trend-date {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .insights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--space-4);
+    }
+
+    .insight-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      display: flex;
+      gap: var(--space-3);
+      transition: all 200ms;
+    }
+
+    .insight-card:hover {
+      border-color: var(--accent-primary);
+      background: var(--bg-secondary);
+    }
+
+    .insight-card.positive {
+      border-left: 4px solid #10b981;
+    }
+
+    .insight-card.improvement {
+      border-left: 4px solid #f59e0b;
+    }
+
+    .insight-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .insight-content {
+      flex: 1;
+    }
+
+    .insight-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-1);
+      font-size: var(--text-sm);
+    }
+
+    .insight-text {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .themes-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+    }
+
+    .theme-badge {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-full);
+      padding: var(--space-2) var(--space-3);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      transition: all 200ms;
+    }
+
+    .theme-badge:hover {
+      border-color: var(--accent-primary);
+      background: var(--bg-tertiary);
+    }
+
+    .theme-count {
+      font-weight: 700;
+      color: var(--accent-primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 24px;
+      background: var(--accent-primary);
+      color: white;
+      border-radius: var(--radius-full);
+      font-size: var(--text-xs);
+    }
+
+    .company-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--text-sm);
+    }
+
+    .company-table thead {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .company-table th {
+      padding: var(--space-3) var(--space-4);
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .company-table td {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .company-table tbody tr:hover {
+      background: var(--bg-secondary);
+    }
+
+    .company-rating {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .company-rating-stars {
+      color: var(--accent-primary);
+      font-size: var(--text-sm);
+    }
+
+    .working-well-section,
+    .needs-work-section {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+    }
+
+    .working-well-section {
+      border-left: 4px solid #10b981;
+    }
+
+    .needs-work-section {
+      border-left: 4px solid #f59e0b;
+    }
+
+    .section-title {
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-3);
+      font-size: var(--text-sm);
+    }
+
+    .insight-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .insight-list li {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      padding-left: var(--space-3);
+      position: relative;
+      line-height: 1.5;
+    }
+
+    .insight-list li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--accent-primary);
+      font-weight: 600;
+    }
+
     @media (max-width: 768px) {
       .debrief-container {
         flex-direction: column;
@@ -668,6 +1038,14 @@
         max-height: 40vh;
         border-right: none;
         border-bottom: 1px solid var(--border-color);
+      }
+
+      .stats-row {
+        grid-template-columns: 1fr;
+      }
+
+      .insights-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -1727,121 +2105,540 @@ Additional Notes: ${formData.notes}`;
        * Pattern Analysis - identify recurring themes from 5+ debriefs
        * Shows empty state if fewer than 5 debriefs completed
        */
+      /**
+       * Render comprehensive Patterns Intelligence Dashboard
+       * Shows analysis across 5+ debriefs with insights and recommendations
+       */
       renderPatternsTab() {
         const container = document.getElementById('patternsContainer');
+        const debriefCount = this.state.debriefs ? this.state.debriefs.length : 0;
 
-        if (!this.state.debriefs || this.state.debriefs.length < 5) {
-          container.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><p>Complete 5+ debriefs to see pattern analysis</p></div>';
+        // Show progress bar if fewer than 5 debriefs
+        if (debriefCount < 5) {
+          const percentage = Math.round((debriefCount / 5) * 100);
+          container.innerHTML = `
+            <div style="padding: var(--space-6);">
+              <div class="patterns-title">
+                <span>📊</span> Pattern Analysis
+              </div>
+              <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">Complete 5+ debriefs to unlock pattern analysis and intelligence insights.</p>
+              <div class="patterns-progress">
+                <div class="patterns-progress-bar">
+                  <div class="patterns-progress-fill" style="width: ${percentage}%"></div>
+                </div>
+                <div class="patterns-progress-text">${debriefCount}/5 debriefs</div>
+              </div>
+            </div>
+          `;
           return;
         }
 
+        // Analyze patterns
         const patterns = this.analyzeDebriefPatterns();
+        const insights = this.generateDebriefInsights(patterns);
 
-        let html = '<div style="padding: var(--space-4);">';
-        html += '<h3 style="font-weight: 600; margin-bottom: var(--space-4); color: var(--text-primary);">Interview Patterns</h3>';
-
-        // Common questions
-        if (patterns.commonQuestions.length > 0) {
-          html += `<div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-4);">
-            <h4 style="font-weight: 600; margin-bottom: var(--space-3); color: var(--text-primary);">Frequently Asked Questions</h4>
-            <ul style="margin: 0; padding-left: var(--space-4); list-style: none;">
-              ${patterns.commonQuestions.slice(0, 5).map(q => `
-                <li style="margin-bottom: var(--space-2); color: var(--text-secondary); font-size: var(--text-sm);">
-                  <strong>${q.count} times:</strong> ${q.question.slice(0, 80)}...
-                </li>
-              `).join('')}
-            </ul>
-          </div>`;
-        }
-
-        // Red flags
-        if (patterns.redFlags.length > 0) {
-          html += `<div style="background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.3); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-4);">
-            <h4 style="font-weight: 600; margin-bottom: var(--space-3); color: var(--danger);">Common Red Flags</h4>
-            <ul style="margin: 0; padding-left: var(--space-4); list-style: none;">
-              ${patterns.redFlags.slice(0, 5).map(rf => `
-                <li style="margin-bottom: var(--space-2); color: var(--text-secondary); font-size: var(--text-sm);">
-                  <strong>${rf.count} mentions:</strong> ${rf.flag.slice(0, 80)}...
-                </li>
-              `).join('')}
-            </ul>
-          </div>`;
-        }
-
-        // Skills mentioned
-        if (patterns.skillsMentioned.length > 0) {
-          html += `<div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-4);">
-            <h4 style="font-weight: 600; margin-bottom: var(--space-3); color: var(--text-primary);">Most Valued Skills</h4>
-            <div style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
-              ${patterns.skillsMentioned.slice(0, 8).map(s => `
-                <div style="background: var(--accent); color: white; padding: var(--space-1) var(--space-2); border-radius: var(--radius-full); font-size: var(--text-xs);">
-                  ${s.skill} (${s.count}x)
-                </div>
-              `).join('')}
+        // Build comprehensive dashboard
+        let html = `
+          <div class="patterns-container">
+            <div>
+              <div class="patterns-title">
+                <span>📊</span> Interview Patterns & Intelligence
+              </div>
+              <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">Analysis across ${debriefCount} debriefs to identify trends and opportunities.</p>
             </div>
-          </div>`;
-        }
 
-        html += '</div>';
+            <!-- TOP ROW: Stats Cards -->
+            <div class="stats-row">
+              <div class="stat-card">
+                <div class="stat-label">Total Debriefs</div>
+                <div class="stat-value">${debriefCount}</div>
+                <div class="stat-detail">Complete interview records</div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-label">Average Rating</div>
+                <div class="stat-value">${patterns.avgRating.toFixed(1)}</div>
+                <div class="stat-detail">${this.renderStars(patterns.avgRating)} Overall performance</div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-label">Most Common Question</div>
+                <div class="stat-value">${patterns.questionTypeDistribution[0]?.type || 'N/A'}</div>
+                <div class="stat-detail">${patterns.questionTypeDistribution[0]?.count || 0} occurrences</div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-label">Longest Positive Streak</div>
+                <div class="stat-value">${patterns.longestPositiveStreak}</div>
+                <div class="stat-detail">Consecutive strong performances</div>
+              </div>
+            </div>
+
+            <!-- MIDDLE ROW: Charts -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: var(--space-4);">
+              <!-- Question Type Distribution Chart -->
+              <div class="chart-container">
+                <div class="chart-title">Question Type Distribution</div>
+                <div class="horizontal-bar-chart">
+                  ${patterns.questionTypeDistribution.map(item => {
+                    const percentage = (item.count / debriefCount) * 100;
+                    return `
+                      <div class="chart-bar-item">
+                        <div class="chart-bar-label">${item.type}</div>
+                        <div class="chart-bar-track">
+                          <div class="chart-bar-fill" style="width: ${percentage}%">${item.count}</div>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+              <!-- Sentiment Over Time Chart -->
+              <div class="chart-container">
+                <div class="chart-title">Sentiment Trajectory</div>
+                <div class="trend-line-container">
+                  ${patterns.sentimentTrajectory.map((item, idx) => {
+                    const heightPercent = ((item.avgRating / 5) * 100);
+                    const sentimentColor = item.avgRating >= 3.5 ? '#10b981' : item.avgRating >= 2.5 ? '#f59e0b' : '#ef4444';
+                    return `
+                      <div class="trend-point">
+                        <div class="trend-bar" style="height: ${heightPercent}%; background: linear-gradient(180deg, ${sentimentColor}, ${sentimentColor}80);"></div>
+                        <div class="trend-date">${item.dateShort}</div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            </div>
+
+            <!-- BOTTOM ROW: Themes, Companies, and Insights -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: var(--space-4);">
+              <!-- Top 5 Recurring Themes -->
+              <div class="chart-container">
+                <div class="chart-title">Top 5 Recurring Themes</div>
+                <div class="themes-container">
+                  ${patterns.topThemes.slice(0, 5).map(theme => `
+                    <div class="theme-badge">
+                      <span>${theme.word}</span>
+                      <div class="theme-count">${theme.count}</div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <!-- Company Comparison Table -->
+              <div class="chart-container">
+                <div class="chart-title">Company Performance</div>
+                <table class="company-table">
+                  <thead>
+                    <tr>
+                      <th>Company</th>
+                      <th>Avg Rating</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${patterns.companyPatterns.slice(0, 4).map(company => `
+                      <tr>
+                        <td>${company.company}</td>
+                        <td>
+                          <div class="company-rating">
+                            <span class="company-rating-stars">${this.renderStars(company.avgRating)}</span>
+                            <span>${company.avgRating.toFixed(1)}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- INSIGHTS SECTION -->
+            <div>
+              <h3 style="font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-4);">Key Insights & Recommendations</h3>
+              <div class="insights-grid">
+                ${insights.map(insight => `
+                  <div class="insight-card ${insight.type === 'positive' ? 'positive' : 'improvement'}">
+                    <div class="insight-icon">${insight.icon}</div>
+                    <div class="insight-content">
+                      <div class="insight-title">${insight.title}</div>
+                      <div class="insight-text">${insight.text}</div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- WORKING WELL / NEEDS WORK SECTIONS -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-4);">
+              <div class="working-well-section">
+                <div class="section-title">✓ What's Working Well</div>
+                <ul class="insight-list">
+                  ${patterns.workingWell.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+              </div>
+
+              <div class="needs-work-section">
+                <div class="section-title">⚡ Areas to Improve</div>
+                <ul class="insight-list">
+                  ${patterns.needsWork.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+              </div>
+            </div>
+          </div>
+        `;
+
         container.innerHTML = html;
+
+        // Persist patterns data to localStorage for cross-module access
+        this.persistPatternsSummary(patterns, insights);
       },
 
       /**
-       * Analyze all debriefs to extract patterns
+       * Analyze all debriefs to extract comprehensive patterns
+       * INPUT: none (uses this.state.debriefs)
+       * OUTPUT: comprehensive analysis object with 7+ different pattern categories
        */
       analyzeDebriefPatterns() {
-        const patterns = {
-          commonQuestions: [],
-          redFlags: [],
-          skillsMentioned: []
+        const debriefs = this.state.debriefs || [];
+        if (debriefs.length === 0) return {};
+
+        // ===== 1. QUESTION TYPE FREQUENCY =====
+        // Categorize questions by type (behavioral, technical, system design, case study, culture fit)
+        const questionTypeFreq = {
+          'Behavioral': 0,
+          'Technical': 0,
+          'System Design': 0,
+          'Case Study': 0,
+          'Culture Fit': 0
         };
 
-        // Extract questions
-        const questionCounts = {};
-        this.state.debriefs.forEach(d => {
+        const questionKeywords = {
+          'Behavioral': ['tell me about', 'describe a time', 'how did you', 'example of', 'walk me through', 'situation'],
+          'Technical': ['implement', 'design', 'code', 'algorithm', 'data structure', 'debug', 'technical', 'coding'],
+          'System Design': ['design', 'architecture', 'system', 'scale', 'distributed'],
+          'Case Study': ['market', 'growth', 'business', 'metrics', 'case'],
+          'Culture Fit': ['culture', 'team', 'conflict', 'values', 'personality']
+        };
+
+        debriefs.forEach(d => {
           (d.sections.questions || []).forEach(q => {
-            questionCounts[q] = (questionCounts[q] || 0) + 1;
+            const qLower = q.toLowerCase();
+            let categorized = false;
+            for (const [type, keywords] of Object.entries(questionKeywords)) {
+              if (keywords.some(kw => qLower.includes(kw))) {
+                questionTypeFreq[type]++;
+                categorized = true;
+                break;
+              }
+            }
+            if (!categorized) questionTypeFreq['Behavioral']++;
           });
         });
 
-        patterns.commonQuestions = Object.entries(questionCounts)
-          .filter(([q, count]) => count >= 2)
-          .map(([question, count]) => ({ question, count }))
+        const questionTypeDistribution = Object.entries(questionTypeFreq)
+          .map(([type, count]) => ({ type, count }))
+          .filter(item => item.count > 0)
           .sort((a, b) => b.count - a.count);
 
-        // Extract red flags
-        const redFlagCounts = {};
-        this.state.debriefs.forEach(d => {
-          if (d.sections.redFlags) {
-            const flags = d.sections.redFlags.split(',').map(f => f.trim()).filter(f => f);
-            flags.forEach(flag => {
-              redFlagCounts[flag] = (redFlagCounts[flag] || 0) + 1;
-            });
-          }
-        });
+        // ===== 2. RECURRING THEMES =====
+        // Extract common keywords/phrases from debrief notes using word frequency
+        const stopWords = new Set([
+          'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
+          'from', 'is', 'are', 'was', 'were', 'been', 'be', 'have', 'has', 'had', 'do', 'does',
+          'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'that', 'this',
+          'it', 'they', 'them', 'their', 'what', 'which', 'who', 'when', 'where', 'why', 'how',
+          'as', 'if', 'not', 'no', 'yes', 'so', 'just', 'only', 'my', 'your', 'our', 'his', 'her'
+        ]);
 
-        patterns.redFlags = Object.entries(redFlagCounts)
-          .filter(([rf, count]) => count >= 2)
-          .map(([flag, count]) => ({ flag, count }))
-          .sort((a, b) => b.count - a.count);
+        const wordFreq = {};
+        debriefs.forEach(d => {
+          const text = (
+            (d.sections.overall || '') + ' ' +
+            (d.sections.landed || '') + ' ' +
+            (d.sections.didntLand || '') + ' ' +
+            (d.sections.priorities || '') + ' ' +
+            (d.sections.notes || '')
+          ).toLowerCase();
 
-        // Extract skills mentioned in priorities
-        const skillCounts = {};
-        const skillKeywords = ['technical', 'leadership', 'strategy', 'execution', 'communication', 'cross-functional', 'analytics', 'design', 'product', 'scale', 'system', 'data'];
-        this.state.debriefs.forEach(d => {
-          const text = (d.sections.priorities + ' ' + d.sections.overall).toLowerCase();
-          skillKeywords.forEach(skill => {
-            if (text.includes(skill)) {
-              skillCounts[skill] = (skillCounts[skill] || 0) + 1;
+          const words = text.match(/\b\w{3,}\b/g) || [];
+          words.forEach(word => {
+            if (!stopWords.has(word)) {
+              wordFreq[word] = (wordFreq[word] || 0) + 1;
             }
           });
         });
 
-        patterns.skillsMentioned = Object.entries(skillCounts)
-          .map(([skill, count]) => ({ skill, count }))
-          .sort((a, b) => b.count - a.count);
+        const topThemes = Object.entries(wordFreq)
+          .filter(([word, count]) => count >= 2 && word.length > 3)
+          .map(([word, count]) => ({ word, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10);
 
-        return patterns;
+        // ===== 3. SENTIMENT TRAJECTORY =====
+        // Track overall sentiment per debrief over time
+        const sorted = [...debriefs].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const sentimentTrajectory = sorted.map((d, idx) => {
+          const dateObj = new Date(d.date);
+          const dateShort = (dateObj.getMonth() + 1) + '/' + dateObj.getDate();
+          return {
+            date: d.date,
+            dateShort,
+            avgRating: d.overallRating || 0,
+            sentiment: d.overallRating >= 3.5 ? 'positive' : d.overallRating >= 2.5 ? 'neutral' : 'negative'
+          };
+        });
+
+        // ===== 4. COMPANY PATTERNS =====
+        // Group debriefs by company and calculate average ratings
+        const companyStats = {};
+        debriefs.forEach(d => {
+          if (!companyStats[d.company]) {
+            companyStats[d.company] = { ratings: [], count: 0 };
+          }
+          companyStats[d.company].ratings.push(d.overallRating);
+          companyStats[d.company].count++;
+        });
+
+        const companyPatterns = Object.entries(companyStats)
+          .map(([company, stats]) => ({
+            company,
+            avgRating: stats.ratings.reduce((a, b) => a + b, 0) / stats.count,
+            count: stats.count
+          }))
+          .sort((a, b) => b.avgRating - a.avgRating);
+
+        // ===== 5. STAGE PATTERNS =====
+        // Determine interview stage from synthesis or other signals
+        // For now, assume all debriefs are interview debriefs and count by outcome
+        let strongStages = 0;
+        let weakStages = 0;
+        sentimentTrajectory.forEach(s => {
+          if (s.avgRating >= 3.5) strongStages++;
+          else if (s.avgRating < 2.5) weakStages++;
+        });
+
+        // ===== 6. AVERAGE RATING & STATS =====
+        const ratings = debriefs.map(d => d.overallRating);
+        const avgRating = ratings.reduce((a, b) => a + b, 0) / debriefs.length;
+
+        // ===== 7. LONGEST POSITIVE STREAK =====
+        let longestPositiveStreak = 0;
+        let currentStreak = 0;
+        sentimentTrajectory.forEach(item => {
+          if (item.avgRating >= 3.5) {
+            currentStreak++;
+            longestPositiveStreak = Math.max(longestPositiveStreak, currentStreak);
+          } else {
+            currentStreak = 0;
+          }
+        });
+
+        // ===== 8. INSIGHTS FOR WORKING WELL / NEEDS WORK =====
+        const workingWell = [];
+        const needsWork = [];
+
+        if (questionTypeDistribution[0]) {
+          const topQuestionType = questionTypeDistribution[0].type;
+          const topQuestionPerf = debriefs
+            .filter(d => {
+              const hasTopType = (d.sections.questions || []).some(q => {
+                const qLower = q.toLowerCase();
+                const keywords = questionKeywords[topQuestionType] || [];
+                return keywords.some(kw => qLower.includes(kw));
+              });
+              return hasTopType;
+            })
+            .reduce((sum, d) => sum + (d.overallRating || 0), 0) / Math.max(1, debriefs.filter(d => {
+              const hasTopType = (d.sections.questions || []).some(q => {
+                const qLower = q.toLowerCase();
+                const keywords = questionKeywords[topQuestionType] || [];
+                return keywords.some(kw => qLower.includes(kw));
+              });
+              return hasTopType;
+            }).length);
+
+          if (topQuestionPerf >= 3.5) {
+            workingWell.push(`Strong performance on ${topQuestionType} questions (avg ${topQuestionPerf.toFixed(1)}/5)`);
+          } else {
+            needsWork.push(`${topQuestionType} questions need preparation (avg ${topQuestionPerf.toFixed(1)}/5)`);
+          }
+        }
+
+        const companyBest = companyPatterns[0];
+        if (companyBest && companyBest.avgRating >= 4) {
+          workingWell.push(`Consistently strong at ${companyBest.company} (${companyBest.avgRating.toFixed(1)}/5)`);
+        }
+
+        if (avgRating >= 3.5) {
+          workingWell.push(`Overall performance trending positive (avg ${avgRating.toFixed(1)}/5)`);
+        } else if (avgRating < 3) {
+          needsWork.push(`Overall performance below target (avg ${avgRating.toFixed(1)}/5) - consider mock prep`);
+        }
+
+        if (longestPositiveStreak >= 3) {
+          workingWell.push(`Demonstrated ${longestPositiveStreak}-interview winning streak`);
+        }
+
+        if (topThemes.length > 0) {
+          needsWork.push(`Focus preparation on: ${topThemes.slice(0, 3).map(t => t.word).join(', ')}`);
+        }
+
+        // Ensure we have content in both sections
+        if (workingWell.length === 0) {
+          workingWell.push('Continue maintaining current interview preparation routine');
+        }
+        if (needsWork.length === 0) {
+          needsWork.push('Review past debriefs for common patterns to address');
+        }
+
+        return {
+          questionTypeDistribution,
+          topThemes,
+          sentimentTrajectory,
+          companyPatterns,
+          avgRating,
+          longestPositiveStreak,
+          workingWell,
+          needsWork
+        };
+      },
+
+      /**
+       * Generate actionable insights from pattern analysis
+       * INPUT: patterns object from analyzeDebriefPatterns()
+       * OUTPUT: array of insight objects with title, text, type, icon
+       */
+      generateDebriefInsights(patterns) {
+        const insights = [];
+        const avgRating = patterns.avgRating || 0;
+        const debriefCount = this.state.debriefs?.length || 0;
+
+        // Insight 1: Overall performance level
+        if (avgRating >= 4.2) {
+          insights.push({
+            type: 'positive',
+            icon: '🎯',
+            title: 'Exceptional Interview Performance',
+            text: `Your technical interviews average ${avgRating.toFixed(1)}/5 — this is your strongest area. Continue this momentum!`
+          });
+        } else if (avgRating >= 3.5) {
+          insights.push({
+            type: 'positive',
+            icon: '👍',
+            title: 'Strong Overall Performance',
+            text: `Averaging ${avgRating.toFixed(1)}/5 across ${debriefCount} interviews. Maintain current prep routine.`
+          });
+        } else {
+          insights.push({
+            type: 'improvement',
+            icon: '📈',
+            title: 'Performance Improvement Opportunity',
+            text: `Current average: ${avgRating.toFixed(1)}/5. Consider 30-min mock interviews 48 hours before real interviews.`
+          });
+        }
+
+        // Insight 2: Question type patterns
+        if (patterns.questionTypeDistribution && patterns.questionTypeDistribution.length > 0) {
+          const topType = patterns.questionTypeDistribution[0];
+          const percentage = Math.round((topType.count / debriefCount) * 100);
+          if (percentage >= 70) {
+            insights.push({
+              type: 'positive',
+              icon: '🎓',
+              title: 'Prepare for Recurring Questions',
+              text: `${topType.type} questions appear in ${percentage}% of interviews. Master the STAR format for behavioral, or deepen technical depth.`
+            });
+          }
+        }
+
+        // Insight 3: Company pattern
+        if (patterns.companyPatterns && patterns.companyPatterns.length > 0) {
+          const topCompany = patterns.companyPatterns[0];
+          if (topCompany.avgRating >= 4.3) {
+            insights.push({
+              type: 'positive',
+              icon: '⭐',
+              title: 'You Excel at Specific Companies',
+              text: `Best performance at ${topCompany.company} (${topCompany.avgRating.toFixed(1)}/5). Identify what's different and apply it elsewhere.`
+            });
+          }
+        }
+
+        // Insight 4: Streak insight
+        if (patterns.longestPositiveStreak >= 3) {
+          insights.push({
+            type: 'positive',
+            icon: '🔥',
+            title: 'Demonstrated Consistency',
+            text: `You achieved a ${patterns.longestPositiveStreak}-interview winning streak. This shows you can perform well under pressure consistently.`
+          });
+        }
+
+        // Insight 5: Recurring themes
+        if (patterns.topThemes && patterns.topThemes.length > 0) {
+          const topTheme = patterns.topThemes[0];
+          if (topTheme.count >= 4) {
+            insights.push({
+              type: 'improvement',
+              icon: '🎯',
+              title: 'Focus Preparation Area',
+              text: `The topic "${topTheme.word}" appears in ${topTheme.count} debriefs. Deepen expertise here before next round.`
+            });
+          }
+        }
+
+        // Ensure we have at least 3 insights
+        while (insights.length < 3) {
+          insights.push({
+            type: 'positive',
+            icon: '💡',
+            title: 'Continue Momentum',
+            text: 'Keep conducting debriefs after each interview to track patterns and refine your approach.'
+          });
+        }
+
+        return insights.slice(0, 5); // Return max 5 insights
+      },
+
+      /**
+       * Helper: Render star rating display
+       * INPUT: rating (1-5)
+       * OUTPUT: star string (★★★☆☆)
+       */
+      renderStars(rating) {
+        const rounded = Math.round(rating);
+        return '★'.repeat(rounded) + '☆'.repeat(5 - rounded);
+      },
+
+      /**
+       * Persist patterns summary to localStorage for cross-module access
+       * INPUT: patterns, insights objects
+       * OUTPUT: writes pf_debrief_patterns to localStorage
+       */
+      persistPatternsSummary(patterns, insights) {
+        const summary = {
+          lastUpdated: new Date().toISOString(),
+          questionTypeDistribution: patterns.questionTypeDistribution || [],
+          topThemes: patterns.topThemes || [],
+          avgRating: patterns.avgRating || 0,
+          longestPositiveStreak: patterns.longestPositiveStreak || 0,
+          insights: insights.map(i => ({
+            type: i.type,
+            icon: i.icon,
+            title: i.title,
+            text: i.text
+          })),
+          companyPatterns: patterns.companyPatterns || [],
+          sentimentTrajectory: patterns.sentimentTrajectory || []
+        };
+
+        try {
+          localStorage.setItem('pf_debrief_patterns', JSON.stringify(summary));
+        } catch (e) {
+          console.warn('Could not persist patterns summary to localStorage');
+        }
       },
 
       /**

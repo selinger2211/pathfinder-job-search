@@ -694,6 +694,363 @@
       background: rgba(16, 185, 129, 0.1);
       color: #10b981;
     }
+
+    /* ================================================================
+       FEATURE 50: NEGOTIATION SUPPORT ENGINE STYLES
+       ================================================================ */
+
+    /* Radar/Spider Chart - CSS-based approximation */
+    .radar-chart {
+      width: 240px;
+      height: 240px;
+      position: relative;
+      margin: var(--space-4) auto;
+    }
+
+    .radar-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Negotiation Scorecard Styles */
+    .negotiation-scorecard {
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+
+    .scorecard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-4);
+    }
+
+    .score-overall {
+      font-size: var(--text-3xl);
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .score-label {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .scorecard-axes {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+
+    .axis-item {
+      padding: var(--space-3);
+      background: var(--bg-base);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--accent);
+    }
+
+    .axis-name {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      margin-bottom: var(--space-1);
+    }
+
+    .axis-value {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* Counter-Offer Wizard */
+    .wizard-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+
+    .wizard-steps {
+      display: flex;
+      gap: var(--space-2);
+      margin-bottom: var(--space-4);
+      border-bottom: 1px solid var(--bg-subtle);
+      padding-bottom: var(--space-4);
+    }
+
+    .wizard-step {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      position: relative;
+      padding-bottom: var(--space-3);
+    }
+
+    .wizard-step.active {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .wizard-step-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--bg-base);
+      border: 1px solid var(--bg-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-xs);
+      font-weight: 700;
+    }
+
+    .wizard-step.active .wizard-step-number {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .wizard-content {
+      min-height: 200px;
+    }
+
+    .priority-item {
+      display: flex;
+      align-items: center;
+      padding: var(--space-3);
+      background: var(--bg-base);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-2);
+      cursor: grab;
+      transition: all var(--duration-fast);
+    }
+
+    .priority-item:hover {
+      background: var(--bg-elevated);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .priority-handle {
+      color: var(--text-tertiary);
+      margin-right: var(--space-2);
+      cursor: grab;
+    }
+
+    .priority-item input {
+      margin-right: var(--space-2);
+      cursor: pointer;
+    }
+
+    /* Equity Calculator */
+    .equity-calculator {
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+
+    .equity-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+
+    .equity-result {
+      background: var(--bg-base);
+      border-left: 3px solid var(--accent);
+      padding: var(--space-3);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-3);
+    }
+
+    .equity-result-label {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      margin-bottom: var(--space-1);
+    }
+
+    .equity-result-value {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .equity-tax-note {
+      padding: var(--space-3);
+      background: rgba(239, 68, 68, 0.05);
+      border-left: 3px solid rgba(239, 68, 68, 0.3);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Offer Comparison */
+    .comparison-table-wrapper {
+      overflow-x: auto;
+      margin-bottom: var(--space-4);
+    }
+
+    .offer-comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .offer-comparison-table th,
+    .offer-comparison-table td {
+      padding: var(--space-3);
+      text-align: right;
+      border-bottom: 1px solid var(--bg-subtle);
+    }
+
+    .offer-comparison-table th:first-child,
+    .offer-comparison-table td:first-child {
+      text-align: left;
+      font-weight: 600;
+      background: var(--bg-base);
+      position: sticky;
+      left: 0;
+      z-index: 1;
+    }
+
+    .offer-comparison-table th {
+      background: var(--bg-elevated);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .comparison-winner {
+      background: rgba(34, 197, 94, 0.1);
+      color: #22c55e;
+      font-weight: 700;
+    }
+
+    .comparison-note {
+      padding: var(--space-3);
+      background: rgba(99, 102, 241, 0.05);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Buttons and Actions */
+    .button-group {
+      display: flex;
+      gap: var(--space-2);
+      margin-bottom: var(--space-4);
+    }
+
+    .button-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--duration-fast);
+    }
+
+    .button-secondary:hover {
+      background: var(--bg-elevated);
+      border-color: var(--accent);
+    }
+
+    .button-secondary:active {
+      transform: scale(0.98);
+    }
+
+    /* Summary Cards */
+    .summary-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+
+    .summary-section {
+      margin-bottom: var(--space-4);
+    }
+
+    .summary-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .summary-title {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-2);
+    }
+
+    .talking-point {
+      padding: var(--space-3);
+      background: var(--bg-surface);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-2);
+      border-left: 3px solid var(--accent);
+    }
+
+    .talking-point-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-1);
+      font-size: var(--text-sm);
+    }
+
+    .talking-point-content {
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      line-height: 1.5;
+    }
+
+    /* Print Styles */
+    @media print {
+      .no-print {
+        display: none;
+      }
+
+      .comp-container,
+      .comp-sidebar,
+      .comp-toolbar {
+        display: none;
+      }
+
+      .summary-card {
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
+      }
+    }
   </style>
 </head>
 <body>
@@ -2177,16 +2534,46 @@
         `;
       }
 
+      // Get all roles with comp data for comparison
+      const compData = getCompData();
+      const allRoles = getPipelineRoles();
+      const rolesWithComp = allRoles.filter(r => compData[r.id]).map(r => r.id);
+
       return `
-        <div class="comp-card">
-          <div class="comp-card-title">Negotiation Strategy</div>
-          <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-4);">
-            Generate AI-powered negotiation advice based on your offer and market data.
-          </p>
-          <button class="action-button" id="generateNegotiationBtn" onclick="generateNegotiationStrategy('${role.id}')">
-            Generate Strategy with Claude AI
-          </button>
-          <div id="negotiationOutput" style="margin-top: var(--space-4);"></div>
+        <div style="display: grid; gap: var(--space-4);">
+          <!-- Negotiation Scorecard with Radar Chart -->
+          ${renderAdvancedScorecard(data, benchmarks)}
+
+          <!-- Counter-Offer Wizard -->
+          <div id="counterOfferWizardContent">
+            ${renderCounterOfferWizard(role.id)}
+          </div>
+
+          <!-- Equity Calculator -->
+          ${renderEquityCalculator(data)}
+
+          <!-- Multi-Offer Comparison (if 2+ offers) -->
+          ${rolesWithComp.length >= 2 ? `
+            <div class="comp-card">
+              <div class="comp-card-title">Compare Offers</div>
+              <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-4);">
+                See how this offer stacks up against your other opportunities.
+              </p>
+              ${renderOfferComparison(rolesWithComp)}
+            </div>
+          ` : ''}
+
+          <!-- Advanced Negotiation Strategy -->
+          <div class="comp-card">
+            <div class="comp-card-title">AI Negotiation Strategy</div>
+            <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-4);">
+              Generate comprehensive, AI-powered negotiation advice based on your offer and market data.
+            </p>
+            <button class="action-button" id="generateNegotiationBtn" onclick="generateNegotiationStrategy('${role.id}')">
+              Generate Strategy with Claude AI
+            </button>
+            <div id="negotiationOutput" style="margin-top: var(--space-4);"></div>
+          </div>
         </div>
       `;
     }
@@ -2587,6 +2974,740 @@
       } catch (error) {
         console.error('Error closing modal:', error);
       }
+    }
+
+    /* ====== FEATURE 50: NEGOTIATION SUPPORT ENGINE ====== */
+    /**
+     * Calculate comprehensive negotiation score for an offer.
+     * Scores across 6 dimensions: base, bonus, equity, benefits, growth, WLB
+     * INPUT: offer (comp data), marketData (benchmarks)
+     * OUTPUT: {score: 1-10, breakdown: {dimension: value}, percentile: number}
+     */
+    function calculateNegotiationScore(offer, marketData = []) {
+      if (!offer) return { score: 0, breakdown: {}, percentile: 0 };
+
+      // Calculate market baseline
+      const marketBase = marketData.length > 0
+        ? Math.round(marketData.reduce((sum, m) => sum + (m.base || 0), 0) / marketData.length)
+        : (offer.baseMax || 0);
+
+      // 1. Base Salary Score (0-2)
+      const basePercentile = marketBase > 0 ? (offer.baseMax - marketBase) / marketBase : 0;
+      let baseScore = 0.5;
+      if (basePercentile >= 0.25) baseScore = 2;
+      else if (basePercentile >= 0.15) baseScore = 1.5;
+      else if (basePercentile >= 0) baseScore = 1;
+      else if (basePercentile >= -0.15) baseScore = 0.75;
+
+      // 2. Bonus Score (0-1.5)
+      const bonus = offer.bonusTarget || 0;
+      let bonusScore = 0;
+      if (bonus >= 30) bonusScore = 1.5;
+      else if (bonus >= 20) bonusScore = 1.2;
+      else if (bonus >= 10) bonusScore = 0.8;
+      else if (bonus > 0) bonusScore = 0.4;
+
+      // 3. Equity Score (0-2) - rough estimate
+      let equityScore = 0.5;
+      if (offer.equity && typeof offer.equity === 'string') {
+        const equityStr = offer.equity.toLowerCase();
+        if (equityStr.includes('$') || equityStr.includes('%')) {
+          equityScore = 1.5;
+        } else if (equityStr !== 'none' && equityStr !== '') {
+          equityScore = 1;
+        }
+      }
+
+      // 4. Benefits Score (0-1) - qualitative
+      let benefitsScore = 0.5;
+      if (offer.benefits && typeof offer.benefits === 'string' && offer.benefits.length > 10) {
+        benefitsScore = 1;
+      }
+
+      // 5. Growth Potential (0-2) - estimated based on role context
+      let growthScore = 1;
+
+      // 6. Work-Life Balance (0-1) - placeholder
+      let wlbScore = 0.5;
+
+      // Calculate total
+      const maxScore = 10;
+      const totalScore = Math.min(baseScore + bonusScore + equityScore + benefitsScore + growthScore + wlbScore, maxScore);
+
+      return {
+        score: Math.round(totalScore * 10) / 10,
+        breakdown: {
+          base: Math.round(baseScore * 10) / 10,
+          bonus: Math.round(bonusScore * 10) / 10,
+          equity: Math.round(equityScore * 10) / 10,
+          benefits: Math.round(benefitsScore * 10) / 10,
+          growth: Math.round(growthScore * 10) / 10,
+          wlb: Math.round(wlbScore * 10) / 10
+        },
+        percentile: Math.round(basePercentile * 100)
+      };
+    }
+
+    /**
+     * Calculate equity option/RSU values at different scenarios.
+     * INPUT: shares, strikePrice, currentValuation, vestingMonths
+     * OUTPUT: {currentValue, value2x, value5x, value10x, monthlyValue, note}
+     */
+    function calculateEquityValue(shares, strikePrice, currentValuation, vestingMonths) {
+      if (!shares || !strikePrice || !currentValuation || !vestingMonths) {
+        return null;
+      }
+
+      // Current intrinsic value = (valuation - strike) * shares
+      const currentValue = Math.max(0, (currentValuation - strikePrice) * shares);
+
+      // Potential values at future valuations
+      const value2x = (currentValuation * 2 - strikePrice) * shares;
+      const value5x = (currentValuation * 5 - strikePrice) * shares;
+      const value10x = (currentValuation * 10 - strikePrice) * shares;
+
+      // Effective monthly value (spread over vesting period)
+      const monthlyValue = currentValue / (vestingMonths || 48);
+
+      return {
+        currentValue: Math.round(currentValue),
+        value2x: Math.round(Math.max(0, value2x)),
+        value5x: Math.round(Math.max(0, value5x)),
+        value10x: Math.round(Math.max(0, value10x)),
+        monthlyValue: Math.round(monthlyValue),
+        shares: shares,
+        strikePrice: strikePrice,
+        currentValuation: currentValuation,
+        vestingMonths: vestingMonths
+      };
+    }
+
+    /**
+     * Render negotiation scorecard with radar visualization.
+     * Shows 6-axis radar approximation and detailed breakdown.
+     * INPUT: offer (comp data), marketData (benchmarks)
+     * OUTPUT: HTML string with scorecard and visualization
+     */
+    function renderAdvancedScorecard(offer, marketData = []) {
+      const scoreData = calculateNegotiationScore(offer, marketData);
+      const { score, breakdown } = scoreData;
+
+      const axes = ['Base', 'Bonus', 'Equity', 'Benefits', 'Growth', 'WLB'];
+      const values = [
+        Math.round(breakdown.base * 10) / 10,
+        Math.round(breakdown.bonus * 10) / 10,
+        Math.round(breakdown.equity * 10) / 10,
+        Math.round(breakdown.benefits * 10) / 10,
+        Math.round(breakdown.growth * 10) / 10,
+        Math.round(breakdown.wlb * 10) / 10
+      ];
+
+      // Create SVG radar chart
+      const size = 240;
+      const center = size / 2;
+      const radius = 80;
+      const angles = axes.map((_, i) => (i / axes.length) * Math.PI * 2 - Math.PI / 2);
+
+      // Generate SVG path for spider web
+      const webLines = axes.map((_, i) => {
+        const angle = angles[i];
+        const x2 = center + radius * Math.cos(angle);
+        const y2 = center + radius * Math.sin(angle);
+        return `<line x1="${center}" y1="${center}" x2="${x2}" y2="${y2}" stroke="var(--bg-subtle)" stroke-width="1" />`;
+      }).join('');
+
+      // Generate concentric circles
+      const circles = [0.2, 0.4, 0.6, 0.8, 1].map(ratio => {
+        const r = radius * ratio;
+        return `<circle cx="${center}" cy="${center}" r="${r}" fill="none" stroke="var(--bg-subtle)" stroke-width="0.5" opacity="0.3" />`;
+      }).join('');
+
+      // Generate data polygon
+      const dataPoints = values.map((val, i) => {
+        const angle = angles[i];
+        const r = radius * (val / 2); // Scale to max 2 per axis
+        const x = center + r * Math.cos(angle);
+        const y = center + r * Math.sin(angle);
+        return `${x},${y}`;
+      }).join(' ');
+
+      const polygon = `<polygon points="${dataPoints}" fill="var(--accent)" opacity="0.2" stroke="var(--accent)" stroke-width="2" />`;
+
+      // Generate axis labels
+      const labels = axes.map((axis, i) => {
+        const angle = angles[i];
+        const x = center + (radius + 30) * Math.cos(angle);
+        const y = center + (radius + 30) * Math.sin(angle);
+        return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="11" fill="var(--text-secondary)" font-weight="500">${axis}</text>`;
+      }).join('');
+
+      const radarSvg = `
+        <svg viewBox="0 0 ${size} ${size}" class="radar-svg">
+          ${circles}
+          ${webLines}
+          ${polygon}
+          ${labels}
+        </svg>
+      `;
+
+      const assessment = score >= 8 ? 'Excellent' : score >= 6 ? 'Good' : score >= 4 ? 'Fair' : 'Weak';
+      const assessmentColor = score >= 8 ? '#22c55e' : score >= 6 ? '#3b82f6' : score >= 4 ? '#f59e0b' : '#ef4444';
+
+      return `
+        <div class="negotiation-scorecard">
+          <div class="scorecard-header">
+            <div>
+              <div class="score-overall" style="color: ${assessmentColor};">${score}/10</div>
+              <div class="score-label">${assessment}</div>
+            </div>
+            <div class="radar-chart">${radarSvg}</div>
+          </div>
+
+          <div class="scorecard-axes">
+            <div class="axis-item">
+              <div class="axis-name">Base Salary</div>
+              <div class="axis-value">${Math.round(breakdown.base * 10) / 10}/2</div>
+            </div>
+            <div class="axis-item">
+              <div class="axis-name">Bonus Target</div>
+              <div class="axis-value">${Math.round(breakdown.bonus * 10) / 10}/1.5</div>
+            </div>
+            <div class="axis-item">
+              <div class="axis-name">Equity</div>
+              <div class="axis-value">${Math.round(breakdown.equity * 10) / 10}/2</div>
+            </div>
+            <div class="axis-item">
+              <div class="axis-name">Benefits</div>
+              <div class="axis-value">${Math.round(breakdown.benefits * 10) / 10}/1</div>
+            </div>
+            <div class="axis-item">
+              <div class="axis-name">Growth Potential</div>
+              <div class="axis-value">${Math.round(breakdown.growth * 10) / 10}/2</div>
+            </div>
+            <div class="axis-item">
+              <div class="axis-name">Work-Life Balance</div>
+              <div class="axis-value">${Math.round(breakdown.wlb * 10) / 10}/1</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * Generate counter-offer talking points using Claude AI.
+     * INPUT: offer (comp data), priorities (array), marketData (benchmarks), role (pipeline role)
+     * OUTPUT: HTML string with negotiation scripts and talking points
+     */
+    async function generateCounterOfferTalkingPoints(roleId, priorities = []) {
+      const roles = getPipelineRoles();
+      const role = roles.find(r => r.id === roleId);
+      const compData = getCompData();
+      const benchmarks = getCompBenchmarks();
+      const data = compData[roleId];
+
+      if (!role || !data) {
+        alert('Missing role or compensation data.');
+        return '';
+      }
+
+      const baseMax = data.baseMax || 0;
+      const bonus = data.bonusTarget || 0;
+      const equity = data.equity || 'Not specified';
+      const marketBase = benchmarks.length > 0
+        ? Math.round(benchmarks.reduce((sum, b) => sum + (b.base || 0), 0) / benchmarks.length)
+        : baseMax;
+
+      // Calculate counter suggestions
+      const marketPercentile = marketBase > 0 ? Math.round((baseMax - marketBase) / marketBase * 100) : 0;
+      const counterBase = baseMax < marketBase ? Math.round(marketBase * 1.1) : baseMax;
+      const counterBonus = bonus < 20 ? 20 : bonus;
+
+      const prioritiesText = priorities.length > 0 ? priorities.join(', ') : 'base salary, equity, signing bonus';
+
+      const userPrompt = `
+Generate specific, tactical negotiation talking points for a counter-offer. Context:
+
+Role: ${role.title} at ${role.company}
+Current Offer:
+- Base: ${formatCurrency(baseMax)}
+- Bonus: ${bonus}%
+- Equity: ${equity}
+
+Market Data:
+- Market Avg Base: ${formatCurrency(marketBase)}
+- Position: ${marketPercentile >= 0 ? 'above' : 'below'} market by ${Math.abs(marketPercentile)}%
+
+User Priorities: ${prioritiesText}
+
+Please provide:
+1. Opening Script - How to initiate the negotiation conversation
+2. Market Justification - Cite market data to support asks
+3. Value Proposition - How to articulate unique value (generic but realistic)
+4. Specific Counter Asks:
+   - Counter base: ${formatCurrency(counterBase)}
+   - Counter bonus: ${counterBonus}%
+   - Signing bonus ask (if not included)
+   - Other asks based on priorities
+5. Negotiation Scenarios:
+   - If they say "we can't move on base"
+   - If they say "this is our final offer"
+   - If they come back with a compromise
+6. Closing Script - How to close the negotiation positively
+
+Format as actionable HTML with clear sections and ready-to-use language. Be specific with numbers.
+      `;
+
+      const systemPrompt = `You are an expert negotiation coach specializing in tech compensation. Provide realistic, tactical advice based on actual market data. Focus on win-win framing and specific talking points the candidate can use verbatim.`;
+
+      try {
+        const result = await PF.claude.generateHTML(systemPrompt, userPrompt);
+        return result;
+      } catch (error) {
+        console.error('Error generating talking points:', error);
+        return `<p style="color: var(--text-secondary);">Error generating talking points. Please try again.</p>`;
+      }
+    }
+
+    /**
+     * Render counter-offer wizard UI with step-by-step guidance.
+     * INPUT: roleId
+     * OUTPUT: HTML string with wizard interface
+     */
+    function renderCounterOfferWizard(roleId) {
+      const roles = getPipelineRoles();
+      const role = roles.find(r => r.id === roleId);
+      const compData = getCompData();
+      const data = compData[roleId];
+
+      if (!role || !data) {
+        return `<div class="empty-state"><p class="empty-state-text">Add compensation data to build a counter-offer.</p></div>`;
+      }
+
+      return `
+        <div class="wizard-container">
+          <div class="wizard-steps">
+            <div class="wizard-step active">
+              <div class="wizard-step-number">1</div>
+              <span>Current Offer</span>
+            </div>
+            <div class="wizard-step">
+              <div class="wizard-step-number">2</div>
+              <span>Priorities</span>
+            </div>
+            <div class="wizard-step">
+              <div class="wizard-step-number">3</div>
+              <span>Generate</span>
+            </div>
+            <div class="wizard-step">
+              <div class="wizard-step-number">4</div>
+              <span>Review</span>
+            </div>
+          </div>
+
+          <div class="wizard-content">
+            <div class="comp-card">
+              <div class="comp-card-title">Step 1: Confirm Your Offer</div>
+              <div style="margin-top: var(--space-4);">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-4);">
+                  <div style="padding: var(--space-3); background: var(--bg-base); border-radius: var(--radius-sm);">
+                    <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1); text-transform: uppercase; font-weight: 600;">Base Salary</div>
+                    <div style="font-size: var(--text-lg); font-weight: 700; color: var(--text-primary);">${formatCurrency(data.baseMax)}</div>
+                  </div>
+                  <div style="padding: var(--space-3); background: var(--bg-base); border-radius: var(--radius-sm);">
+                    <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1); text-transform: uppercase; font-weight: 600;">Bonus</div>
+                    <div style="font-size: var(--text-lg); font-weight: 700; color: var(--text-primary);">${data.bonusTarget || 0}%</div>
+                  </div>
+                  <div style="padding: var(--space-3); background: var(--bg-base); border-radius: var(--radius-sm);">
+                    <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1); text-transform: uppercase; font-weight: 600;">Signing</div>
+                    <div style="font-size: var(--text-lg); font-weight: 700; color: var(--text-primary);">${data.signingBonus ? formatCurrency(data.signingBonus) : 'None'}</div>
+                  </div>
+                  <div style="padding: var(--space-3); background: var(--bg-base); border-radius: var(--radius-sm);">
+                    <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1); text-transform: uppercase; font-weight: 600;">Equity</div>
+                    <div style="font-size: var(--text-lg); font-weight: 700; color: var(--text-primary);">${data.equity || 'None'}</div>
+                  </div>
+                </div>
+                <p style="font-size: var(--text-sm); color: var(--text-secondary); margin: 0;">Review your offer details. Click "Next" to set priorities.</p>
+                <button class="action-button" style="margin-top: var(--space-4);" onclick="showCounterOfferStep(2, '${roleId}')">Next: Set Priorities</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * Render step 2 of counter-offer wizard: priorities selection.
+     * INPUT: roleId
+     * OUTPUT: HTML string with priority checkboxes
+     */
+    function renderCounterOfferPriorities(roleId) {
+      return `
+        <div class="wizard-container">
+          <div class="wizard-steps">
+            <div class="wizard-step">
+              <div class="wizard-step-number">1</div>
+              <span>Current Offer</span>
+            </div>
+            <div class="wizard-step active">
+              <div class="wizard-step-number">2</div>
+              <span>Priorities</span>
+            </div>
+            <div class="wizard-step">
+              <div class="wizard-step-number">3</div>
+              <span>Generate</span>
+            </div>
+            <div class="wizard-step">
+              <div class="wizard-step-number">4</div>
+              <span>Review</span>
+            </div>
+          </div>
+
+          <div class="wizard-content">
+            <div class="comp-card">
+              <div class="comp-card-title">Step 2: Select Your Priorities</div>
+              <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-4);">Rank items by importance (drag to reorder). Selected items will guide your counter-offer.</p>
+
+              <div id="priorityList">
+                <div class="priority-item">
+                  <input type="checkbox" id="prio-base" checked>
+                  <label for="prio-base" style="flex: 1; cursor: pointer;">Base Salary</label>
+                  <span class="priority-handle">⋮⋮</span>
+                </div>
+                <div class="priority-item">
+                  <input type="checkbox" id="prio-equity" checked>
+                  <label for="prio-equity" style="flex: 1; cursor: pointer;">Equity / RSUs</label>
+                  <span class="priority-handle">⋮⋮</span>
+                </div>
+                <div class="priority-item">
+                  <input type="checkbox" id="prio-bonus">
+                  <label for="prio-bonus" style="flex: 1; cursor: pointer;">Signing Bonus</label>
+                  <span class="priority-handle">⋮⋮</span>
+                </div>
+                <div class="priority-item">
+                  <input type="checkbox" id="prio-title">
+                  <label for="prio-title" style="flex: 1; cursor: pointer;">Title / Level</label>
+                  <span class="priority-handle">⋮⋮</span>
+                </div>
+                <div class="priority-item">
+                  <input type="checkbox" id="prio-pto">
+                  <label for="prio-pto" style="flex: 1; cursor: pointer;">PTO / Time Off</label>
+                  <span class="priority-handle">⋮⋮</span>
+                </div>
+                <div class="priority-item">
+                  <input type="checkbox" id="prio-remote">
+                  <label for="prio-remote" style="flex: 1; cursor: pointer;">Remote Work Flexibility</label>
+                  <span class="priority-handle">⋮⋮</span>
+                </div>
+              </div>
+
+              <div class="button-group" style="margin-top: var(--space-4);">
+                <button class="button-secondary" onclick="showCounterOfferStep(1, '${roleId}')">Back</button>
+                <button class="action-button" onclick="showCounterOfferStep(3, '${roleId}')">Generate Talking Points</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * Render step 3: AI-generated talking points.
+     * INPUT: roleId
+     * OUTPUT: HTML string with loading state and generation button
+     */
+    function renderCounterOfferGenerate(roleId) {
+      return `
+        <div class="wizard-container">
+          <div class="wizard-steps">
+            <div class="wizard-step">
+              <div class="wizard-step-number">1</div>
+              <span>Current Offer</span>
+            </div>
+            <div class="wizard-step">
+              <div class="wizard-step-number">2</div>
+              <span>Priorities</span>
+            </div>
+            <div class="wizard-step active">
+              <div class="wizard-step-number">3</div>
+              <span>Generate</span>
+            </div>
+            <div class="wizard-step">
+              <div class="wizard-step-number">4</div>
+              <span>Review</span>
+            </div>
+          </div>
+
+          <div class="wizard-content">
+            <div class="comp-card">
+              <div class="comp-card-title">Step 3: Generate with Claude AI</div>
+              <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-4);">Your assistant will create personalized negotiation scripts based on market data and your priorities.</p>
+
+              <div id="counterOfferOutput" style="min-height: 200px;"></div>
+
+              <div class="button-group" style="margin-top: var(--space-4);">
+                <button class="button-secondary" onclick="showCounterOfferStep(2, '${roleId}')">Back</button>
+                <button class="action-button" id="generateTalkingPointsBtn" onclick="generateAndDisplayTalkingPoints('${roleId}')">
+                  Generate Talking Points
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * Display generated talking points and transition to step 4.
+     * INPUT: roleId
+     */
+    async function generateAndDisplayTalkingPoints(roleId) {
+      const btn = document.getElementById('generateTalkingPointsBtn');
+      const output = document.getElementById('counterOfferOutput');
+
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+      output.innerHTML = '<div class="loading-spinner"></div> Generating talking points...';
+
+      // Collect selected priorities
+      const priorities = [];
+      ['base', 'equity', 'bonus', 'title', 'pto', 'remote'].forEach(key => {
+        if (document.getElementById(`prio-${key}`)?.checked) {
+          priorities.push(key);
+        }
+      });
+
+      const talkingPoints = await generateCounterOfferTalkingPoints(roleId, priorities);
+      output.innerHTML = talkingPoints;
+
+      btn.disabled = false;
+      btn.textContent = 'Generate Talking Points';
+    }
+
+    /**
+     * Show different steps of the counter-offer wizard.
+     * INPUT: step (1-4), roleId
+     */
+    function showCounterOfferStep(step, roleId) {
+      const content = document.getElementById('counterOfferWizardContent');
+      if (!content) return;
+
+      let html = '';
+      switch (step) {
+        case 1:
+          html = renderCounterOfferWizard(roleId);
+          break;
+        case 2:
+          html = renderCounterOfferPriorities(roleId);
+          break;
+        case 3:
+          html = renderCounterOfferGenerate(roleId);
+          break;
+        case 4:
+          // Will be populated after generation
+          return;
+        default:
+          return;
+      }
+      content.innerHTML = html;
+    }
+
+    /**
+     * Render equity calculator UI with inputs and calculated outputs.
+     * INPUT: offer (comp data)
+     * OUTPUT: HTML string with calculator form
+     */
+    function renderEquityCalculator(offer) {
+      const baseMax = offer?.baseMax || 0;
+
+      return `
+        <div class="equity-calculator">
+          <div class="comp-card-title">Equity Valuation Helper</div>
+          <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-4);">Calculate what your equity is worth at different scenarios. Note: This is informational; consult a tax advisor for specific guidance.</p>
+
+          <div class="equity-grid">
+            <div class="form-group">
+              <label class="form-label">Shares / Options Offered</label>
+              <input type="number" id="equityShares" class="form-input" placeholder="e.g. 10000" oninput="updateEquityCalculation()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Strike Price ($)</label>
+              <input type="number" id="equityStrike" class="form-input" placeholder="e.g. 0.25" step="0.01" oninput="updateEquityCalculation()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Current Valuation ($B or actual)</label>
+              <input type="number" id="equityValuation" class="form-input" placeholder="e.g. 5" step="0.1" oninput="updateEquityCalculation()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Vesting Period (months)</label>
+              <input type="number" id="equityVesting" class="form-input" value="48" placeholder="e.g. 48" oninput="updateEquityCalculation()">
+            </div>
+          </div>
+
+          <div id="equityResults"></div>
+
+          <div class="equity-tax-note">
+            <strong>Tax Consideration:</strong> Option valuations, strike prices, and vesting schedules have significant tax implications. ISOs, NSOs, and RSUs are treated differently. Please consult with a tax professional before accepting any equity offer.
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * Update equity calculator results in real-time.
+     * Triggered by input changes in equity calculator.
+     */
+    function updateEquityCalculation() {
+      const shares = parseFloat(document.getElementById('equityShares')?.value) || 0;
+      const strike = parseFloat(document.getElementById('equityStrike')?.value) || 0;
+      const valuation = parseFloat(document.getElementById('equityValuation')?.value) || 0;
+      const vesting = parseFloat(document.getElementById('equityVesting')?.value) || 48;
+
+      const results = document.getElementById('equityResults');
+
+      if (shares && strike !== null && valuation) {
+        const calc = calculateEquityValue(shares, strike, valuation, vesting);
+
+        if (calc) {
+          results.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); margin-bottom: var(--space-4);">
+              <div class="equity-result">
+                <div class="equity-result-label">Current Value (Intrinsic)</div>
+                <div class="equity-result-value">${formatCurrency(calc.currentValue)}</div>
+              </div>
+              <div class="equity-result">
+                <div class="equity-result-label">Monthly Value</div>
+                <div class="equity-result-value">${formatCurrency(calc.monthlyValue)}/mo</div>
+              </div>
+              <div class="equity-result">
+                <div class="equity-result-label">If Company 2x</div>
+                <div class="equity-result-value">${formatCurrency(calc.value2x)}</div>
+              </div>
+              <div class="equity-result">
+                <div class="equity-result-label">If Company 5x</div>
+                <div class="equity-result-value">${formatCurrency(calc.value5x)}</div>
+              </div>
+            </div>
+            <div style="padding: var(--space-3); background: var(--bg-base); border-radius: var(--radius-sm); margin-bottom: var(--space-3);">
+              <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1); text-transform: uppercase; font-weight: 600;">At 10x Valuation</div>
+              <div style="font-size: var(--text-xl); font-weight: 700; color: var(--text-primary);">${formatCurrency(calc.value10x)}</div>
+            </div>
+          `;
+        }
+      } else {
+        results.innerHTML = '<p style="color: var(--text-tertiary); font-size: var(--text-sm);">Fill in all fields to calculate equity value.</p>';
+      }
+    }
+
+    /**
+     * Compare multiple offers side-by-side with winner highlights.
+     * INPUT: rolesWithOffers (array of role IDs with comp data), preferences (user priorities)
+     * OUTPUT: HTML string with comparison table and recommendation
+     */
+    function renderOfferComparison(rolesWithOffers = []) {
+      const roles = getPipelineRoles();
+      const compData = getCompData();
+
+      // Filter roles that have comp data
+      const offersToCompare = rolesWithOffers
+        .map(roleId => ({ role: roles.find(r => r.id === roleId), data: compData[roleId] }))
+        .filter(item => item.role && item.data);
+
+      if (offersToCompare.length < 2) {
+        return `
+          <div class="empty-state">
+            <p class="empty-state-text">Add compensation data for at least 2 roles to compare offers.</p>
+          </div>
+        `;
+      }
+
+      // Calculate metrics for each offer
+      const offers = offersToCompare.map(item => {
+        const base = item.data.baseMax || 0;
+        const bonus = item.data.bonusTarget || 0;
+        const signing = item.data.signingBonus || 0;
+        const equityVal = calculateEquityValue(1000, 1, item.data.baseMax ? item.data.baseMax / 100 : 0, 48) || {};
+
+        const totalComp = base + (base * bonus / 100) + signing + (equityVal.monthlyValue || 0) * 12;
+
+        return {
+          role: item.role,
+          base: base,
+          bonus: bonus,
+          signing: signing,
+          equity: item.data.equity || 'None',
+          pto: item.data.pto || '20 days',
+          remote: item.data.remote || 'Not specified',
+          growth: 'TBD',
+          totalComp: Math.round(totalComp)
+        };
+      });
+
+      // Find winners for each category
+      const winners = {
+        base: offers.reduce((max, o) => o.base > max.base ? o : max).role.id,
+        totalComp: offers.reduce((max, o) => o.totalComp > max.totalComp ? o : max).role.id
+      };
+
+      const rows = [
+        { label: 'Base Salary', key: 'base', format: 'currency', winner: winners.base },
+        { label: 'Bonus Target', key: 'bonus', format: 'percent', winner: null },
+        { label: 'Signing Bonus', key: 'signing', format: 'currency', winner: null },
+        { label: 'Equity', key: 'equity', format: 'text', winner: null },
+        { label: 'PTO', key: 'pto', format: 'text', winner: null },
+        { label: 'Remote Policy', key: 'remote', format: 'text', winner: null },
+        { label: 'Growth Potential', key: 'growth', format: 'text', winner: null },
+        { label: 'Total Estimated Comp', key: 'totalComp', format: 'currency', winner: winners.totalComp }
+      ];
+
+      let tableHtml = `
+        <div class="comparison-table-wrapper">
+          <table class="offer-comparison-table">
+            <thead>
+              <tr>
+                <th style="width: 150px;">Metric</th>
+                ${offers.map(o => `<th>${o.role.company}<br><small style="font-weight: 400;">${o.role.title}</small></th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      rows.forEach(row => {
+        tableHtml += '<tr>';
+        tableHtml += `<td><strong>${row.label}</strong></td>`;
+
+        offers.forEach(offer => {
+          const value = offer[row.key];
+          const isWinner = row.winner === offer.role.id;
+          let displayValue = value;
+
+          if (row.format === 'currency') {
+            displayValue = formatCurrency(value);
+          } else if (row.format === 'percent') {
+            displayValue = value ? `${value}%` : '0%';
+          }
+
+          const cellClass = isWinner ? 'comparison-winner' : '';
+          tableHtml += `<td class="${cellClass}">${displayValue}</td>`;
+        });
+
+        tableHtml += '</tr>';
+      });
+
+      tableHtml += `
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      const topOffer = offers.reduce((max, o) => o.totalComp > max.totalComp ? o : max);
+
+      tableHtml += `
+        <div class="comparison-note">
+          <strong>Based on total compensation:</strong> <strong>${topOffer.role.company}</strong> leads with ${formatCurrency(topOffer.totalComp)}. However, consider quality of life factors, growth trajectory, and role fit beyond raw numbers.
+        </div>
+      `;
+
+      return tableHtml;
     }
 
     /**

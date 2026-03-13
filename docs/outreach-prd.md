@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/outreach/`
-**Version:** v3.13
+**Version:** v3.15
 **Last Updated:** 2026-03-13
-**Status:** Active — v3.13.0 features live
+**Status:** Active — v3.15.0 features live
 
 ---
 
@@ -723,22 +723,22 @@ What will be implemented:
 
 ### Phase 2: Debrief Integration & Refinement (v1.1)
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.15.0)** — Debrief-aware drafting, quality scorer, edit sidebar.
 
-- [ ] Read debrief notes and pull specific discussion points for interview thank-yous
-- [ ] Message quality scorer (checks for personalization signals, flags generic patterns)
-- [ ] Edit context sidebar (user can add research notes to enrich prompt)
+- [x] Read debrief notes and pull specific discussion points for interview thank-yous
+- [x] Message quality scorer (checks for personalization signals, flags generic patterns as 1-10 with breakdown)
+- [x] Edit context sidebar (320px, tone/length selectors, regenerate button)
 - [ ] Message templates as starting points (for power users)
 - [ ] Save draft for later feature (store in localStorage)
 - [ ] Bulk messaging (generate multiple messages in one session)
 
 ### Phase 3: Intelligence & Optimization (v1.2+)
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.15.0)** — Response rate analytics, smart timing suggestions.
 
-- [ ] A/B testing framework (track response rates by message structure)
-- [ ] Response rate analytics by message type / company tier / connection type
-- [ ] Smart timing suggestions ("Send this message on Tuesday at 9am for higher response rates")
+- [x] A/B insights after 10+ messages (response patterns by type/channel)
+- [x] Response rate analytics by message type / company tier / connection type
+- [x] Smart timing suggestions ("Send this message on Tuesday at 9am for higher response rates")
 - [ ] Conversation threading (track entire email/LinkedIn thread in connection record)
 - [ ] Suggested follow-up timing based on response patterns
 - [ ] Integration with email/LinkedIn API for auto-logging sends (if user opts in)

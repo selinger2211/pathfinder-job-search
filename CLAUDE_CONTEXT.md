@@ -8,6 +8,9 @@
 
 Pathfinder is an agentic job search system with 11 standalone HTML modules sharing data via localStorage + IndexedDB. Each module is a single `index.html` file in `modules/`. There is no backend server required for core functionality — Claude API calls happen directly from the browser via `modules/shared/claude-api.js`.
 
+**Current Version:** v3.15.0 (as of 2026-03-13)
+**Last Major Features:** Outreach debrief integration + quality scorer, Debrief pattern analysis, Comp Intelligence negotiation support, Calendar interview journey tracking
+
 **Owner:** Ili Selinger (ilan.selinger@gmail.com)
 **Repo:** github.com/selinger2211/pathfinder-job-search
 **Local Path:** ~/Projects/job-search-agents
@@ -369,6 +372,14 @@ Object with boolean flags per nudge rule:
 - JD enrichment: roles without LinkedIn URLs or ATS links rely on DuckDuckGo web search fallback — coverage is good but not 100%
 - CORS proxy 1 (allorigins.win) tends to timeout; proxy 2 (corsproxy.io) works reliably as fallback
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.15.0)
+- **Outreach Debrief-Aware Drafting**: When generating interview thank-you messages, system injects context from interview debrief with specific discussion points and themes. Message quality scorer rates 1-10 with breakdown. Edit sidebar (320px) with tone/length selectors and regenerate button.
+- **Outreach Response Rate Analytics**: After 10+ sent messages, surfaces analytics by message type/channel with optimal timing suggestions and A/B insights based on response patterns.
+- **Debrief Pattern Analysis**: After 10+ debriefs, system detects patterns (question types, themes, sentiment) and generates intelligence dashboard with charts and recommendations. Cross-module signal `pf_debrief_patterns` feeds Dashboard, Research Brief, Mock Interview.
+- **Comp Intelligence Negotiation Support**: Negotiation scorecard with 5-dimension radar chart, 4-step counter-offer wizard with Claude, equity valuation calculator (funding stage → share value estimates), multi-offer comparison table with color-coded percentiles.
+- **Calendar Phase 2 & 3**: Full nudge display with company logos + prep checklists, manual event-to-role linking UI, post-event detection triggering debrief capture, stage progression suggestions, follow-up queue with badge count, interview journey timeline view showing all rounds per role.
+- **New localStorage Keys**: `pf_outreach_analytics`, `pf_counter_offers`, `pf_calendar_prep_checklists`, `pf_calendar_manual_links`, `pf_debrief_patterns`, `pf_outreach_edit_state`.
 
 ### Recently Fixed (v3.14.0)
 - **Dashboard Suppression Chains**: Dismissing nudge auto-suppresses related nudges (7d/3d/24h rules), stored in `pf_nudge_suppressions` localStorage.

@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v3.14.0
+**Status:** v3.15.0
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v3.15.0 | 2026-03-13 | **Tier 4 Major Build: 7 features across Outreach, Debrief, Comp Intelligence, Calendar** — Major release completing advanced intelligence and interview lifecycle automation. (1) Outreach (#44, #45): Debrief-aware drafting (injects interview context), quality scorer (1-10 with breakdown), edit sidebar (320px, tone/length selectors, regenerate). Response rate analytics by type/channel, smart timing suggestions, A/B insights after 10+ messages. (2) Debrief (#48): Pattern analysis & intelligence (question type/theme/sentiment detection, intelligence dashboard with charts), insight generation, cross-module `pf_debrief_patterns` signal. (3) Comp Intelligence (#50): Negotiation scorecard with radar chart, counter-offer wizard (4 steps with Claude), equity valuation calculator, multi-offer comparison table. (4) Calendar (#46, #47): Phase 2 (full nudge display with company logos + prep checklists, manual event-to-role linking, UX polish), Phase 3 (post-event detection, stage progression suggestions, follow-up queue with badge count, interview journey timeline). |
 | v3.14.0 | 2026-03-13 | **Dashboard & Pipeline: 6 Tier 2 Features** — Major release completing domain-specific intelligence and opaque recruiter outreach. (1) Dashboard: Suppression Chains auto-suppress related nudges for same role using 7d/3d/24h rules, stored in `pf_nudge_suppressions` localStorage. (2) Dashboard: Interview Intelligence Card appears after 5+ debriefs, shows pattern analysis with question types, pass rates, and strongest areas. (3) Job Feed: Tier Management Suggestions auto-suggest company tier promotion/demotion based on activity with "Update Tier" button. (4) Job Feed: Feed Analytics new tab showing match accuracy, false positive rate, score distribution histogram, acceptance trends, and top sources. (5) Pipeline: Opaque Recruiter Outreach "Quick Add Recruiter Outreach" for when company/role is unknown, dashed-border cards with "Reveal Details" button. (6) Research Brief: Degraded Mode handles company-unknown, role-unknown, and no-JD scenarios, skips unavailable sections, shows placeholders, displays degraded banners. |
 | v3.13.0 | 2026-03-13 | **Research Brief auto-generation** — Briefs auto-generate on first visit (no manual "Generate" click). Cached briefs persist until explicit regeneration. Brief artifacts attached to pipeline roles (`briefArtifactId` + `artifacts[]`). "Generate" button becomes "Regenerate" when brief exists. "Clear Cache" now auto-regenerates. **Pipeline comms dropdown** — Added text labels to per-contact channel dropdown (was emoji-only). **Feed Apify error** — Handle `public-actor-disabled` 403 error with clear upgrade message. |
 | v3.8.5 | 2026-03-12 | **Apify credit conservation** — maxItems 10→1 (only enrich once if we can get it). Re-enrich guard skips already-enriched roles. Batch early-abort on 401/403/not-rented errors. |

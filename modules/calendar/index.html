@@ -1058,6 +1058,305 @@
         }
 
         /* ============================================================================
+           FEATURE 46: ENHANCED NUDGE DISPLAY - PREP CHECKLIST & MANUAL LINKING
+           ============================================================================ */
+
+        .nudge-company-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            object-fit: contain;
+            background: var(--bg-tertiary);
+            padding: 4px;
+        }
+
+        .nudge-prep-checklist {
+            margin-top: 12px;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--accent);
+        }
+
+        .checklist-item label {
+            cursor: pointer;
+            flex: 1;
+            color: var(--text-secondary);
+            transition: color 150ms ease;
+        }
+
+        .checklist-item input[type="checkbox"]:checked + label {
+            color: var(--success);
+            text-decoration: line-through;
+        }
+
+        .link-role-button {
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms ease;
+        }
+
+        .link-role-button:hover {
+            background: var(--accent);
+            color: var(--bg-base);
+        }
+
+        .link-role-dropdown {
+            margin-top: 8px;
+            padding: 8px;
+            background: var(--bg-base);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius-sm);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 50;
+        }
+
+        .link-role-option {
+            padding: 8px 10px;
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            color: var(--text-secondary);
+            transition: all 150ms ease;
+        }
+
+        .link-role-option:hover {
+            background: var(--bg-tertiary);
+            color: var(--accent);
+        }
+
+        .link-status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            margin-left: 8px;
+        }
+
+        .link-status-indicator.auto {
+            background: rgba(129, 201, 149, 0.2);
+            color: var(--success);
+        }
+
+        .link-status-indicator.manual {
+            background: rgba(252, 201, 52, 0.2);
+            color: var(--warning);
+        }
+
+        .link-status-indicator.unlinked {
+            background: rgba(242, 132, 130, 0.2);
+            color: var(--error);
+        }
+
+        /* ============================================================================
+           FEATURE 47: POST-EVENT TRIGGERS - FOLLOW-UP QUEUE
+           ============================================================================ */
+
+        .follow-up-queue {
+            margin-top: 24px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+
+        .follow-up-queue-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .follow-up-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 24px;
+            height: 24px;
+            background: var(--error);
+            color: var(--bg-base);
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .follow-up-item {
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            transition: all 150ms ease;
+        }
+
+        .follow-up-item:hover {
+            background: var(--bg-base);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .follow-up-item-content {
+            flex: 1;
+        }
+
+        .follow-up-item-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .follow-up-item-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .follow-up-item-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .follow-up-action-btn {
+            padding: 6px 12px;
+            background: var(--accent);
+            color: var(--bg-base);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms ease;
+            white-space: nowrap;
+        }
+
+        .follow-up-action-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .interview-timeline {
+            margin-top: 16px;
+            padding: 12px;
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+        }
+
+        .timeline-event {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            position: relative;
+        }
+
+        .timeline-event:last-child {
+            margin-bottom: 0;
+        }
+
+        .timeline-event::before {
+            content: '';
+            position: absolute;
+            left: 2px;
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border: 2px solid var(--bg-base);
+            border-radius: 50%;
+            box-shadow: 0 0 0 1px var(--border);
+        }
+
+        .timeline-event.completed::before {
+            background: var(--success);
+        }
+
+        .timeline-event-content {
+            padding-left: 28px;
+        }
+
+        .timeline-event-stage {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .timeline-event-date {
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+
+        .post-event-prompt {
+            padding: 12px;
+            background: var(--warning);
+            color: var(--bg-base);
+            border-radius: var(--radius-sm);
+            margin-top: 12px;
+            font-size: 13px;
+        }
+
+        .post-event-prompt-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .post-event-prompt-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .post-event-action-btn {
+            padding: 6px 12px;
+            background: var(--bg-base);
+            color: var(--warning);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 150ms ease;
+        }
+
+        .post-event-action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* ============================================================================
            SYNC LOG
            ============================================================================ */
         .sync-log-container {
@@ -1688,7 +1987,11 @@
 
                 <!-- Tab 3: Nudge Timeline -->
                 <div class="tab-content" id="tabNudges">
-                    <div class="nudge-list" id="nudgeList"></div>
+                    <div style="padding: 16px 0;">
+                        <div class="nudge-list" id="nudgeList"></div>
+                        <!-- Feature 47: Follow-Up Queue Section -->
+                        <div id="followUpQueue"></div>
+                    </div>
                 </div>
 
                 <!-- Tab 4: Sync Log -->
@@ -1895,6 +2198,10 @@
                 generateInterviewNudges();
                 renderNudgeTimeline();
                 loadSyncLog();
+
+                // Feature 47: Start post-event trigger detection (every 10 minutes)
+                renderFollowUpQueue();
+                startFollowUpQueueRefresh();
 
                 // Start nudge refresh interval (every 15 minutes)
                 startNudgeRefreshInterval();
@@ -3683,12 +3990,32 @@
                     card.dataset.eventId = nudge.eventId;
                     card.dataset.nudgeType = nudge.nudgeType;
 
-                    /* Nudge header: title and company */
+                    /* Feature 46: Get event details for company logo and link status */
+                    const allEvents = getStorageData('calendar_events') || [];
+                    const currentEvent = allEvents.find(e => e.id === nudge.eventId);
+                    const eventCompany = currentEvent ? currentEvent.company : nudge.title.split(':')[1]?.trim() || '';
+                    const roles = getStorageData('roles') || [];
+                    const linkedRole = currentEvent && currentEvent.linkedRoleId ? roles.find(r => r.id === currentEvent.linkedRoleId) : null;
+
+                    /* Nudge header: logo, title and company */
                     const header = document.createElement('div');
                     header.style.display = 'flex';
                     header.style.alignItems = 'flex-start';
                     header.style.gap = '12px';
                     header.style.marginBottom = '8px';
+
+                    /* Feature 46: Company logo from Google Favicon API */
+                    const logoImg = document.createElement('img');
+                    logoImg.className = 'nudge-company-logo';
+                    logoImg.src = getCompanyLogoUrl(linkedRole ? linkedRole.company : eventCompany);
+                    logoImg.alt = 'Company logo';
+                    logoImg.style.width = '40px';
+                    logoImg.style.height = '40px';
+                    logoImg.style.borderRadius = 'var(--radius-sm)';
+                    logoImg.style.backgroundColor = 'var(--bg-tertiary)';
+                    logoImg.style.padding = '4px';
+                    logoImg.style.objectFit = 'contain';
+                    header.appendChild(logoImg);
 
                     const titleSection = document.createElement('div');
                     titleSection.style.flex = '1';
@@ -3698,7 +4025,32 @@
                     eventTitle.style.fontWeight = '600';
                     eventTitle.style.color = 'var(--text-primary)';
                     eventTitle.style.marginBottom = '2px';
-                    eventTitle.textContent = nudge.title;
+                    eventTitle.style.display = 'flex';
+                    eventTitle.style.alignItems = 'center';
+                    eventTitle.style.gap = '8px';
+
+                    /* Show role title if linked */
+                    let titleText = nudge.title;
+                    if (linkedRole) {
+                        titleText = `${linkedRole.title} at ${linkedRole.company}`;
+                    }
+                    eventTitle.textContent = titleText;
+
+                    /* Feature 46: Add link status indicator */
+                    if (currentEvent) {
+                        const linkStatus = getLinkStatus(currentEvent);
+                        const statusSpan = document.createElement('span');
+                        statusSpan.className = `link-status-indicator ${linkStatus}`;
+                        if (linkStatus === 'auto') {
+                            statusSpan.innerHTML = '✓ Auto-linked';
+                        } else if (linkStatus === 'manual') {
+                            statusSpan.innerHTML = '✓ Linked';
+                        } else {
+                            statusSpan.innerHTML = '○ Unlinked';
+                        }
+                        eventTitle.appendChild(statusSpan);
+                    }
+
                     titleSection.appendChild(eventTitle);
 
                     const eventMeta = document.createElement('div');
@@ -3710,6 +4062,19 @@
                     eventMeta.innerHTML = `
                         <span>${nudge.eventDate} at ${nudge.eventTime}</span>
                     `;
+
+                    /* Feature 46: Show interview stage if available */
+                    if (linkedRole) {
+                        const stageLabel = document.createElement('span');
+                        stageLabel.style.fontSize = '11px';
+                        stageLabel.style.padding = '2px 8px';
+                        stageLabel.style.background = 'var(--bg-tertiary)';
+                        stageLabel.style.borderRadius = 'var(--radius-sm)';
+                        stageLabel.style.color = 'var(--text-tertiary)';
+                        stageLabel.textContent = linkedRole.stage || 'applied';
+                        eventMeta.appendChild(stageLabel);
+                    }
+
                     titleSection.appendChild(eventMeta);
 
                     header.appendChild(titleSection);
@@ -3789,6 +4154,73 @@
                         card.appendChild(details);
                     }
 
+                    /* Feature 46: Prep checklist for pre-interview nudges */
+                    if ((nudge.nudgeType === '72h' || nudge.nudgeType === '48h' || nudge.nudgeType === 'morning') && currentEvent) {
+                        const checklist = loadChecklistState(nudge.eventId);
+                        const checklistDiv = document.createElement('div');
+                        checklistDiv.className = 'nudge-prep-checklist';
+
+                        const checklistTitle = document.createElement('div');
+                        checklistTitle.style.fontSize = '12px';
+                        checklistTitle.style.fontWeight = '600';
+                        checklistTitle.style.color = 'var(--text-primary)';
+                        checklistTitle.style.marginBottom = '8px';
+                        checklistTitle.textContent = 'Prep Checklist';
+                        checklistDiv.appendChild(checklistTitle);
+
+                        const items = ['Reviewed Research Brief', 'Practiced Mock', 'Prepared Questions'];
+                        items.forEach(item => {
+                            const itemDiv = document.createElement('div');
+                            itemDiv.className = 'checklist-item';
+
+                            const checkbox = document.createElement('input');
+                            checkbox.type = 'checkbox';
+                            checkbox.id = `check-${nudge.eventId}-${item}`;
+                            checkbox.checked = checklist[item] || false;
+                            checkbox.onchange = () => {
+                                checklist[item] = checkbox.checked;
+                                saveChecklistState(nudge.eventId, checklist);
+                            };
+
+                            const label = document.createElement('label');
+                            label.htmlFor = checkbox.id;
+                            label.textContent = item;
+
+                            itemDiv.appendChild(checkbox);
+                            itemDiv.appendChild(label);
+                            checklistDiv.appendChild(itemDiv);
+                        });
+
+                        card.appendChild(checklistDiv);
+                    }
+
+                    /* Feature 46: Manual linking for unlinked events (confidence < 40) */
+                    if (currentEvent && !linkedRole && currentEvent.confidenceScore < 40) {
+                        const linkingDiv = document.createElement('div');
+                        linkingDiv.style.marginTop = '8px';
+
+                        const linkBtn = document.createElement('button');
+                        linkBtn.className = 'link-role-button';
+                        linkBtn.textContent = 'Link to Role';
+                        linkBtn.onclick = () => {
+                            const dropdown = document.getElementById(`dropdown-${nudge.eventId}`);
+                            if (dropdown && dropdown.style.display === 'block') {
+                                dropdown.style.display = 'none';
+                            } else {
+                                showLinkRoleDropdown(nudge.eventId, eventCompany);
+                            }
+                        };
+                        linkingDiv.appendChild(linkBtn);
+
+                        const dropdown = document.createElement('div');
+                        dropdown.id = `dropdown-${nudge.eventId}`;
+                        dropdown.className = 'link-role-dropdown';
+                        dropdown.style.display = 'none';
+                        linkingDiv.appendChild(dropdown);
+
+                        card.appendChild(linkingDiv);
+                    }
+
                     /* Action buttons */
                     const actions = document.createElement('div');
                     actions.style.display = 'flex';
@@ -3856,6 +4288,315 @@
                 generateInterviewNudges();
                 renderNudgeTimeline();
             }, 15 * 60 * 1000);
+        }
+
+        /* ====== FEATURE 46: ENHANCED NUDGE DISPLAY & MANUAL LINKING ====== */
+
+        /**
+         * Get the favicon URL for a company domain using Google Favicon API.
+         * @param {string} domain - Company domain (e.g., "google.com")
+         * @returns {string} URL to the company's favicon
+         */
+        function getCompanyLogoUrl(domain) {
+            if (!domain) return '';
+            // Clean domain: remove www. and extract main domain
+            const cleanDomain = domain.replace(/^www\./, '').split('/')[0];
+            return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(cleanDomain)}&sz=64`;
+        }
+
+        /**
+         * Save prep checklist state for an event.
+         * Checklist includes: "Reviewed Research Brief", "Practiced Mock", "Prepared Questions"
+         * @param {string} eventId - Event ID
+         * @param {Object} checklist - Checklist state object with item names as keys
+         */
+        function saveChecklistState(eventId, checklist) {
+            const checklists = getStorageData('pf_calendar_prep_checklists') || {};
+            checklists[eventId] = {
+                ...checklist,
+                savedAt: new Date()
+            };
+            saveStorageData('pf_calendar_prep_checklists', checklists);
+        }
+
+        /**
+         * Load prep checklist state for an event.
+         * @param {string} eventId - Event ID
+         * @returns {Object} Checklist state object
+         */
+        function loadChecklistState(eventId) {
+            const checklists = getStorageData('pf_calendar_prep_checklists') || {};
+            return checklists[eventId] || {
+                'Reviewed Research Brief': false,
+                'Practiced Mock': false,
+                'Prepared Questions': false
+            };
+        }
+
+        /**
+         * Show role linking dropdown for an event with confidence < 40.
+         * Renders a fuzzy-matched list of available roles sorted by relevance.
+         * @param {string} eventId - Event ID to link
+         * @param {string} eventCompany - Company name from event (for fuzzy matching)
+         */
+        function showLinkRoleDropdown(eventId, eventCompany) {
+            const roles = getStorageData('roles') || [];
+            const manualLinks = getStorageData('pf_calendar_manual_links') || {};
+
+            // Fuzzy match roles by company/title
+            const scored = roles.map(role => {
+                let score = 0;
+                if (eventCompany && role.company) {
+                    const eventLower = eventCompany.toLowerCase();
+                    const roleLower = role.company.toLowerCase();
+                    if (roleLower.includes(eventLower) || eventLower.includes(roleLower)) {
+                        score += 100;
+                    }
+                }
+                return { role, score };
+            }).sort((a, b) => b.score - a.score);
+
+            const container = document.getElementById(`dropdown-${eventId}`);
+            if (!container) return;
+
+            container.innerHTML = '';
+            container.style.display = 'block';
+
+            scored.forEach(({ role }) => {
+                const option = document.createElement('div');
+                option.className = 'link-role-option';
+                option.innerHTML = `<strong>${role.title}</strong> at ${role.company}`;
+                option.onclick = () => manuallyLinkEvent(eventId, role.id);
+                container.appendChild(option);
+            });
+        }
+
+        /**
+         * Manually link an event to a role.
+         * Stores the link in pf_calendar_manual_links localStorage.
+         * Manual links override auto-matching for the event.
+         * @param {string} eventId - Event ID
+         * @param {string} roleId - Role ID to link to
+         */
+        function manuallyLinkEvent(eventId, roleId) {
+            const manualLinks = getStorageData('pf_calendar_manual_links') || {};
+            manualLinks[eventId] = {
+                roleId: roleId,
+                linkedAt: new Date()
+            };
+            saveStorageData('pf_calendar_manual_links', manualLinks);
+
+            // Update the event with the new link
+            const events = getStorageData('calendar_events') || [];
+            const event = events.find(e => e.id === eventId);
+            if (event) {
+                event.linkedRoleId = roleId;
+                event.manualLink = true;
+                saveStorageData('calendar_events', events);
+            }
+
+            renderNudgeTimeline();
+            showNotification('Event linked to role');
+        }
+
+        /**
+         * Get the link status for an event (auto/manual/unlinked).
+         * @param {Object} event - Calendar event
+         * @returns {string} Link status: 'auto', 'manual', or 'unlinked'
+         */
+        function getLinkStatus(event) {
+            const manualLinks = getStorageData('pf_calendar_manual_links') || {};
+            if (manualLinks[event.id]) return 'manual';
+            if (event.linkedRoleId || event.roleId) return 'auto';
+            return 'unlinked';
+        }
+
+        /* ====== FEATURE 47: POST-EVENT TRIGGERS & FOLLOW-UP QUEUE ====== */
+
+        /**
+         * Detect completed interview events (past end time within last 24h).
+         * Runs on page load and every 10 minutes.
+         * Returns events that need debrief or stage progression checks.
+         * @returns {Array} Array of completed events needing action
+         */
+        function detectCompletedEvents() {
+            const allEvents = getStorageData('calendar_events') || [];
+            const now = new Date();
+            const completedEvents = [];
+
+            allEvents.forEach(evt => {
+                if (!isInterviewEvent(evt)) return;
+
+                const eventDate = new Date(evt.date);
+                const duration = evt.duration || 60;
+                const eventEndTime = new Date(eventDate);
+                eventEndTime.setMinutes(eventEndTime.getMinutes() + duration);
+
+                // Check if event ended within last 24 hours
+                const hoursAgo = (now - eventEndTime) / (1000 * 60 * 60);
+                if (hoursAgo > 0 && hoursAgo <= 24) {
+                    completedEvents.push({
+                        ...evt,
+                        hoursAgo: hoursAgo,
+                        endTime: eventEndTime
+                    });
+                }
+            });
+
+            return completedEvents;
+        }
+
+        /**
+         * Check if a debrief exists for a completed event (within 2h of event end).
+         * @param {Object} event - Calendar event
+         * @returns {Object|null} Debrief object or null if not found
+         */
+        function findDebriefForEvent(event) {
+            const debriefs = getStorageData('debriefs') || [];
+            const eventEndTime = new Date(event.date);
+            eventEndTime.setMinutes(eventEndTime.getMinutes() + (event.duration || 60));
+
+            return debriefs.find(d => {
+                if (d.roleId && event.linkedRoleId && d.roleId === event.linkedRoleId) {
+                    const debriefTime = new Date(d.date || d.createdAt);
+                    const timeDiff = Math.abs(debriefTime - eventEndTime);
+                    return timeDiff < 2 * 60 * 60 * 1000; // Within 2 hours
+                }
+                return false;
+            });
+        }
+
+        /**
+         * Suggest stage progression based on interview type and event history.
+         * Returns suggestion object with recommended next stage.
+         * @param {Object} role - Pipeline role object
+         * @param {Array} events - Array of interview events for this role
+         * @returns {Object|null} Suggestion object with nextStage or null
+         */
+        function suggestStageProgression(role, events) {
+            if (!role || !events || events.length === 0) return null;
+
+            const currentStage = role.stage || 'applied';
+            const stageProgression = ['applied', 'phone_screen', 'technical', 'onsite', 'final', 'offer', 'rejected'];
+            const currentIndex = stageProgression.indexOf(currentStage);
+
+            // Check interview types in events
+            const eventTypes = events.map(e => e.type);
+            const hasPhoneScreen = eventTypes.includes('phone_screen');
+            const hasTechnical = eventTypes.includes('technical');
+            const hasOnsite = eventTypes.includes('onsite');
+
+            let suggestion = null;
+
+            if (currentStage === 'phone_screen' && hasTechnical) {
+                suggestion = { nextStage: 'technical', reason: 'Technical interview completed' };
+            } else if (currentStage === 'technical' && hasOnsite) {
+                suggestion = { nextStage: 'onsite', reason: 'Onsite interview completed' };
+            } else if (currentStage === 'onsite' && eventTypes.length > 2) {
+                suggestion = { nextStage: 'final', reason: 'Multiple interview rounds completed' };
+            }
+
+            return suggestion;
+        }
+
+        /**
+         * Build interview journey timeline for a role showing all interview events.
+         * Detects progression: phone → technical → onsite → final
+         * @param {string} roleId - Role ID
+         * @param {Array} events - Array of interview events for this role
+         * @returns {Array} Timeline array with stage, date, and completion status
+         */
+        function buildInterviewTimeline(roleId, events) {
+            if (!events || events.length === 0) return [];
+
+            // Sort events by date
+            const sorted = [...events].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Build timeline with stage detection
+            const stageOrder = ['phone_screen', 'technical', 'onsite', 'final'];
+            const timeline = [];
+            const now = new Date();
+
+            sorted.forEach((evt, idx) => {
+                const eventDate = new Date(evt.date);
+                const duration = evt.duration || 60;
+                const endTime = new Date(eventDate);
+                endTime.setMinutes(endTime.getMinutes() + duration);
+
+                timeline.push({
+                    stage: evt.type || `Interview ${idx + 1}`,
+                    date: eventDate,
+                    completed: now > endTime,
+                    event: evt
+                });
+            });
+
+            return timeline;
+        }
+
+        /**
+         * Render the follow-up queue showing incomplete post-interview actions.
+         * Shows: events without debrief, events without thank-you sent, unprogressed stages.
+         */
+        function renderFollowUpQueue() {
+            const completedEvents = detectCompletedEvents();
+            const roles = getStorageData('roles') || [];
+            const debriefs = getStorageData('debriefs') || [];
+            const queueContainer = document.getElementById('followUpQueue');
+
+            if (!queueContainer) return;
+
+            // Filter completed events needing action
+            const needsAction = completedEvents.filter(evt => {
+                const hasDebrief = findDebriefForEvent(evt);
+                const role = roles.find(r => r.id === evt.linkedRoleId);
+                return !hasDebrief || !evt.thankYouSent || (role && !role.nextRoundScheduled);
+            });
+
+            if (needsAction.length === 0) {
+                queueContainer.innerHTML = '<div style="padding: 16px; text-align: center; color: var(--text-secondary); font-size: 13px;">No follow-ups needed</div>';
+                return;
+            }
+
+            queueContainer.innerHTML = `
+                <div class="follow-up-queue">
+                    <div class="follow-up-queue-header">
+                        <span>Follow-Up Queue</span>
+                        <span class="follow-up-badge">${needsAction.length}</span>
+                    </div>
+                    ${needsAction.map(evt => {
+                        const role = roles.find(r => r.id === evt.linkedRoleId);
+                        const debrief = findDebriefForEvent(evt);
+                        const timeline = role ? buildInterviewTimeline(role.id, [evt]) : [];
+
+                        return `
+                            <div class="follow-up-item">
+                                <div class="follow-up-item-content">
+                                    <div class="follow-up-item-title">${evt.company} - ${evt.title || 'Interview'}</div>
+                                    <div class="follow-up-item-meta">
+                                        Completed: ${new Date(evt.date).toLocaleDateString()} | ${evt.hoursAgo.toFixed(1)}h ago
+                                    </div>
+                                    ${!debrief ? `<div style="font-size: 12px; color: var(--warning); margin-bottom: 8px;">⚠ Debrief not recorded</div>` : ''}
+                                    ${!evt.thankYouSent ? `<div style="font-size: 12px; color: var(--warning); margin-bottom: 8px;">⚠ Thank-you not sent</div>` : ''}
+                                    <div class="follow-up-item-actions">
+                                        ${!debrief ? `<button class="follow-up-action-btn" onclick="window.location.href='../debrief/?event=${evt.id}'">Record Debrief</button>` : ''}
+                                        ${!evt.thankYouSent ? `<button class="follow-up-action-btn" onclick="window.location.href='../outreach/?type=thank-you&event=${evt.id}'">Send Thank-You</button>` : ''}
+                                        ${role ? `<button class="follow-up-action-btn" onclick="window.location.href='../pipeline/?role=${role.id}'">Update Stage</button>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        // Run follow-up queue detection every 10 minutes
+        function startFollowUpQueueRefresh() {
+            setInterval(() => {
+                detectCompletedEvents();
+                renderFollowUpQueue();
+            }, 10 * 60 * 1000);
         }
 
         // ============================================================================

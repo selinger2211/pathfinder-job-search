@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/debrief/`
-**Version:** v3.13
+**Version:** v3.15
 **Last Updated:** 2026-03-13
-**Status:** Active — v3.13.0 features live
+**Status:** Active — v3.15.0 features live
 
 ---
 
@@ -767,18 +767,21 @@ When an interview ends (detected via Calendar), user receives a notification:
 
 ### Phase 3: Pattern Analysis & Intelligence (Week 5–6)
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.15.0)** — Pattern detection, intelligence dashboard, cross-module signal.
 
 **MCP Tools:**
-- `pf_analyze_debrief_patterns` — Background job after 10+ debriefs, analyze trends
+- [x] `pf_analyze_debrief_patterns` — Background job after 10+ debriefs, analyze trends
 
 **UI:**
-- Dashboard "Interview Intelligence" card
-- Full analysis view (story performance, interview type breakdown, conversion rates)
+- [x] Dashboard "Interview Intelligence" card
+- [x] Full analysis view (story performance, interview type breakdown, conversion rates)
+- [x] Pattern detection (question types, themes, sentiment analysis)
+- [x] Insight generation (recommendations based on patterns)
 
 **Data:**
-- Pattern summary object (appended to debrief artifacts, stored separately)
-- Dashboard widget configuration
+- [x] Pattern summary object (appended to debrief artifacts, stored separately)
+- [x] Dashboard widget configuration
+- [x] Cross-module signal: `pf_debrief_patterns` (read by Dashboard, Research Brief, Mock Interview)
 
 **Scope:** After 10 debriefs, surface patterns & recommendations.
 

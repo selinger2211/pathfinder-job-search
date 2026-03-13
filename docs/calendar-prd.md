@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/calendar/`
-**Version:** v3.13
+**Version:** v3.15
 **Last Updated:** 2026-03-13
-**Status:** Active — v3.13.0 features live
+**Status:** Active — v3.15.0 features live
 
 ---
 
@@ -547,21 +547,23 @@ If user has connection data for an interviewer, Research Brief can reference pri
 
 ### Phase 2: Nudges & UX Polish (v1.1)
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.15.0)** — Full nudge display with company logos + prep checklists, manual event linking, UX polish.
 
-- [ ] Implement full nudge display on Dashboard
-- [ ] Pre-interview nudges trigger at correct times
-- [ ] Nudge actions link to Research Brief, Debrief Agent
-- [ ] Post-interview nudge ("Capture debrief") surfaces after event ends
-- [ ] Manual event linking UI in Pipeline (for low-confidence events)
+- [x] Implement full nudge display on Dashboard (with company logos + prep checklists)
+- [x] Pre-interview nudges trigger at correct times
+- [x] Nudge actions link to Research Brief, Debrief Agent
+- [x] Post-interview nudge ("Capture debrief") surfaces after event ends
+- [x] Manual event-to-role linking UI in Pipeline (for low-confidence events)
 - [ ] Interviewer context fetching (LinkedIn, Glassdoor, internal notes)
 
 ### Phase 3: Post-Event Triggers (v1.2)
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.15.0)** — Post-event detection, stage progression suggestions, follow-up queue.
 
-- [ ] Detect next round scheduled within 1-2 weeks
-- [ ] Auto-link follow-up events
+- [x] Post-event detection (interview completed, debrief triggered)
+- [x] Stage progression suggestions (advance to next stage based on interview outcome)
+- [x] Follow-up queue with badge count (next steps, thank-yous, follow-ups)
+- [x] Interview journey timeline (view full interview history per role)
 - [ ] No-follow-up nudge after 2 weeks
 - [ ] Offer detection and stage auto-advance
 - [ ] 30-day check-in for stalled roles

@@ -4,6 +4,68 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.15.0 — 2026-03-13
+
+### What Changed — Tier 4 Major Build: 7 Features Across 4 Modules
+
+**Summary:** Major release completing advanced intelligence and interview lifecycle automation. Four modules receive major feature implementations: Outreach (debrief integration, quality scoring, optimization analytics), Debrief (pattern analysis intelligence), Comp Intelligence (negotiation support with wizards and calculators), and Calendar (full interview journey tracking with smart nudges and follow-up queues).
+
+**Changes:**
+
+**Outreach Module (#44, #45):**
+1. **Debrief-Aware Drafting** — When generating interview thank-you messages, system injects context from interview debrief. Message generator reads `pf_debrief[roleId]` to pull specific discussion points, question themes, interviewer feedback. Thank-you drafts now reference actual conversation topics instead of generic language. Reduces edit friction and ensures personalization.
+
+2. **Message Quality Scorer** — Auto-scores generated messages on 1-10 scale with detailed breakdown: personalization signals (0-3 pts), specificity (0-2 pts), tone match (0-2 pts), length appropriateness (0-2 pts), forbidden patterns (0-1 pt). Displays as visual card with color coding and actionable feedback. Helps users catch quality issues before sending.
+
+3. **Edit Context Sidebar** — New 320px right panel with tone selector (Professional/Warm/Casual), length preference (Concise/Standard/Detailed), and "Regenerate" button. Allows users to refine drafts without leaving message view. Tone/length choices update prompt parameters sent to Claude.
+
+4. **Response Rate Analytics** — After 10+ sent messages, Dashboard surfaces analytics card showing: response rate by message type (cold email: 12%, LinkedIn request: 28%, thank-you: 45%), channel effectiveness (email vs LinkedIn), company tier patterns. Data stored in `pf_outreach_analytics` localStorage.
+
+5. **Smart Timing Suggestions** — ML-powered suggestions based on sent message history: optimal day/time to send (e.g., "Tuesday 9am shows 18% higher response rate"), spacing between follow-ups, best-performing message lengths. Suggestions surface in nudge queue with "Send at suggested time" option.
+
+6. **A/B Insights** — After 10+ messages, surfaces insights like "Opening hook about company mission gets 2x response vs generic intro", "Follow-ups after 7 days outperform 5-day timing by 15%". Helps users refine approach.
+
+**Debrief Module (#48):**
+7. **Pattern Analysis & Intelligence** — After 10+ debriefs, system analyzes patterns: question types asked across interviews (behavioral, technical, case study, etc.) with frequency, sentiment tracking (positive/neutral/negative interviewer), themes that recur (company growth, team dynamics, your background fit). Intelligence dashboard shows charts and aggregated insights. Cross-module signal written to `pf_debrief_patterns` (read by Dashboard, Research Brief, Mock Interview for contextual prep).
+
+8. **Pattern Detection Engine** — Automatically detects patterns in debrief notes: "80% of phone screens ask behavioral questions about conflict resolution", "Technical interviews at Series B startups focus on system design", "Company X always asks 3-interviewer panels with VP, PM, Tech Lead".
+
+9. **Intelligence Recommendations** — System generates actionable insights: "Your interview performance is strongest in system design discussions (4.2/5 avg). Mock more behavioral questions (2.8/5) before next interviews." Displayed on Dashboard Interview Intelligence card.
+
+**Comp Intelligence Module (#50):**
+10. **Negotiation Scorecard** — When offer received, auto-generates radar chart scorecard rating offer across 5 dimensions: compensation (base/bonus/equity percentile), scope (team size, reporting level), growth (upskilling opportunity, career path), culture (fit assessment), risk (company stability, equity risk). Total score out of 125 with recommendation (Accept/Counter/Decline).
+
+11. **Counter-Offer Wizard** — 4-step Claude-powered wizard guides counter-offer strategy: (1) Current offer review, (2) Market data analysis with percentiles, (3) Counter proposal generation with specific numbers backed by data, (4) Response template with professional language. Wizard saves attempts to `pf_counter_offers` localStorage.
+
+12. **Equity Valuation Calculator** — Estimates share value for private company offers using funding stage proxy (Series A → $25M valuation), company growth signals (hiring rate, feature releases), and exit timelines (5-7 year typical path). Displays valuation sensitivity analysis (if exit delays 1yr, equity value drops X%).
+
+13. **Multi-Offer Comparison Table** — When multiple offers in pipeline at offer stage, displays side-by-side table: base, bonus, equity, total comp, percentiles, comp growth trajectory, risk profile. Color-coded (green/yellow/red) by percentile and recommendation. Helps prioritize competing offers.
+
+**Calendar Module (#46, #47):**
+14. **Phase 2: Full Nudge Display** — Pre-interview nudge cards now display company logo (sourced from company enrichment), role title, interview type, prep checklist (research company, review JD, prep stories, practice mock). Nudge cards clickable → opens Research Brief or Mock Interview. Full integration with pipeline company data.
+
+15. **Manual Event-to-Role Linking** — If Calendar event isn't auto-matched to a role, user can manually link via dropdown selector in nudge card. "Link to Role" button shows pipeline roles, fuzzy-matches by company name, allows selection. Improves coverage for confidential opportunities or unusual interview formats.
+
+16. **UX Polish** — Nudge card redesign: larger type, clearer CTA buttons, expandable prep checklist, countdown timer showing time-until-interview. Dark mode support. Mobile responsive.
+
+17. **Phase 3: Post-Event Detection** — Calendar agent auto-detects when interview event ends (time passes), triggers post-event nudge ("Capture debrief while fresh"). Debrief nudge surfaces within 5 minutes, before memory fades. Read from event `endTime`.
+
+18. **Stage Progression Suggestions** — After interview debrief is captured, system suggests stage advance: if debrief sentiment is positive, suggests moving role to "interviewing" or "final round". User can accept/decline suggestion. Reduces manual stage tracking.
+
+19. **Follow-Up Queue with Badge Count** — New "Follow-Up Actions" card on Dashboard showing queued actions (thank-you emails to draft, next rounds to schedule, company research briefs to refresh). Badge count shows total pending. Each action links to relevant module. Keeps interview process on track.
+
+20. **Interview Journey Timeline** — New view in Pipeline role detail showing full interview history: all calendar events linked to role in chronological order, debrief summaries, stage progression markers, time between rounds. Visual timeline helps track progression and identify bottlenecks.
+
+**localStorage Updates:**
+- Added `pf_outreach_analytics` (message type, channel, response status, timestamp)
+- Added `pf_counter_offers` (counter proposal history, response, status)
+- Added `pf_calendar_prep_checklists` (prep items per interview type)
+- Added `pf_calendar_manual_links` (user manual event-to-role mappings)
+- Added `pf_debrief_patterns` (cross-module signal for patterns)
+- Added `pf_outreach_edit_state` (tone/length preferences, regenerate history)
+
+---
+
 ## v3.14.0 — 2026-03-13
 
 ### What Changed — Dashboard & Pipeline: 6 Tier 2 Features
