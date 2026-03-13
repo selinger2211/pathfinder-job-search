@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/research-brief/`
-**Version:** v3.13
+**Version:** v3.14
 **Last Updated:** 2026-03-13
-**Status:** Active — v3.13.0 features live
+**Status:** Active — v3.14.0 features live
 
 ---
 
@@ -441,9 +441,9 @@ Mar 9 — Email from Sarah Chen
 
 ### 3.1 Degraded Mode (Opaque Recruiter Outreach)
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.14.0)** — Handles company-unknown, role-unknown, no-JD scenarios. Skips unavailable sections, shows placeholders, degraded banners.
 
-This section describes how the system will handle roles with partial information (company-unknown, role-unknown, or both).
+This section describes how the system handles roles with partial information (company-unknown, role-unknown, or both).
 
 When a role is tracked with partial information — unknown company, unknown role, or both (see main PRD Section 7.1.7) — the Research Brief operates in degraded mode. Each section either generates normally, generates with reduced scope, or is blocked entirely with a message explaining what's needed to unlock it.
 

@@ -271,6 +271,20 @@ Object with boolean flags per nudge rule:
 
 **Purpose:** Track nudge dismissals so they don't immediately resurface. After reEligibleAt passes, nudge can fire again.
 
+### pf_nudge_suppressions — SuppressionChain[] (v3.14.0)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| id | string | yes | Unique identifier (uuid) |
+| ruleId | string | yes | Primary rule that was dismissed (e.g., "rule_4_interview_prep") |
+| roleId | string | yes | Target role for this suppression chain |
+| suppressedRuleIds | array | yes | Array of related rules to suppress (e.g., ["rule_8_interview_prep_not_started"]) |
+| suppressedAt | string | yes | ISO timestamp when suppression activated |
+| expiresAt | string | yes | ISO timestamp when suppression expires (7d/3d/24h based on rule) |
+| dismissalReason | string | no | Optional reason user provided when dismissing |
+
+**Purpose:** Auto-suppress related nudges when user dismisses primary nudge. Dismissing "Prep for interview at {company}" suppresses "Generate research brief for {company}" for duration. Prevents nudge fatigue for interconnected actions on same role.
+
 ### pf_brief_invalidation — BriefInvalidation (v3.13.0)
 
 | Field | Type | Required | Notes |
@@ -330,7 +344,7 @@ Object with boolean flags per nudge rule:
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.13.0
+**Current Version:** v3.14.0
 **Last Updated:** 2026-03-13
 
 ### Implementation Status
@@ -355,6 +369,14 @@ Object with boolean flags per nudge rule:
 - JD enrichment: roles without LinkedIn URLs or ATS links rely on DuckDuckGo web search fallback — coverage is good but not 100%
 - CORS proxy 1 (allorigins.win) tends to timeout; proxy 2 (corsproxy.io) works reliably as fallback
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.14.0)
+- **Dashboard Suppression Chains**: Dismissing nudge auto-suppresses related nudges (7d/3d/24h rules), stored in `pf_nudge_suppressions` localStorage.
+- **Dashboard Interview Intelligence Card**: Pattern analysis after 5+ debriefs showing question types, pass rates, strongest areas.
+- **Job Feed Tier Management Suggestions**: Auto-suggest company tier promotion/demotion based on activity with "Update Tier" button.
+- **Job Feed Feed Analytics**: New analytics tab showing match accuracy, false positive rate, score distribution, acceptance trends, top sources.
+- **Pipeline Opaque Recruiter Outreach**: "Quick Add Recruiter Outreach" for unknown company/role, dashed-border cards with "Reveal Details" button.
+- **Research Brief Degraded Mode**: Handles company-unknown, role-unknown, no-JD scenarios with placeholders and degraded banners.
 
 ### Recently Fixed (v3.13.0)
 - **Dashboard Feed Review Section**: Top 5 unreviewed feed items with Accept/Snooze/Dismiss buttons.

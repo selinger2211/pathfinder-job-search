@@ -2810,6 +2810,224 @@ The HTML content should come first, followed by the citations block. Do not incl
     }
 
     /**
+     * Feature 29: Degraded Mode — Assess capability and determine which sections are available.
+     *
+     * Evaluates role and company data completeness:
+     * - Company unknown: skips company-specific sections (2, 3, 4, 8, 9)
+     * - Role unknown: skips role-specific sections (1, 5, 6, 7, 12, 13)
+     * - No JD: marks JD-dependent sections with low confidence
+     *
+     * INPUT: role (object), company (object)
+     * RETURNS: {
+     *   mode: 'full' | 'degraded_company' | 'degraded_role' | 'degraded_jd',
+     *   availableSections: [num, num, ...],
+     *   unavailableSections: [num, num, ...],
+     *   bannerMessage: string,
+     *   hasJD: boolean,
+     *   companyUnknown: boolean,
+     *   roleUnknown: boolean
+     * }
+     */
+    function assessBriefCapability(role, company) {
+      // Check for missing/unknown company
+      const companyUnknown = !company ||
+        !company.name ||
+        company.name.toLowerCase() === 'unknown' ||
+        company.name.toLowerCase().startsWith('unknown (via');
+
+      // Check for missing/unknown role
+      const roleUnknown = !role ||
+        !role.title ||
+        role.title === 'TBD' ||
+        role.title.toLowerCase() === 'unknown';
+
+      // Check for missing JD
+      const hasJD = role && role.jdText && role.jdText.trim().length > 0;
+
+      // Determine mode based on what's missing
+      let mode = 'full';
+      let unavailableSections = [];
+      let bannerMessage = '';
+
+      if (companyUnknown && roleUnknown) {
+        // Both missing — can only show minimal company/role info
+        mode = 'degraded_both';
+        unavailableSections = [1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 13];
+        bannerMessage = 'Limited brief — company and role details pending';
+      } else if (companyUnknown) {
+        // Company unknown — skip company-specific sections (4, 8, 9 per spec)
+        // Also pragmatically skip: 2 (Company Now), 3 (Funding), 5 (Team Intel), 10 (Culture)
+        mode = 'degraded_company';
+        unavailableSections = [2, 3, 4, 5, 8, 9, 10];
+        bannerMessage = 'Limited brief — company not yet identified';
+      } else if (roleUnknown) {
+        // Role unknown — skip role-specific sections: 1, 6, 7, 12, 13
+        // Note: Section 5 stays available (Team & Org is mainly company intel)
+        mode = 'degraded_role';
+        unavailableSections = [1, 6, 7, 12, 13];
+        bannerMessage = 'Limited brief — role details pending';
+      }
+
+      // If no JD, mark JD-dependent sections with low confidence
+      let jdDependentSections = [1, 7, 9, 12, 13];
+      if (!hasJD) {
+        mode = mode === 'full' ? 'degraded_jd' : mode;
+      }
+
+      // Compile available sections (exclude unavailable ones and conditionals on no JD if JD exists)
+      const allSectionNums = SECTION_DEFINITIONS.map(s => s.num);
+      let availableSections = allSectionNums.filter(num =>
+        !unavailableSections.includes(num)
+      );
+
+      // Filter out section 0 if JD exists
+      if (hasJD) {
+        availableSections = availableSections.filter(num => num !== 0);
+      }
+
+      return {
+        mode,
+        availableSections,
+        unavailableSections,
+        bannerMessage,
+        hasJD,
+        companyUnknown,
+        roleUnknown,
+        jdDependentSections: !hasJD ? jdDependentSections : []
+      };
+    }
+
+    /**
+     * Feature 29: Degraded Mode — Render warning banner for incomplete data.
+     *
+     * Shows user-facing banner explaining why the brief is limited and what sections
+     * are unavailable. Styled consistently with other callouts in the brief.
+     *
+     * INPUT: capability (object from assessBriefCapability)
+     * RETURNS: HTML string for banner, or empty string if no degradation
+     */
+    function renderDegradedBanner(capability) {
+      if (capability.mode === 'full') {
+        return '';
+      }
+
+      const bannerClass = 'degraded-mode-banner';
+      const bannerStyles = `
+        padding: var(--space-4);
+        margin-bottom: var(--space-4);
+        background: rgba(251, 191, 36, 0.08);
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        border-radius: var(--radius-sm);
+        display: flex;
+        gap: var(--space-3);
+        align-items: flex-start;
+      `;
+
+      const iconHtml = `<div style="flex-shrink: 0; margin-top: 2px; font-size: 18px;">⚠️</div>`;
+
+      const contentStyles = `
+        flex: 1;
+        font-size: var(--text-sm);
+        line-height: 1.5;
+      `;
+
+      const titleStyles = `
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+      `;
+
+      const messageStyles = `
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+      `;
+
+      const detailsStyles = `
+        font-size: var(--text-xs);
+        color: var(--text-tertiary);
+        padding-top: 8px;
+        border-top: 1px solid rgba(251, 191, 36, 0.2);
+        margin-top: 8px;
+      `;
+
+      let detailsHtml = '';
+      if (capability.companyUnknown) {
+        detailsHtml += '<strong>Missing:</strong> Company details. Skipped: Company Now, Funding, Team Intel, Competitive Landscape, Compensation, Strategic Challenges, Culture.<br>';
+      }
+      if (capability.roleUnknown) {
+        detailsHtml += '<strong>Missing:</strong> Role details. Skipped: Role Decode, Network, Fit Analysis, TMAY Script, Interview Questions.<br>';
+      }
+      if (capability.jdDependentSections.length > 0) {
+        const jdDeps = capability.jdDependentSections.join(', ');
+        detailsHtml += `<strong>No Job Description:</strong> Sections ${jdDeps} will use role title + company only. Add the JD for higher confidence.`;
+      }
+
+      let html = `
+        <div class="${bannerClass}" style="${bannerStyles}">
+          ${iconHtml}
+          <div style="${contentStyles}">
+            <div style="${titleStyles}">${capability.bannerMessage}</div>
+            <div style="${messageStyles}">
+              Update the missing information to unlock the full research brief.
+            </div>
+            <div style="${detailsStyles}">
+              ${detailsHtml}
+            </div>
+          </div>
+        </div>
+      `;
+
+      return html;
+    }
+
+    /**
+     * Feature 29: Degraded Mode — Render placeholder for unavailable section.
+     *
+     * Displays a graceful "Unavailable" placeholder when a section can't be generated
+     * due to missing data (company unknown, role unknown, etc).
+     *
+     * INPUT: sectionNum (number), reason (string - "company unknown", "role unknown", "no JD")
+     * RETURNS: HTML string for placeholder section
+     */
+    function renderUnavailableSectionPlaceholder(sectionNum, reason) {
+      const sectionDef = SECTION_DEFINITIONS.find(s => s.num === sectionNum);
+      if (!sectionDef) return '';
+
+      const placeholderStyles = `
+        padding: var(--space-4);
+        background: var(--bg-elevated);
+        border: 1px dashed var(--bg-subtle);
+        border-radius: var(--radius-sm);
+        text-align: center;
+        color: var(--text-secondary);
+      `;
+
+      const titleStyles = `
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+      `;
+
+      let reasonText = '';
+      if (reason === 'company_unknown') {
+        reasonText = 'This section requires company information. Add company details to unlock.';
+      } else if (reason === 'role_unknown') {
+        reasonText = 'This section requires role details. Add role information to unlock.';
+      } else if (reason === 'no_jd') {
+        reasonText = 'Low confidence — no Job Description available. Add the JD for higher quality analysis.';
+      }
+
+      return `
+        <div style="${placeholderStyles}">
+          <div style="${titleStyles}">Unavailable — ${reason.replace(/_/g, ' ')}</div>
+          <div style="font-size: var(--text-xs); color: var(--text-tertiary);">
+            ${reasonText}
+          </div>
+        </div>
+      `;
+    }
+
+    /**
      * Determine which sections to generate based on the role data.
      * Section 0 only appears when there's no JD.
      * Returns an array of batch arrays: [[preBatch], [batch1], [batch2], [batch3]]
@@ -2837,11 +3055,20 @@ The HTML content should come first, followed by the citations block. Do not incl
 
     /**
      * Get the list of sections that should be visible for this role.
+     * Feature 29: Respects degraded mode — filters out unavailable sections.
      * (Filters out Section 0 if JD exists.)
      */
-    function getVisibleSections(role) {
-      const hasJD = !!(role.jdText && role.jdText.trim().length > 0);
+    function getVisibleSections(role, company) {
+      const hasJD = !!(role && role.jdText && role.jdText.trim().length > 0);
+
+      // Feature 29: Assess capability for degraded mode
+      const capability = assessBriefCapability(role, company);
+
+      // Return sections that are:
+      // 1. Not explicitly marked as unavailable (due to missing company/role)
+      // 2. Not conditionalOnNoJD if JD exists
       return SECTION_DEFINITIONS.filter(s => {
+        if (capability.unavailableSections.includes(s.num)) return false;
         if (s.conditionalOnNoJD && hasJD) return false;
         return true;
       });
@@ -3929,7 +4156,10 @@ The HTML content should come first, followed by the citations block. Do not incl
     async function generateBrief() {
       const role = state.selectedRole;
       const company = state.selectedCompany;
-      if (!role || !company) return;
+
+      // Feature 29: Allow generation even with missing company/role (degraded mode will handle it)
+      if (!role) return;
+      // Company may be missing/unknown in degraded mode, but we need at least a role
       if (state.isGenerating) return; // Prevent double-clicks
 
       // Gather interviewer names
@@ -3951,7 +4181,12 @@ The HTML content should come first, followed by the citations block. Do not incl
       state.generatedSections = {};
 
       const companySlug = getCompanySlug(company.name);
-      const visibleSections = getVisibleSections(role);
+
+      // Feature 29: Assess degraded mode capability
+      const capability = assessBriefCapability(role, company);
+      state.briefCapability = capability;
+
+      const visibleSections = getVisibleSections(role, company);
       const batches = getBatchPlan(role);
 
       // Clear sections area and show TOC
@@ -3959,6 +4194,14 @@ The HTML content should come first, followed by the citations block. Do not incl
       const tocSidebar = document.getElementById('tocSidebar');
       sectionsArea.innerHTML = '';
       tocSidebar.style.display = 'block';
+
+      // Feature 29: Show degraded mode banner if needed
+      const degradedBannerHtml = renderDegradedBanner(capability);
+      if (degradedBannerHtml) {
+        const bannerEl = document.createElement('div');
+        bannerEl.innerHTML = degradedBannerHtml;
+        sectionsArea.appendChild(bannerEl.firstChild);
+      }
 
       // Build TOC
       const tocList = document.getElementById('tocList');
@@ -3971,10 +4214,54 @@ The HTML content should come first, followed by the citations block. Do not incl
         tocList.appendChild(li);
       });
 
-      // Create skeleton placeholders for all sections
+      // Create skeleton placeholders for all visible sections
       visibleSections.forEach(sec => {
         const sectionEl = createSectionSkeleton(sec);
         sectionsArea.appendChild(sectionEl);
+      });
+
+      // Feature 29: Render unavailable section placeholders
+      capability.unavailableSections.forEach(sectionNum => {
+        const sectionDef = SECTION_DEFINITIONS.find(s => s.num === sectionNum);
+        if (!sectionDef) return;
+
+        const section = document.createElement('div');
+        section.className = 'section';
+        section.id = `section-${sectionNum}`;
+        section.setAttribute('data-section-num', sectionNum);
+
+        // Header
+        const header = document.createElement('div');
+        header.className = 'section-header';
+
+        const titleGroup = document.createElement('div');
+        titleGroup.className = 'section-title-group';
+
+        const badge = document.createElement('div');
+        badge.className = 'section-badge';
+        badge.textContent = sectionNum;
+        titleGroup.appendChild(badge);
+
+        const titleEl = document.createElement('h3');
+        titleEl.className = 'section-title';
+        titleEl.textContent = sectionDef.title;
+        titleGroup.appendChild(titleEl);
+        header.appendChild(titleGroup);
+        section.appendChild(header);
+
+        // Content with unavailable placeholder
+        const content = document.createElement('div');
+        content.className = 'section-content';
+        let reason = 'unknown';
+        if (capability.companyUnknown) {
+          reason = 'company_unknown';
+        } else if (capability.roleUnknown) {
+          reason = 'role_unknown';
+        }
+        content.innerHTML = renderUnavailableSectionPlaceholder(sectionNum, reason);
+        section.appendChild(content);
+
+        sectionsArea.appendChild(section);
       });
 
       lucide.createIcons();
@@ -3983,6 +4270,25 @@ The HTML content should come first, followed by the citations block. Do not incl
       let completedCount = 0;
       const totalCount = visibleSections.length;
       const generationStartTime = Date.now();
+
+      // Feature 29: If all sections are unavailable (degraded mode with no generatable sections),
+      // skip generation and just show the unavailable placeholders + sources
+      if (totalCount === 0) {
+        // All sections are unavailable — just show sources if available
+        const sourcesHtml = renderSourcesAggregation();
+        if (sourcesHtml) {
+          const sourcesEl = document.createElement('div');
+          sourcesEl.innerHTML = sourcesHtml;
+          sectionsArea.appendChild(sourcesEl);
+        }
+
+        state.isGenerating = false;
+        updateGenerateButtonLabel(true);
+        const generationDuration = (Date.now() - generationStartTime) / 1000;
+        showGenerationComplete(generationDuration);
+        lucide.createIcons();
+        return;
+      }
 
       for (const batch of batches) {
         // Filter to only sections visible for this role

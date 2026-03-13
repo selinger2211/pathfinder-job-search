@@ -2,7 +2,7 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/pipeline/`
-**Version:** v3.11
+**Version:** v3.14
 **Last Updated:** 2026-03-13
 **Status:** Active — core features and advanced views implemented
 
@@ -469,7 +469,7 @@ In the role detail panel, the Comms Log appears as a scrollable timeline:
 
 ## 8. Opaque Recruiter Outreach
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.14.0)** — "Quick Add Recruiter Outreach" for unknown company/role. Dashed-border cards with "Reveal Details" button.
 
 Some recruiter emails mention opportunities without revealing the company or role details upfront. The Pipeline supports "opaque" entries that can later be revealed:
 

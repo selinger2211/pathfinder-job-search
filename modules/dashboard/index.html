@@ -1873,6 +1873,14 @@
         </div>
       </div>
 
+      <!-- FEATURE 37: INTERVIEW INTELLIGENCE CARD -->
+      <div class="chart-section" style="margin-top: var(--space-6); border-top: 1px solid var(--bg-subtle); padding-top: var(--space-6);">
+        <div class="summary-title">Interview Intelligence</div>
+        <div id="interviewIntelligenceContainer">
+          <!-- Content populated by JavaScript -->
+        </div>
+      </div>
+
       <!-- FEATURE 6: NUDGE PREFERENCES SECTION -->
       <div class="nudge-prefs-section" id="nudgePrefsSection">
         <div class="nudge-prefs-title">Nudge Preferences</div>
@@ -2300,23 +2308,176 @@
       return hoursPassed < 24; // Still dismissed if less than 24 hours
     }
 
+    // ================================================================
+    // FEATURE 16: SUPPRESSION CHAINS
+    // ================================================================
+
+    /**
+     * Define suppression rules: when user dismisses a nudge, related nudges get suppressed
+     * Returns array of {targetRuleId, duration} for a given source rule
+     * INPUT: ruleId (string), roleId (string), company (string)
+     * OUTPUT: array of suppression targets
+     */
+    /**
+     * Define suppression rules mapping (Feature 16)
+     * When user dismisses a nudge, related nudges are suppressed for specified duration
+     * INPUT: ruleId (source nudge rule), roleId, company
+     * OUTPUT: array of {targetRuleId, duration} suppressions to apply
+     */
+    function getSuppressionTargets(ruleId, roleId, company) {
+      const suppressionMap = {
+        // Dismissing "stale role" → suppress "outreach follow-up" for 7 days
+        'stale_discovered': [
+          { targetRuleId: 'outreach_followup', duration: 7 }
+        ],
+        // Dismissing "applied, no response" → suppress "outreach follow-up" for 3 days
+        'applied_no_response': [
+          { targetRuleId: 'outreach_followup', duration: 3 }
+        ],
+        // Dismissing "screen prep" (interview prep) → suppress related nudges until interview
+        // Duration set to 7 days (assumes most interviews happen within a week)
+        'screen_prep': [
+          { targetRuleId: 'interview_coming', duration: 7 }
+        ],
+        // Dismissing "interview coming" → suppress research/prep nudges for 3 days (interview period)
+        'interview_coming': [
+          { targetRuleId: 'screen_prep', duration: 3 }
+        ],
+        // Company profile sparse: only suppress itself to avoid repeat nudges
+        'company_profile_sparse': [
+          { targetRuleId: 'company_profile_sparse', duration: 30 }
+        ]
+      };
+
+      // Default behavior: suppress lower-priority nudges for 24 hours on any dismissal
+      // This is implemented per-role to avoid suppressing unrelated nudges
+      return suppressionMap[ruleId] || [];
+    }
+
+    /**
+     * Apply suppression chain when user dismisses a nudge
+     * Stores suppressions in pf_nudge_suppressions localStorage
+     * INPUT: ruleId (source), roleId, company
+     * OUTPUT: Updates localStorage with new suppressions
+     */
+    function applySuppression(ruleId, roleId, company) {
+      let suppressions = [];
+      try {
+        const stored = localStorage.getItem('pf_nudge_suppressions');
+        if (stored) suppressions = JSON.parse(stored);
+      } catch (e) {
+        console.warn('Could not parse pf_nudge_suppressions:', e);
+      }
+
+      const targets = getSuppressionTargets(ruleId, roleId, company);
+      const now = new Date();
+
+      // Add each target as a suppression entry
+      targets.forEach(target => {
+        const suppressedUntil = new Date(now.getTime() + target.duration * 24 * 60 * 60 * 1000);
+
+        suppressions.push({
+          sourceRuleId: ruleId,
+          targetRuleId: target.targetRuleId,
+          roleId: roleId,
+          company: company,
+          suppressedAt: now.toISOString(),
+          suppressedUntil: suppressedUntil.toISOString()
+        });
+      });
+
+      try {
+        localStorage.setItem('pf_nudge_suppressions', JSON.stringify(suppressions));
+      } catch (e) {
+        console.warn('Could not save pf_nudge_suppressions:', e);
+      }
+    }
+
+    /**
+     * Check if a nudge is suppressed by active suppression chain
+     * INPUT: ruleId, roleId, company
+     * OUTPUT: boolean, true if suppressed
+     */
+    function isSuppressed(ruleId, roleId, company) {
+      let suppressions = [];
+      try {
+        const stored = localStorage.getItem('pf_nudge_suppressions');
+        if (stored) suppressions = JSON.parse(stored);
+      } catch (e) {
+        return false;
+      }
+
+      const now = new Date();
+      return suppressions.some(s =>
+        s.targetRuleId === ruleId &&
+        (s.roleId === roleId || !s.roleId) &&
+        (!s.company || s.company === company) &&
+        new Date(s.suppressedUntil) > now
+      );
+    }
+
+    /**
+     * Clean up expired suppressions from localStorage
+     * Removes all suppressions that have expired
+     */
+    function cleanupSuppressions() {
+      let suppressions = [];
+      try {
+        const stored = localStorage.getItem('pf_nudge_suppressions');
+        if (stored) suppressions = JSON.parse(stored);
+      } catch (e) {
+        return;
+      }
+
+      const now = new Date();
+      const active = suppressions.filter(s => new Date(s.suppressedUntil) > now);
+
+      try {
+        localStorage.setItem('pf_nudge_suppressions', JSON.stringify(active));
+      } catch (e) {
+        console.warn('Could not save cleaned suppressions:', e);
+      }
+    }
+
+    /**
+     * Count currently suppressed nudges
+     * Returns count of active suppressions
+     */
+    function getSuppressionCount() {
+      let suppressions = [];
+      try {
+        const stored = localStorage.getItem('pf_nudge_suppressions');
+        if (stored) suppressions = JSON.parse(stored);
+      } catch (e) {
+        return 0;
+      }
+
+      const now = new Date();
+      return suppressions.filter(s => new Date(s.suppressedUntil) > now).length;
+    }
+
     /**
      * Generate all nudges for today by scanning roles and companies
      * Implements the full 12-rule nudge engine from the PRD
      * Returns array of nudge objects sorted by priority
+     * Now respects suppression chains (Feature 16)
      */
     function generateNudges() {
       const { companies, roles, connections, dismissedNudges } = loadData();
       const nudges = [];
       const now = new Date();
 
+      // Clean up expired suppressions at start of generation
+      cleanupSuppressions();
+
       // RULE 1: Stale discovered roles (>3 days in discovered stage)
+      // Check suppression chains (Feature 16)
       roles.forEach(role => {
         if (role.stage === 'discovered') {
           const daysSinceAdded = daysSince(role.dateAdded);
           if (daysSinceAdded > 3) {
             const nudgeId = generateNudgeId('stale_discovered', role.id);
-            if (!isDismissed(nudgeId, dismissedNudges)) {
+            if (!isDismissed(nudgeId, dismissedNudges) && !isSuppressed('stale_discovered', role.id, role.company)) {
               nudges.push({
                 id: nudgeId,
                 priority: 'suggested',
@@ -2354,12 +2515,13 @@
 
       // RULE 3: Applied, no response (>10 days in applied stage)
       // Now reads comms log for context-aware follow-up suggestions
+      // Check suppression chains (Feature 16)
       roles.forEach(role => {
         if (role.stage === 'applied') {
           const daysSinceApplied = daysSince(role.lastActivity || role.dateAdded);
           if (daysSinceApplied > 10) {
             const nudgeId = generateNudgeId('applied_no_response', role.id);
-            if (!isDismissed(nudgeId, dismissedNudges)) {
+            if (!isDismissed(nudgeId, dismissedNudges) && !isSuppressed('applied_no_response', role.id, role.company)) {
               const lastComms = getLatestCommsForRole(role.id, roles);
               let nudgeText = `<span class="nudge-highlight">${role.company}</span> hasn't responded to your <span class="nudge-highlight">${role.title}</span> application in ${daysSinceApplied} days`;
 
@@ -2618,6 +2780,7 @@
 
       // RULE 13: Company profile sparse (Feature 3)
       // Check if company has <50% profile completion AND has active role
+      // Check suppression chains (Feature 16)
       const nudgePrefs = loadNudgePrefs();
       if (nudgePrefs['company_profile_sparse'] !== false) {
         companies.forEach(company => {
@@ -2628,7 +2791,7 @@
           const completion = getCompanyProfileCompletion(company);
           if (completion < 50) {
             const nudgeId = generateNudgeId('company_profile_sparse', company.id || company.name);
-            if (!isDismissed(nudgeId, dismissedNudges)) {
+            if (!isDismissed(nudgeId, dismissedNudges) && !isSuppressed('company_profile_sparse', null, company.name)) {
               nudges.push({
                 id: nudgeId,
                 priority: 'informational',
@@ -2793,6 +2956,262 @@
           progressedThisWeek: rolesProgressedThisWeek,
         },
       };
+    }
+
+    // ================================================================
+    // FEATURE 37: INTERVIEW INTELLIGENCE CARD
+    // ================================================================
+
+    /**
+     * Compute interview intelligence analytics from debrief data
+     * Requires 10+ debriefs to unlock insights
+     * INPUT: debriefs (array), roles (array)
+     * OUTPUT: analytics object with patterns, conversion rates, etc.
+     */
+    /**
+     * Analyze debrief data to extract interview patterns and trends (Feature 37)
+     * Unlocked after 5+ debriefs, shows patterns like question types, pass rates, top companies
+     * INPUT: debriefs array, roles array
+     * OUTPUT: intelligence object with patterns or unlock progress
+     */
+    function computeInterviewIntelligence(debriefs, roles) {
+      if (!debriefs || debriefs.length < 5) {
+        return {
+          unlocked: false,
+          debriefCount: debriefs ? debriefs.length : 0,
+          required: 5
+        };
+      }
+
+      // 1. Extract common question types from debrief sections
+      const questionTypes = {};
+      debriefs.forEach(debrief => {
+        if (debrief.sections) {
+          debrief.sections.forEach(section => {
+            const type = section.type || section.category || 'general';
+            questionTypes[type] = (questionTypes[type] || 0) + 1;
+          });
+        }
+      });
+
+      // Sort and get top 5 question types
+      const topQuestions = Object.entries(questionTypes)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([type, count]) => ({ type, count }));
+
+      // 2. Calculate pass rate by interview type (from feedback patterns)
+      const passRateByType = {};
+      debriefs.forEach(debrief => {
+        const type = debrief.interviewType || 'general';
+        if (!passRateByType[type]) {
+          passRateByType[type] = { passed: 0, total: 0 };
+        }
+        passRateByType[type].total++;
+
+        // Check feedback for indicators of success (heuristic)
+        if (debrief.feedback && debrief.feedback.toLowerCase().includes('strong')) {
+          passRateByType[type].passed++;
+        } else if (debrief.outcome === 'passed' || debrief.outcome === 'advance') {
+          passRateByType[type].passed++;
+        }
+      });
+
+      // Convert to percentages
+      const passRates = Object.entries(passRateByType).map(([type, data]) => ({
+        type: type.charAt(0).toUpperCase() + type.slice(1),
+        rate: data.total > 0 ? Math.round((data.passed / data.total) * 100) : 0,
+        count: data.total
+      }));
+
+      // 3. Calculate average days from interview to offer
+      const interviewToOfferDays = [];
+      debriefs.forEach(debrief => {
+        if (debrief.date && debrief.offerDate) {
+          const days = Math.floor((new Date(debrief.offerDate) - new Date(debrief.date)) / (1000 * 60 * 60 * 24));
+          if (days > 0 && days < 365) {
+            interviewToOfferDays.push(days);
+          }
+        }
+      });
+
+      const avgDaysToOffer = interviewToOfferDays.length > 0
+        ? Math.round(interviewToOfferDays.reduce((a, b) => a + b, 0) / interviewToOfferDays.length)
+        : null;
+
+      // 4. Top 3 companies by interview volume
+      const companyVolume = {};
+      debriefs.forEach(debrief => {
+        const company = debrief.company || 'Unknown';
+        companyVolume[company] = (companyVolume[company] || 0) + 1;
+      });
+
+      const topCompanies = Object.entries(companyVolume)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([name, count]) => ({ name, count }));
+
+      // 5. Strongest areas based on feedback patterns
+      const feedbackKeywords = {};
+      debriefs.forEach(debrief => {
+        if (debrief.feedback) {
+          const feedback = debrief.feedback.toLowerCase();
+          const strengths = ['strong', 'excellent', 'great', 'well', 'confident', 'articulate', 'clear', 'knowledgeable', 'impressive'];
+          strengths.forEach(strength => {
+            if (feedback.includes(strength)) {
+              feedbackKeywords[strength] = (feedbackKeywords[strength] || 0) + 1;
+            }
+          });
+        }
+      });
+
+      const strongestAreas = Object.entries(feedbackKeywords)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([area, count]) => ({ area, mentions: count }));
+
+      return {
+        unlocked: true,
+        debriefCount: debriefs.length,
+        topQuestionTypes: topQuestions,
+        passRateByType: passRates,
+        avgInterviewToOfferDays: avgDaysToOffer,
+        topCompaniesByVolume: topCompanies,
+        strongestAreas: strongestAreas
+      };
+    }
+
+    /**
+     * Render interview intelligence card (Feature 37)
+     * Shows patterns after 5+ debriefs, or unlock progress (X/5) otherwise
+     * Displays: top question types, pass rates by type, avg interview-to-offer days,
+     * most interviewed companies, and strongest areas from debrief feedback
+     */
+    function renderInterviewIntelligence() {
+      const container = document.getElementById('interviewIntelligenceContainer');
+      if (!container) return;
+
+      try {
+        const debriefs = JSON.parse(localStorage.getItem('pf_debriefs') || '[]');
+        const { roles } = loadData();
+
+        const intelligence = computeInterviewIntelligence(debriefs, roles);
+
+        if (!intelligence.unlocked) {
+          // Show unlock progress
+          const progress = Math.round((intelligence.debriefCount / intelligence.required) * 100);
+          container.innerHTML = `
+            <div style="text-align: center; padding: var(--space-6);">
+              <div style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-3); color: var(--text-primary);">Interview Intelligence</div>
+              <div style="margin-bottom: var(--space-4); color: var(--text-secondary);">
+                Complete <strong>${intelligence.required - intelligence.debriefCount}</strong> more debrief${intelligence.required - intelligence.debriefCount !== 1 ? 's' : ''} to unlock patterns and insights
+              </div>
+              <div style="background: var(--bg-secondary); border-radius: var(--radius); height: 8px; overflow: hidden;">
+                <div style="width: ${progress}%; height: 100%; background: var(--accent); transition: width 300ms var(--ease-default);"></div>
+              </div>
+              <div style="margin-top: var(--space-2); font-size: var(--text-xs); color: var(--text-tertiary);">${intelligence.debriefCount} / ${intelligence.required} debriefs</div>
+            </div>
+          `;
+          return;
+        }
+
+        // Render full intelligence report
+        let html = '<div style="display: flex; flex-direction: column; gap: var(--space-6);">';
+
+        // Section 1: Top Question Types
+        if (intelligence.topQuestionTypes.length > 0) {
+          html += `
+            <div>
+              <div style="font-weight: 600; margin-bottom: var(--space-3); color: var(--text-primary);">Most Common Question Types</div>
+              <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+          `;
+          intelligence.topQuestionTypes.forEach(q => {
+            html += `
+              <div style="display: flex; align-items: center; gap: var(--space-2);">
+                <div style="flex: 1; font-size: var(--text-sm);">${q.type}</div>
+                <div style="width: 120px; background: var(--bg-secondary); border-radius: var(--radius); height: 6px; overflow: hidden;">
+                  <div style="width: ${Math.min((q.count / intelligence.debriefCount) * 100, 100)}%; height: 100%; background: var(--accent);"></div>
+                </div>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary); width: 30px; text-align: right;">${q.count}x</div>
+              </div>
+            `;
+          });
+          html += '</div></div>';
+        }
+
+        // Section 2: Pass Rate by Interview Type
+        if (intelligence.passRateByType.length > 0) {
+          html += `
+            <div>
+              <div style="font-weight: 600; margin-bottom: var(--space-3); color: var(--text-primary);">Pass Rate by Interview Type</div>
+              <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+          `;
+          intelligence.passRateByType.forEach(pr => {
+            const color = pr.rate >= 70 ? 'var(--accent)' : pr.rate >= 50 ? 'var(--warning)' : 'var(--error)';
+            html += `
+              <div style="display: flex; align-items: center; gap: var(--space-2);">
+                <div style="flex: 1; font-size: var(--text-sm);">${pr.type} (${pr.count})</div>
+                <div style="width: 120px; background: var(--bg-secondary); border-radius: var(--radius); height: 6px; overflow: hidden;">
+                  <div style="width: ${pr.rate}%; height: 100%; background: ${color};"></div>
+                </div>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary); width: 40px; text-align: right; font-weight: 600;">${pr.rate}%</div>
+              </div>
+            `;
+          });
+          html += '</div></div>';
+        }
+
+        // Section 3: Time to Offer
+        if (intelligence.avgInterviewToOfferDays !== null) {
+          html += `
+            <div style="padding: var(--space-3); background: var(--bg-secondary); border-radius: var(--radius);">
+              <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1);">Average Interview → Offer</div>
+              <div style="font-size: var(--text-lg); font-weight: 600; color: var(--text-primary);">${intelligence.avgInterviewToOfferDays} days</div>
+            </div>
+          `;
+        }
+
+        // Section 4: Top Companies
+        if (intelligence.topCompaniesByVolume.length > 0) {
+          html += `
+            <div>
+              <div style="font-weight: 600; margin-bottom: var(--space-3); color: var(--text-primary);">Most Interviewed Companies</div>
+              <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+          `;
+          intelligence.topCompaniesByVolume.forEach(company => {
+            html += `
+              <div style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2); background: var(--bg-secondary); border-radius: var(--radius);">
+                <div style="flex: 1; font-size: var(--text-sm); font-weight: 500;">${company.name}</div>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary);">${company.count} interview${company.count !== 1 ? 's' : ''}</div>
+              </div>
+            `;
+          });
+          html += '</div></div>';
+        }
+
+        // Section 5: Strongest Areas
+        if (intelligence.strongestAreas.length > 0) {
+          html += `
+            <div>
+              <div style="font-weight: 600; margin-bottom: var(--space-3); color: var(--text-primary);">Your Strongest Areas</div>
+              <div style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+          `;
+          intelligence.strongestAreas.forEach(area => {
+            html += `
+              <div style="padding: var(--space-2) var(--space-3); background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: var(--radius); font-size: var(--text-sm);">
+                ${area.area.charAt(0).toUpperCase() + area.area.slice(1)}
+              </div>
+            `;
+          });
+          html += '</div></div>';
+        }
+
+        html += '</div>';
+        container.innerHTML = html;
+      } catch (e) {
+        console.warn('[Dashboard] Failed to render interview intelligence:', e);
+        container.innerHTML = '<p class="empty-state">Could not load interview data</p>';
+      }
     }
 
     // ================================================================
@@ -3260,12 +3679,12 @@
         </div>
       `;
 
-      // Dismiss button functionality with logging (Feature 5)
+      // Dismiss button functionality with logging (Feature 5) and suppression chains (Feature 16)
       const dismissBtn = card.querySelector('.nudge-dismiss-btn');
       dismissBtn.addEventListener('click', () => {
         const ruleId = nudge.ruleId || nudge.trigger;
         logNudge(ruleId, nudge.roleId, 'dismissed');
-        dismissNudge(nudge.id);
+        dismissNudge(nudge.id, nudge); // Pass nudge object to apply suppressions
         card.remove();
       });
 
@@ -3283,8 +3702,9 @@
 
     /**
      * Dismiss a nudge (mark as dismissed, expires in 24 hours)
+     * Also applies suppression chains (Feature 16)
      */
-    function dismissNudge(nudgeId) {
+    function dismissNudge(nudgeId, nudge = null) {
       const data = loadData();
       const dismissed = data.dismissedNudges.find(d => d.nudgeId === nudgeId);
 
@@ -3296,6 +3716,12 @@
       }
 
       saveDismissedNudges(data.dismissedNudges);
+
+      // Apply suppression chain if nudge object provided (Feature 16)
+      if (nudge) {
+        const ruleId = nudge.ruleId || nudge.trigger;
+        applySuppression(ruleId, nudge.roleId, nudge.company);
+      }
     }
 
     /**
@@ -3563,6 +3989,7 @@
     /**
      * Render nudge preference toggles for each rule
      * Allows users to enable/disable specific nudge rules
+     * Shows count of currently suppressed nudges (Feature 16)
      */
     function renderNudgePreferences() {
       const container = document.getElementById('nudgePrefsContainer');
@@ -3570,6 +3997,7 @@
       if (!container) return;
 
       const prefs = loadNudgePrefs();
+      const suppressionCount = getSuppressionCount();
 
       // Define all nudge rules with friendly labels
       const rules = [
@@ -3624,7 +4052,12 @@
         })
         .join('');
 
-      container.innerHTML = html;
+      // Add suppression status info (Feature 16)
+      const suppressionInfo = suppressionCount > 0
+        ? `<div style="margin-top: var(--space-4); padding: var(--space-2); background: rgba(59, 130, 246, 0.1); border-radius: var(--radius); font-size: var(--text-xs); color: var(--text-secondary);"><strong>${suppressionCount}</strong> nudge${suppressionCount !== 1 ? 's' : ''} currently suppressed</div>`
+        : '';
+
+      container.innerHTML = html + suppressionInfo;
 
       // Add event listeners to toggles
       const toggles = container.querySelectorAll('input[type="checkbox"]');
@@ -4360,6 +4793,9 @@
           if (event.key === 'pf_nudge_prefs') {
             renderNudges(); // When preferences change, re-filter nudges
           }
+          if (event.key === 'pf_debriefs') {
+            renderInterviewIntelligence(); // Feature 37: Re-render when debriefs update
+          }
         }
       });
     }
@@ -4409,6 +4845,9 @@
       renderConversionFunnel();
       renderTimeInStage();
 
+      // Render Feature 37: Interview Intelligence
+      renderInterviewIntelligence();
+
       // Render Feature 6: Nudge Preferences
       renderNudgePreferences();
 
@@ -4440,10 +4879,11 @@
       // Re-render pipeline stats every minute
       setInterval(renderPipelineStats, 60000);
 
-      // Re-render conversion funnel and time in stage every 5 minutes
+      // Re-render conversion funnel, time in stage, and interview intelligence every 5 minutes
       setInterval(() => {
         renderConversionFunnel();
         renderTimeInStage();
+        renderInterviewIntelligence();
       }, 5 * 60 * 1000);
 
       // Re-render sync status every 5 minutes (checks for stale data)

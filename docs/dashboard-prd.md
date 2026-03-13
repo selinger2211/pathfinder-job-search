@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/dashboard/`
-**Version:** v3.13
+**Version:** v3.14
 **Last Updated:** 2026-03-13
-**Status:** Active — v3.13.0 features live
+**Status:** Active — v3.14.0 features live
 
 ---
 
@@ -300,11 +300,11 @@ New from Job Feed (3 roles matched today)
 
 ---
 
-### 3.5 Interview Intelligence Card (Appears After 10+ Debriefs)
+### 3.5 Interview Intelligence Card (Appears After 5+ Debriefs)
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.14.0)** — Pattern analysis card after 5+ debriefs showing question types, pass rates, and strongest areas.
 
-Once the Post-Interview Debrief Agent has accumulated 10+ interview records, a summary card will appear showing patterns:
+Once the Post-Interview Debrief Agent has accumulated 5+ interview records, a summary card will appear showing patterns:
 
 ```
 Interview Intelligence (based on 12 debriefs)
@@ -1060,9 +1060,9 @@ The Dashboard embodies five principles from the main Pathfinder spec:
 - **Max nudges per load:** Display at most 5 nudges per page load. Prioritize by severity: Critical (offer expiring, interview tomorrow) > Important (follow-up overdue, stale role) > Suggested (new role to research, prep nudge).
 - **Cooldown periods:** Once dismissed, a nudge rule doesn't fire again for 24 hours for that specific role. Critical nudges (offer/interview) re-fire after 6 hours. Global cooldown: if user dismisses 3+ nudges in one session, pause nudge generation until next page load.
 
-> **Status: Planned** — Suppression chains not yet implemented.
+> **Status: Implemented (v3.14.0)** — Suppression chains implemented. Dismissing nudge auto-suppresses related nudges using 7d/3d/24h rules. Stored in `pf_nudge_suppressions` localStorage.
 
-- **Suppression chains:** Planned. Dismissing "Prep for interview at {company}" will suppress "Generate research brief for {company}" for 48 hours. Dismissing "Follow up with {contact}" will suppress "Outreach needed for {role}" for 24 hours.
+- **Suppression chains:** Dismissing "Prep for interview at {company}" will suppress "Generate research brief for {company}" for 48 hours. Dismissing "Follow up with {contact}" will suppress "Outreach needed for {role}" for 24 hours. Suppression data stored in `pf_nudge_suppressions` with rule ID chains and expiration timestamps.
 
 > **Status: Planned** — Nudge logging not yet implemented.
 

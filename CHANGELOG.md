@@ -4,6 +4,32 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.14.0 — 2026-03-13
+
+### What Changed — Dashboard & Pipeline: 6 Tier 2 Features
+
+**Summary:** Major release completing domain-specific intelligence and opaque recruiter outreach patterns. Tier 2 features enable dashboard nudge suppression chains, interview pattern recognition, feed analytics, tier management suggestions, and graceful handling of confidential opportunities.
+
+**Changes:**
+
+**Dashboard Module (#16, #37):**
+1. **Suppression Chains** — Dismissing nudge auto-suppresses related nudges for same role (7d/3d/24h rules). Dismissal stored in `pf_nudge_suppressions` localStorage with rule ID chains and expiration timestamps. Related nudges suppressed without re-firing until TTL expires.
+
+2. **Interview Intelligence Card** — Appears after 5+ debriefs (reduced from 10+ to surface patterns earlier). Shows pattern analysis with question types, pass rates, strongest areas. Card updated on debrief completion. Reads from `pf_debriefs` array with aggregation logic.
+
+**Job Feed Module (#25, #34):**
+3. **Tier Management Suggestions** — Auto-suggest company tier promotion/demotion based on activity metrics (role volume, recency, conversion rate). "Update Tier" button on feed cards and dashboard nudges. Promotion triggers: strong match (80+) at dormant/watching company, multiple roles within 30 days, recruiter outreach, networking signal. Demotion signals: no new roles 60+ days, all roles closed as rejected/ghosted, layoff news.
+
+4. **Feed Analytics** — New analytics tab showing match accuracy, false positive rate, score distribution histogram, acceptance trends, and top sources. Metrics calculated from feed run history (`pf_feed_runs`) and pipeline closure data. Helps users tune scoring model and identify high-signal sources.
+
+**Pipeline Module (#27):**
+5. **Opaque Recruiter Outreach** — "Quick Add Recruiter Outreach" for when company/role is unknown. Creates role with `company: "Unknown Company"`, `title: "Confidential Opportunity"`. Dashed-border cards visually distinguish from normal roles. "Reveal Details" button enables editing company and title once details shared. System auto-creates company profile on reveal.
+
+**Research Brief Module (#29):**
+6. **Degraded Mode** — Handles company-unknown, role-unknown, no-JD scenarios gracefully. Skips unavailable sections (Company Now, Funding, Network), shows placeholder messages explaining what's needed to unlock them. Available sections generate with reduced scope. Degraded banners indicate what information is needed. Sections regenerate automatically when company/role revealed or JD added.
+
+---
+
 ## v3.13.0 — 2026-03-13
 
 ### What Changed — Cross-Module Wiring: 12 Tier 2 Features (10 Modules)

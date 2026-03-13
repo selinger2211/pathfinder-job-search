@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/job-feed-listener/`
-**Version:** v3.13
+**Version:** v3.14
 **Last Updated:** 2026-03-13
-**Status:** Active — v3.13.0 features live
+**Status:** Active — v3.14.0 features live
 
 ---
 
@@ -621,7 +621,7 @@ New companies start at **Dormant** tier by default. The match score on the trigg
 
 ## 8. Tier Management Suggestions
 
-> **Status: Planned** — Tier promotion/demotion suggestions are planned for Phase 5. Currently, only manual tier management exists in the Pipeline module.
+> **Status: Implemented (v3.14.0)** — Tier promotion/demotion suggestions now active. Auto-suggest company tier promotion/demotion based on activity with "Update Tier" button.
 
 The Feed actively manages the funnel by suggesting tier changes:
 
@@ -642,7 +642,7 @@ All suggestions are surfaced as nudges on the Dashboard. The Feed **never auto-c
 
 ## 9. Feed Analytics
 
-> **Status: Planned** — Not yet implemented. Analytics infrastructure is planned for Phase 5. Current implementation includes basic role counters.
+> **Status: Implemented (v3.14.0)** — Analytics tab with match accuracy, false positive rate, score distribution histogram, acceptance trends, and top sources.
 
 The Feed tracks its own performance to help tune the scoring model:
 

@@ -2208,6 +2208,15 @@
           </svg>
           <span>New Role</span>
         </button>
+
+        <button id="add-recruiter-outreach-btn" class="toolbar-button" style="background: var(--accent-subtle); color: var(--accent);" aria-label="Quick add recruiter outreach without company details yet" title="Add minimal outreach info, fill details later">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+            <path d="M16 11h6"></path>
+          </svg>
+          <span>Recruiter Outreach</span>
+        </button>
       </div>
     </div>
 
@@ -2391,6 +2400,54 @@
       <div class="modal-footer">
         <button id="modal-cancel" class="btn btn-secondary" aria-label="Cancel and close this dialog without saving">Cancel</button>
         <button id="modal-submit" class="btn btn-primary" aria-label="Save this new role to your pipeline">Add Role</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURE 27: Quick Add Recruiter Outreach Modal -->
+  <div class="modal-overlay" id="recruiter-outreach-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Quick Add Recruiter Outreach</h2>
+        <button class="modal-close" id="recruiter-modal-close" aria-label="Close dialog">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--text-secondary); font-size: var(--text-sm); margin-bottom: var(--space-4);">
+          Track minimal outreach info. Fill in company & role details later when they're revealed.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label">Recruiter Name *</label>
+          <input type="text" id="recruiter-name" class="form-input" placeholder="e.g., Sarah Chen" aria-label="Name of the recruiter who contacted you" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Source *</label>
+          <select id="recruiter-source" class="form-select" aria-label="How the recruiter contacted you">
+            <option value="">— Select source —</option>
+            <option value="linkedin">LinkedIn</option>
+            <option value="email">Email</option>
+            <option value="referral">Referral</option>
+            <option value="phone">Phone</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Notes <span style="color: var(--text-tertiary); font-weight: 400;">(optional)</span></label>
+          <textarea id="recruiter-notes" class="form-textarea" placeholder="Paste their message or any details about the opportunity..." aria-label="Notes about the recruiter or opportunity" style="min-height: 80px;"></textarea>
+        </div>
+
+        <div style="background: var(--bg-base); border-radius: var(--radius-sm); padding: var(--space-3); margin-top: var(--space-4);">
+          <p style="font-size: var(--text-xs); color: var(--text-tertiary); margin: 0;">
+            This creates an opaque role with <strong>company: "Unknown (via Recruiter Name)"</strong> and <strong>title: "TBD"</strong>.
+            When details emerge, you can click <strong>"Reveal Details"</strong> to fill them in.
+          </p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="recruiter-modal-cancel" class="btn btn-secondary" aria-label="Cancel without saving">Cancel</button>
+        <button id="recruiter-modal-submit" class="btn btn-primary" aria-label="Create opaque recruiter outreach entry">Create Outreach</button>
       </div>
     </div>
   </div>
@@ -3496,6 +3553,198 @@
       localStorage.setItem('pf_roles', JSON.stringify(roles));
     }
 
+    // ============================================================
+    // FEATURE 27: OPAQUE RECRUITER OUTREACH
+    // ============================================================
+
+    /**
+     * Create a minimal opaque role for recruiter outreach.
+     * Used when company/role details aren't known yet.
+     *
+     * INPUT: recruiterName (string), source (string: linkedin/email/referral/phone/other), notes (string)
+     * OUTPUT: creates and saves a role with isOpaque: true flag
+     * SIDE EFFECTS: saves to pf_roles, creates placeholder company
+     */
+    function createOpaqueRole(recruiterName, source, notes) {
+      try {
+        const roles = getRoles();
+        const companies = getCompanies();
+
+        // Create a placeholder company name
+        const placeholderCompany = `Unknown (via ${recruiterName})`;
+
+        // Ensure placeholder company exists
+        const companyExists = companies.some(c =>
+          c.name.toLowerCase() === placeholderCompany.toLowerCase()
+        );
+        if (!companyExists) {
+          companies.push({
+            name: placeholderCompany,
+            domain: null,
+            tier: 'watching',
+            dateAdded: Date.now(),
+            logoUrl: null,
+            isOpaque: true
+          });
+          saveCompanies(companies);
+        }
+
+        // Create the opaque role
+        const opaqueRole = {
+          id: `role-${Date.now()}`,
+          company: placeholderCompany,
+          title: 'TBD',
+          positioning: 'ic',
+          tier: 'watching',
+          stage: 'outreach',
+          substage: '',
+          source: source,
+          dateAdded: Date.now(),
+          lastActivity: Date.now(),
+          stageHistory: [],
+          connections: 0,
+          jd: '',
+          url: '',
+          location: '',
+          salary: {},
+          contact: {
+            name: recruiterName,
+            title: '',
+            email: '',
+            linkedin: '',
+            source: source,
+            relationship: 'new',
+            context: notes
+          },
+          isOpaque: true,
+          opaqueData: {
+            recruiterName: recruiterName,
+            source: source,
+            initialNotes: notes
+          }
+        };
+
+        roles.push(opaqueRole);
+        saveRoles(roles);
+
+        console.log(`[Pipeline] Created opaque role from recruiter: ${recruiterName}`);
+        return opaqueRole;
+      } catch (e) {
+        console.error('[Pipeline] Failed to create opaque role:', e);
+        throw e;
+      }
+    }
+
+    /**
+     * Reveal details of an opaque role by allowing company and title to be filled in.
+     * Shows a modal for the user to enter company and role details.
+     *
+     * INPUT: roleId (string)
+     * OUTPUT: opens modal for editing company and title
+     */
+    function revealOpaqueRole(roleId) {
+      const roles = getRoles();
+      const role = roles.find(r => r.id === roleId);
+
+      if (!role || !role.isOpaque) return;
+
+      // Create a reveal modal
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.style.zIndex = '10000';
+      modal.innerHTML = `
+        <div class="modal">
+          <div class="modal-header">
+            <h2 class="modal-title">Reveal Recruiter Outreach Details</h2>
+            <button class="modal-close" aria-label="Close dialog">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p style="color: var(--text-secondary); font-size: var(--text-sm); margin-bottom: var(--space-4);">
+              You can now fill in the actual company name and role title.
+            </p>
+
+            <div class="form-group">
+              <label class="form-label">Company Name *</label>
+              <input type="text" id="reveal-company" class="form-input" placeholder="e.g., Stripe" value="${role.company}" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Role Title *</label>
+              <input type="text" id="reveal-title" class="form-input" placeholder="e.g., Senior Product Manager" value="${role.title === 'TBD' ? '' : role.title}" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Location <span style="color: var(--text-tertiary); font-weight: 400;">(optional)</span></label>
+              <input type="text" id="reveal-location" class="form-input" placeholder="e.g., San Francisco, CA" value="${role.location || ''}">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Job Description <span style="color: var(--text-tertiary); font-weight: 400;">(optional)</span></label>
+              <textarea id="reveal-jd" class="form-textarea" placeholder="Paste the job description..." style="min-height: 100px;">${role.jd || ''}</textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-ghost" id="reveal-cancel">Cancel</button>
+            <button class="btn btn-primary" id="reveal-submit">Save Details</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      // Handle close button
+      modal.querySelector('.modal-close').onclick = () => modal.remove();
+      modal.querySelector('#reveal-cancel').onclick = () => modal.remove();
+
+      // Handle submit
+      modal.querySelector('#reveal-submit').onclick = () => {
+        const newCompany = modal.querySelector('#reveal-company').value.trim();
+        const newTitle = modal.querySelector('#reveal-title').value.trim();
+        const newLocation = modal.querySelector('#reveal-location').value.trim();
+        const newJD = modal.querySelector('#reveal-jd').value.trim();
+
+        if (!newCompany || !newTitle) {
+          alert('Company name and role title are required');
+          return;
+        }
+
+        // Update the role to no longer be opaque
+        const updatedRole = {
+          company: newCompany,
+          title: newTitle,
+          location: newLocation,
+          jd: newJD,
+          isOpaque: false
+        };
+
+        updateRole(roleId, updatedRole);
+
+        // Ensure company exists
+        const companies = getCompanies();
+        if (!companies.some(c => c.name.toLowerCase() === newCompany.toLowerCase())) {
+          companies.push({
+            name: newCompany,
+            domain: getCompanyDomain(newCompany),
+            tier: 'watching',
+            dateAdded: Date.now(),
+            logoUrl: getCompanyLogoUrl(newCompany)
+          });
+          saveCompanies(companies);
+        }
+
+        console.log(`[Pipeline] Revealed opaque role: ${newCompany} — ${newTitle}`);
+        showToast(`Updated to "${newTitle}" at ${newCompany}"`, 'success');
+
+        modal.remove();
+        render();
+      };
+
+      // Close on overlay click
+      modal.onclick = (e) => {
+        if (e.target === modal) modal.remove();
+      };
+    }
+
     /**
      * Adds a new job to the pipeline
      * INPUT: role = a job object with company, title, etc.
@@ -3700,6 +3949,7 @@
      * Creates HTML for a single job card displayed in kanban column
      * INPUT: role = job object
      * RETURNS: HTML string representing the card
+     * NOTE: Opaque roles show distinctive styling (dashed border, muted colors, "?" icon)
      */
     function renderRoleCard(role) {
       const company = getCompanies().find(c => c.name === role.company);
@@ -3709,6 +3959,17 @@
       const trackedConns = getConnectionsForCompany(role.company).length || role.connections || 0;
       const linkedinConns = getLinkedInConnectionsForCompany(role.company).length;
       const connectionCount = trackedConns + linkedinConns;
+
+      // ====== OPAQUE ROLE STYLING ======
+      // Opaque roles (recruiter outreach with TBD company/title) show distinctive styling
+      const isOpaque = role.isOpaque === true;
+      const opaqueStyle = isOpaque
+        ? 'border: 2px dashed var(--bg-subtle); background: var(--bg-base); opacity: 0.85;'
+        : '';
+      const opaqueIcon = isOpaque ? ' <span style="font-size: 16px; margin-left: 4px;" title="Click to reveal details">❓</span>' : '';
+      const revealButton = isOpaque
+        ? `<button class="btn btn-sm btn-ghost" style="margin-top: var(--space-2); width: 100%; font-size: var(--text-xs);" onclick="revealOpaqueRole('${role.id}')">Reveal Details</button>`
+        : '';
 
       // ====== STALE DETECTION ======
       // Check if role hasn't been updated in 14+ days (1,209,600,000 ms)
@@ -3734,19 +3995,19 @@
       const companyDesc = getCompanyDescription(role.company);
 
       return `
-        <div class="role-card ${isSelected ? 'selected' : ''} ${staleClass}" data-role-id="${role.id}" draggable="true" style="position: relative;">
+        <div class="role-card ${isSelected ? 'selected' : ''} ${staleClass}" data-role-id="${role.id}" draggable="true" style="position: relative; ${opaqueStyle}">
           <div class="role-card-company">
             ${companyLogoHtml(role.company, 'role-card-logo', role.url)}
             <div style="flex: 1; min-width: 0;">
-              <a href="../research-brief/index.html?company=${encodeURIComponent(role.company)}" class="role-card-company-name" style="cursor: pointer; color: var(--accent); transition: opacity var(--duration-fast) var(--ease-default);" title="${companyDesc}" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">${role.company}</a>
-              ${companyDesc ? `<div style="font-size: var(--text-xs); color: var(--text-tertiary); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px;">${companyDesc}</div>` : ''}
+              <a href="${isOpaque ? '#' : '../research-brief/index.html?company=' + encodeURIComponent(role.company)}" class="role-card-company-name" style="cursor: ${isOpaque ? 'default' : 'pointer'}; color: ${isOpaque ? 'var(--text-secondary)' : 'var(--accent)'}; transition: opacity var(--duration-fast) var(--ease-default);" title="${isOpaque ? 'Opaque recruiter outreach' : companyDesc}" ${!isOpaque ? 'onmouseover="this.style.opacity=\'0.7\'" onmouseout="this.style.opacity=\'1\'"' : ''}>${role.company}${opaqueIcon}</a>
+              ${companyDesc && !isOpaque ? `<div style="font-size: var(--text-xs); color: var(--text-tertiary); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px;">${companyDesc}</div>` : ''}
             </div>
           </div>
-          <div class="role-card-title">${role.title}${role.title === 'Exploratory' ? ' <span style="font-size: 10px; opacity: 0.6;">🔍</span>' : ''}</div>
-          <div class="role-card-salary ${salaryEval}" title="${salaryTitle}">${salaryEval === 'below' ? '⚠️ ' : ''}${salaryDisplay}</div>
+          <div class="role-card-title">${role.title}${role.title === 'Exploratory' ? ' <span style="font-size: 10px; opacity: 0.6;">🔍</span>' : ''}${role.title === 'TBD' && isOpaque ? ' <span style="font-size: 10px; opacity: 0.6; margin-left: 4px;">pending</span>' : ''}</div>
+          ${!isOpaque ? `<div class="role-card-salary ${salaryEval}" title="${salaryTitle}">${salaryEval === 'below' ? '⚠️ ' : ''}${salaryDisplay}</div>` : `<div style="font-size: var(--text-xs); color: var(--text-tertiary); margin: var(--space-2) 0;">Recruiter: ${role.contact?.name || 'Unknown'}</div>`}
           <div class="role-card-badges">
             <span class="badge badge-filled" style="background: ${getColorForTier(role.tier)}; color: white; font-size: var(--text-xs);">${role.tier}</span>
-            ${role.title === 'Exploratory' ? '<span class="badge badge-outlined" style="border-color: var(--warning); color: var(--warning);">Inbound</span>' : `<span class="badge badge-outlined" style="border-color: ${role.positioning === 'ic' ? 'var(--info)' : 'var(--stage-screen)'}; color: ${role.positioning === 'ic' ? 'var(--info)' : 'var(--stage-screen)'};">${role.positioning === 'ic' ? 'IC' : 'Mgmt'}</span>`}
+            ${isOpaque ? `<span class="badge badge-outlined" style="border-color: var(--text-tertiary); color: var(--text-tertiary);">Opaque</span>` : (role.title === 'Exploratory' ? '<span class="badge badge-outlined" style="border-color: var(--warning); color: var(--warning);">Inbound</span>' : `<span class="badge badge-outlined" style="border-color: ${role.positioning === 'ic' ? 'var(--info)' : 'var(--stage-screen)'}; color: ${role.positioning === 'ic' ? 'var(--info)' : 'var(--stage-screen)'};">${role.positioning === 'ic' ? 'IC' : 'Mgmt'}</span>`)}
             ${staleBadgeHtml}
           </div>
           <div class="role-card-footer">
@@ -3761,6 +4022,7 @@
               <span>${connectionCount}</span>
             </div>
           </div>
+          ${revealButton}
         </div>
       `;
     }
@@ -4142,6 +4404,72 @@
     addRoleBtn.addEventListener('click', () => {
       addRoleModal.classList.add('open');
     });
+
+    // ============================================================
+    // FEATURE 27: RECRUITER OUTREACH BUTTON HANDLER
+    // ============================================================
+
+    /**
+     * Handles Quick Add Recruiter Outreach button click
+     * Opens modal to capture minimal outreach info (recruiter name, source, notes)
+     */
+    const recruiterBtn = document.getElementById('add-recruiter-outreach-btn');
+    const recruiterModal = document.getElementById('recruiter-outreach-modal');
+
+    if (recruiterBtn && recruiterModal) {
+      recruiterBtn.addEventListener('click', () => {
+        recruiterModal.classList.add('open');
+      });
+
+      // Close button
+      const recruiterClose = document.getElementById('recruiter-modal-close');
+      recruiterClose?.addEventListener('click', () => {
+        recruiterModal.classList.remove('open');
+      });
+
+      // Cancel button
+      const recruiterCancel = document.getElementById('recruiter-modal-cancel');
+      recruiterCancel?.addEventListener('click', () => {
+        recruiterModal.classList.remove('open');
+      });
+
+      // Submit button
+      const recruiterSubmit = document.getElementById('recruiter-modal-submit');
+      recruiterSubmit?.addEventListener('click', () => {
+        const recruiterName = document.getElementById('recruiter-name').value.trim();
+        const recruiterSource = document.getElementById('recruiter-source').value;
+        const recruiterNotes = document.getElementById('recruiter-notes').value.trim();
+
+        if (!recruiterName || !recruiterSource) {
+          alert('Please enter recruiter name and select a source');
+          return;
+        }
+
+        try {
+          const newRole = createOpaqueRole(recruiterName, recruiterSource, recruiterNotes);
+          showToast(`Created opaque entry from ${recruiterName}`, 'success');
+          recruiterModal.classList.remove('open');
+
+          // Clear form
+          document.getElementById('recruiter-name').value = '';
+          document.getElementById('recruiter-source').value = '';
+          document.getElementById('recruiter-notes').value = '';
+
+          // Rerender to show new role
+          render();
+        } catch (e) {
+          console.error('[Pipeline] Error creating opaque role:', e);
+          showToast('Error creating outreach entry — check console', 'error');
+        }
+      });
+
+      // Close on overlay click
+      recruiterModal.addEventListener('click', (e) => {
+        if (e.target === recruiterModal) {
+          recruiterModal.classList.remove('open');
+        }
+      });
+    }
 
     /**
      * Closes the modal when user clicks the X button

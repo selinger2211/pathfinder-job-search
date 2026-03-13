@@ -4571,8 +4571,219 @@
       `;
     }
 
+    // ============================================================
+    // FEATURE 25: TIER MANAGEMENT SUGGESTIONS
+    // ============================================================
+
+    /**
+     * Analyze each company's activity and suggest tier promotions/demotions.
+     * Runs after scoring to identify hot companies or stagnant ones.
+     *
+     * INPUT: companies (array from pf_companies), roles (array from pf_roles)
+     * OUTPUT: suggestions array with {company, currentTier, suggestedTier, reason}
+     *
+     * Promotion triggers (suggest upgrading tier):
+     *   - 3+ roles at same company → suggest "hot"
+     *   - Recent interview activity → suggest "hot"
+     *   - Multiple mutual connections → suggest "active"
+     *
+     * Demotion triggers (suggest downgrading):
+     *   - All roles rejected/withdrawn → suggest "watching"
+     *   - No activity in 30+ days → suggest "watching"
+     *   - Role removed from pipeline → suggest downgrade
+     */
+    function analyzeTierSuggestions(companies, roles) {
+      const suggestions = [];
+      const now = new Date().getTime();
+      const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+
+      companies.forEach(company => {
+        // Count roles at this company
+        const companyRoles = roles.filter(r =>
+          r.company.toLowerCase() === company.name.toLowerCase()
+        );
+
+        // Filter by stage for activity analysis
+        const activeRoles = companyRoles.filter(r =>
+          ['applied', 'interviewing', 'offer'].includes(r.stage)
+        );
+        const rejectedRoles = companyRoles.filter(r =>
+          ['rejected', 'withdrawn'].includes(r.stage)
+        );
+        const discardedRoles = companyRoles.filter(r =>
+          ['rejected', 'withdrawn'].includes(r.stage)
+        );
+
+        // Calculate most recent activity
+        const recentRole = companyRoles.length > 0
+          ? companyRoles.reduce((latest, role) =>
+              (role.lastActivity || role.dateAdded || 0) > (latest.lastActivity || latest.dateAdded || 0)
+                ? role
+                : latest
+            )
+          : null;
+        const lastActivityMs = recentRole ? (recentRole.lastActivity || recentRole.dateAdded || 0) : 0;
+        const daysSinceActivity = Math.floor((now - lastActivityMs) / (24 * 60 * 60 * 1000));
+
+        let suggestion = null;
+
+        // PROMOTION TRIGGERS
+        if (company.tier !== 'hot') {
+          // 3+ active roles at same company → hot
+          if (activeRoles.length >= 3) {
+            suggestion = {
+              company: company.name,
+              currentTier: company.tier,
+              suggestedTier: 'hot',
+              reason: `${activeRoles.length} active roles in progress`,
+              action: 'promoteToHot'
+            };
+          }
+          // Recent interview activity (last 7 days) → hot
+          else if (
+            activeRoles.some(r => r.stage === 'interviewing') &&
+            daysSinceActivity <= 7
+          ) {
+            suggestion = {
+              company: company.name,
+              currentTier: company.tier,
+              suggestedTier: 'hot',
+              reason: 'Recent interview activity',
+              action: 'promoteToHot'
+            };
+          }
+          // Multiple mutual connections → active
+          else if (
+            company.tier === 'watching' &&
+            companyRoles.length >= 2
+          ) {
+            suggestion = {
+              company: company.name,
+              currentTier: company.tier,
+              suggestedTier: 'active',
+              reason: `${companyRoles.length} roles at this company`,
+              action: 'promoteToActive'
+            };
+          }
+        }
+
+        // DEMOTION TRIGGERS
+        if (!suggestion && company.tier !== 'watching') {
+          // All roles rejected/withdrawn → watching
+          if (
+            companyRoles.length > 0 &&
+            discardedRoles.length === companyRoles.length
+          ) {
+            suggestion = {
+              company: company.name,
+              currentTier: company.tier,
+              suggestedTier: 'watching',
+              reason: 'All roles rejected or withdrawn',
+              action: 'demoteToWatching'
+            };
+          }
+          // No activity in 30+ days → watching
+          else if (daysSinceActivity > 30 && companyRoles.length > 0) {
+            suggestion = {
+              company: company.name,
+              currentTier: company.tier,
+              suggestedTier: 'watching',
+              reason: `No activity for ${daysSinceActivity} days`,
+              action: 'demoteToWatching'
+            };
+          }
+        }
+
+        if (suggestion) {
+          suggestions.push(suggestion);
+        }
+      });
+
+      return suggestions;
+    }
+
+    /**
+     * Render tier suggestion banners in the feed.
+     * Shows for each company with a tier change recommendation.
+     *
+     * INPUT: suggestions array from analyzeTierSuggestions()
+     * OUTPUT: HTML banner or empty string if no suggestions
+     */
+    function renderTierSuggestionBanners(suggestions) {
+      if (suggestions.length === 0) return '';
+
+      return suggestions.map(s => `
+        <div class="tier-suggestion-banner" style="
+          background: var(--accent-subtle);
+          border: 1px solid var(--accent);
+          border-radius: var(--radius-md);
+          padding: var(--space-3);
+          margin-bottom: var(--space-3);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: var(--space-3);
+        " role="status" aria-label="Tier suggestion">
+          <div style="display: flex; align-items: center; gap: var(--space-2); flex: 1;">
+            <span style="font-size: 18px;">📈</span>
+            <div>
+              <div style="font-weight: 500; font-size: var(--text-sm);">
+                Consider promoting <strong>${s.company}</strong> to <strong>${s.suggestedTier}</strong>
+              </div>
+              <div style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: 2px;">
+                ${s.reason}
+              </div>
+            </div>
+          </div>
+          <button
+            class="btn btn-sm btn-accent"
+            onclick="updateCompanyTier('${s.company}', '${s.suggestedTier}')"
+            style="white-space: nowrap;"
+            aria-label="Update tier for ${s.company}"
+          >
+            Update Tier
+          </button>
+        </div>
+      `).join('');
+    }
+
+    /**
+     * Update a company's tier and save to pf_companies.
+     * Triggered by "Update Tier" button in suggestion banners.
+     *
+     * INPUT: companyName (string), newTier (string: 'hot', 'active', 'watching')
+     * OUTPUT: none (side effect: updates localStorage and rerenders)
+     */
+    function updateCompanyTier(companyName, newTier) {
+      try {
+        const companies = loadCompanies();
+        const company = companies.find(c =>
+          c.name.toLowerCase() === companyName.toLowerCase()
+        );
+
+        if (company) {
+          const oldTier = company.tier;
+          company.tier = newTier;
+          saveCompanies(companies);
+
+          // Log the change
+          console.log(`[Feed] Updated tier for ${companyName}: ${oldTier} → ${newTier}`);
+
+          // Rerender the feed to remove the suggestion banner
+          renderFeedCards();
+
+          // Show success toast
+          showToast(`Updated ${companyName} to "${newTier}" tier`, 'success');
+        }
+      } catch (e) {
+        console.error('[Feed] Failed to update company tier:', e);
+        showToast('Error updating tier — check console', 'error');
+      }
+    }
+
     /**
      * Render the feed card grid. Each card shows a role with score and actions.
+     * Also displays tier suggestions for companies with activity changes.
      */
     function renderFeedCards() {
       const container = document.getElementById('feedCards');
@@ -4590,7 +4801,13 @@
         return;
       }
 
-      container.innerHTML = state.feedItems.map(item => {
+      // Analyze and render tier suggestions
+      const companies = loadCompanies();
+      const roles = loadRoles();
+      const suggestions = analyzeTierSuggestions(companies, roles);
+      const suggestionBanners = renderTierSuggestionBanners(suggestions);
+
+      container.innerHTML = suggestionBanners + state.feedItems.map(item => {
         const scoreClass = item.score >= 80 ? 'score-high' : item.score >= 60 ? 'score-medium' : 'score-low';
         const scorePercent = item.score;
         const companyDesc = getCompanyDescription(item.company);
@@ -4767,126 +4984,231 @@
       `).join('');
     }
 
+    // ============================================================
+    // FEATURE 34: FEED ANALYTICS
+    // ============================================================
+
+    /**
+     * Calculate comprehensive feed analytics from historical data.
+     * Analyzes match accuracy, false positives, acceptance rate trends,
+     * score distribution, and top-performing sources.
+     *
+     * INPUT: none (reads from pf_feed_run_log, pf_feed_queue, pf_roles)
+     * OUTPUT: analytics object with metrics for dashboard rendering
+     * REQUIRES: pf_feed_run_log with 5+ runs for statistically valid data
+     */
+    function calculateFeedAnalytics() {
+      const runs = loadFeedRuns();
+      const allRoles = [...state.feedItems, ...state.acceptedRoles, ...state.dismissedRoles, ...state.snoozedRoles];
+      const pipelineRoles = loadRoles();
+
+      // If fewer than 5 runs, show a friendly message
+      if (runs.length < 5) {
+        return {
+          sufficientData: false,
+          runsCount: runs.length,
+          message: `Need ${5 - runs.length} more feed runs for analytics`
+        };
+      }
+
+      // Calculate match accuracy: of roles scored 70+, how many accepted to pipeline?
+      const highScorers = allRoles.filter(r => r.score >= 70);
+      const acceptedHighScorers = state.acceptedRoles.filter(r => r.score >= 70).length;
+      const matchAccuracy = highScorers.length > 0
+        ? Math.round((acceptedHighScorers / highScorers.length) * 100)
+        : 0;
+
+      // Calculate false positive rate: roles scored 70+ but dismissed
+      const dismissedHighScorers = state.dismissedRoles.filter(r => r.score >= 70).length;
+      const falsePositiveRate = highScorers.length > 0
+        ? Math.round((dismissedHighScorers / highScorers.length) * 100)
+        : 0;
+
+      // Calculate acceptance rate over time (per feed run)
+      const acceptanceByRun = runs.map(run => ({
+        timestamp: run.timestamp,
+        date: new Date(run.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        accepted: run.acceptedCount || 0,
+        scored: run.scored || 0,
+        rate: run.scored > 0 ? Math.round(((run.acceptedCount || 0) / run.scored) * 100) : 0
+      }));
+
+      // Score distribution: histogram of scores
+      const scoreRanges = {
+        '0-20': 0,
+        '20-40': 0,
+        '40-60': 0,
+        '60-80': 0,
+        '80-100': 0
+      };
+      allRoles.forEach(role => {
+        if (role.score < 20) scoreRanges['0-20']++;
+        else if (role.score < 40) scoreRanges['20-40']++;
+        else if (role.score < 60) scoreRanges['40-60']++;
+        else if (role.score < 80) scoreRanges['60-80']++;
+        else scoreRanges['80-100']++;
+      });
+
+      // Top sources: which sources produce highest-scoring roles
+      const sourceMetrics = {};
+      allRoles.forEach(role => {
+        const source = role.source || 'Unknown';
+        if (!sourceMetrics[source]) {
+          sourceMetrics[source] = { count: 0, totalScore: 0, accepted: 0 };
+        }
+        sourceMetrics[source].count++;
+        sourceMetrics[source].totalScore += role.score;
+        if (state.acceptedRoles.some(r => r.id === role.id)) {
+          sourceMetrics[source].accepted++;
+        }
+      });
+
+      const topSources = Object.entries(sourceMetrics)
+        .map(([source, metrics]) => ({
+          source,
+          count: metrics.count,
+          avgScore: Math.round(metrics.totalScore / metrics.count),
+          accepted: metrics.accepted,
+          acceptRate: Math.round((metrics.accepted / metrics.count) * 100)
+        }))
+        .sort((a, b) => b.avgScore - a.avgScore)
+        .slice(0, 5);
+
+      return {
+        sufficientData: true,
+        runsCount: runs.length,
+        matchAccuracy,
+        falsePositiveRate,
+        acceptanceByRun,
+        scoreRanges,
+        topSources,
+        totalRoles: allRoles.length,
+        acceptedCount: state.acceptedRoles.length,
+        overallAcceptRate: allRoles.length > 0 ? Math.round((state.acceptedRoles.length / allRoles.length) * 100) : 0
+      };
+    }
+
     /**
      * Render analytics stats and charts.
+     * Shows analytics when sufficient data exists (5+ feed runs),
+     * otherwise shows friendly message about data collection.
      */
     function renderAnalytics() {
       const container = document.getElementById('analyticsGrid');
-      const runs = loadFeedRuns();
+      const analytics = calculateFeedAnalytics();
 
-      // Calculate stats
-      const totalRoles = state.feedItems.length + state.acceptedRoles.length + state.dismissedRoles.length + state.snoozedRoles.length;
-      const allRoles = [...state.feedItems, ...state.acceptedRoles, ...state.dismissedRoles, ...state.snoozedRoles];
-      const avgScore = allRoles.length > 0
-        ? Math.round(allRoles.reduce((sum, item) => sum + item.score, 0) / allRoles.length)
-        : 0;
-      const acceptRate = totalRoles > 0
-        ? Math.round((state.acceptedRoles.length / totalRoles) * 100)
-        : 0;
+      // If insufficient data, show collection message
+      if (!analytics.sufficientData) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"></path>
+            </svg>
+            <h3 class="empty-title">Collecting Analytics Data</h3>
+            <p style="color: var(--text-secondary); font-size: var(--text-sm); margin-top: var(--space-2);">
+              We need ${analytics.message} to show accurate metrics. This helps us understand your feed's effectiveness.
+            </p>
+            <p style="color: var(--text-tertiary); font-size: var(--text-xs); margin-top: var(--space-3);">
+              Progress: ${analytics.runsCount} of 5 feed runs completed
+            </p>
+          </div>
+        `;
+        return;
+      }
 
-      // Score distribution
-      const scoreRanges = {
-        '80-100': 0,
-        '60-79': 0,
-        '40-59': 0,
-        '20-39': 0,
-        '0-19': 0
-      };
-
-      allRoles.forEach(role => {
-        if (role.score >= 80) scoreRanges['80-100']++;
-        else if (role.score >= 60) scoreRanges['60-79']++;
-        else if (role.score >= 40) scoreRanges['40-59']++;
-        else if (role.score >= 20) scoreRanges['20-39']++;
-        else scoreRanges['0-19']++;
-      });
-
-      // Top companies
-      const companies = {};
-      allRoles.forEach(role => {
-        companies[role.company] = (companies[role.company] || 0) + 1;
-      });
-
-      const topCompanies = Object.entries(companies)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5);
-
-      // Source breakdown
-      const sources = {};
-      allRoles.forEach(role => {
-        sources[role.source] = (sources[role.source] || 0) + 1;
-      });
-
-      // Build distribution chart HTML
-      const maxCount = Math.max(...Object.values(scoreRanges), 1);
-      let distributionHTML = '<strong>Score Distribution:</strong><div class="score-distribution-chart">';
-      Object.entries(scoreRanges).forEach(([range, count]) => {
+      // Score distribution chart
+      const maxCount = Math.max(...Object.values(analytics.scoreRanges), 1);
+      let distributionHTML = '<strong>Score Distribution</strong><div class="score-distribution-chart">';
+      Object.entries(analytics.scoreRanges).forEach(([range, count]) => {
         const height = Math.max(20, (count / maxCount) * 180);
+        const pct = analytics.totalRoles > 0 ? Math.round((count / analytics.totalRoles) * 100) : 0;
         distributionHTML += `
-          <div>
-            <div class="distribution-bar" style="height: ${height}px;" title="${range}: ${count} roles"></div>
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <div class="distribution-bar" style="height: ${height}px;" title="${range}: ${count} roles (${pct}%)"></div>
             <div class="distribution-label">${range}</div>
+            <div style="font-size: var(--text-xs); color: var(--text-tertiary);">${pct}%</div>
           </div>
         `;
       });
       distributionHTML += '</div>';
 
-      // Build top companies HTML
-      let topCompaniesHTML = '<strong>Top Companies by Role Count:</strong><div class="top-companies-list">';
-      if (topCompanies.length > 0) {
-        topCompanies.forEach(([company, count]) => {
-          topCompaniesHTML += `
-            <div class="company-item">
-              <span class="company-name">${company}</span>
-              <span class="company-count">${count}</span>
+      // Acceptance rate trend over time
+      let trendHTML = '<strong>Acceptance Rate Over Time</strong><div style="display: flex; gap: var(--space-2); overflow-x: auto; padding: var(--space-2) 0;">';
+      analytics.acceptanceByRun.forEach(run => {
+        const height = Math.max(10, (run.rate / 100) * 150);
+        trendHTML += `
+          <div style="display: flex; flex-direction: column; align-items: center; min-width: 60px;">
+            <div style="height: ${height}px; width: 12px; background: var(--accent); border-radius: 4px; margin-bottom: var(--space-2);" title="${run.date}: ${run.rate}% (${run.accepted}/${run.scored})"></div>
+            <div style="font-size: var(--text-xs); color: var(--text-tertiary); text-align: center;">${run.date}</div>
+          </div>
+        `;
+      });
+      trendHTML += '</div>';
+
+      // Top sources table
+      let sourcesHTML = '<strong>Top Performing Sources</strong><div style="display: flex; flex-direction: column; gap: var(--space-2);">';
+      if (analytics.topSources.length > 0) {
+        analytics.topSources.forEach((source, idx) => {
+          sourcesHTML += `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-2); background: var(--bg-base); border-radius: var(--radius-sm);">
+              <div>
+                <div style="font-size: var(--text-sm); font-weight: 500;">${idx + 1}. ${source.source}</div>
+                <div style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: 2px;">
+                  Avg score: ${source.avgScore}/100 | ${source.accepted} accepted
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: var(--text-sm); font-weight: 600; color: var(--accent);">${source.acceptRate}%</div>
+                <div style="font-size: var(--text-xs); color: var(--text-tertiary);">${source.count} roles</div>
+              </div>
             </div>
           `;
         });
       } else {
-        topCompaniesHTML += '<p style="color: var(--text-tertiary); font-size: var(--text-sm);">No roles discovered yet</p>';
+        sourcesHTML += '<p style="color: var(--text-tertiary); font-size: var(--text-sm);">No source data available</p>';
       }
-      topCompaniesHTML += '</div>';
-
-      // Build source breakdown HTML
-      let sourceHTML = '<strong>Source Breakdown:</strong><div class="top-companies-list">';
-      Object.entries(sources).forEach(([source, count]) => {
-        sourceHTML += `
-          <div class="company-item">
-            <span class="company-name">${source}</span>
-            <span class="company-count">${count}</span>
-          </div>
-        `;
-      });
-      sourceHTML += '</div>';
+      sourcesHTML += '</div>';
 
       container.innerHTML = `
         <div class="stat-card">
-          <div class="stat-label">Total Roles Discovered</div>
-          <div class="stat-value">${totalRoles}</div>
+          <div class="stat-label">Match Accuracy (70+)</div>
+          <div class="stat-value">${analytics.matchAccuracy}%</div>
           <div class="stat-bar">
-            <div class="stat-bar-fill" style="width: ${Math.min(totalRoles * 5, 100)}%"></div>
+            <div class="stat-bar-fill" style="width: ${analytics.matchAccuracy}%"></div>
+          </div>
+          <div style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-2);">
+            ${analytics.matchAccuracy}% of high-scoring roles were accepted
           </div>
         </div>
 
         <div class="stat-card">
-          <div class="stat-label">Average Match Score</div>
-          <div class="stat-value">${avgScore}</div>
+          <div class="stat-label">False Positive Rate</div>
+          <div class="stat-value">${analytics.falsePositiveRate}%</div>
           <div class="stat-bar">
-            <div class="stat-bar-fill" style="width: ${avgScore}%"></div>
+            <div class="stat-bar-fill" style="width: ${analytics.falsePositiveRate}%; background: var(--danger-subtle);" title="High scores dismissed"></div>
+          </div>
+          <div style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-2);">
+            ${analytics.falsePositiveRate}% of high-scoring roles were dismissed
           </div>
         </div>
 
         <div class="stat-card">
-          <div class="stat-label">Accept Rate</div>
-          <div class="stat-value">${acceptRate}%</div>
+          <div class="stat-label">Overall Accept Rate</div>
+          <div class="stat-value">${analytics.overallAcceptRate}%</div>
           <div class="stat-bar">
-            <div class="stat-bar-fill" style="width: ${acceptRate}%"></div>
+            <div class="stat-bar-fill" style="width: ${analytics.overallAcceptRate}%"></div>
+          </div>
+          <div style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-2);">
+            ${analytics.acceptedCount} of ${analytics.totalRoles} roles accepted
           </div>
         </div>
 
         <div class="stat-card">
-          <div class="stat-label">Currently Snoozed</div>
-          <div class="stat-value">${state.snoozedRoles.length}</div>
+          <div class="stat-label">Runs Analyzed</div>
+          <div class="stat-value">${analytics.runsCount}</div>
+          <div style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-2);">
+            Feed quality data collected from ${analytics.runsCount} check cycles
+          </div>
         </div>
 
         <div class="stat-card" style="grid-column: 1 / -1;">
@@ -4894,11 +5216,11 @@
         </div>
 
         <div class="stat-card" style="grid-column: 1 / -1;">
-          ${topCompaniesHTML}
+          ${trendHTML}
         </div>
 
         <div class="stat-card" style="grid-column: 1 / -1;">
-          ${sourceHTML}
+          ${sourcesHTML}
         </div>
       `;
     }
