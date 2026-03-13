@@ -185,7 +185,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.6.0
+**Current Version:** v3.6.1
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -208,6 +208,12 @@ These are the actual field shapes for objects stored in shared localStorage keys
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.6.1)
+- **Auto-enrich on page load**: Feed now auto-enriches stub JDs in background on load (when Apify token is configured). Progress counter shown. Auth errors abort early. No manual click needed.
+- **Max Total slider removed**: Only Min Base and Target Total remain. Scoring simplified: meets target = 100, above min = 70, below min = 0. No cap on upside.
+- **Comp slider unified scale**: Both sliders now 50-1000K so visual positions match ($250K sits left of $350K).
+- **Happitap actor input fixes**: 3 validation errors fixed: keywords as array, `datePosted: '30d'`, `proxyCountry: 'US'` (flat string, not proxy object).
 
 ### Recently Fixed (v3.6.0)
 - **Settings live-update pattern**: All settings now update the UI immediately without page refresh. Comp range inputs replaced with range sliders (debounced save + instant label). Company stage checkboxes re-score and re-render feed on toggle. Mock Interview practiced questions re-render question bank. Research Brief API key masked with placeholder (never exposed in plaintext). Settings Live-Update Pattern documented in `docs/skill-patch-settings-live-update.md` as mandatory rule.

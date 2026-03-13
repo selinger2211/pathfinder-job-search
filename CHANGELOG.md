@@ -4,6 +4,24 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.6.1 — 2026-03-12
+
+### What Changed — Auto-Enrich on Load, Comp Slider Cleanup, Happitap Fix
+
+**User reported:** "from a user POV, they should have been updated or updating when I open the app" + "lose the max total, just put in min and target, there should be no 'max', why would i not want money?" + "the slider does not make sense, why is 250 farther to R than the 350"
+
+**Changes:**
+
+1. **Feed: Auto-enrich on page load** — When the feed loads with an Apify token configured and stub JDs exist, enrichment now runs automatically in the background. Progress counter shown in the Enrich button area. Auth errors (403/401) abort the loop early to avoid wasting API calls. No manual "Enrich" button click required.
+
+2. **Feed: Removed Max Total comp slider** — Only Min Base and Target Total remain. There's no reason to cap upside on compensation. Scoring updated: roles meeting/exceeding target = 100, above min but below target = 70, below min = 0.
+
+3. **Feed: Unified comp slider scale** — Both sliders now use the same 50-1000K range so $250K visually sits left of $350K. Previously Min Base (max=800) and Target Total (max=1500) used different scales, making the thumbs misleadingly positioned.
+
+4. **Feed: Happitap actor input fixes** — Fixed 3 input validation errors for `happitap/linkedin-job-scraper`: keywords sent as array (not string), `datePosted: '30d'` field added, `proxyCountry: 'US'` replaces `proxy: { useApifyProxy: true }` object.
+
+---
+
 ## v3.6.0 — 2026-03-12
 
 ### What Changed — Settings Live-Update, Comp Sliders, Cross-Module Bug Fixes
@@ -12,7 +30,7 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 **Changes:**
 
-1. **Feed: Compensation range sliders** — Replaced number inputs with range sliders (`<input type="range">`) for Min Base, Target Total, and Max Total compensation. Each slider shows a live-updating `$XK` label during drag. Debounced save (500ms idle) persists to `pf_preferences` and re-scores all feed cards instantly. Slider ranges: Min Base 50-800K, Target Total 50-1500K, Max Total 50-1500K. No page refresh needed.
+1. **Feed: Compensation range sliders** — Replaced number inputs with range sliders (`<input type="range">`) for Min Base and Target Total compensation. Each slider shows a live-updating `$XK` label during drag. Debounced save (500ms idle) persists to `pf_preferences` and re-scores all feed cards instantly. Both sliders share the same 50-1000K scale. No page refresh needed.
 
 2. **Feed: Company stage checkbox live-update** — Toggling company stage checkboxes (Series B+, Late-stage, Pre-IPO, Public) now immediately saves preferences, re-scores all feed cards, and re-renders the grid with a toast confirmation. Previously, checkbox changes updated in-memory state but required a page refresh to take effect.
 

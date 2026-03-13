@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v3.6.0
+**Status:** v3.6.1
 
 ---
 

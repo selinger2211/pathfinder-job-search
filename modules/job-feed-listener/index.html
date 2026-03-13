@@ -1708,7 +1708,7 @@
               <label class="comp-slider-label" for="minBase">Min Base</label>
               <span class="comp-slider-value" id="minBaseDisplay">$285K</span>
             </div>
-            <input type="range" class="comp-slider" id="minBase" min="50" max="800" step="5" value="285"
+            <input type="range" class="comp-slider" id="minBase" min="50" max="1000" step="5" value="285"
                    aria-label="Minimum base salary in thousands">
           </div>
           <div class="comp-slider-group">
@@ -1716,17 +1716,10 @@
               <label class="comp-slider-label" for="targetTotal">Target Total</label>
               <span class="comp-slider-value" id="targetTotalDisplay">$350K</span>
             </div>
-            <input type="range" class="comp-slider" id="targetTotal" min="50" max="1500" step="5" value="350"
+            <input type="range" class="comp-slider" id="targetTotal" min="50" max="1000" step="5" value="350"
                    aria-label="Target total compensation in thousands">
           </div>
-          <div class="comp-slider-group">
-            <div class="comp-slider-row">
-              <label class="comp-slider-label" for="maxTotal">Max Total</label>
-              <span class="comp-slider-value" id="maxTotalDisplay">$450K</span>
-            </div>
-            <input type="range" class="comp-slider" id="maxTotal" min="50" max="1500" step="5" value="450"
-                   aria-label="Maximum total compensation in thousands">
-          </div>
+          <!-- Max Total removed — no reason to cap upside -->
         </div>
 
         <!-- Must-Have Keywords -->
@@ -2138,7 +2131,7 @@
       minHeadcount: 100,
       locations: ['Remote', 'Hybrid (SF Bay)', 'San Francisco'],
       excludedLocations: [],
-      compRange: { minBase: 250000, targetBase: 300000, maxTotal: 450000 },
+      compRange: { minBase: 250000, targetBase: 300000 },
       mustHaveKeywords: ['product manager', 'strategy'],
       boostKeywords: ['AdTech', 'targeting', 'LLM', 'agents', 'real-time', 'decisioning'],
       excludeKeywords: ['junior', 'associate', 'intern', 'contract']
@@ -2166,7 +2159,7 @@
     // Uses a LinkedIn jobs scraper actor to search for "{title} {company}"
     // and match the best result back to the Feed role using fuzzy matching.
     //
-    // Default actor: `valig/linkedin-jobs-scraper` (consumption-based pricing,
+    // Default actor: `logical_scrapers/linkedin-jobs-scraper` (consumption-based,
     // works with Apify's free $5/month credits — no rental fee required).
     //
     // The actor ID is configurable via sidebar settings or `pf_apify_actor`
@@ -2182,8 +2175,8 @@
 
     /**
      * Default Apify actor for LinkedIn job scraping.
-     * `valig/linkedin-jobs-scraper` uses consumption-based pricing (no rental).
-     * It accepts title, location, and companyName as inputs.
+     * `logical_scrapers/linkedin-jobs-scraper` uses consumption-based pricing (no rental).
+     * It accepts keywords + location inputs.
      * Can be overridden via localStorage key `pf_apify_actor`.
      */
     const DEFAULT_APIFY_ACTOR = 'logical_scrapers/linkedin-jobs-scraper';
@@ -2305,6 +2298,18 @@
       if (usesKeywords) {
         // Keywords-based actors (logical_scrapers, happitap, fetchclub)
         // These are consumption-based (no rental fee), just use Apify credits
+        // Note: happitap expects keywords as an ARRAY + requires datePosted field.
+        // logical_scrapers takes a keywords string. We detect per-actor quirks.
+        const isHappitap = actorId.includes('happitap/');
+        if (isHappitap) {
+          return {
+            keywords: [`${title}`, company],
+            location: cleanLoc,
+            datePosted: '30d',       // happitap requires this field
+            maxResults: maxItems,
+            proxyCountry: 'US'       // happitap uses flat proxyCountry, NOT proxy object
+          };
+        }
         return {
           keywords: `${title} ${company}`,
           location: cleanLoc,
@@ -3302,7 +3307,6 @@
       let compScore = 0;
       const minBase = prefs.compRange?.minBase || 0;
       const targetBase = prefs.compRange?.targetBase || 0;
-      const maxTotal = prefs.compRange?.maxTotal || 0;
 
       if (!role.salary || role.salary === 'Salary not listed') {
         compScore = 50; // No data = neutral
@@ -3312,9 +3316,11 @@
           const salaryMin = parseInt(salaryMatch[1]) * 1000;
           const salaryMax = parseInt(salaryMatch[2]) * 1000;
 
-          if (salaryMax >= minBase && salaryMin <= maxTotal) compScore = 100;
-          else if (salaryMax < minBase) compScore = 0;
-          else compScore = 50;
+          // Score based on whether salary meets minimum and how it compares to target
+          // No max cap — there's no reason to penalize high comp
+          if (salaryMax >= targetBase) compScore = 100;       // Meets or exceeds target — perfect
+          else if (salaryMax >= minBase) compScore = 70;       // Above min but below target — decent
+          else compScore = 0;                                  // Below minimum — deal-breaker
         } else {
           compScore = 50; // Can't parse, be neutral
         }
@@ -3520,15 +3526,12 @@
       // Compensation display
       const minK = Math.round((prefs.compRange?.minBase || 285000) / 1000);
       const targetK = Math.round((prefs.compRange?.targetBase || 350000) / 1000);
-      const maxK = Math.round((prefs.compRange?.maxTotal || 450000) / 1000);
 
       document.getElementById('minBaseDisplay').textContent = `$${minK}K`;
       document.getElementById('targetTotalDisplay').textContent = `$${targetK}K`;
-      document.getElementById('maxTotalDisplay').textContent = `$${maxK}K`;
 
       document.getElementById('minBase').value = minK;
       document.getElementById('targetTotal').value = targetK;
-      document.getElementById('maxTotal').value = maxK;
 
       // Must-have keywords
       renderPills('mustHaveKeywordsPills', prefs.mustHaveKeywords || [], 'must-have-keyword');
@@ -5007,6 +5010,71 @@
       renderFeedLog();
       updateSnoozedBadge();
 
+      // ====== AUTO-ENRICH STUB JDs ON PAGE LOAD (v3.6.1) ======
+      // If user has an Apify token, automatically enrich any roles with stub JDs
+      // in the background. Runs sequentially to respect rate limits. Each enriched
+      // role re-scores and updates the card in-place without disrupting the user.
+      const autoEnrichToken = getApifyToken();
+      const stubRoles = state.feedItems.filter(isStubJD);
+      if (autoEnrichToken && stubRoles.length > 0) {
+        console.log(`[Feed] Auto-enriching ${stubRoles.length} stub JDs in background...`);
+        // Show a subtle progress indicator in the header
+        const enrichProgress = document.getElementById('enrichProgress');
+        if (enrichProgress) {
+          enrichProgress.textContent = `(enriching 0/${stubRoles.length}...)`;
+        }
+
+        // Run enrichment in background (non-blocking)
+        (async () => {
+          let enriched = 0;
+          let failed = 0;
+          for (const role of stubRoles) {
+            try {
+              const jd = await enrichRoleJD(role);
+              if (jd) {
+                enriched++;
+                // Re-score the enriched role with full JD data
+                const scoring = scoreRole(role, state.preferences);
+                if (scoring) {
+                  role.score = scoring.score;
+                  role.scoring = scoring.breakdown;
+                }
+                // Re-sort and re-render to show updated scores
+                state.feedItems.sort((a, b) => b.score - a.score);
+                renderFeedCards();
+              } else {
+                failed++;
+              }
+            } catch (err) {
+              failed++;
+              console.warn(`[Auto-enrich] Failed for "${role.title}": ${err.message}`);
+              // If it's a token/auth error, stop trying (don't burn through roles)
+              if (err.message.includes('403') || err.message.includes('401') || err.message.includes('not-rented')) {
+                console.warn('[Auto-enrich] Auth error — stopping auto-enrichment');
+                showToast('Apify token issue — check sidebar settings', 'warning');
+                break;
+              }
+            }
+            // Update progress counter
+            if (enrichProgress) {
+              enrichProgress.textContent = `(enriching ${enriched + failed}/${stubRoles.length}...)`;
+            }
+          }
+          // Final status
+          if (enrichProgress) {
+            const remaining = stubRoles.length - enriched - failed;
+            enrichProgress.textContent = enriched > 0
+              ? `(${enriched} enriched${remaining > 0 ? `, ${remaining} remaining` : ''})`
+              : `(${stubRoles.length} need JDs)`;
+          }
+          if (enriched > 0) {
+            showToast(`Auto-enriched ${enriched} JD${enriched > 1 ? 's' : ''}`, 'success');
+            updateApifyStatus();
+          }
+          console.log(`[Auto-enrich] Done: ${enriched} enriched, ${failed} failed, ${stubRoles.length - enriched - failed} remaining`);
+        })();
+      }
+
       // Event handlers
       // ====== COMPENSATION SLIDER LIVE-UPDATE (v3.6.0) ======
       // Each slider updates its display label in real-time on drag,
@@ -5020,10 +5088,8 @@
       function updateCompDisplays() {
         const minK = parseInt(document.getElementById('minBase').value) || 285;
         const targetK = parseInt(document.getElementById('targetTotal').value) || 350;
-        const maxK = parseInt(document.getElementById('maxTotal').value) || 450;
         document.getElementById('minBaseDisplay').textContent = `$${minK}K`;
         document.getElementById('targetTotalDisplay').textContent = `$${targetK}K`;
-        document.getElementById('maxTotalDisplay').textContent = `$${maxK}K`;
       }
 
       /**
@@ -5033,14 +5099,12 @@
       function saveCompAndRescore() {
         const minK = parseInt(document.getElementById('minBase').value) || 285;
         const targetK = parseInt(document.getElementById('targetTotal').value) || 350;
-        const maxK = parseInt(document.getElementById('maxTotal').value) || 450;
 
         const updated = {
           ...state.preferences,
           compRange: {
             minBase: minK * 1000,
-            targetBase: targetK * 1000,
-            maxTotal: maxK * 1000
+            targetBase: targetK * 1000
           },
           minHeadcount: parseInt(document.getElementById('minHeadcount').value) || 100
         };
@@ -5062,8 +5126,8 @@
         showToast('Preferences updated', 'success');
       }
 
-      // Wire up all 3 comp sliders: instant display + debounced save
-      ['minBase', 'targetTotal', 'maxTotal'].forEach(id => {
+      // Wire up comp sliders: instant display + debounced save
+      ['minBase', 'targetTotal'].forEach(id => {
         document.getElementById(id).addEventListener('input', () => {
           updateCompDisplays();  // Instant visual feedback on drag
           clearTimeout(compSaveTimer);
