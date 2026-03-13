@@ -8,9 +8,9 @@
 
 Pathfinder is an agentic job search system with 11 standalone HTML modules sharing data via localStorage + IndexedDB. Each module is a single `index.html` file in `modules/`. There is no backend server required for core functionality — Claude API calls happen directly from the browser via `modules/shared/claude-api.js`.
 
-**Current Version:** v3.19.4 (as of 2026-03-13)
-**Last Major Features:** Resume Builder complete rewrite (v3.19.0), Feed scoring transparency overhaul (v3.19.1), Research Brief generation fix (v3.19.1). All 53 planned features now implemented.
-**Status:** Feed scoring re-calculates after JD enrichment, remote detection improved, score breakdown grid layout, Research Brief parallel generation fixed
+**Current Version:** v3.20.0 (as of 2026-03-13)
+**Last Major Features:** Compact feed cards with detail sidebar (v3.20.0), Clearbit logo upgrade (v3.20.0), salary extraction from JD text (v3.19.5). All 53 planned features now implemented.
+**Status:** Feed cards compact 4-per-row with click-to-detail sidebar, Clearbit logos, salary extracted from JD body, comp type priority fixed
 
 **Owner:** Ili Selinger (ilan.selinger@gmail.com)
 **Repo:** github.com/selinger2211/pathfinder-job-search

@@ -707,26 +707,28 @@
     /* Feed card grid */
     .feed-cards {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: var(--space-4);
-      align-items: start;       /* v3.19.3: Cards size to their own content instead of stretching to row height */
+      /* v3.20.0: Narrower columns for compact cards — fit more per row */
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--space-3);
+      align-items: start;
       flex: 1;
       overflow-y: auto;
-      padding: var(--space-4);
+      padding: var(--space-3);
       background: var(--bg-base);
       border-radius: var(--radius-md);
     }
 
-    /* Individual feed card */
+    /* v3.20.0: Compact feed cards — click to open detail sidebar */
     .feed-card {
       display: flex;
       flex-direction: column;
       background: var(--bg-surface);
       border: 1px solid var(--bg-subtle);
       border-radius: var(--radius-md);
-      padding: var(--space-4);
+      padding: var(--space-3);
       transition: all var(--duration-default) var(--ease-default);
       animation: slideIn var(--duration-default) var(--ease-default);
+      cursor: pointer;
     }
 
     @keyframes slideIn {
@@ -770,22 +772,22 @@
     /* Card header with company info */
     .card-header {
       display: flex;
-      gap: var(--space-3);
-      margin-bottom: var(--space-3);
+      gap: var(--space-2);
+      margin-bottom: var(--space-2);
       align-items: flex-start;
     }
 
-    /* Company logo */
+    /* Company logo — v3.20.0: smaller for compact cards */
     .card-logo {
-      width: 48px;
-      height: 48px;
+      width: 36px;
+      height: 36px;
       border-radius: var(--radius-sm);
       background: var(--bg-elevated);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      font-size: var(--text-lg);
+      font-size: var(--text-sm);
       font-weight: 700;
       color: var(--accent);
       overflow: hidden;
@@ -910,10 +912,10 @@
       opacity: 1;
     }
 
-    /* Match score section */
+    /* Match score section — v3.20.0: tighter for compact cards */
     .card-score-section {
-      margin: var(--space-3) 0;
-      padding-bottom: var(--space-3);
+      margin: var(--space-2) 0;
+      padding-bottom: var(--space-2);
       border-bottom: 1px solid var(--bg-subtle);
     }
 
@@ -1030,10 +1032,11 @@
     }
 
     /* Quick action buttons */
+    /* v3.20.0: Compact inline actions — smaller for compact cards */
     .card-actions {
       display: flex;
-      gap: var(--space-2);
-      margin-top: var(--space-3);
+      gap: 6px;
+      margin-top: var(--space-2);
     }
 
     .action-btn {
@@ -1042,9 +1045,9 @@
       align-items: center;
       justify-content: center;
       gap: var(--space-1);
-      padding: var(--space-2) var(--space-3);
+      padding: 5px var(--space-2);
       border-radius: var(--radius-sm);
-      font-size: var(--text-xs);
+      font-size: 11px;
       font-weight: 600;
       border: none;
       cursor: pointer;
@@ -1405,6 +1408,268 @@
     /* Responsive: narrower on mobile */
     @media (max-width: 640px) {
       .jd-detail-panel {
+        width: 100%;
+      }
+    }
+
+    /* ================================================================
+       v3.20.0: ROLE DETAIL SIDEBAR
+       Slides in from the right when user clicks a compact feed card.
+       Shows full scoring breakdown, JD, comp details, LinkedIn contacts
+       by name, and action buttons. Modeled after Pipeline detail-panel.
+       ================================================================ */
+
+    /* Overlay backdrop */
+    .feed-detail-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      z-index: 35;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration-normal) var(--ease-default);
+    }
+    .feed-detail-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* The panel itself — slides from right */
+    .feed-detail-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 520px;
+      max-width: 95vw;
+      height: 100vh;
+      background: var(--bg-elevated);
+      box-shadow: var(--shadow-lg);
+      z-index: 40;
+      transform: translateX(100%);
+      transition: transform var(--duration-enter) var(--ease-default);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .feed-detail-panel.open {
+      transform: translateX(0);
+    }
+
+    /* Sticky header with company + title + close */
+    .fd-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: var(--space-4) var(--space-5);
+      border-bottom: 1px solid var(--bg-subtle);
+      flex-shrink: 0;
+      gap: var(--space-3);
+    }
+    .fd-header-info {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-3);
+      flex: 1;
+      min-width: 0;
+    }
+    .fd-header-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      background: var(--bg-subtle);
+      object-fit: contain;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .fd-header-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .fd-header-text { flex: 1; min-width: 0; }
+    .fd-company {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 2px;
+    }
+    .fd-title {
+      font-size: var(--text-base);
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+    .fd-close {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      border: 1px solid var(--bg-subtle);
+      cursor: pointer;
+      font-size: 18px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+    .fd-close:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    /* Scrollable body */
+    .fd-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-4) var(--space-5);
+    }
+
+    /* Section headings inside the detail panel */
+    .fd-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: var(--space-4) 0 var(--space-2);
+    }
+    .fd-section-title:first-child {
+      margin-top: 0;
+    }
+
+    /* Meta badges row (source, posted, location) */
+    .fd-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      margin-bottom: var(--space-3);
+    }
+    .fd-meta-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      background: var(--bg-subtle);
+      border-radius: var(--radius-pill);
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .fd-meta-badge a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .fd-meta-badge a:hover {
+      text-decoration: underline;
+    }
+
+    /* Score display in sidebar */
+    .fd-score-bar {
+      margin: var(--space-3) 0;
+    }
+
+    /* LinkedIn connections list in detail panel */
+    .fd-connections-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .fd-conn-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      transition: background var(--duration-fast) var(--ease-default);
+    }
+    .fd-conn-item:hover {
+      background: var(--bg-subtle);
+    }
+    .fd-conn-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent-subtle);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .fd-conn-tracked {
+      font-size: 9px;
+      padding: 1px 5px;
+      background: rgba(139, 92, 246, 0.15);
+      color: #a78bfa;
+      border-radius: var(--radius-pill);
+      font-weight: 600;
+    }
+
+    /* JD preview in detail panel */
+    .fd-jd-preview {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: var(--space-3);
+      background: var(--bg-subtle);
+      border-radius: var(--radius-sm);
+    }
+
+    /* Sticky footer with actions */
+    .fd-actions {
+      display: flex;
+      gap: var(--space-2);
+      padding: var(--space-3) var(--space-5);
+      border-top: 1px solid var(--bg-subtle);
+      flex-shrink: 0;
+      background: var(--bg-elevated);
+    }
+
+    /* Compact card: one-line comp display */
+    .card-comp-line {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-comp-line .comp-value {
+      font-weight: 600;
+      color: var(--success);
+    }
+    .card-comp-line .comp-missing {
+      color: var(--text-tertiary);
+      font-style: italic;
+    }
+
+    /* Compact card: network count */
+    .card-network-line {
+      font-size: 11px;
+      color: #a78bfa;
+      margin-top: 2px;
+    }
+
+    /* Compact card: domain + location one-liner */
+    .card-domain-line {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 640px) {
+      .feed-detail-panel {
         width: 100%;
       }
     }
@@ -2255,6 +2520,12 @@
     <div class="jd-overlay" id="jdOverlay"></div>
     <div class="jd-detail-panel" id="jdPanel">
       <!-- Content populated by openJDPanel() -->
+    </div>
+
+    <!-- v3.20.0: ROLE DETAIL SIDEBAR — opens when user clicks a compact feed card -->
+    <div class="feed-detail-overlay" id="feedDetailOverlay" onclick="closeFeedDetail()"></div>
+    <div class="feed-detail-panel" id="feedDetailPanel">
+      <!-- Content populated by openFeedDetail() -->
     </div>
   </div>
 
@@ -3527,6 +3798,11 @@
               role.jdEnrichSource = 'linkedin-direct';
               role.jdEnrichConfidence = 95; // Direct URL = high confidence
               if (!role.salary && extracted.salary) role.salary = extracted.salary;
+              // v3.19.5: Extract salary from JD text if still missing
+              if (!role.salary) {
+                const jdSalary = extractSalaryFromJD(role.jd);
+                if (jdSalary) role.salary = jdSalary;
+              }
               saveFeedQueue(state.feedItems);
               return role.jd;
             }
@@ -3550,6 +3826,11 @@
             role.jdEnrichSource = 'ats-api';
             role.jdEnrichConfidence = 98; // ATS API = very high confidence
             if (!role.salary && atsResult.salary) role.salary = atsResult.salary;
+            // v3.19.5: Extract salary from JD text if still missing
+            if (!role.salary) {
+              const jdSalary = extractSalaryFromJD(role.jd);
+              if (jdSalary) role.salary = jdSalary;
+            }
             saveFeedQueue(state.feedItems);
             return role.jd;
           }
@@ -3601,6 +3882,7 @@
                 role.jdEnrichSource = 'ats-api-via-search';
                 role.jdEnrichConfidence = 95; // ATS API = very high confidence
                 if (!role.salary && atsResult.salary) role.salary = atsResult.salary;
+                if (!role.salary) { const jdSalary = extractSalaryFromJD(role.jd); if (jdSalary) role.salary = jdSalary; }
                 saveFeedQueue(state.feedItems);
                 return role.jd;
               }
@@ -3628,6 +3910,7 @@
                   role.jdEnrichSource = 'linkedin-via-search';
                   role.jdEnrichConfidence = 90; // LinkedIn via search = high confidence
                   if (!role.salary && extracted.salary) role.salary = extracted.salary;
+                  if (!role.salary) { const jdSalary = extractSalaryFromJD(role.jd); if (jdSalary) role.salary = jdSalary; }
                   saveFeedQueue(state.feedItems);
                   return role.jd;
                 }
@@ -4512,25 +4795,38 @@
     function detectCompType(salaryText, jdText) {
       const text = ((salaryText || '') + ' ' + (jdText || '')).toLowerCase();
 
-      // OTE patterns (highest priority — sales-style comp)
-      const otePatterns = ['on-target earnings', 'on target earnings', ' ote ', 'commission eligible',
-        'variable comp', 'quota', 'attainment'];
-      if (otePatterns.some(p => text.includes(p))) return 'OTE';
+      // v3.19.5: Check BASE_SALARY first — it's the most common type for PM roles.
+      // Previously OTE was checked first and false-positive matched on boilerplate
+      // like "base salary only (or OTE for commissions based roles)" in Zendesk JDs.
+      const basePatterns = ['base salary', 'annual base pay', 'salary range',
+        'pay range', 'base compensation', 'base pay'];
+      const hasBase = basePatterns.some(p => text.includes(p));
 
-      // Total target cash patterns (second priority — already includes bonus)
+      // OTE patterns — but ONLY if base salary wasn't also mentioned.
+      // Many JDs mention OTE in legal boilerplate while the actual posting is base salary.
+      const otePatterns = ['on-target earnings', 'on target earnings', 'commission eligible',
+        'variable comp', 'quota', 'attainment'];
+      // " ote " alone is too aggressive — it catches boilerplate. Only count it if
+      // other strong OTE signals are present or if base salary wasn't mentioned.
+      const hasStrongOTE = otePatterns.some(p => text.includes(p));
+      const hasWeakOTE = text.includes(' ote ');
+
+      // Total target cash patterns (already includes bonus)
       const tccPatterns = ['total target cash', 'total target compensation',
         'inclusive of bonus', 'inclusive of bonus or commission',
         'cash compensation', 'target cash', 'total cash'];
-      if (tccPatterns.some(p => text.includes(p))) return 'TOTAL_TARGET_CASH';
+      const hasTCC = tccPatterns.some(p => text.includes(p));
 
-      // Base salary patterns (third priority — most common for PM postings)
-      const basePatterns = ['base salary', 'annual base pay', 'salary range',
-        'pay range', 'base compensation', 'base pay'];
-      if (basePatterns.some(p => text.includes(p))) return 'BASE_SALARY';
+      // Priority logic:
+      // 1. Strong OTE signals (quota, commission eligible, etc.) win even with base mentioned
+      if (hasStrongOTE) return 'OTE';
+      // 2. Base salary overrides weak OTE (" ote " alone in boilerplate)
+      if (hasBase) return 'BASE_SALARY';
+      // 3. TCC if no base detected
+      if (hasTCC) return 'TOTAL_TARGET_CASH';
+      // 4. Weak OTE only if nothing else matched
+      if (hasWeakOTE) return 'OTE';
 
-      // Default: UNKNOWN — use conservative fallback
-      // Most job postings without explicit labels are posting base salary,
-      // but we can't be sure, so we use a wider range with lower confidence
       return 'UNKNOWN';
     }
 
@@ -4702,11 +4998,52 @@
      * @param {string} jdText - Full JD text for signal detection
      * @returns {Object|null} Full estimation result with breakdowns and metadata
      */
+    /**
+     * v3.19.5: Extract salary range from JD text when role.salary is empty.
+     * Many companies (Salesforce, Sigma, etc.) embed salary in the JD body
+     * rather than in structured data. This function scans for common patterns
+     * like "base salary range for this position is $148,500 - $313,700".
+     *
+     * INPUT: jdText (string) — the full JD text
+     * OUTPUT: string|null — e.g., "$148,500 - $313,700" or null if not found
+     */
+    /**
+     * Strip trailing ".00" decimals from salary strings for cleaner display.
+     * "$148,600.00 - $237,400.00" → "$148,600 - $237,400"
+     */
+    function cleanSalaryDecimals(s) {
+      return s.replace(/\.00/g, '');
+    }
+
+    function extractSalaryFromJD(jdText) {
+      if (!jdText || jdText.length < 100) return null;
+
+      // Pattern 1: "base salary range...is $X - $Y" (Salesforce, Sigma, etc.)
+      // Matches: "$148,500 - $313,700", "$240k - $260k", "$148,500-$313,700"
+      const baseSalaryPattern = /(?:base\s+salary|salary\s+range|pay\s+range|base\s+pay|compensation\s+range|base\s+compensation)[^$]*?(\$[\d,]+(?:\.\d+)?k?\s*[-–—]\s*\$?[\d,]+(?:\.\d+)?k?)/i;
+      const baseMatch = jdText.match(baseSalaryPattern);
+      if (baseMatch) return cleanSalaryDecimals(baseMatch[1].trim());
+
+      // Pattern 2: "typical...range...is $X - $Y" (Salesforce style)
+      const typicalPattern = /typical[^$]*?(\$[\d,]+(?:\.\d+)?k?\s*[-–—]\s*\$?[\d,]+(?:\.\d+)?k?)\s*(?:annually|per year|\/year)?/i;
+      const typicalMatch = jdText.match(typicalPattern);
+      if (typicalMatch) return cleanSalaryDecimals(typicalMatch[1].trim());
+
+      // Pattern 3: Standalone "$X,000 - $Y,000" near salary context words
+      // Look for salary amounts near context words within 200 chars
+      const contextPattern = /(?:salary|compensation|pay|annual|base)[^$]{0,80}(\$\d{2,3},\d{3}(?:\.\d+)?\s*[-–—]\s*\$?\d{2,3},\d{3}(?:\.\d+)?)/i;
+      const contextMatch = jdText.match(contextPattern);
+      if (contextMatch) return cleanSalaryDecimals(contextMatch[1].trim());
+
+      return null;
+    }
+
     function parseSalaryAndEstimate(salaryText, stage, title, jdText) {
       if (!salaryText || salaryText === 'Salary not listed') return null;
 
       // Parse the numeric range from the salary text
-      const salaryMatch = salaryText.match(/\$(\d[\d,]*)\s*(?:K)?\s*[-–—]\s*\$?(\d[\d,]*)\s*(?:K)?/i);
+      // v3.20.0: Handle decimal formats like "$148,600.00 - $237,400.00" (Zillow)
+      const salaryMatch = salaryText.match(/\$(\d[\d,]*)(?:\.\d+)?\s*(?:K)?\s*[-–—]\s*\$?(\d[\d,]*)(?:\.\d+)?\s*(?:K)?/i);
       if (!salaryMatch) return null;
 
       let postedLow = parseInt(salaryMatch[1].replace(/,/g, ''));
@@ -4802,8 +5139,20 @@
      * @returns {string} HTML for comp display
      */
     function renderCompDisplay(item) {
+      // v3.19.5: If role has no salary but has an enriched JD, try extracting
+      // salary from the JD text (Salesforce, Sigma, etc. embed salary in body)
+      let salaryText = item.salary;
+      if ((!salaryText || salaryText === 'Salary not listed') && item.jdEnriched) {
+        const extracted = extractSalaryFromJD(item.jd || '');
+        if (extracted) {
+          salaryText = extracted;
+          // Persist so we don't re-extract every render
+          item.salary = extracted;
+        }
+      }
+
       const est = parseSalaryAndEstimate(
-        item.salary,
+        salaryText,
         normalizeStage(item.stage),
         item.title,
         (item.jd || '').toLowerCase()
@@ -4924,6 +5273,189 @@
       const overlay = document.querySelector('.jd-overlay');
       const panel = document.querySelector('.jd-detail-panel');
 
+      if (overlay) overlay.classList.remove('open');
+      if (panel) panel.classList.remove('open');
+    }
+
+    // ============================================================
+    // v3.20.0: FEED DETAIL SIDEBAR
+    // Opens when user clicks a compact feed card. Shows all details:
+    // score breakdown, JD, comp analysis, LinkedIn contacts by name,
+    // source links, and action buttons.
+    // ============================================================
+
+    /**
+     * Open the detail sidebar for a specific feed item.
+     * Renders full scoring breakdown, comp analysis, JD preview,
+     * LinkedIn connections by name, and action buttons.
+     * @param {string} roleId - The ID of the feed item to show
+     */
+    function openFeedDetail(roleId) {
+      const item = state.feedItems.find(r => r.id === roleId);
+      if (!item) return;
+
+      const overlay = document.getElementById('feedDetailOverlay');
+      const panel = document.getElementById('feedDetailPanel');
+      if (!overlay || !panel) return;
+
+      const companyDesc = getCompanyDescription(item.company);
+      const domain = getCompanyDomain(item.company || '', item.url || item.feedMetadata?.linkedinJobUrl || '');
+      const logoUrl = `https://logo.clearbit.com/${domain}`;
+      const fallbackUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+      const safeName = (item.company || '').replace(/'/g, "\\'");
+
+      // Score breakdown — full 7-dimension grid
+      const dims = [
+        { label: 'Title', val: item.scoring.title, weight: 20 },
+        { label: 'Domain', val: item.scoring.domain, weight: 20 },
+        { label: 'Keys', val: item.scoring.keywords, weight: 15 },
+        { label: 'Loc', val: item.scoring.location, weight: 15 },
+        { label: 'Net', val: item.scoring.network || 0, weight: 15 },
+        { label: 'Stage', val: item.scoring.stage, weight: 10 },
+        { label: 'Comp', val: item.scoring.comp || 0, weight: 5 },
+      ];
+      const scoreClass = item.score >= 80 ? 'score-high' : item.score >= 60 ? 'score-medium' : 'score-low';
+      const breakdownHTML = dims.map(d => {
+        const tier = d.val >= 70 ? 'high' : d.val >= 40 ? 'medium' : 'low';
+        return `<span class="score-dim" title="${d.label}: ${d.val}/100 (${d.weight}% weight)"><span class="score-dim-label">${d.label}</span><span class="score-dim-val ${tier}">${d.val}</span></span>`;
+      }).join('');
+
+      // Source links
+      const linkedinUrl = item.feedMetadata?.linkedinJobUrl;
+      const sourceUrl = item.feedMetadata?.sourceUrl;
+      let sourceHTML = '';
+      if (linkedinUrl) sourceHTML += `<span class="fd-meta-badge"><a href="${linkedinUrl}" target="_blank" onclick="event.stopPropagation()">LinkedIn ↗</a></span>`;
+      if (sourceUrl) sourceHTML += `<span class="fd-meta-badge"><a href="${sourceUrl}" target="_blank" onclick="event.stopPropagation()">${linkedinUrl ? 'Email ↗' : item.source + ' ↗'}</a></span>`;
+      sourceHTML += `<span class="fd-meta-badge">${item.posted}</span>`;
+      sourceHTML += `<span class="fd-meta-badge">${item.domain || 'Unknown'}</span>`;
+      sourceHTML += `<span class="fd-meta-badge">${item.location || 'Not listed'}${item.remote ? ' (Remote)' : ''}</span>`;
+      if (item.scoring.leaderIC) sourceHTML += `<span class="fd-meta-badge" style="color: var(--primary); font-weight: 600;">${item.scoring.leaderIC}</span>`;
+
+      // Comp display — full version
+      const compHTML = renderCompDisplay(item);
+
+      // JD preview (first 600 chars)
+      let jdHTML = '';
+      if (item.jdEnriched && item.jd) {
+        const snippet = item.jd.slice(0, 600).trim();
+        jdHTML = `
+          <div class="fd-section-title">Job Description</div>
+          <div class="fd-jd-preview">${snippet}${item.jd.length > 600 ? '...' : ''}</div>
+          <button class="enrich-btn" style="margin-top: var(--space-2);" onclick="event.stopPropagation(); openJDPanel('${item.id}', ${JSON.stringify(item).replace(/"/g, '&quot;')})">📖 View Full JD</button>
+        `;
+      } else if (isStubJD(item)) {
+        jdHTML = `
+          <div class="fd-section-title">Job Description</div>
+          <div style="font-size: var(--text-xs); color: var(--text-tertiary); font-style: italic;">Stub JD only — enrich for full description</div>
+          <button class="enrich-btn" style="margin-top: var(--space-2);" onclick="event.stopPropagation(); enrichSingleRole('${item.id}')">⚡ Enrich JD</button>
+        `;
+      }
+
+      // LinkedIn connections — show names
+      let connectionsHTML = '';
+      const net = item.networkInfo;
+      if (net && net.total > 0) {
+        const connItems = [];
+        // Tracked connections first (higher signal)
+        for (const name of net.tracked) {
+          const initials = name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+          connItems.push(`
+            <div class="fd-conn-item">
+              <div class="fd-conn-avatar">${initials}</div>
+              <span style="flex: 1;">${name}</span>
+              <span class="fd-conn-tracked">Tracked</span>
+            </div>
+          `);
+        }
+        // LinkedIn connections
+        for (const name of net.linkedin) {
+          const initials = name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+          connItems.push(`
+            <div class="fd-conn-item">
+              <div class="fd-conn-avatar">${initials}</div>
+              <span style="flex: 1;">${name}</span>
+            </div>
+          `);
+        }
+        connectionsHTML = `
+          <div class="fd-section-title">Connections at ${item.company} (${net.total})</div>
+          <div class="fd-connections-list">${connItems.join('')}</div>
+        `;
+      }
+
+      // Pipeline status
+      const pipelineRoles = loadRoles();
+      const pStatus = checkPipelineStatus(item, pipelineRoles);
+      const pipelineHTML = pStatus.inPipeline
+        ? `<div class="dedup-warning" style="margin-bottom: var(--space-3);"><div class="dedup-warning-title">✓ In Pipeline</div><div class="dedup-warning-text">Stage: <strong>${pStatus.stage}</strong></div></div>`
+        : '';
+
+      // JD confidence
+      const jdConfHTML = item.jdEnrichConfidence
+        ? `<span style="font-size: 10px; color: var(--text-tertiary);">JD confidence: ${item.jdEnrichConfidence}%</span>`
+        : '';
+
+      // Company description
+      const descHTML = companyDesc
+        ? `<div style="font-size: var(--text-xs); color: var(--text-tertiary); margin-bottom: var(--space-3); line-height: 1.4;">${companyDesc}</div>`
+        : '';
+
+      panel.innerHTML = `
+        <div class="fd-header">
+          <div class="fd-header-info">
+            <div class="fd-header-logo">
+              <img src="${logoUrl}" alt="${item.company}" onerror="this.onerror=function(){handleLogoError(this,'${safeName}','');}; this.src='${fallbackUrl}';">
+            </div>
+            <div class="fd-header-text">
+              <a href="../research-brief/index.html?company=${encodeURIComponent(item.company)}" class="fd-company" style="text-decoration: none;" onclick="event.stopPropagation();">${item.company}</a>
+              <div class="fd-title">${item.title}</div>
+            </div>
+          </div>
+          <button class="fd-close" onclick="closeFeedDetail()">×</button>
+        </div>
+        <div class="fd-body">
+          ${descHTML}
+          ${pipelineHTML}
+
+          <div class="fd-meta-row">${sourceHTML}</div>
+
+          <div class="fd-section-title">Match Score</div>
+          <div class="card-score-section ${scoreClass}" style="border: none; margin: 0; padding: 0;">
+            <div class="card-score-label">
+              <span>${isStubJD(item) ? '📄 Stub JD' : '✓ Full JD'} ${jdConfHTML}</span>
+              <span class="card-score-value">${item.score}/100</span>
+            </div>
+            <div class="score-bar">
+              <div class="score-bar-fill" style="width: ${item.score}%;"></div>
+            </div>
+            <div class="score-breakdown">${breakdownHTML}</div>
+          </div>
+
+          <div class="fd-section-title">Compensation</div>
+          <div style="font-size: var(--text-xs);">${compHTML}</div>
+
+          ${connectionsHTML}
+
+          ${jdHTML}
+        </div>
+        <div class="fd-actions">
+          <button class="action-btn action-accept" style="flex: 1;" onclick="acceptRole('${item.id}'); closeFeedDetail();">Accept</button>
+          <button class="action-btn action-snooze" style="flex: 1;" onclick="snoozeRole('${item.id}'); closeFeedDetail();">Snooze</button>
+          <button class="action-btn action-dismiss" style="flex: 1;" onclick="dismissRole('${item.id}'); closeFeedDetail();">Dismiss</button>
+        </div>
+      `;
+
+      // Open it
+      overlay.classList.add('open');
+      panel.classList.add('open');
+    }
+
+    /**
+     * Close the feed detail sidebar.
+     */
+    function closeFeedDetail() {
+      const overlay = document.getElementById('feedDetailOverlay');
+      const panel = document.getElementById('feedDetailPanel');
       if (overlay) overlay.classList.remove('open');
       if (panel) panel.classList.remove('open');
     }
@@ -5696,138 +6228,80 @@
       container.innerHTML = suggestionBanners + state.feedItems.map(item => {
         const scoreClass = item.score >= 80 ? 'score-high' : item.score >= 60 ? 'score-medium' : 'score-low';
         const scorePercent = item.score;
-        const companyDesc = getCompanyDescription(item.company);
+
+        // v3.20.0: Compact card — just the essentials.
+        // Click card body to open detail sidebar, buttons still work independently.
+
+        // One-line comp: extract salary info compactly
+        const compLine = (() => {
+          let salaryText = item.salary;
+          if ((!salaryText || salaryText === 'Salary not listed') && item.jdEnriched) {
+            const extracted = extractSalaryFromJD(item.jd || '');
+            if (extracted) { salaryText = extracted; item.salary = extracted; }
+          }
+          if (!salaryText) return '<span class="comp-missing">Salary unknown</span>';
+          const est = parseSalaryAndEstimate(salaryText, normalizeStage(item.stage), item.title, (item.jd || '').toLowerCase());
+          if (est) {
+            const lowK = Math.round(est.rawMin / 1000);
+            const highK = Math.round(est.rawMax / 1000);
+            const estHighK = Math.round(est.estHigh / 1000);
+            return `<span class="comp-value">$${lowK}K–$${highK}K</span>` +
+              `<span style="color: var(--text-tertiary);"> · Est. TC ~$${estHighK}K</span>`;
+          }
+          return `<span class="comp-value">${salaryText}</span>`;
+        })();
+
+        // Network count
+        const net = item.networkInfo;
+        const netLine = net && net.total > 0
+          ? `<div class="card-network-line">👥 ${net.total} connection${net.total > 1 ? 's' : ''}${net.tracked.length ? ` (${net.tracked.length} tracked)` : ''}</div>`
+          : '';
+
+        // JD status icon
+        const jdIcon = isStubJD(item) ? '📄' : '✓';
+        const jdClass = isStubJD(item) ? 'color: var(--warning)' : 'color: var(--success)';
+
+        // Pipeline status
+        const pipelineRoles = loadRoles();
+        const pStatus = checkPipelineStatus(item, pipelineRoles);
+        const pipelineBadge = pStatus.inPipeline
+          ? `<span style="font-size: 10px; color: var(--success); font-weight: 600;">✓ Pipeline (${pStatus.stage})</span>`
+          : '';
 
         return `
-          <div class="feed-card" data-role-id="${item.id}">
+          <div class="feed-card" data-role-id="${item.id}" onclick="openFeedDetail('${item.id}')">
             <div class="card-header">
               <div class="card-logo">${renderCardLogo(item)}</div>
               <div class="card-info">
-                <a href="../research-brief/index.html?company=${encodeURIComponent(item.company)}" class="card-company" style="cursor: pointer; color: var(--accent); transition: opacity var(--duration-fast) var(--ease-default);" title="${companyDesc}" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">${item.company}</a>
-                ${companyDesc ? `<div style="font-size: var(--text-xs); color: var(--text-tertiary); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${companyDesc}</div>` : ''}
+                <div class="card-company" style="color: var(--accent); font-weight: 600;">${item.company}</div>
                 <div class="card-title">${item.title}</div>
                 <div class="card-meta">
-                  ${(() => {
-                    // LinkedIn alert items: link to the LinkedIn job posting
-                    // Gmail items: link to the original email in Gmail
-                    const linkedinUrl = item.feedMetadata && item.feedMetadata.linkedinJobUrl;
-                    const sourceUrl = item.feedMetadata && item.feedMetadata.sourceUrl;
-                    if (linkedinUrl) {
-                      return `<a href="${linkedinUrl}" target="_blank" class="card-badge card-badge-link" title="View on LinkedIn">${item.source} ↗</a>`
-                        + `<a href="${sourceUrl}" target="_blank" class="card-badge card-badge-link card-badge-secondary" title="View alert email">✉️</a>`;
-                    } else if (sourceUrl) {
-                      return `<a href="${sourceUrl}" target="_blank" class="card-badge card-badge-link" title="Open source: ${sourceUrl}">${item.source} ↗</a>`;
-                    } else {
-                      return `<span class="card-badge">${item.source}</span>`;
-                    }
-                  })()}
-                  <span>Posted ${item.posted}</span>
+                  <span class="card-badge">${item.source}</span>
+                  <span>${item.posted}</span>
+                  ${item.scoring.leaderIC ? `<span style="color: var(--primary); font-weight: 600;">${item.scoring.leaderIC}</span>` : ''}
                 </div>
               </div>
             </div>
 
             <div class="card-score-section ${scoreClass}">
               <div class="card-score-label">
-                <span>Match Score</span>
+                <span style="${jdClass}; font-size: 11px;">${jdIcon} JD</span>
                 <span class="card-score-value">${item.score}/100</span>
               </div>
               <div class="score-bar">
                 <div class="score-bar-fill" style="width: 0%;" data-target="${scorePercent}"></div>
               </div>
-              <div class="score-breakdown">
-                ${(() => {
-                  // v3.19.1: Clean 7-column grid with label on top, value below
-                  const dims = [
-                    { label: 'Title', val: item.scoring.title, weight: 20 },
-                    { label: 'Domain', val: item.scoring.domain, weight: 20 },
-                    { label: 'Keys', val: item.scoring.keywords, weight: 15 },
-                    { label: 'Loc', val: item.scoring.location, weight: 15 },
-                    { label: 'Net', val: item.scoring.network || 0, weight: 15 },
-                    { label: 'Stage', val: item.scoring.stage, weight: 10 },
-                    { label: 'Comp', val: item.scoring.comp || 0, weight: 5 },
-                  ];
-                  return dims.map(d => {
-                    const tier = d.val >= 70 ? 'high' : d.val >= 40 ? 'medium' : 'low';
-                    return `<span class="score-dim" title="${d.label}: ${d.val}/100 (${d.weight}% weight)"><span class="score-dim-label">${d.label}</span><span class="score-dim-val ${tier}">${d.val}</span></span>`;
-                  }).join('');
-                })()}
-              </div>
-              <div class="score-meta-row">
-                ${item.hasFullJD === false ? '<span class="stub-jd-warning">⚠ Scored on stub JD — enrich for accuracy</span>' : '<span></span>'}
-                ${item.scoring.leaderIC ? `<span class="leader-ic-badge">${item.scoring.leaderIC}</span>` : ''}
-              </div>
             </div>
 
-            <!-- FEATURE 24: Dedup badge (In Pipeline or Possible Duplicate) -->
-            ${(() => {
-              const pipelineRoles = loadRoles();
-              const status = checkPipelineStatus(item, pipelineRoles);
+            <div class="card-domain-line">${item.domain || 'Unknown'} · ${item.location || 'Not listed'}${item.remote ? ' (Remote)' : ''}</div>
+            <div class="card-comp-line">${compLine}</div>
+            ${netLine}
+            ${pipelineBadge}
 
-              if (status.inPipeline) {
-                return `<div class="dedup-warning" style="margin: var(--space-2) 0 0;">
-                  <div class="dedup-warning-title">✓ In Pipeline</div>
-                  <div class="dedup-warning-text">This role is in your pipeline at stage: <strong>${status.stage}</strong></div>
-                </div>`;
-              }
-              return '';
-            })()}
-
-            <!-- JD quality indicator + one-click enrich button + view full JD button (Bug #4) -->
-            <div style="display: flex; align-items: center; gap: 6px; margin: var(--space-2) 0 0; flex-wrap: wrap;">
-              ${(() => {
-                const stub = isStubJD(item);
-                if (stub) {
-                  return `<span class="jd-badge jd-stub">📄 Stub JD</span>`
-                    + `<button class="enrich-btn" onclick="event.stopPropagation(); enrichSingleRole('${item.id}')" title="Fetch full JD from source">⚡ Enrich</button>`;
-                } else {
-                  return `<span class="jd-badge jd-full">✓ Full JD</span>`
-                    + (item.jdEnrichConfidence ? `<span style="font-size: 10px; color: var(--text-tertiary);" title="How confident we are this is the correct JD (not a match score)">JD confidence: ${item.jdEnrichConfidence}%</span>` : '')
-                    + `<button class="enrich-btn" style="margin-left: auto;" onclick="event.stopPropagation(); openJDPanel('${item.id}', ${JSON.stringify(item).replace(/"/g, '&quot;')})" title="View full job description">📖 View JD</button>`;
-                }
-              })()}
-            </div>
-
-            ${(() => {
-              // Show a snippet of the JD if it's been enriched
-              if (!isStubJD(item) && item.jdEnriched) {
-                const snippet = (item.jd || '').slice(0, 180).trim();
-                return `<div class="jd-preview">${snippet}...</div>`;
-              }
-              return '';
-            })()}
-
-            <div class="card-details">
-              <strong>${item.domain || 'Unknown'}</strong> • ${item.location || 'Not listed'}${item.remote ? ' (Remote)' : ''}<br>
-              ${renderCompDisplay(item)}
-              ${item.feedMetadata && item.feedMetadata.referredBy
-                ? `<br><span class="referral-badge">🤝 Referred by ${item.feedMetadata.referredBy}</span>`
-                : ''
-              }
-              ${(() => {
-                // Show network badge if user knows people at this company
-                const net = item.networkInfo;
-                if (!net || net.total === 0) return '';
-                const trackedCount = net.tracked.length;
-                const linkedinCount = net.linkedin.length;
-                const names = [...net.tracked, ...net.linkedin].slice(0, 3);
-                const namesStr = names.join(', ') + (net.total > 3 ? ` +${net.total - 3} more` : '');
-                const label = trackedCount > 0
-                  ? `👥 ${net.total} connection${net.total > 1 ? 's' : ''} (${trackedCount} tracked)`
-                  : `👥 ${net.total} LinkedIn connection${net.total > 1 ? 's' : ''}`;
-                return `<br><span class="network-badge" title="${namesStr}">${label}</span>`;
-              })()}
-            </div>
-
-            <div class="card-actions">
-              <button class="action-btn action-accept" onclick="acceptRole('${item.id}')">
-                <span>Accept</span>
-              </button>
-              <button class="action-btn action-snooze" onclick="snoozeRole('${item.id}')">
-                <span>Snooze</span>
-              </button>
-              <button class="action-btn action-dismiss" onclick="dismissRole('${item.id}')">
-                <span>Dismiss</span>
-              </button>
+            <div class="card-actions" onclick="event.stopPropagation()">
+              <button class="action-btn action-accept" onclick="acceptRole('${item.id}')">Accept</button>
+              <button class="action-btn action-snooze" onclick="snoozeRole('${item.id}')">Snooze</button>
+              <button class="action-btn action-dismiss" onclick="dismissRole('${item.id}')">Dismiss</button>
             </div>
           </div>
         `;
@@ -6479,9 +6953,13 @@
       // NOTE: item.domain is the INDUSTRY category (e.g., "Enterprise SaaS / AI"),
       // NOT a web domain. Always use getCompanyDomain() which resolves actual domains.
       const domain = getCompanyDomain(item.company || '', item.url || item.feedMetadata?.linkedinJobUrl || '');
-      const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+      // v3.20.0: Use Clearbit Logo API as primary (returns real logos, not favicons).
+      // Fallback chain: Clearbit → Google Favicon → letter-initial avatar.
+      // This fixes LinkedIn icons appearing when Google Favicon can't find the real logo.
+      const logoUrl = `https://logo.clearbit.com/${domain}`;
+      const fallbackUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
       const safeName = (item.company || '').replace(/'/g, "\\'");
-      return `<img src="${logoUrl}" alt="${item.company || ''}" onerror="handleLogoError(this,'${safeName}','card-logo-img')">`;
+      return `<img src="${logoUrl}" alt="${item.company || ''}" onerror="this.onerror=function(){handleLogoError(this,'${safeName}','card-logo-img');}; this.src='${fallbackUrl}';">`;
     }
 
     /**
@@ -6625,75 +7103,44 @@
         const scoreClass = item.score >= 80 ? 'score-high' : item.score >= 60 ? 'score-medium' : 'score-low';
         const scorePercent = item.score;
         const snoozedUntil = new Date(item.snoozedUntil);
-        const timeLeft = formatRelativeTime(snoozedUntil);
+
+        // v3.20.0: Compact snoozed cards (matching feed card style)
+        const net = item.networkInfo;
+        const netLine = net && net.total > 0
+          ? `<div class="card-network-line">👥 ${net.total} connection${net.total > 1 ? 's' : ''}</div>`
+          : '';
 
         return `
           <div class="feed-card" data-role-id="${item.id}">
             <div class="card-header">
               <div class="card-logo">${renderCardLogo(item)}</div>
               <div class="card-info">
-                <div class="card-company">${item.company}</div>
+                <div class="card-company" style="color: var(--accent); font-weight: 600;">${item.company}</div>
                 <div class="card-title">${item.title}</div>
                 <div class="card-meta">
                   <span class="card-badge">${item.source}</span>
-                  <span>Snoozed until ${formatTimestamp(snoozedUntil)}</span>
+                  <span>Until ${formatTimestamp(snoozedUntil)}</span>
                 </div>
               </div>
             </div>
 
             <div class="card-score-section ${scoreClass}">
               <div class="card-score-label">
-                <span>Match Score</span>
+                <span>Score</span>
                 <span class="card-score-value">${item.score}/100</span>
               </div>
               <div class="score-bar">
                 <div class="score-bar-fill" style="width: 0%;" data-target="${scorePercent}"></div>
               </div>
-              ${item.scoring ? `<div class="score-breakdown">
-                ${[
-                  { label: 'Title', val: item.scoring.title, weight: 20 },
-                  { label: 'Domain', val: item.scoring.domain, weight: 20 },
-                  { label: 'Keywords', val: item.scoring.keywords, weight: 15 },
-                  { label: 'Location', val: item.scoring.location, weight: 15 },
-                  { label: 'Network', val: item.scoring.network || 0, weight: 15 },
-                  { label: 'Stage', val: item.scoring.stage, weight: 10 },
-                  { label: 'Comp', val: item.scoring.comp || 0, weight: 5 },
-                ].map(d => {
-                  const tier = d.val >= 70 ? 'high' : d.val >= 40 ? 'medium' : 'low';
-                  return `<span class="score-dim"><span class="score-dim-label">${d.label}</span> <span class="score-dim-val ${tier}">${d.val}</span></span>`;
-                }).join('')}
-                ${item.scoring.leaderIC ? `<span class="score-dim"><span class="score-dim-label" style="color: var(--primary); font-weight: 600;">${item.scoring.leaderIC}</span></span>` : ''}
-              </div>` : ''}
             </div>
 
-            <div class="card-details">
-              <strong>${item.domain || 'Unknown'}</strong> • ${item.location || 'Not listed'}${item.remote ? ' (Remote)' : ''}<br>
-              ${renderCompDisplay(item)}
-              ${item.feedMetadata && item.feedMetadata.referredBy
-                ? `<br><span class="referral-badge">🤝 Referred by ${item.feedMetadata.referredBy}</span>`
-                : ''
-              }
-              ${(() => {
-                // Show network badge on snoozed cards too
-                const net = item.networkInfo;
-                if (!net || net.total === 0) return '';
-                const label = net.tracked.length > 0
-                  ? `👥 ${net.total} connection${net.total > 1 ? 's' : ''} (${net.tracked.length} tracked)`
-                  : `👥 ${net.total} LinkedIn connection${net.total > 1 ? 's' : ''}`;
-                return `<br><span class="network-badge">${label}</span>`;
-              })()}
-            </div>
+            <div class="card-domain-line">${item.domain || 'Unknown'} · ${item.location || 'Not listed'}</div>
+            ${netLine}
 
-            <div class="card-actions">
-              <button class="action-btn action-accept" onclick="acceptRole('${item.id}')">
-                <span>Accept</span>
-              </button>
-              <button class="action-btn action-snooze" onclick="unsnoozedRole('${item.id}')">
-                <span>Unsnoozed</span>
-              </button>
-              <button class="action-btn action-dismiss" onclick="dismissRole('${item.id}')">
-                <span>Dismiss</span>
-              </button>
+            <div class="card-actions" onclick="event.stopPropagation()">
+              <button class="action-btn action-accept" onclick="acceptRole('${item.id}')">Accept</button>
+              <button class="action-btn action-snooze" onclick="unsnoozedRole('${item.id}')">Unsnooze</button>
+              <button class="action-btn action-dismiss" onclick="dismissRole('${item.id}')">Dismiss</button>
             </div>
           </div>
         `;

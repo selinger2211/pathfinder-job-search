@@ -2932,13 +2932,22 @@
     }
 
     /**
-     * Gets the logo URL for a company, using Google's Favicon API.
-     * Clearbit is deprecated/unreliable (fails from localhost).
-     * Google Favicon API returns high-res favicons reliably.
+     * Gets the logo URL for a company.
+     * v3.20.0: Uses Clearbit Logo API as primary (real logos, not favicons),
+     * with Google Favicon as fallback in the img onerror handler.
+     * This fixes LinkedIn icons appearing when Google can't find the real logo.
      * INPUT: company name, optional URL
      * RETURNS: URL string for the company logo
      */
     function getCompanyLogoUrl(companyName, url) {
+      const domain = getCompanyDomain(companyName, url);
+      return `https://logo.clearbit.com/${domain}`;
+    }
+
+    /**
+     * Google Favicon fallback URL for when Clearbit fails.
+     */
+    function getCompanyLogoFallbackUrl(companyName, url) {
       const domain = getCompanyDomain(companyName, url);
       return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
     }
@@ -3371,11 +3380,13 @@
     }
 
     function companyLogoHtml(companyName, cssClass, url) {
+      // v3.20.0: Clearbit as primary → Google Favicon fallback → letter avatar
       var domain = getCompanyDomain(companyName, url);
-      var logoUrl = 'https://www.google.com/s2/favicons?domain=' + domain + '&sz=128';
+      var logoUrl = 'https://logo.clearbit.com/' + domain;
+      var fallbackUrl = 'https://www.google.com/s2/favicons?domain=' + domain + '&sz=128';
       var safeName = companyName.replace(/'/g, "\\'");
       return '<img src="' + logoUrl + '" alt="' + companyName + '" class="' + cssClass + '"'
-        + " onerror=\"handleLogoError(this,'" + safeName + "','" + cssClass + "')\">";
+        + " onerror=\"this.onerror=function(){handleLogoError(this,'" + safeName + "','" + cssClass + "');}; this.src='" + fallbackUrl + "';\">";
     }
 
     /**
@@ -3849,10 +3860,10 @@
       };
 
       try {
-        // Source 1: Google Favicon API (always available, no auth needed)
+        // Source 1: Clearbit Logo API (v3.20.0 — higher quality than favicons)
         if (domain) {
-          enrichment.logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-          enrichment.enrichmentSource.push('Google Favicon API');
+          enrichment.logoUrl = `https://logo.clearbit.com/${domain}`;
+          enrichment.enrichmentSource.push('Clearbit Logo API');
         }
 
         // Source 2: DuckDuckGo Instant Answer API
@@ -5788,10 +5799,15 @@
       selectedCardId = roleId;
       renderKanban();
 
-      // Populate header with logo
+      // Populate header with logo — v3.20.0: Clearbit → Google Favicon → letter fallback
       const company = getCompanies().find(c => c.name === role.company);
       const logoUrl = getCompanyLogoUrl(role.company, role.url);
+      const fallbackLogoUrl = getCompanyLogoFallbackUrl(role.company, role.url);
       const headerLogo = document.getElementById('detail-header-logo');
+      headerLogo.onerror = function() {
+        this.onerror = function() { this.style.display = 'none'; };
+        this.src = fallbackLogoUrl;
+      };
       headerLogo.src = logoUrl;
       headerLogo.style.display = '';
       const companyDesc = getCompanyDescription(role.company);
@@ -7396,7 +7412,7 @@
             <div class="modal-body">
               <div style="display: flex; gap: var(--space-4); margin-bottom: var(--space-4);">
                 <img src="${company.logoUrl || getCompanyLogoUrl(company.name, company.url)}"
-                     alt="${company.name}" style="width: 64px; height: 64px; border-radius: var(--radius-md); object-fit: contain; background: var(--bg-elevated);" onerror="this.style.display='none'">
+                     alt="${company.name}" style="width: 64px; height: 64px; border-radius: var(--radius-md); object-fit: contain; background: var(--bg-elevated);" onerror="this.onerror=function(){this.style.display='none';}; this.src=getCompanyLogoFallbackUrl('${company.name.replace(/'/g, "\\'")}');">
                 <div>
                   <div style="display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2);">
                     <span class="company-card-tier ${company.tier}">${company.tier}</span>

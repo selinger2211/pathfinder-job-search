@@ -4,6 +4,58 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.20.0 — 2026-03-13
+
+### Feed: Compact Cards + Detail Sidebar + Logo & Salary Fixes
+
+**Compact card redesign (v3.20.0)**
+- Cards reduced from 340px min to 280px min — now 4 per row instead of 3
+- Removed JD preview, score breakdown grid, and JD quality row from cards
+- Cards show: logo, company, title, source, score bar, domain/location, comp one-liner, network count
+- Click any card to open detail sidebar with full information
+- Smaller logo (36px vs 48px), tighter padding, smaller action buttons
+
+**Role detail sidebar (v3.20.0)**
+- Slides in from right when clicking a feed card (like Pipeline detail panel)
+- Full score breakdown with 7-dimension grid
+- Compensation section with posted base + estimated total comp
+- LinkedIn connections listed by name with tracked/untracked badges
+- JD preview (600 chars) with "View Full JD" button
+- Accept/Snooze/Dismiss actions in sticky footer
+- Overlay backdrop with click-to-close
+
+**Clearbit logo upgrade (v3.20.0)**
+- Switched from Google Favicon API to Clearbit Logo API as primary source
+- Fallback chain: Clearbit → Google Favicon → letter-initial avatar
+- Applied to both Feed and Pipeline modules
+- Fixes LinkedIn icons appearing when Google Favicon couldn't find real logos
+
+**Salary parsing improvements (v3.20.0)**
+- `parseSalaryAndEstimate()` now handles decimal formats like "$148,600.00 - $237,400.00" (Zillow)
+- `extractSalaryFromJD()` strips trailing ".00" decimals for clean display
+- Pattern 3 now captures decimal salary amounts
+
+---
+
+## v3.19.5 — 2026-03-13
+
+### Feed: Salary Extraction from JD Text + Comp Algorithm Fix
+
+**Salary extraction from JD body text (v3.19.5)**
+- New `extractSalaryFromJD()` extracts salary from JD text using 3 regex patterns
+- Handles "base salary range...is $X - $Y", "typical...range", and context-near patterns
+- Added as fallback in `renderCompDisplay()` when structured salary is empty
+- Wired into all 4 enrichment strategies (LinkedIn direct, ATS API, ATS search, LinkedIn search)
+- Salesforce: extracts "$148,500 - $313,700", Sigma: extracts "$240k - $260k"
+
+**Comp type detection fix (v3.19.5)**
+- Fixed Zendesk OTE false-positive: "base salary only (or OTE)" no longer triggers OTE
+- Split OTE patterns into strong (quota, commission eligible) and weak (" ote " alone)
+- Priority: Strong OTE > Base Salary > TCC > Weak OTE > UNKNOWN
+- Zendesk now correctly classified as BASE_SALARY
+
+---
+
 ## v3.19.4 — 2026-03-13
 
 ### Feed: Expanded Keywords & Collapsible Sidebar
