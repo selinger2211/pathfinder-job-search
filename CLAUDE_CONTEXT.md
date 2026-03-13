@@ -185,7 +185,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.8.1
+**Current Version:** v3.8.2
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -208,6 +208,9 @@ These are the actual field shapes for objects stored in shared localStorage keys
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.8.2)
+- **Auto-enrich disabled**: Switched JD enrichment from automatic-on-load to on-demand only. Per-card "⚡ Enrich" and batch "Enrich JDs" buttons still work. Conserves Apify credits. Auto-enrich code commented out (re-enable by uncommenting block in init).
 
 ### Recently Fixed (v3.8.1)
 - **Async Apify enrichment**: Replaced sync API (300s hard timeout) with async run + poll pattern (up to 10 min). Happitap actor was timing out every time on the sync endpoint.

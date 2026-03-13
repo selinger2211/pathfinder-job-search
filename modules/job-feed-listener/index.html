@@ -5486,21 +5486,20 @@
       renderFeedLog();
       updateSnoozedBadge();
 
-      // ====== AUTO-ENRICH STUB JDs ON PAGE LOAD (v3.6.1) ======
-      // If user has an Apify token, automatically enrich any roles with stub JDs
-      // in the background. Runs sequentially to respect rate limits. Each enriched
-      // role re-scores and updates the card in-place without disrupting the user.
+      // ====== AUTO-ENRICH DISABLED (v3.8.2) ======
+      // Was: auto-enrich stub JDs on page load (v3.6.1). Disabled to conserve
+      // Apify credits. Enrichment is now on-demand only via per-card "⚡ Enrich"
+      // button and the batch "Enrich JDs" header button.
+      // To re-enable: uncomment the block below.
+      /*
       const autoEnrichToken = getApifyToken();
       const stubRoles = state.feedItems.filter(isStubJD);
       if (autoEnrichToken && stubRoles.length > 0) {
         console.log(`[Feed] Auto-enriching ${stubRoles.length} stub JDs in background...`);
-        // Show a subtle progress indicator in the header
         const enrichProgress = document.getElementById('enrichProgress');
         if (enrichProgress) {
           enrichProgress.textContent = `(enriching 0/${stubRoles.length}...)`;
         }
-
-        // Run enrichment in background (non-blocking)
         (async () => {
           let enriched = 0;
           let failed = 0;
@@ -5509,52 +5508,39 @@
               const jd = await enrichRoleJD(role);
               if (jd) {
                 enriched++;
-                // Re-score the enriched role with full JD data
                 const scoring = scoreRole(role, state.preferences);
-                if (scoring) {
-                  role.score = scoring.score;
-                  role.scoring = scoring.breakdown;
-                }
-                // Re-sort and re-render to show updated scores
+                if (scoring) { role.score = scoring.score; role.scoring = scoring.breakdown; }
                 state.feedItems.sort((a, b) => b.score - a.score);
                 renderFeedCards();
-              } else {
-                failed++;
-              }
+              } else { failed++; }
             } catch (err) {
               failed++;
               console.warn(`[Auto-enrich] Failed for "${role.title}": ${err.message}`);
-              // If it's a token/auth error, stop trying (don't burn through roles)
-              // Stop on auth, billing, or rental errors — no point trying more roles
               if (err.message.includes('403') || err.message.includes('401') || err.message.includes('not-rented')) {
-                console.warn('[Auto-enrich] Auth error — stopping auto-enrichment');
-                showToast('Apify token issue — check sidebar settings', 'warning');
-                break;
+                console.warn('[Auto-enrich] Auth error — stopping'); showToast('Apify token issue', 'warning'); break;
               }
               if (err.message.includes('402') || err.message.includes('free tier limit')) {
-                console.warn('[Auto-enrich] Billing limit — stopping auto-enrichment');
-                showToast('Apify free tier limit reached this month', 'warning');
-                break;
+                console.warn('[Auto-enrich] Billing limit — stopping'); showToast('Apify limit reached', 'warning'); break;
               }
             }
-            // Update progress counter
-            if (enrichProgress) {
-              enrichProgress.textContent = `(enriching ${enriched + failed}/${stubRoles.length}...)`;
-            }
+            if (enrichProgress) { enrichProgress.textContent = `(enriching ${enriched + failed}/${stubRoles.length}...)`; }
           }
-          // Final status
           if (enrichProgress) {
             const remaining = stubRoles.length - enriched - failed;
             enrichProgress.textContent = enriched > 0
               ? `(${enriched} enriched${remaining > 0 ? `, ${remaining} remaining` : ''})`
               : `(${stubRoles.length} need JDs)`;
           }
-          if (enriched > 0) {
-            showToast(`Auto-enriched ${enriched} JD${enriched > 1 ? 's' : ''}`, 'success');
-            updateApifyStatus();
-          }
+          if (enriched > 0) { showToast(`Auto-enriched ${enriched} JDs`, 'success'); updateApifyStatus(); }
           console.log(`[Auto-enrich] Done: ${enriched} enriched, ${failed} failed, ${stubRoles.length - enriched - failed} remaining`);
         })();
+      }
+      */
+      // Instead, just show how many stubs need enrichment so user knows
+      const stubCount = state.feedItems.filter(isStubJD).length;
+      const enrichProgress = document.getElementById('enrichProgress');
+      if (enrichProgress && stubCount > 0) {
+        enrichProgress.textContent = `(${stubCount} need JDs)`;
       }
 
       // Event handlers

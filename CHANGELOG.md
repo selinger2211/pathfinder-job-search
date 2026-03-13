@@ -4,6 +4,18 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.8.2 — 2026-03-12
+
+### What Changed — On-Demand Enrichment Only
+
+**User reported:** Burned through Apify credits. Auto-enrich on page load is too aggressive.
+
+**Changes:**
+
+1. **Feed: Disabled auto-enrich on load** — Commented out the auto-enrich block that ran on every page load. JD enrichment is now on-demand only via per-card "⚡ Enrich" button and the batch "Enrich JDs" header button. Page load now just shows stub count ("X need JDs") instead of auto-enriching. Code preserved as commented block for easy re-enable.
+
+---
+
 ## v3.8.1 — 2026-03-12
 
 ### What Changed — Async Apify Enrichment + Billing Early-Abort
