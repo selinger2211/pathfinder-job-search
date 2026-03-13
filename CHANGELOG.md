@@ -4,6 +4,49 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.19.0 — 2026-03-13
+
+### Resume Builder: Complete Rewrite
+
+Full ground-up rebuild of the Resume Builder module as Ili's personal resume tailoring machine.
+
+**Architecture: Two-panel layout with 4-phase workflow**
+- Controls panel (left): Context → Analysis → Builder → History
+- Preview panel (right): Live resume preview with inline editing
+- Phase gating: must complete analysis before generating
+
+**Phase 1: Context Gathering**
+- Role selector loads all pipeline roles with JD auto-population
+- Additional notes textarea for insider context
+- File upload (drag-drop) for PDFs, DOCX, TXT with client-side text extraction via pdf.js and mammoth.js
+- Research brief auto-pull from pipeline data
+
+**Phase 2: Role Analysis (Claude-powered decision gate)**
+- Structured analysis: seniority, keywords (earned/borderline/missing), domain, role type, stakeholders
+- Fit assessment (Strong/Moderate/Stretch) with specific reasons and gaps
+- Strategy recommendation before generation
+- Recommended bullet selection and skills bar configuration
+
+**Phase 3: Resume Generation**
+- Claude generates tailored summary and skills bar using full agent spec as system prompt
+- All Ili-specific constants hardcoded: contact info, bullet bank, skills pool, seniority calibration, honest framing guidelines
+- Variable bullet allocation per company based on JD relevance
+
+**Phase 4: Builder with Live Preview**
+- Summary editor, skills bar editor (add/remove from canonical pool)
+- Per-company bullet toggle (checkbox selector from full bullet bank)
+- Subtitle editor per role
+- Live HTML resume preview matching DOCX layout
+- Inline contenteditable on summary, name, and subtitles
+
+**Phase 5: Export + Version Management**
+- DOCX export via docx-js (US Letter, 780/1008 DXA margins, Arial, borderless two-column headers, LevelFormat.BULLET)
+- PDF export via html2pdf.js
+- Save to role: versions logged to pf_resume_log and role.artifacts array
+- Version history with load-into-builder capability
+
+---
+
 ## v3.18.6 — 2026-03-13
 
 ### QA Pass #2: Fix Feed card display and log field mismatches
