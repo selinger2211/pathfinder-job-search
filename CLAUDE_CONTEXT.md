@@ -185,7 +185,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.5.0
+**Current Version:** v3.5.1
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -208,6 +208,12 @@ These are the actual field shapes for objects stored in shared localStorage keys
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.5.1)
+- **Accept → Pipeline integration**: `acceptRole()` now creates a full Pipeline role (stage: "discovered") in `pf_roles` + company in `pf_companies` with Google Favicon logo. New helpers: `addRoleToPipeline()`, `guessDomain()`. Toast shows "→ Pipeline (Discovered)".
+- **Dismiss persistence**: `dismissRole()` now calls `saveFeedQueue()` so dismissed roles don't reappear on reload.
+- **Dark mode cache fix**: `data-layer.js` initializes `data-theme` on `<html>` from `pf_theme` on every page load. Overrides stale cached CSS. Cache-bust `?v=3.5.1` on shared CSS/JS links in all 11 modules.
+- **Apify companyName array**: `buildApifyInput()` sends `companyName: [company]` (array) instead of string. Fixes 400 error from valig actor.
 
 ### Recently Fixed (v3.5.0)
 - **JD-first scoring engine**: `scoreRole()` rewritten with `searchText` pattern — scans full JD when available, falls back to title+company+domain for stubs. New tier: target title found in JD body = 75/100 Role Fit. `hasFullJD` flag in score breakdown.

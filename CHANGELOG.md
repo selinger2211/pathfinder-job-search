@@ -4,6 +4,26 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.5.1 — 2026-03-12
+
+### What Changed — Bug Fixes: Accept→Pipeline, Dark Mode Cache, Dismiss Persist
+
+**User reported:** "I accepted a job in the feed and it disappeared" + "still stuck in dark mode on some"
+
+**Changes:**
+
+1. **Feed: Accept → Pipeline integration** — `acceptRole()` now creates a full Pipeline role (stage: "discovered") in `pf_roles` with all metadata (JD text, salary, source, feed metadata, stage history). Also creates a company entry in `pf_companies` if one doesn't exist, with Google Favicon logo via domain guessing. New helper functions: `addRoleToPipeline(feedRole)` creates the role + company, `guessDomain(companyName)` maps common company names to domains with hardcoded overrides and a generic fallback. Toast updated: "✅ [title] at [company] → Pipeline (Discovered)".
+
+2. **Feed: Dismiss persists to localStorage** — `dismissRole()` now calls `saveFeedQueue()` after removing the role from `state.feedItems`, so dismissed roles don't reappear on page reload.
+
+3. **Dark mode cache fix** — Added theme initialization to `data-layer.js` (loaded by all 11 modules): reads `pf_theme` from localStorage and sets `data-theme` attribute on `<html>` element immediately on load. This overrides any stale cached CSS `:root` values. Previously, modules could render in dark mode if the browser had cached an old version of `pathfinder.css` where `:root` had dark values (pre-v3.3.1).
+
+4. **Cache-bust query params** — Added `?v=3.5.1` to `pathfinder.css`, `data-layer.js`, and `claude-api.js` `<script>`/`<link>` tags in all 11 modules. Forces browsers to fetch fresh copies after the dark mode CSS change in v3.3.1.
+
+5. **Fix: Apify companyName array** — `buildApifyInput()` now sends `companyName: [company]` (array) instead of `companyName: company` (string). The valig actor spec requires an array, and the string was returning a 400 error.
+
+---
+
 ## v3.5.0 — 2026-03-12
 
 ### What Changed — JD-First Scoring Engine + Apify Actor Swap

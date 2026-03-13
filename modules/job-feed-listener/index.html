@@ -7,7 +7,7 @@
   <meta name="description" content="Monitor job sources and score incoming roles against preferences">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>P</text></svg>">
 
-  <link rel="stylesheet" href="../shared/pathfinder.css">
+  <link rel="stylesheet" href="../shared/pathfinder.css?v=3.5.1">
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <style>
@@ -2057,7 +2057,7 @@
     </div>
   </div>
 
-  <script src="../shared/claude-api.js"></script>
+  <script src="../shared/claude-api.js?v=3.5.1"></script>
   <script>
     /**
      * ============================================================
@@ -3850,12 +3850,96 @@
       if (card) {
         card.classList.add('accepted');
         setTimeout(() => {
+          // Remove from feed
           state.feedItems = state.feedItems.filter(r => r.id !== roleId);
           state.acceptedRoles.push(role);
+
+          // ====== PERSIST TO PIPELINE (v3.5.1) ======
+          // Create a new role in pf_roles so the role shows up in Pipeline
+          addRoleToPipeline(role);
+
+          // Save updated feed queue so removal persists across reloads
+          saveFeedQueue(state.feedItems);
+
           renderFeedCards();
-          showToast(`Accepted: ${role.title} at ${role.company}`, 'success');
+          showToast(`✅ ${role.title} at ${role.company} → Pipeline (Discovered)`, 'success');
         }, 300);
       }
+    }
+
+    /**
+     * Add an accepted Feed role to the Pipeline (pf_roles + pf_companies).
+     * Creates the role as stage "discovered" and ensures the company exists.
+     * INPUT: Feed role object (from pf_feed_queue)
+     * OUTPUT: New role added to pf_roles, company added to pf_companies if needed
+     */
+    function addRoleToPipeline(feedRole) {
+      try {
+        // --- Create the Pipeline role ---
+        const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+        const newRole = {
+          id: 'role-' + Date.now(),
+          company: feedRole.company || 'Unknown',
+          title: feedRole.title || 'Untitled Role',
+          url: feedRole.url || feedRole.feedMetadata?.linkedinJobUrl || '',
+          jdText: feedRole.jd || '',
+          stage: 'discovered',
+          source: (feedRole.source || 'feed').toLowerCase(),
+          dateAdded: new Date().toISOString(),
+          lastActivity: new Date().toISOString(),
+          salary: feedRole.salary ? { raw: feedRole.salary } : null,
+          stageHistory: [{ stage: 'discovered', date: new Date().toISOString() }],
+          feedMetadata: feedRole.feedMetadata || null,
+          // Carry over enrichment data if available
+          jdEnriched: feedRole.jdEnriched || false,
+          jdEnrichedAt: feedRole.jdEnrichedAt || null,
+          jdEnrichSource: feedRole.jdEnrichSource || null
+        };
+        roles.push(newRole);
+        localStorage.setItem('pf_roles', JSON.stringify(roles));
+
+        // --- Ensure the company exists in pf_companies ---
+        const companies = JSON.parse(localStorage.getItem('pf_companies') || '[]');
+        const companyExists = companies.some(c =>
+          c.name.toLowerCase() === feedRole.company.toLowerCase()
+        );
+        if (!companyExists && feedRole.company) {
+          const domain = feedRole.domain || guessDomain(feedRole.company);
+          companies.push({
+            name: feedRole.company,
+            domain: domain,
+            tier: 'watching',
+            dateAdded: new Date().toISOString(),
+            logoUrl: domain
+              ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128`
+              : null
+          });
+          localStorage.setItem('pf_companies', JSON.stringify(companies));
+        }
+
+        console.log(`[Feed] Added "${feedRole.title}" at ${feedRole.company} to Pipeline as "discovered"`);
+      } catch (e) {
+        console.error('[Feed] Failed to add role to pipeline:', e);
+        showToast('Error adding to pipeline — check console', 'error');
+      }
+    }
+
+    /**
+     * Guess a company's domain from its name (for logo URLs).
+     * Simple heuristic: lowercase, remove spaces/special chars, append .com
+     * INPUT: "Adobe" → OUTPUT: "adobe.com"
+     */
+    function guessDomain(companyName) {
+      if (!companyName) return '';
+      // Known overrides for tricky names
+      const overrides = {
+        'amazon ads': 'amazon.com', 'google': 'google.com',
+        'meta': 'meta.com', 'apple': 'apple.com',
+        'sofi': 'sofi.com', 'blackrock': 'blackrock.com'
+      };
+      const lower = companyName.toLowerCase().trim();
+      if (overrides[lower]) return overrides[lower];
+      return lower.replace(/[^a-z0-9]/g, '') + '.com';
     }
 
     /**
@@ -3872,6 +3956,7 @@
         setTimeout(() => {
           state.feedItems = state.feedItems.filter(r => r.id !== roleId);
           state.dismissedRoles.push(role);
+          saveFeedQueue(state.feedItems);  // v3.5.1: persist removal
           renderFeedCards();
           showToast(`Dismissed: ${role.title}`, 'success');
         }, 300);
@@ -5041,6 +5126,6 @@
       startAutoRefresh();
     });
   </script>
-  <script src="../shared/data-layer.js"></script> <!-- v3.0.0: MCP-backed data persistence -->
+  <script src="../shared/data-layer.js?v=3.5.1"></script> <!-- v3.0.0: MCP-backed data persistence -->
 </body>
 </html>

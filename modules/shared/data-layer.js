@@ -345,6 +345,20 @@
   // a page reload (which is intentional).
   // ============================================================
 
+  // ============================================================
+  // Theme Initialization (v3.5.1)
+  // ============================================================
+  // Ensures every module applies the correct theme on page load.
+  // Reads pf_theme from localStorage (default: 'light') and sets
+  // the data-theme attribute on <html>. This prevents stale CSS
+  // cache from showing the wrong theme.
+  // ============================================================
+
+  (function initTheme() {
+    const theme = localStorage.getItem('pf_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+
   startupRecovery();
 
 })();
