@@ -128,6 +128,41 @@
       margin-top: 0;
     }
 
+    /* v3.19.4: Collapsible pill sections for busy keyword lists */
+    .sidebar-section-title.collapsible {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      user-select: none;
+      transition: color var(--duration-fast) var(--ease-default);
+    }
+    .sidebar-section-title.collapsible:hover {
+      color: var(--text-primary);
+    }
+    .sidebar-section-title.collapsible::before {
+      content: '▸';
+      font-size: 10px;
+      transition: transform var(--duration-fast) var(--ease-default);
+      display: inline-block;
+    }
+    .sidebar-section-title.collapsible.expanded::before {
+      transform: rotate(90deg);
+    }
+    .section-count-badge {
+      font-weight: 500;
+      font-size: 10px;
+      background: var(--accent-subtle);
+      color: var(--accent);
+      padding: 1px 6px;
+      border-radius: var(--radius-pill);
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .pref-group.collapsed {
+      display: none;
+    }
+
     /* Preference form group */
     .pref-group {
       margin-bottom: var(--space-4);
@@ -1881,9 +1916,9 @@
     <div class="feed-layout">
       <!-- LEFT SIDEBAR: Preferences & Settings -->
       <div class="feed-sidebar">
-        <!-- Target Job Titles -->
-        <div class="sidebar-section-title">Target Titles</div>
-        <div class="pref-group">
+        <!-- Target Job Titles (v3.19.4: collapsible) -->
+        <div class="sidebar-section-title collapsible" onclick="toggleSection(this)" data-section="targetTitles">Target Titles <span class="section-count-badge" id="targetTitlesCount"></span></div>
+        <div class="pref-group collapsed" id="targetTitlesGroup">
           <div class="pill-container" id="targetTitlesPills" aria-label="Target job titles">
             <!-- Pills populated by JavaScript -->
           </div>
@@ -1991,27 +2026,27 @@
           <!-- Max Total removed — no reason to cap upside -->
         </div>
 
-        <!-- Must-Have Keywords -->
-        <div class="sidebar-section-title">Must-Have Keywords</div>
-        <div class="pref-group">
+        <!-- Must-Have Keywords (v3.19.4: collapsible) -->
+        <div class="sidebar-section-title collapsible" onclick="toggleSection(this)" data-section="mustHaveKeywords">Must-Have Keywords <span class="section-count-badge" id="mustHaveKeywordsCount"></span></div>
+        <div class="pref-group collapsed" id="mustHaveKeywordsGroup">
           <div class="pill-container" id="mustHaveKeywordsPills" aria-label="Must-have keywords">
             <!-- Pills populated by JavaScript -->
           </div>
           <input type="text" class="pref-input" id="mustHaveKeywordInput" placeholder="Add keyword (e.g., product manager)" aria-label="Add must-have keyword">
         </div>
 
-        <!-- Boost Keywords -->
-        <div class="sidebar-section-title">Boost Keywords</div>
-        <div class="pref-group">
+        <!-- Boost Keywords (v3.19.4: collapsible) -->
+        <div class="sidebar-section-title collapsible" onclick="toggleSection(this)" data-section="boostKeywords">Boost Keywords <span class="section-count-badge" id="boostKeywordsCount"></span></div>
+        <div class="pref-group collapsed" id="boostKeywordsGroup">
           <div class="pill-container" id="boostKeywordsPills" aria-label="Boost keywords">
             <!-- Pills populated by JavaScript -->
           </div>
           <input type="text" class="pref-input" id="boostKeywordInput" placeholder="Add keyword (e.g., LLM)" aria-label="Add boost keyword">
         </div>
 
-        <!-- Exclude Keywords -->
-        <div class="sidebar-section-title">Exclude Keywords</div>
-        <div class="pref-group">
+        <!-- Exclude Keywords (v3.19.4: collapsible) -->
+        <div class="sidebar-section-title collapsible" onclick="toggleSection(this)" data-section="excludeKeywords">Exclude Keywords <span class="section-count-badge" id="excludeKeywordsCount"></span></div>
+        <div class="pref-group collapsed" id="excludeKeywordsGroup">
           <div class="pill-container" id="excludeKeywordsPills" aria-label="Excluded keywords">
             <!-- Pills populated by JavaScript -->
           </div>
@@ -3058,8 +3093,20 @@
     // DEFAULT PREFERENCES & CONSTANTS
     // ============================================================
 
+    // v3.19.4: Expanded keyword lists based on Ili's full career profile.
+    // Target titles cover Director→VP range across naming conventions.
+    // Must-haves are tight (5 terms) to avoid penalizing JDs that use synonyms.
+    // Boost keywords cast a wide net — scoring uses count*20 capped at 100,
+    // so more keywords = more chances to hit the 5-match cap, no dilution.
     const DEFAULT_PREFERENCES = {
-      targetTitles: ['Senior PM', 'Staff PM', 'Principal PM'],
+      targetTitles: [
+        'Senior PM', 'Staff PM', 'Principal PM',
+        'Head of Product', 'Director of Product', 'Senior Director, Product',
+        'Lead Product Manager', 'Product Lead', 'VP Product',
+        'Product Management Director', 'Principal Data Product Manager',
+        'Technical Product Manager', 'Group Product Manager',
+        'Principal Product Manager', 'Sr. Principal Product Manager'
+      ],
       seniority: 'senior',
       primaryDomains: ['AdTech', 'AI/ML', 'Data Platforms'],
       secondaryDomains: ['Enterprise SaaS', 'Fintech'],
@@ -3069,8 +3116,20 @@
       locations: ['Remote', 'Hybrid (SF Bay)', 'San Francisco'],
       excludedLocations: [],
       compRange: { minBase: 250000, targetBase: 300000 },
-      mustHaveKeywords: ['product manager', 'strategy'],
-      boostKeywords: ['AdTech', 'targeting', 'LLM', 'agents', 'real-time', 'decisioning'],
+      mustHaveKeywords: ['product manager', 'strategy', 'product strategy', 'cross-functional', 'roadmap'],
+      boostKeywords: [
+        // AdTech / Yahoo
+        'AdTech', 'targeting', 'programmatic', 'monetization', 'audience',
+        'addressability', 'publisher', 'identity', 'privacy', 'brand safety', 'DSP', 'SSP',
+        // AI / JPMC
+        'LLM', 'agents', 'RAG', 'agentic', 'NLP', 'natural language', 'automation',
+        'search and ranking',
+        // Platform / Infrastructure
+        'real-time', 'decisioning', 'data platform', 'pipeline', 'infrastructure',
+        'scale', 'SaaS', 'billing',
+        // General PM seniority
+        '0-to-1', 'zero to one', 'GTM', 'go-to-market', 'stakeholder', 'enterprise'
+      ],
       excludeKeywords: ['junior', 'associate', 'intern', 'contract']
     };
 
@@ -4030,7 +4089,42 @@
     function loadPreferences() {
       try {
         const stored = localStorage.getItem('pf_preferences');
-        return stored ? JSON.parse(stored) : DEFAULT_PREFERENCES;
+        if (!stored) return DEFAULT_PREFERENCES;
+
+        const prefs = JSON.parse(stored);
+
+        // v3.19.4: One-time migration — merge new default keywords into existing prefs.
+        // Only runs once per version. Adds any DEFAULT keywords the user doesn't already have,
+        // without removing any they've manually added or deleted.
+        const MIGRATION_KEY = 'pf_prefs_migrated_v3194';
+        if (!localStorage.getItem(MIGRATION_KEY)) {
+          let changed = false;
+          ['targetTitles', 'mustHaveKeywords', 'boostKeywords'].forEach(key => {
+            const defaults = DEFAULT_PREFERENCES[key] || [];
+            const existing = prefs[key] || [];
+            const existingLower = existing.map(k => k.toLowerCase());
+            defaults.forEach(d => {
+              if (!existingLower.includes(d.toLowerCase())) {
+                existing.push(d);
+                changed = true;
+              }
+            });
+            prefs[key] = existing;
+          });
+          // Also remove bare "Product Manager" from target titles (mid-level noise)
+          const bareIdx = prefs.targetTitles.findIndex(t => t.toLowerCase() === 'product manager');
+          if (bareIdx !== -1) {
+            prefs.targetTitles.splice(bareIdx, 1);
+            changed = true;
+          }
+          if (changed) {
+            console.log('[Feed] v3.19.4 migration: merged new default keywords into existing preferences');
+            localStorage.setItem('pf_preferences', JSON.stringify(prefs));
+          }
+          localStorage.setItem(MIGRATION_KEY, 'true');
+        }
+
+        return prefs;
       } catch (e) {
         console.warn('Failed to load preferences from localStorage:', e);
         return DEFAULT_PREFERENCES;
@@ -5121,9 +5215,33 @@
       container.innerHTML = items.map(item => `
         <div class="pill">
           ${item}
-          <span class="pill-remove" onclick="removePill('${type}', '${item}')">✕</span>
+          <span class="pill-remove" onclick="removePill('${type}', '${item.replace(/'/g, "\\'")}')">✕</span>
         </div>
       `).join('');
+    }
+
+    /**
+     * v3.19.4: Toggle a collapsible sidebar section open/closed.
+     * Toggles the 'expanded' class on the title and 'collapsed' class on the
+     * adjacent pref-group. State is purely visual — no localStorage persistence.
+     * INPUT: titleEl (the clicked .sidebar-section-title element)
+     */
+    function toggleSection(titleEl) {
+      const section = titleEl.dataset.section;
+      const group = document.getElementById(section + 'Group');
+      if (!group) return;
+      const isExpanded = titleEl.classList.toggle('expanded');
+      group.classList.toggle('collapsed', !isExpanded);
+    }
+
+    /**
+     * v3.19.4: Update the count badge on a collapsible section header.
+     * Shows the number of items as a small pill next to the section title.
+     * INPUT: sectionKey (e.g., 'targetTitles'), count (number of items)
+     */
+    function updateSectionCount(sectionKey, count) {
+      const badge = document.getElementById(sectionKey + 'Count');
+      if (badge) badge.textContent = count;
     }
 
     /**
@@ -5197,6 +5315,7 @@
 
       // Target titles
       renderPills('targetTitlesPills', prefs.targetTitles || [], 'title');
+      updateSectionCount('targetTitles', (prefs.targetTitles || []).length);  // v3.19.4
       document.getElementById('titleInput').onkeypress = (e) => {
         if (e.key === 'Enter') addPill('title', 'titleInput');
       };
@@ -5267,18 +5386,21 @@
 
       // Must-have keywords
       renderPills('mustHaveKeywordsPills', prefs.mustHaveKeywords || [], 'must-have-keyword');
+      updateSectionCount('mustHaveKeywords', (prefs.mustHaveKeywords || []).length);  // v3.19.4
       document.getElementById('mustHaveKeywordInput').onkeypress = (e) => {
         if (e.key === 'Enter') addPill('must-have-keyword', 'mustHaveKeywordInput');
       };
 
       // Boost keywords
       renderPills('boostKeywordsPills', prefs.boostKeywords || [], 'boost-keyword');
+      updateSectionCount('boostKeywords', (prefs.boostKeywords || []).length);  // v3.19.4
       document.getElementById('boostKeywordInput').onkeypress = (e) => {
         if (e.key === 'Enter') addPill('boost-keyword', 'boostKeywordInput');
       };
 
       // Exclude keywords
       renderPills('excludeKeywordsPills', prefs.excludeKeywords || [], 'exclude-keyword');
+      updateSectionCount('excludeKeywords', (prefs.excludeKeywords || []).length);  // v3.19.4
       document.getElementById('excludeKeywordInput').onkeypress = (e) => {
         if (e.key === 'Enter') addPill('exclude-keyword', 'excludeKeywordInput');
       };

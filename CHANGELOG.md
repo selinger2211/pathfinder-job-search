@@ -4,6 +4,23 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.19.4 — 2026-03-13
+
+### Feed: Expanded Keywords & Collapsible Sidebar
+
+**Expanded default keyword lists**
+- Target Titles: 15 titles covering Director→VP range across naming conventions
+- Must-Have Keywords: 5 terms (added product strategy, cross-functional, roadmap)
+- Boost Keywords: 34 terms across 4 themes (AdTech, AI/JPMC, Platform, General PM)
+- One-time migration merges new defaults into existing localStorage prefs
+
+**Collapsible sidebar sections**
+- Target Titles, Must-Have/Boost/Exclude Keywords collapse with a click
+- Count badge shows number of items when collapsed (e.g., "Boost Keywords 34")
+- Arrow indicator + smooth expand/collapse animation
+
+---
+
 ## v3.19.3 — 2026-03-13
 
 ### Feed: Duplicate Cards & Layout Fixes
