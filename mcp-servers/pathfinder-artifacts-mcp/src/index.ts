@@ -16,6 +16,34 @@ import { handleGenerateBriefSection, GenerateBriefSectionInputSchema } from "./t
 import { handleBackupPipeline, BackupPipelineInputSchema } from "./tools/backup.js";
 import { handleRestorePipeline, RestorePipelineInputSchema } from "./tools/restore.js";
 
+// Feature 28: Research Brief Persistence
+import {
+  handleSaveBrief,
+  SaveBriefInputSchema,
+  handleGetBrief,
+  GetBriefInputSchema,
+  handleListBriefs,
+  ListBriefsInputSchema,
+  handleCompareBriefs,
+  CompareBriefsInputSchema,
+} from "./tools/research-briefs.js";
+
+// Feature 35: Job Feed Tools
+import {
+  handleSearchFeed,
+  SearchFeedInputSchema,
+  handleGetRole,
+  GetRoleInputSchema,
+} from "./tools/job-feed.js";
+
+// Feature 49: Resume Builder Tools
+import {
+  handleGenerateBullets,
+  GenerateBulletsInputSchema,
+  handleExportResume,
+  ExportResumeInputSchema,
+} from "./tools/resume-builder.js";
+
 // Import storage service for initialization
 import { storageService } from "./services/storage.js";
 
@@ -341,6 +369,282 @@ class PathfinderArtifactsMcpServer {
         } catch (error) {
           throw new Error(
             `restore_pipeline failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+        }
+      }
+    );
+
+    // ================================================================
+    // FEATURE 28: RESEARCH BRIEF PERSISTENCE TOOLS
+    // ================================================================
+
+    // pf_save_brief - Save a research brief with auto-incrementing version
+    this.server.registerTool(
+      "pf_save_brief",
+      {
+        title: "Save Research Brief",
+        description:
+          "Save a generated research brief to the database with versioning support. " +
+          "Auto-increments version number per roleId for tracking changes over time.",
+        inputSchema: SaveBriefInputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      async (params) => {
+        try {
+          const result = await handleSaveBrief(params);
+          return {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          };
+        } catch (error) {
+          throw new Error(
+            `save_brief failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+        }
+      }
+    );
+
+    // pf_get_brief - Retrieve a research brief by roleId and optional version
+    this.server.registerTool(
+      "pf_get_brief",
+      {
+        title: "Get Research Brief",
+        description:
+          "Retrieve a research brief by roleId. Returns the latest version by default, " +
+          "or a specific version if provided.",
+        inputSchema: GetBriefInputSchema,
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (params) => {
+        try {
+          const result = await handleGetBrief(params);
+          return {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          };
+        } catch (error) {
+          throw new Error(
+            `get_brief failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+        }
+      }
+    );
+
+    // pf_list_briefs - List all saved briefs with optional filtering
+    this.server.registerTool(
+      "pf_list_briefs",
+      {
+        title: "List Research Briefs",
+        description:
+          "List all saved research briefs with optional filtering by roleId or company. " +
+          "Returns metadata including version numbers and section counts.",
+        inputSchema: ListBriefsInputSchema,
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (params) => {
+        try {
+          const result = await handleListBriefs(params);
+          return {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          };
+        } catch (error) {
+          throw new Error(
+            `list_briefs failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+        }
+      }
+    );
+
+    // pf_compare_briefs - Compare two versions of a brief
+    this.server.registerTool(
+      "pf_compare_briefs",
+      {
+        title: "Compare Research Brief Versions",
+        description:
+          "Compare two versions of a research brief and show section-level differences. " +
+          "Returns detailed diffs showing what content changed between versions.",
+        inputSchema: CompareBriefsInputSchema,
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (params) => {
+        try {
+          const result = await handleCompareBriefs(params);
+          return {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          };
+        } catch (error) {
+          throw new Error(
+            `compare_briefs failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+        }
+      }
+    );
+
+    // ================================================================
+    // FEATURE 35: JOB FEED TOOLS
+    // ================================================================
+
+    // pf_search_feed - Search feed items by query and optional score filter
+    this.server.registerTool(
+      "pf_search_feed",
+      {
+        title: "Search Job Feed",
+        description:
+          "Search job feed items by title or company. Optionally filter by minimum score. " +
+          "Returns ranked results ordered by relevance.",
+        inputSchema: SearchFeedInputSchema,
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (params) => {
+        try {
+          const result = await handleSearchFeed(params);
+          return {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          };
+        } catch (error) {
+          throw new Error(
+            `search_feed failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+        }
+      }
+    );
+
+    // pf_get_role - Get full role details by role ID
+    this.server.registerTool(
+      "pf_get_role",
+      {
+        title: "Get Role Details",
+        description:
+          "Retrieve complete details for a specific role including job description, " +
+          "salary, location, and other metadata.",
+        inputSchema: GetRoleInputSchema,
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (params) => {
+        try {
+          const result = await handleGetRole(params);
+          return {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          };
+        } catch (error) {
+          throw new Error(
+            `get_role failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+        }
+      }
+    );
+
+    // ================================================================
+    // FEATURE 49: RESUME BUILDER TOOLS
+    // ================================================================
+
+    // pf_generate_bullets - Generate tailored resume bullets using Claude
+    this.server.registerTool(
+      "pf_generate_bullets",
+      {
+        title: "Generate Resume Bullets",
+        description:
+          "Generate AI-powered resume bullet points tailored to a specific job description. " +
+          "Analyzes JD requirements and existing bullets to create targeted suggestions with confidence scores.",
+        inputSchema: GenerateBulletsInputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: true, // Makes external API calls to Claude
+        },
+      },
+      async (params) => {
+        try {
+          const result = await handleGenerateBullets(params);
+          return {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          };
+        } catch (error) {
+          throw new Error(
+            `generate_bullets failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+        }
+      }
+    );
+
+    // pf_export_resume - Export resume in specified format
+    this.server.registerTool(
+      "pf_export_resume",
+      {
+        title: "Export Resume",
+        description:
+          "Generate a formatted resume document from selected bullet points. " +
+          "Returns HTML content that can be converted to DOCX or PDF by the client.",
+        inputSchema: ExportResumeInputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      async (params) => {
+        try {
+          const result = await handleExportResume(params);
+          return {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          };
+        } catch (error) {
+          throw new Error(
+            `export_resume failed: ${
               error instanceof Error ? error.message : String(error)
             }`
           );

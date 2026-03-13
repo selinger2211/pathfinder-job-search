@@ -8,8 +8,8 @@
 
 Pathfinder is an agentic job search system with 11 standalone HTML modules sharing data via localStorage + IndexedDB. Each module is a single `index.html` file in `modules/`. There is no backend server required for core functionality — Claude API calls happen directly from the browser via `modules/shared/claude-api.js`.
 
-**Current Version:** v3.15.0 (as of 2026-03-13)
-**Last Major Features:** Outreach debrief integration + quality scorer, Debrief pattern analysis, Comp Intelligence negotiation support, Calendar interview journey tracking
+**Current Version:** v3.16.0 (as of 2026-03-13)
+**Last Major Features:** Research Brief smart caching phase 2 + phase 4 polish, MCP artifact persistence, Job Feed MCP tools, Resume Builder MCP generation
 
 **Owner:** Ili Selinger (ilan.selinger@gmail.com)
 **Repo:** github.com/selinger2211/pathfinder-job-search
@@ -343,12 +343,80 @@ Object with boolean flags per nudge rule:
 
 **Purpose:** Preserve Outreach module navigation state across page reloads so users don't lose context when switching modules and returning.
 
+### pf_brief_section_collapse — BriefSectionCollapse (v3.16.0)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| roleId | string | yes | Role whose brief section state is stored |
+| collapsedSections | number[] | yes | Array of section numbers (0-13) that user has collapsed |
+| stickyNavOpen | boolean | yes | Whether sticky sidebar is currently open (v3.16.0) |
+| lastUpdated | string | yes | ISO timestamp of last collapse/expand change |
+
+**Purpose:** Track which brief sections user has collapsed/expanded so state persists across page reloads (v3.16.0). Sticky sidebar toggle state also preserved.
+
+### pf_section_meta_* — SectionMeta (v3.16.0)
+
+Format: `pf_section_meta_{companySlug}_{roleId}_{sectionNum}`
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| sectionNum | number | yes | Section number (0-13) |
+| freshAt | string | yes | ISO timestamp when this section was last generated |
+| sourceHash | string | yes | SHA-256 hash of input sources (JD, company data, bullets, etc.) |
+| isFresh | boolean | yes | True if inputs haven't changed since generation |
+| isStale | boolean | yes | True if cross-module invalidation signal fired |
+| staleDueToSources | string[] | yes | Which source types changed: "jd", "company", "bullets", "comp", "debrief" (v3.16.0) |
+| refreshButtonVisible | boolean | yes | True if user should see "Refresh" button for this section (stale or error) |
+
+**Purpose:** Track section-level staleness with source hashing so brief knows which sections to regenerate (v3.16.0 #51). "Smart regeneration" only refreshes stale sections, preserving fresh ones.
+
+### pf_research_briefs — ResearchBrief[] (v3.16.0)
+
+MCP-backed artifact persistence (SQLite table). Queried via MCP tools: `pf_save_brief`, `pf_get_brief`, `pf_list_briefs`, `pf_compare_briefs`.
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| id | string | yes | Unique artifact ID (uuid) |
+| roleId | string | yes | Target role ID |
+| company | string | yes | Company name (for filtering) |
+| roleTitle | string | yes | Role title |
+| generatedAt | string | yes | ISO timestamp when brief was created |
+| sections | BriefSection[] | yes | Array of generated sections (0-13) with content, citations, metadata |
+| inputsMissing | string[] | no | Which data inputs were unavailable during generation |
+| sectionsGenerated | number | yes | How many of 14 sections succeeded |
+| tags | string[] | yes | [company, roleId, "complete"/"degraded", dateString] for filtering |
+| metadata | object | yes | {sectionsGenerated, inputsMissing: [], generatedAt: ISO} |
+| sourceUrl | string | no | Original posting URL if imported |
+| status | string | yes | "complete" / "degraded" / "draft" |
+
+**Purpose:** Server-side persistence of research briefs via MCP (v3.16.0 #28). Enables "Save to Server" button and "Brief History" dropdown. Each generation is a new version; never overwritten. Compare tool supports side-by-side diff.
+
 ---
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.14.0
+**Current Version:** v3.16.0
 **Last Updated:** 2026-03-13
+
+---
+
+## MCP Tools Summary (v3.16.0)
+
+The MCP server at `mcp-servers/pathfinder-artifacts-mcp/` provides the following tools for module use:
+
+| Tool | Parameters | Returns | Module Uses | Status |
+|------|-----------|---------|-------------|--------|
+| **pf_save_brief** | `{roleId, company, roleTitle, sections, metadata}` | `{id, savedAt}` | Research Brief | Implemented v3.16.0 (#28) |
+| **pf_get_brief** | `{id}` | `ResearchBrief` | Research Brief | Implemented v3.16.0 (#28) |
+| **pf_list_briefs** | `{company?, roleId?, limit?, offset?}` | `ResearchBrief[]` | Research Brief | Implemented v3.16.0 (#28) |
+| **pf_compare_briefs** | `{id1, id2}` | `{diff, changes, metadata}` | Research Brief | Implemented v3.16.0 (#28) |
+| **pf_search_feed** | `{minScore?, maxResults?, company?, sources?}` | `FeedItem[]` | Job Feed | Implemented v3.16.0 (#35) |
+| **pf_get_role** | `{feedItemId}` | `FeedItem` | Job Feed | Implemented v3.16.0 (#35) |
+| **pf_generate_brief_section** | `{sectionNum, company, role, jdText, context}` | `{sectionContent, citations}` | Research Brief | Implemented v3.16.0 (#36) |
+| **pf_generate_bullets** | `{roleId, companySlug, jdAnalysis, bulletBank, preferences}` | `{bullets, newProposals, gapAnalysis}` | Resume Builder | Implemented v3.16.0 (#49) |
+| **pf_export_resume** | `{roleId, format, resumeData}` | `{url, filename, format}` | Resume Builder | Implemented v3.16.0 (#49) |
+
+---
 
 ### Implementation Status
 
@@ -372,6 +440,15 @@ Object with boolean flags per nudge rule:
 - JD enrichment: roles without LinkedIn URLs or ATS links rely on DuckDuckGo web search fallback — coverage is good but not 100%
 - CORS proxy 1 (allorigins.win) tends to timeout; proxy 2 (corsproxy.io) works reliably as fallback
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.16.0)
+- **Research Brief Smart Caching Phase 2**: Cross-module invalidation signals from Pipeline, Company, Comp, Debrief. Section-level staleness tracking with source hashing. Smart regeneration only refreshes stale sections. New `pf_section_meta_*` and `pf_brief_section_collapse` localStorage keys. (#51)
+- **Research Brief Phase 4 Polish**: Enhanced citation popovers with URL, date, trust level, refresh button. Improved progress bar showing section names and ETA. Keyboard shortcuts (G/E/R/Esc/arrows). Sticky section navigation sidebar (200px left). (#52)
+- **Research Brief MCP Artifact Persistence**: `pf_save_brief`, `pf_get_brief`, `pf_list_briefs`, `pf_compare_briefs` tools. SQLite research_briefs table. "Save to Server" button and "Brief History" dropdown in UI. (#28)
+- **Job Feed MCP Tool Integration**: `pf_search_feed` and `pf_get_role` tools. MCP status indicator (green/gray dot) in feed header. (#35)
+- **MCP Server Brief Section Generation**: New `pf_generate_brief_section` tool for server-side brief section generation via Claude API. (#36)
+- **Resume Builder MCP-Powered Generation**: `pf_generate_bullets` and `pf_export_resume` tools. MCP Generate toggle and "Export via MCP" button in UI. (#49)
+- **New localStorage Keys**: `pf_section_meta_{companySlug}_{roleId}_{sectionNum}`, `pf_brief_section_collapse`, `pf_research_briefs` (MCP-backed).
 
 ### Recently Fixed (v3.15.0)
 - **Outreach Debrief-Aware Drafting**: When generating interview thank-you messages, system injects context from interview debrief with specific discussion points and themes. Message quality scorer rates 1-10 with breakdown. Edit sidebar (320px) with tone/length selectors and regenerate button.

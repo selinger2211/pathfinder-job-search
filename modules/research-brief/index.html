@@ -452,6 +452,53 @@
       color: var(--text-secondary);
     }
 
+    /* FEATURE #52: Sticky section nav sidebar (left, 200px) */
+    .section-nav-sidebar {
+      position: fixed;
+      left: 320px;
+      top: var(--nav-height);
+      width: 200px;
+      height: calc(100vh - var(--nav-height));
+      background: var(--bg-surface);
+      border-right: 1px solid var(--bg-subtle);
+      overflow-y: auto;
+      padding: var(--space-4);
+      z-index: 40;
+      display: none;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .section-nav-sidebar.active {
+      display: flex;
+    }
+
+    .section-nav-item {
+      position: relative;
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      font-size: 0.85em;
+      color: var(--text-secondary);
+      border-left: 2px solid transparent;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .section-nav-item:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .section-nav-item.current {
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--accent);
+      border-left-color: var(--accent);
+      font-weight: 500;
+    }
+
     /* Section card */
     .section {
       background: var(--bg-elevated);
@@ -794,6 +841,35 @@
     .citation-popover-trust-low {
       background: rgba(239, 68, 68, 0.15);
       color: rgb(239, 68, 68);
+    }
+
+    /* FEATURE #52: Refresh source button in citation popover */
+    .btn-refresh-source {
+      margin-top: var(--space-2);
+      padding: 6px 10px;
+      background: var(--accent-subtle, rgba(99, 102, 241, 0.1));
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius-sm);
+      font-size: 0.85em;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      width: 100%;
+    }
+
+    .btn-refresh-source:hover {
+      background: var(--accent);
+      color: white;
+      transform: scale(1.02);
+    }
+
+    .btn-refresh-source:active {
+      transform: scale(0.98);
     }
 
     /* ================================================================
@@ -1267,6 +1343,25 @@
           <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: var(--space-1);" id="briefSubtitle"></p>
         </div>
         <div class="brief-actions">
+          <!-- Brief History Dropdown (Feature 28) -->
+          <div style="position: relative;">
+            <button id="briefHistoryBtn" title="Brief version history" aria-label="View brief history" style="display: none;">
+              <i data-lucide="history" style="width: 16px; height: 16px;"></i>
+              History
+            </button>
+            <div id="briefHistoryMenu" style="display: none; position: absolute; top: 100%; right: 0; background: var(--bg-elevated); border: 1px solid var(--bg-subtle); border-radius: var(--radius-md); min-width: 200px; max-width: 300px; max-height: 400px; overflow-y: auto; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+              <div style="padding: var(--space-3); font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); border-bottom: 1px solid var(--bg-subtle); text-transform: uppercase; letter-spacing: 0.05em;">Saved Versions</div>
+              <div id="briefHistoryList" style="padding: var(--space-2);"></div>
+            </div>
+          </div>
+
+          <!-- Save to Server Button (Feature 28) -->
+          <button id="saveBriefBtn" title="Save brief to server" aria-label="Save brief to server" style="display: none;">
+            <i data-lucide="save" style="width: 16px; height: 16px;"></i>
+            Save
+          </button>
+
+          <!-- Export Dropdown -->
           <button id="exportBtn" title="Export as HTML" aria-label="Download brief as HTML" style="display: none;">
             <i data-lucide="download" style="width: 16px; height: 16px;"></i>
             Export
@@ -1294,6 +1389,14 @@
               </p>
             </div>
           </div>
+        </div>
+
+        <!-- FEATURE #52: Sticky section nav sidebar (left, 200px) -->
+        <div class="section-nav-sidebar" id="sectionNavSidebar">
+          <div style="font-size: 0.75em; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-3);">
+            Sections
+          </div>
+          <div id="sectionNavList" style="display: flex; flex-direction: column; gap: var(--space-2);"></div>
         </div>
 
         <!-- Right TOC sidebar -->
@@ -1644,6 +1747,13 @@ Questions must be SPECIFIC to this role. Every question needs a "why they'd ask 
       generatedSections: {},   // { sectionNum: htmlContent } for dependency passing
       isGenerating: false,     // Prevent duplicate generation
       allCitations: {},        // { sectionNum: [citations] } for aggregation
+      // FEATURE #51: Smart Caching & Invalidation (Phase 2)
+      sectionMetadata: {},     // { sectionNum: { generatedAt, sourceDataHash, status } }
+      staleInvalidation: null, // Cache invalidation data from cross-module signals
+      // FEATURE #52: Phase 4 Polish
+      sectionCollapseState: JSON.parse(localStorage.getItem('pf_brief_section_collapse') || '{}'),
+      generationStartTime: null, // Track for ETA calculation
+      sectionGenerationTimes: {}, // { sectionNum: milliseconds } for ETA estimation
     };
 
     // ================================================================
@@ -1964,6 +2074,219 @@ Questions must be SPECIFIC to this role. Every question needs a "why they'd ask 
       } catch (e) {
         console.warn('Failed to clear cached sections:', e);
       }
+    }
+
+    /* ====== FEATURE #51: SMART CACHING & INVALIDATION (PHASE 2) ====== */
+
+    /**
+     * Computes a simple hash of input data for cache validation.
+     * Used to detect when section source data has changed without explicit signals.
+     * INPUT: sectionId (number), roleData (object), companyData (object)
+     * RETURNS: hash string
+     */
+    function computeSourceHash(sectionId, roleData, companyData) {
+      try {
+        // Create a deterministic string from the key data fields
+        let dataStr = JSON.stringify({
+          sectionId,
+          roleTitle: roleData?.title || '',
+          roleLevel: roleData?.level || '',
+          companyName: companyData?.name || '',
+          companyIndustry: companyData?.industry || '',
+          companyFunding: companyData?.funding_stage || '',
+          companyHeadcount: companyData?.headcount || ''
+        });
+
+        // Simple hash: sum of character codes
+        let hash = 0;
+        for (let i = 0; i < dataStr.length; i++) {
+          const char = dataStr.charCodeAt(i);
+          hash = ((hash << 5) - hash) + char;
+          hash = hash & hash; // Convert to 32bit integer
+        }
+        return Math.abs(hash).toString(16);
+      } catch (e) {
+        console.warn('Error computing source hash:', e);
+        return 'unknown';
+      }
+    }
+
+    /**
+     * FEATURE #51: Checks multiple signal sources for cache invalidation.
+     * On page load, scans for:
+     *   - pf_brief_invalidation signal (from Debrief module, v3.13.0)
+     *   - Pipeline stage changes (compare lastStageChange vs briefGeneratedAt)
+     *   - Company data updates (compare company.updatedAt vs briefGeneratedAt)
+     *   - Comp data changes (compare comp.updatedAt vs briefGeneratedAt)
+     * INPUT: roleId (string)
+     * RETURNS: { isStale, staleSections[], reasons[] }
+     */
+    function checkInvalidationSignals(roleId) {
+      const result = {
+        isStale: false,
+        staleSections: [],
+        reasons: []
+      };
+
+      try {
+        const role = state.selectedRole;
+        if (!role) return result;
+
+        // Check 1: Debrief invalidation signal (v3.13.0)
+        const debriefsData = localStorage.getItem('pf_debriefs') || '{}';
+        const debriefs = JSON.parse(debriefsData);
+        if (debriefs[roleId]?.lastDebrief) {
+          const debriefsKey = `pf_brief_${getCompanySlug(role.company)}_${roleId}_section6`;
+          const cachedSection6 = localStorage.getItem(debriefsKey);
+          if (cachedSection6) {
+            const cached = JSON.parse(cachedSection6);
+            if (new Date(debriefs[roleId].lastDebrief).getTime() > cached.timestamp) {
+              result.staleSections.push(6, 13); // Interview prep + Questions
+              result.reasons.push('Debrief added');
+              result.isStale = true;
+            }
+          }
+        }
+
+        // Check 2: Pipeline stage changes
+        if (role.lastStageChange && role.briefGeneratedAt) {
+          const briefTime = new Date(role.briefGeneratedAt).getTime();
+          const stageChangeTime = new Date(role.lastStageChange).getTime();
+          if (stageChangeTime > briefTime) {
+            result.staleSections.push(1, 6); // Role overview + Interview prep
+            result.reasons.push('Pipeline stage changed');
+            result.isStale = true;
+          }
+        }
+
+        // Check 3: Company data updates
+        if (role.company && typeof role.company === 'object') {
+          const company = role.company;
+          if (company.updatedAt && role.briefGeneratedAt) {
+            const briefTime = new Date(role.briefGeneratedAt).getTime();
+            const compUpdateTime = new Date(company.updatedAt).getTime();
+            if (compUpdateTime > briefTime) {
+              result.staleSections.push(4, 8, 9); // Company sections
+              result.reasons.push('Company data updated');
+              result.isStale = true;
+            }
+          }
+        }
+
+        // Check 4: Compensation data changes
+        const compData = role.compensation;
+        if (compData && typeof compData === 'object') {
+          if (compData.updatedAt && role.briefGeneratedAt) {
+            const briefTime = new Date(role.briefGeneratedAt).getTime();
+            const compUpdateTime = new Date(compData.updatedAt).getTime();
+            if (compUpdateTime > briefTime) {
+              result.staleSections.push(5); // Compensation section
+              result.reasons.push('Compensation data changed');
+              result.isStale = true;
+            }
+          }
+        }
+
+        // Deduplicate sections
+        result.staleSections = [...new Set(result.staleSections)].sort((a, b) => a - b);
+        result.reasons = [...new Set(result.reasons)];
+
+      } catch (e) {
+        console.warn('Error checking invalidation signals:', e);
+      }
+
+      return result;
+    }
+
+    /**
+     * FEATURE #51: Stores metadata about generated sections for future invalidation.
+     * Updates cache with: sectionId, generatedAt, sourceDataHash, status
+     * INPUT: sectionNum (number), role (object), company (object)
+     * OUTPUT: metadata stored in state.sectionMetadata
+     */
+    function setSectionMetadata(sectionNum, role, company) {
+      const hash = computeSourceHash(sectionNum, role, company);
+      state.sectionMetadata[sectionNum] = {
+        sectionId: sectionNum,
+        generatedAt: new Date().toISOString(),
+        sourceDataHash: hash,
+        status: 'generated'
+      };
+
+      // Persist to localStorage for cross-session validation
+      try {
+        localStorage.setItem(
+          `pf_section_meta_${sectionNum}`,
+          JSON.stringify(state.sectionMetadata[sectionNum])
+        );
+      } catch (e) {
+        console.warn('Failed to store section metadata:', e);
+      }
+    }
+
+    /**
+     * FEATURE #51: Loads section metadata from storage and validates against current data.
+     * If source data hash differs, section is marked as stale.
+     * INPUT: sectionNum (number), role (object), company (object)
+     * RETURNS: { isValid, metadata }
+     */
+    function validateSectionMetadata(sectionNum, role, company) {
+      try {
+        const storedMeta = localStorage.getItem(`pf_section_meta_${sectionNum}`);
+        if (!storedMeta) return { isValid: false, metadata: null };
+
+        const metadata = JSON.parse(storedMeta);
+        const currentHash = computeSourceHash(sectionNum, role, company);
+
+        return {
+          isValid: metadata.sourceDataHash === currentHash,
+          metadata
+        };
+      } catch (e) {
+        console.warn('Error validating section metadata:', e);
+        return { isValid: false, metadata: null };
+      }
+    }
+
+    /**
+     * FEATURE #51: Regenerates only stale sections identified by invalidation.
+     * Shows progress and only re-generates affected sections, not the entire brief.
+     * INPUT: roleId (string), staleSections (array of section numbers)
+     * OUTPUT: stale sections are regenerated and cached
+     */
+    function regenerateStaleSections(roleId, staleSections) {
+      if (!staleSections || staleSections.length === 0) return;
+
+      const role = state.selectedRole;
+      const company = role.company;
+      const companySlug = getCompanySlug(company.name);
+
+      // Show regeneration progress
+      const container = document.getElementById('generationProgressContainer');
+      if (container) container.style.display = 'flex';
+
+      const progressText = document.getElementById('generationProgressText');
+
+      // Regenerate each stale section
+      staleSections.forEach((sectionNum, idx) => {
+        // Clear cache for this section
+        const cacheKey = `pf_brief_${companySlug}_${roleId}_section${sectionNum}`;
+        localStorage.removeItem(cacheKey);
+        localStorage.removeItem(`pf_section_meta_${sectionNum}`);
+
+        // Update progress UI
+        if (progressText) {
+          const reasons = state.staleInvalidation?.reasons.join(', ') || 'data changed';
+          progressText.innerHTML = `<div>Regenerating stale section ${sectionNum}... (${reasons})</div>`;
+        }
+
+        // Trigger regeneration (calls existing generateSectionViaAPI)
+        generateSectionViaAPI(sectionNum, role, company, state.generatedSections);
+      });
+
+      // Clear state after regeneration
+      state.staleInvalidation = null;
+      if (container) container.style.display = 'none';
     }
 
     /* ====== CITATION SYSTEM ====== */
@@ -4038,6 +4361,11 @@ The HTML content should come first, followed by the citations block. Do not incl
         restoreCachedBrief(companySlug, nr, nc);
         // Update button to "Regenerate" since a brief already exists
         updateGenerateButtonLabel(true);
+        // FEATURE #51: Check for invalidation signals and show banner if needed
+        const invalidation = checkInvalidationSignals(nr.id);
+        if (invalidation.isStale && invalidation.staleSections.length > 0) {
+          showInvalidationBanner(invalidation);
+        }
       } else {
         // ====== NO CACHED BRIEF — auto-generate immediately (v3.9.0) ======
         // User should never see an empty "click to generate" state.
@@ -4145,6 +4473,8 @@ The HTML content should come first, followed by the citations block. Do not incl
 
       // Update progress bar and table of contents
       updateProgress();
+      // FEATURE #52: Build the sticky section nav sidebar
+      buildSectionNavSidebar();
       lucide.createIcons();
     }
 
@@ -4407,6 +4737,8 @@ The HTML content should come first, followed by the citations block. Do not incl
       showGenerationComplete(generationDuration);
 
       state.isGenerating = false;
+      // FEATURE #52: Build the sticky section nav sidebar
+      buildSectionNavSidebar();
       lucide.createIcons();
     }
 
@@ -4875,6 +5207,172 @@ The HTML content should come first, followed by the citations block. Do not incl
       window.print();
     }
 
+    // ================================================================
+    // FEATURE 28: RESEARCH BRIEF PERSISTENCE - Save to Server & History
+    // ================================================================
+
+    /**
+     * Save current brief to server via MCP tool
+     * Collects all generated sections and sends to pf_save_brief tool
+     * INPUT: none
+     * OUTPUT: brief saved to database, confirmation message shown
+     */
+    async function saveBriefToServer() {
+      const role = state.selectedRole;
+      const company = state.selectedCompany;
+      if (!role || !company) {
+        alert('Please select a role first');
+        return;
+      }
+
+      try {
+        // Collect all currently displayed sections
+        const sections = [];
+        const sectionElements = document.querySelectorAll('.section');
+        sectionElements.forEach((el) => {
+          const titleEl = el.querySelector('.section-title');
+          const contentEl = el.querySelector('.section-content');
+          const title = titleEl ? titleEl.textContent : 'Untitled';
+          const content = contentEl ? contentEl.innerHTML : '';
+          const sectionId = el.id || `section_${Date.now()}`;
+
+          sections.push({
+            sectionId,
+            title,
+            content,
+            generatedAt: new Date().toISOString(),
+            sourceHash: btoa(content).substring(0, 16),
+          });
+        });
+
+        // Call MCP server to save brief
+        const response = await fetch('http://localhost:3456/api/save-brief', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roleId: role.id,
+            companyName: company.name,
+            sections,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}`);
+        }
+
+        const result = await response.json();
+        alert(`Brief saved! Version ${result.version} created with ${result.sectionCount} sections.`);
+
+        // Refresh history dropdown
+        loadBriefHistory();
+      } catch (error) {
+        console.error('Failed to save brief:', error);
+        alert(`Error saving brief: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
+
+    /**
+     * Toggle brief history dropdown visibility
+     * INPUT: none
+     * OUTPUT: history menu shown/hidden and populated with saved versions
+     */
+    function toggleBriefHistory() {
+      const historyMenu = document.getElementById('briefHistoryMenu');
+      if (!historyMenu) return;
+
+      if (historyMenu.style.display === 'none') {
+        loadBriefHistory();
+        historyMenu.style.display = 'block';
+      } else {
+        historyMenu.style.display = 'none';
+      }
+    }
+
+    /**
+     * Load and display brief version history from server
+     * INPUT: none
+     * OUTPUT: history menu populated with selectable versions
+     */
+    async function loadBriefHistory() {
+      const role = state.selectedRole;
+      if (!role) return;
+
+      try {
+        const response = await fetch('http://localhost:3456/api/list-briefs?roleId=' + encodeURIComponent(role.id));
+        if (!response.ok) throw new Error(`Server returned ${response.status}`);
+
+        const briefs = await response.json();
+        const historyList = document.getElementById('briefHistoryList');
+        if (!historyList) return;
+
+        if (!briefs || briefs.length === 0) {
+          historyList.innerHTML = '<div style="padding: var(--space-2); color: var(--text-secondary); font-size: var(--text-xs);">No saved versions yet</div>';
+          return;
+        }
+
+        // Show up to 10 most recent versions
+        historyList.innerHTML = briefs.slice(0, 10).map((brief) => `
+          <div style="padding: var(--space-2); border-bottom: 1px solid var(--bg-subtle); font-size: var(--text-xs); cursor: pointer; transition: all var(--duration-fast); display: flex; justify-content: space-between; align-items: center;" onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'" onclick="loadBriefVersion('${brief.roleId}', ${brief.version})">
+            <div>
+              <div style="color: var(--text-primary); font-weight: 500;">v${brief.version}</div>
+              <div style="color: var(--text-tertiary);">${new Date(brief.updatedAt).toLocaleDateString()}</div>
+            </div>
+            <div style="color: var(--text-secondary); font-size: 11px;">${brief.sectionCount} sections</div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Failed to load brief history:', error);
+        const historyList = document.getElementById('briefHistoryList');
+        if (historyList) {
+          historyList.innerHTML = '<div style="padding: var(--space-2); color: var(--text-secondary); font-size: var(--text-xs);">Error loading history</div>';
+        }
+      }
+    }
+
+    /**
+     * Load a specific brief version from server
+     * INPUT: roleId, version number
+     * OUTPUT: brief is loaded and displayed
+     */
+    async function loadBriefVersion(roleId, version) {
+      try {
+        const response = await fetch(`http://localhost:3456/api/get-brief?roleId=${encodeURIComponent(roleId)}&version=${version}`);
+        if (!response.ok) throw new Error(`Server returned ${response.status}`);
+
+        const briefData = await response.json();
+
+        // Render sections from loaded brief
+        const sectionsArea = document.getElementById('sectionsArea');
+        if (!sectionsArea) return;
+
+        sectionsArea.innerHTML = briefData.sections.map((section) => `
+          <div class="section" id="${section.sectionId}">
+            <div class="section-header">
+              <div class="section-title-group">
+                <div class="section-badge">✓</div>
+                <div class="section-title">${section.title}</div>
+              </div>
+              <div class="section-status">
+                <span>Loaded v${briefData.version}</span>
+              </div>
+            </div>
+            <div class="section-content" style="font-size: var(--text-sm); line-height: 1.6;">
+              ${section.content}
+            </div>
+          </div>
+        `).join('');
+
+        // Close history menu
+        const historyMenu = document.getElementById('briefHistoryMenu');
+        if (historyMenu) historyMenu.style.display = 'none';
+
+        alert(`Loaded brief v${briefData.version}`);
+      } catch (error) {
+        console.error('Failed to load brief version:', error);
+        alert(`Error loading brief: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
+
     /* ====== FEATURE #20: AUTO CACHE INVALIDATION ====== */
     /**
      * Checks localStorage for pending invalidations and shows banner if found
@@ -5075,6 +5573,113 @@ The HTML content should come first, followed by the citations block. Do not incl
         const activeItem = document.querySelector(`.toc-item:nth-child(${state.currentSection})`);
         if (activeItem) activeItem.classList.add('active');
       }
+
+      // FEATURE #52: Also update section nav sidebar highlight
+      updateSectionNavHighlight(state.currentSection);
+    }
+
+    /* ====== FEATURE #52: STICKY SECTION NAV SIDEBAR ====== */
+    /**
+     * FEATURE #52: Builds and populates the sticky section nav sidebar (200px left).
+     * Shows all 13 section titles, with current section highlighted.
+     * Allows collapsing/expanding sections with state saved to localStorage.
+     * INPUT: none (uses SECTION_DEFINITIONS)
+     * OUTPUT: section nav sidebar is populated with clickable section items
+     */
+    function buildSectionNavSidebar() {
+      const navList = document.getElementById('sectionNavList');
+      const navSidebar = document.getElementById('sectionNavSidebar');
+      if (!navList) return;
+
+      navList.innerHTML = '';
+
+      // Create nav items for each section
+      SECTION_DEFINITIONS.forEach(section => {
+        const item = document.createElement('div');
+        item.className = 'section-nav-item';
+        item.id = `section-nav-${section.num}`;
+        item.textContent = `${section.num}. ${section.title}`;
+        item.title = section.title; // Tooltip for long titles
+
+        // Check if section is collapsed
+        const isCollapsed = state.sectionCollapseState[section.num] === true;
+        if (isCollapsed) {
+          item.classList.add('collapsed');
+        }
+
+        // Click to scroll to section
+        item.addEventListener('click', () => {
+          scrollToSection(section.num);
+        });
+
+        // Long press or double-click to toggle collapse
+        let pressTimer;
+        item.addEventListener('mousedown', () => {
+          pressTimer = setTimeout(() => {
+            toggleSectionCollapse(section.num);
+          }, 500);
+        });
+        item.addEventListener('mouseup', () => {
+          clearTimeout(pressTimer);
+        });
+        item.addEventListener('mouseleave', () => {
+          clearTimeout(pressTimer);
+        });
+
+        navList.appendChild(item);
+      });
+
+      // Show section nav sidebar if there are sections
+      if (SECTION_DEFINITIONS.length > 0) {
+        navSidebar.classList.add('active');
+      }
+    }
+
+    /**
+     * FEATURE #52: Updates which section nav item is highlighted as current.
+     * Called during scroll or when user navigates sections.
+     * INPUT: sectionNum (number)
+     * OUTPUT: CSS class 'current' updated on appropriate nav item
+     */
+    function updateSectionNavHighlight(sectionNum) {
+      const items = document.querySelectorAll('.section-nav-item');
+      items.forEach(item => item.classList.remove('current'));
+
+      if (sectionNum !== null && sectionNum !== undefined) {
+        const activeItem = document.getElementById(`section-nav-${sectionNum}`);
+        if (activeItem) activeItem.classList.add('current');
+      }
+    }
+
+    /**
+     * FEATURE #52: Toggles collapse state of a section.
+     * Saves collapse state to localStorage (pf_brief_section_collapse).
+     * INPUT: sectionNum (number)
+     * OUTPUT: section marked as collapsed/expanded, state persisted
+     */
+    function toggleSectionCollapse(sectionNum) {
+      const item = document.getElementById(`section-nav-${sectionNum}`);
+      const sectionEl = document.getElementById(`section-${sectionNum}`);
+      if (!item || !sectionEl) return;
+
+      const isCurrentlyCollapsed = state.sectionCollapseState[sectionNum] === true;
+      state.sectionCollapseState[sectionNum] = !isCurrentlyCollapsed;
+
+      // Update UI
+      if (isCurrentlyCollapsed) {
+        item.classList.remove('collapsed');
+        sectionEl.style.display = '';
+      } else {
+        item.classList.add('collapsed');
+        sectionEl.style.display = 'none';
+      }
+
+      // Persist to localStorage
+      try {
+        localStorage.setItem('pf_brief_section_collapse', JSON.stringify(state.sectionCollapseState));
+      } catch (e) {
+        console.warn('Failed to save section collapse state:', e);
+      }
     }
 
     /* ====== FEATURE #1: CITATION MARKERS & POPOVERS ====== */
@@ -5130,7 +5735,8 @@ The HTML content should come first, followed by the citations block. Do not incl
 
     /**
      * Shows a popover with citation details (source, URL, date, trust level).
-     * Popover is positioned near the marker and closes when clicking outside.
+     * FEATURE #52: Enhanced with richer info: fetch date, trust level icon, and refresh button.
+     * Popover is positioned near the marker and closes when clicking outside or pressing Esc.
      * INPUT: markerEl (DOM element), citation (object with source, url, date, sourceType)
      * OUTPUT: popover is created and displayed in the DOM
      */
@@ -5141,13 +5747,16 @@ The HTML content should come first, followed by the citations block. Do not incl
       // Determine trust level based on source type
       let trustLevel = 'Medium';
       let trustClass = 'citation-popover-trust-medium';
+      let trustIcon = '◐'; // Medium trust icon
 
       if (citation.sourceType === 'enrichment_web' || citation.sourceType === 'job_board') {
         trustLevel = 'High';
         trustClass = 'citation-popover-trust-high';
+        trustIcon = '●'; // High trust icon
       } else if (citation.sourceType === 'ai_generated') {
         trustLevel = 'Low';
         trustClass = 'citation-popover-trust-low';
+        trustIcon = '○'; // Low trust icon
       }
 
       // Create popover element
@@ -5156,18 +5765,39 @@ The HTML content should come first, followed by the citations block. Do not incl
 
       let html = `<div class="citation-popover-title">${citation.source || 'Unknown Source'}</div>`;
 
+      // FEATURE #52: Clickable URL with better formatting
       if (citation.url) {
-        html += `<a href="${citation.url}" target="_blank" rel="noopener noreferrer" class="citation-popover-url">${citation.url}</a>`;
+        html += `<a href="${citation.url}" target="_blank" rel="noopener noreferrer" class="citation-popover-url" title="Open source">${citation.url}</a>`;
       }
 
+      // FEATURE #52: Rich metadata with trust icon
       html += `<div class="citation-popover-meta">`;
       if (citation.date) {
         html += `<div class="citation-popover-meta-item"><span class="citation-popover-meta-label">Fetched:</span> <span>${citation.date}</span></div>`;
       }
-      html += `<div class="citation-popover-meta-item"><span class="citation-popover-meta-label">Trust:</span> <span class="${trustClass}">${trustLevel}</span></div>`;
+      html += `<div class="citation-popover-meta-item"><span class="citation-popover-meta-label">Trust:</span> <span class="${trustClass}" title="Trust level indicator">${trustIcon} ${trustLevel}</span></div>`;
+
+      // FEATURE #52: Refresh button for source
+      if (citation.url) {
+        html += `<button class="btn-refresh-source" aria-label="Refresh this source" title="Re-fetch and update this source">
+          <span style="font-size: 1.2em;">↻</span> Refresh
+        </button>`;
+      }
       html += `</div>`;
 
       popover.innerHTML = html;
+
+      // Attach refresh handler
+      const refreshBtn = popover.querySelector('.btn-refresh-source');
+      if (refreshBtn && citation.url) {
+        refreshBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // TODO: Implement source refresh via API
+          // For now, just show a confirmation
+          const sectionNum = markerEl.getAttribute('data-section');
+          alert(`Refreshing source: ${citation.url}\nThis feature will be available soon.`);
+        });
+      }
 
       // Position popover relative to marker
       document.body.appendChild(popover);
@@ -5177,12 +5807,13 @@ The HTML content should come first, followed by the citations block. Do not incl
       let top = markerRect.bottom + 8;
       let left = markerRect.left + markerRect.width / 2 - popoverRect.width / 2;
 
-      // Ensure popover doesn't go off-screen
+      // Ensure popover doesn't go off-screen (intelligent positioning)
       if (left < 10) left = 10;
       if (left + popoverRect.width > window.innerWidth - 10) {
         left = window.innerWidth - popoverRect.width - 10;
       }
 
+      // If below viewport, position above marker instead
       if (top + popoverRect.height > window.innerHeight - 10) {
         top = markerRect.top - popoverRect.height - 8;
       }
@@ -5198,7 +5829,17 @@ The HTML content should come first, followed by the citations block. Do not incl
         }
       };
 
+      // FEATURE #52: Close with Escape key
+      const escapeHandler = (e) => {
+        if (e.key === 'Escape') {
+          popover.remove();
+          document.removeEventListener('click', closeHandler);
+          document.removeEventListener('keydown', escapeHandler);
+        }
+      };
+
       document.addEventListener('click', closeHandler);
+      document.addEventListener('keydown', escapeHandler);
     }
 
     /* ====== FEATURE #2: SECTION STATUS BADGES ====== */
@@ -5268,10 +5909,11 @@ The HTML content should come first, followed by the citations block. Do not incl
 
     /* ====== FEATURE #3: GENERATION PROGRESS BAR ====== */
     /**
-     * Updates the progress bar and text during brief generation.
-     * Shows current section being generated and progress percentage.
+     * FEATURE #52: Enhanced progress bar with section names and ETA.
+     * Shows: "Generating: Company Culture (section 4 of 13)..."
+     * Calculates estimated time remaining based on average section generation time.
      * INPUT: currentSection (number), totalSections (number), sectionName (string)
-     * OUTPUT: progress bar and text are updated
+     * OUTPUT: progress bar and text are updated with smooth width transition
      */
     function updateGenerationProgress(currentSection, totalSections, sectionName) {
       const container = document.getElementById('generationProgressContainer');
@@ -5280,22 +5922,50 @@ The HTML content should come first, followed by the citations block. Do not incl
 
       if (!container || !bar || !text) return;
 
+      // Initialize generation start time if not set
+      if (!state.generationStartTime) {
+        state.generationStartTime = Date.now();
+      }
+
       // Activate progress display
       container.classList.add('active');
       text.classList.add('active');
 
-      // Calculate progress percentage
+      // Calculate progress percentage with smooth transition
       const percentage = (currentSection / totalSections) * 100;
       bar.style.width = percentage + '%';
+      bar.style.transition = 'width 0.3s ease-out'; // Smooth width animation
 
-      // Update progress text
+      // FEATURE #52: Calculate ETA based on average section generation time
+      const elapsedMs = Date.now() - state.generationStartTime;
+      const avgTimePerSection = elapsedMs / currentSection || 0;
+      const remainingSections = totalSections - currentSection;
+      const estimatedRemainMs = avgTimePerSection * remainingSections;
+      const estimatedRemainSec = Math.ceil(estimatedRemainMs / 1000);
+
+      let etaText = '';
+      if (estimatedRemainSec > 60) {
+        const minutes = Math.ceil(estimatedRemainSec / 60);
+        etaText = ` (~${minutes}m remaining)`;
+      } else if (estimatedRemainSec > 0) {
+        etaText = ` (~${estimatedRemainSec}s remaining)`;
+      }
+
+      // FEATURE #52: Update progress text with section name
       document.getElementById('generationProgressCurrent').textContent = currentSection;
       document.getElementById('generationProgressTotal').textContent = totalSections;
       document.getElementById('generationProgressSectionName').textContent = sectionName;
 
+      // Show detailed progress: "Generating: Company Culture (section 4 of 13)..."
+      const progressDiv = text.querySelector('div') || text;
+      progressDiv.textContent = `Generating: ${sectionName} (section ${currentSection} of ${totalSections})...${etaText}`;
+
       // Clear completion message
-      document.getElementById('generationProgressCompletion').textContent = '';
-      document.getElementById('generationProgressCompletion').classList.remove('done');
+      const completionEl = document.getElementById('generationProgressCompletion');
+      if (completionEl) {
+        completionEl.textContent = '';
+        completionEl.classList.remove('done');
+      }
     }
 
     /**
@@ -5365,6 +6035,26 @@ The HTML content should come first, followed by the citations block. Do not incl
       document.getElementById('exportBtn').addEventListener('click', exportBrief);
       document.getElementById('printBtn').addEventListener('click', printBrief);
 
+      // Feature 28: Save brief and history buttons
+      const saveBriefBtn = document.getElementById('saveBriefBtn');
+      if (saveBriefBtn) {
+        saveBriefBtn.addEventListener('click', saveBriefToServer);
+      }
+
+      const briefHistoryBtn = document.getElementById('briefHistoryBtn');
+      if (briefHistoryBtn) {
+        briefHistoryBtn.addEventListener('click', toggleBriefHistory);
+      }
+
+      // Close history menu when clicking outside
+      document.addEventListener('click', (e) => {
+        const historyMenu = document.getElementById('briefHistoryMenu');
+        const historyBtn = document.getElementById('briefHistoryBtn');
+        if (historyMenu && historyBtn && !historyMenu.contains(e.target) && !historyBtn.contains(e.target)) {
+          historyMenu.style.display = 'none';
+        }
+      });
+
       document.getElementById('sidebarToggle').addEventListener('click', () => {
         const sidebar = document.getElementById('sidebar');
         state.sidebarCollapsed = !state.sidebarCollapsed;
@@ -5402,9 +6092,17 @@ The HTML content should come first, followed by the citations block. Do not incl
     // ================================================================
 
     /**
-     * Sets up keyboard shortcuts for power users
-     * G: Generate, 1-9: Jump to sections 1-9, 0: Jump to section 0 (Known Context),
-     * Shift+0-3: Jump to sections 10-13, R: Refresh, P: Print, etc.
+     * FEATURE #52: Enhanced keyboard shortcuts for power users.
+     * G: Generate full brief
+     * E: Export menu toggle
+     * R: Regenerate stale sections
+     * Esc: Close any open popover/panel
+     * Arrow keys: Navigate between sections
+     * 1-9: Jump to sections 1-9
+     * 0: Jump to section 0 (Known Context)
+     * Shift+0-3: Jump to sections 10-13
+     * P: Print brief
+     * [/]: Collapse/expand sidebar
      * INPUT: none
      * OUTPUT: keyboard events are handled
      */
@@ -5413,7 +6111,16 @@ The HTML content should come first, followed by the citations block. Do not incl
         // Ignore if typing in an input
         if (e.target.matches('input, textarea, [contenteditable]')) return;
 
-        // Feature #4: 'G' to Generate — only if no modal/overlay is open
+        // FEATURE #52: Escape to close popovers and panels
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          // Close any open citation popovers
+          document.querySelectorAll('.citation-popover').forEach(p => p.remove());
+          // Close any open modals or panels
+          document.querySelectorAll('[role="dialog"]').forEach(m => m.dispatchEvent(new Event('close')));
+        }
+
+        // G: Generate full brief
         if (e.key === 'g' || e.key === 'G') {
           // Check if any modal or overlay is currently open
           const hasOpenModal = document.querySelector('[role="dialog"]') ||
@@ -5424,6 +6131,44 @@ The HTML content should come first, followed by the citations block. Do not incl
           e.preventDefault();
           if (state.selectedRole) {
             generateBrief();
+          }
+        }
+
+        // FEATURE #52: E to toggle Export menu
+        if (e.key === 'e' || e.key === 'E') {
+          e.preventDefault();
+          const exportBtn = document.getElementById('exportBtn') ||
+                           document.querySelector('[aria-label*="Export"]');
+          if (exportBtn) {
+            exportBtn.click();
+          }
+        }
+
+        // FEATURE #52: R to regenerate stale sections (if any exist)
+        if (e.key === 'r' || e.key === 'R') {
+          e.preventDefault();
+          if (state.staleInvalidation && state.staleInvalidation.staleSections.length > 0) {
+            regenerateStaleSections(state.selectedRole.id, state.staleInvalidation.staleSections);
+          } else if (state.currentSection !== null) {
+            // Fallback: refresh current section if no stale sections
+            refreshSection(state.currentSection);
+          }
+        }
+
+        // FEATURE #52: Arrow keys to navigate between sections
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const nextSection = (state.currentSection || 0) + 1;
+          if (nextSection <= 13) {
+            scrollToSection(nextSection);
+          }
+        }
+
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          const prevSection = (state.currentSection || 1) - 1;
+          if (prevSection >= 0) {
+            scrollToSection(prevSection);
           }
         }
 
@@ -5446,18 +6191,13 @@ The HTML content should come first, followed by the citations block. Do not incl
           scrollToSection(sectionNum);
         }
 
-        if (e.key === 'r' || e.key === 'R') {
-          if (state.currentSection) {
-            e.preventDefault();
-            refreshSection(state.currentSection);
-          }
-        }
-
+        // P: Print brief
         if (e.key === 'p' || e.key === 'P') {
           e.preventDefault();
           printBrief();
         }
 
+        // [: Collapse sidebar
         if (e.key === '[') {
           e.preventDefault();
           const sidebar = document.getElementById('sidebar');
@@ -5465,11 +6205,51 @@ The HTML content should come first, followed by the citations block. Do not incl
           state.sidebarCollapsed = true;
         }
 
+        // ]: Expand sidebar
         if (e.key === ']') {
           e.preventDefault();
           const sidebar = document.getElementById('sidebar');
           sidebar.classList.remove('collapsed');
           state.sidebarCollapsed = false;
+        }
+      });
+
+      // FEATURE #52: Show keyboard shortcut hints on hover for relevant buttons
+      const shortcutHints = {
+        'generateBtn': 'Press G to generate',
+        'exportBtn': 'Press E to toggle export menu',
+        'printBtn': 'Press P to print',
+        'clearCacheBtn': 'Clear cache and regenerate'
+      };
+
+      Object.entries(shortcutHints).forEach(([btnId, hint]) => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+          btn.title = hint;
+          btn.addEventListener('mouseenter', () => {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'keyboard-shortcut-hint';
+            tooltip.textContent = hint;
+            tooltip.style.cssText = `
+              position: absolute;
+              background: var(--bg-elevated);
+              border: 1px solid var(--bg-subtle);
+              border-radius: var(--radius-sm);
+              padding: var(--space-2);
+              font-size: 0.75em;
+              color: var(--text-secondary);
+              white-space: nowrap;
+              pointer-events: none;
+              z-index: 999;
+            `;
+            btn.appendChild(tooltip);
+            const rect = btn.getBoundingClientRect();
+            tooltip.style.bottom = (rect.height + 8) + 'px';
+          });
+          btn.addEventListener('mouseleave', () => {
+            const hint = btn.querySelector('.keyboard-shortcut-hint');
+            if (hint) hint.remove();
+          });
         }
       });
     }

@@ -1759,6 +1759,143 @@
        the UI by manipulating the DOM directly.
        ================================================================ */
 
+    // ================================================================
+    // FEATURE 49: MCP-POWERED GENERATION - Resume Builder
+    // ================================================================
+
+    // Check MCP server status on page load
+    async function checkMCPStatus() {
+      try {
+        const response = await fetch('http://localhost:3456/api/health', {
+          method: 'GET',
+          timeout: 2000,
+        });
+        if (response.ok) {
+          const statusEl = document.getElementById('mcpGenerateStatus');
+          if (statusEl) {
+            statusEl.textContent = 'MCP online';
+            statusEl.style.color = '#22c55e';
+          }
+          const toggleBtn = document.getElementById('mcpExportBtn');
+          if (toggleBtn) toggleBtn.disabled = false;
+          return true;
+        }
+      } catch (error) {
+        // MCP server not available
+      }
+      return false;
+    }
+
+    /**
+     * Toggle MCP Export Menu
+     */
+    function toggleMCPExportMenu() {
+      const menu = document.getElementById('mcpExportMenu');
+      if (menu) {
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+      }
+    }
+
+    /**
+     * Export resume via MCP server
+     * INPUT: format ('pdf' or 'docx')
+     * OUTPUT: resume document generated and downloaded
+     */
+    async function exportResumeMCP(format) {
+      const roleId = localStorage.getItem('pf_selected_role_id');
+      const apiKey = localStorage.getItem('claude_api_key');
+      if (!roleId || !apiKey) {
+        alert('Please select a role and set your API key');
+        return;
+      }
+
+      try {
+        // Get selected bullets from the UI or builder state
+        const selectedBullets = Array.from(document.querySelectorAll('input[name="bullet"]:checked'))
+          .map((cb) => cb.value);
+
+        if (selectedBullets.length === 0) {
+          alert('Please select at least one bullet point');
+          return;
+        }
+
+        // Call MCP server to export resume
+        const response = await fetch('http://localhost:3456/api/export-resume', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roleId,
+            selectedBullets,
+            format,
+            apiKey,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        // Handle the downloaded file based on format
+        if (format === 'pdf') {
+          // Use html2pdf to convert HTML to PDF
+          const opt = {
+            margin: 10,
+            filename: result.filename,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+          };
+          const element = document.createElement('div');
+          element.innerHTML = result.content;
+          html2pdf().set(opt).from(element).save();
+        } else if (format === 'docx') {
+          // For DOCX, download the HTML and let user convert
+          const blob = new Blob([result.content], { type: 'text/html' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = result.filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+
+        alert(`Resume exported as ${format.toUpperCase()}`);
+      } catch (error) {
+        console.error('Failed to export resume:', error);
+        alert(`Error exporting resume: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+
+      // Close menu
+      const menu = document.getElementById('mcpExportMenu');
+      if (menu) menu.style.display = 'none';
+    }
+
+    // Initialize MCP features on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      checkMCPStatus();
+      // Check every 30 seconds
+      setInterval(checkMCPStatus, 30000);
+
+      // Add MCP export button listener
+      const mcpExportBtn = document.getElementById('mcpExportBtn');
+      if (mcpExportBtn) {
+        mcpExportBtn.addEventListener('click', toggleMCPExportMenu);
+      }
+
+      // Close menu when clicking outside
+      document.addEventListener('click', (e) => {
+        const menu = document.getElementById('mcpExportMenu');
+        const btn = document.getElementById('mcpExportBtn');
+        if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+          menu.style.display = 'none';
+        }
+      });
+    });
+
     /* ================================================================
        CONSTANTS AND CONFIG
        ================================================================ */
@@ -4135,6 +4272,15 @@ Make them sound like real achievements, not keyword-stuffed. Each should be a di
               `).join('')}
             </div>
 
+            <!-- Feature 49: MCP Generate Toggle -->
+            <div style="padding: var(--space-3); background: var(--bg-elevated); border: 1px solid var(--bg-subtle); border-radius: var(--radius-md); margin-bottom: var(--space-4); display: flex; align-items: center; gap: var(--space-3);">
+              <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer; flex: 1;">
+                <input type="checkbox" id="mcpGenerateToggle" style="cursor: pointer; width: 18px; height: 18px; accent-color: var(--accent);">
+                <span style="font-size: var(--text-sm); color: var(--text-primary); font-weight: 500;">Use MCP for bullet generation</span>
+              </label>
+              <span id="mcpGenerateStatus" style="font-size: var(--text-xs); color: var(--text-secondary);">MCP offline</span>
+            </div>
+
             <!-- Export Buttons -->
             <div class="export-buttons">
               <button class="export-button" onclick="copyToClipboard()">
@@ -4152,6 +4298,21 @@ Make them sound like real achievements, not keyword-stuffed. Each should be a di
                 </svg>
                 Save Version
               </button>
+              <!-- Feature 49: Export via MCP Dropdown -->
+              <div style="position: relative;">
+                <button class="export-button secondary" id="mcpExportBtn" title="Export resume via MCP">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  Export via MCP
+                </button>
+                <div id="mcpExportMenu" style="display: none; position: absolute; top: 100%; right: 0; background: var(--bg-elevated); border: 1px solid var(--bg-subtle); border-radius: var(--radius-md); min-width: 150px; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                  <button style="width: 100%; padding: var(--space-2) var(--space-3); border: none; background: transparent; text-align: left; font-size: var(--text-sm); color: var(--text-primary); cursor: pointer; border-bottom: 1px solid var(--bg-subtle);" onclick="exportResumeMCP('pdf')">PDF</button>
+                  <button style="width: 100%; padding: var(--space-2) var(--space-3); border: none; background: transparent; text-align: left; font-size: var(--text-sm); color: var(--text-primary); cursor: pointer;" onclick="exportResumeMCP('docx')">Word (DOCX)</button>
+                </div>
+              </div>
             </div>
 
             <!-- Cover Letter Section -->

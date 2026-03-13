@@ -4,6 +4,67 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.16.0 — 2026-03-13
+
+### What Changed — Tier 5 Major Build: 6 Features Across 4 Modules + MCP Server
+
+**Summary:** Major release completing intelligent caching system and MCP server integration. Four modules receive major feature implementations: Research Brief (smart caching phase 2 with cross-module invalidation + phase 4 polish with enhanced UX), MCP server (artifact persistence tools + brief section generation), Job Feed (MCP tool integration), and Resume Builder (MCP-powered generation with export tools).
+
+**Changes:**
+
+**Research Brief Module (#51, #52):**
+
+**Smart Caching Phase 2 (#51):**
+- Cross-module invalidation signals from Pipeline, Company, Comp, and Debrief modules
+- Section-level staleness tracking with source hashing algorithm
+- Smart regeneration system that only regenerates stale sections (preserves fresh ones)
+- Improved cache invalidation detection (JD changes, profile updates, external data)
+- Stale/fresh/degraded status badges per section
+
+**Phase 4 Polish (#52):**
+- Enhanced citation popovers with URL links, fetch date, trust level indicator, refresh button
+- Improved progress bar showing section names, current/total count, and ETA
+- Keyboard shortcuts: G (generate), E (edit), R (refresh), Esc (close), arrow keys (navigate)
+- Sticky section navigation sidebar (200px left) with always-visible table of contents
+- Smooth scroll-to-section behavior on sidebar clicks
+
+**MCP-Based Artifact Persistence (#28):**
+- New MCP tools: `pf_save_brief`, `pf_get_brief`, `pf_list_briefs`, `pf_compare_briefs`
+- SQLite research_briefs table for persistent storage with full metadata
+- "Save to Server" button in UI (saves immediately with timestamp)
+- "Brief History" dropdown showing all saved versions with timestamps
+- Version comparison: side-by-side view of two brief versions showing what changed
+- Briefs tagged with [company, roleId, "complete", date] for easy filtering
+
+**Job Feed Module (#35):**
+
+**MCP Tool Integration (#35):**
+- `pf_search_feed` tool: Query feed items with scoring, filtering by minScore, company, sources
+- `pf_get_role` tool: Retrieve detailed feed item by ID
+- MCP status indicator in feed header (green dot when connected, gray when unavailable)
+- Real-time feed sync from MCP server with localStorage fallback
+- Seamless performance even if MCP server is down
+
+**MCP Server (#36):**
+
+**New MCP Tools:**
+- `pf_generate_brief_section` — Server-side generation of a single research brief section via Claude API
+- Input: `{sectionNum, company, role, jdText, context}` → Output: `{sectionContent, citations}`
+- Enables off-browser processing for compute-intensive sections
+- Respects all brief prompt templates and citation requirements
+
+**Resume Builder Module (#49):**
+
+**MCP-Powered Generation (#49):**
+- `pf_generate_bullets` tool: Server-side generation of bullet suggestions for current JD
+- `pf_export_resume` tool: Server-side DOCX/PDF export with formatting
+- "MCP Generate" toggle in UI (switch between client-side and server-side generation)
+- "Export via MCP" button for server-side export when connected
+- Maintains feature parity: client-side generation still available as fallback
+- Improved performance for large bullet banks via server-side processing
+
+---
+
 ## v3.15.0 — 2026-03-13
 
 ### What Changed — Tier 4 Major Build: 7 Features Across 4 Modules

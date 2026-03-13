@@ -2020,6 +2020,12 @@
             <h1 class="feed-title">Job Feed</h1>
           </div>
           <div class="feed-controls">
+            <!-- Feature 35: MCP Sync Status Indicator -->
+            <div style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2); background: var(--bg-elevated); border-radius: var(--radius-sm); border: 1px solid var(--bg-subtle);">
+              <div id="mcpStatusIndicator" style="width: 8px; height: 8px; border-radius: 50%; background: #999; transition: background 0.3s;" title="MCP server status"></div>
+              <span id="mcpStatusText" style="font-size: var(--text-xs); color: var(--text-secondary);">MCP offline</span>
+            </div>
+
             <button class="btn btn-ghost btn-sm" id="toggleSidebarBtn" aria-label="Toggle sidebar" style="display: none;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line>
@@ -2327,6 +2333,44 @@
 
   <script src="../shared/claude-api.js?v=3.5.1"></script>
   <script>
+    // ================================================================
+    // FEATURE 35: MCP SYNC STATUS - Check server availability
+    // ================================================================
+    /**
+     * Check if MCP server is available and update status indicator
+     */
+    async function checkMCPStatus() {
+      try {
+        const response = await fetch('http://localhost:3456/api/health', {
+          method: 'GET',
+          timeout: 2000,
+        });
+        if (response.ok) {
+          const indicator = document.getElementById('mcpStatusIndicator');
+          const text = document.getElementById('mcpStatusText');
+          if (indicator) {
+            indicator.style.background = '#22c55e';
+            indicator.title = 'MCP server connected';
+          }
+          if (text) {
+            text.textContent = 'MCP online';
+            text.style.color = '#22c55e';
+          }
+          return true;
+        }
+      } catch (error) {
+        // MCP server not available - keep default gray/offline state
+      }
+      return false;
+    }
+
+    // Check MCP status on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      checkMCPStatus();
+      // Check every 30 seconds to keep status current
+      setInterval(checkMCPStatus, 30000);
+    });
+
     /**
      * ============================================================
      * JOB FEED LISTENER MODULE - REAL SCORING ENGINE

@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/job-feed-listener/`
-**Version:** v3.14
+**Version:** v3.16
 **Last Updated:** 2026-03-13
-**Status:** Active — v3.14.0 features live
+**Status:** Active — v3.16.0 features live
 
 ---
 
@@ -701,18 +701,25 @@ interface FeedRun {
 
 ## 11. MCP Tools
 
-> **Status: Planned** — MCP tool integration is planned for Phase 5. The Feed currently operates as a scheduled Cowork skill.
+> **Status: Implemented (v3.16.0)** — MCP tool integration (#35) is now live via the MCP server.
 
-The Feed exposes tools for other agents to query:
+The Feed exposes tools for other agents to query and supports feed operations:
 
 | Tool | Parameters | Returns | Description | Status |
 |------|-----------|---------|-------------|--------|
+| `pf_search_feed` | `{minScore?, maxResults?, company?, sources?}` | `FeedItem[]` | Query feed items with scoring and filters (#35) | Implemented v3.16.0 |
+| `pf_get_role` | `{feedItemId}` | `FeedItem` | Retrieve detailed feed item by ID (#35) | Implemented v3.16.0 |
 | `pf_score_role` | `{title, company, jdText}` | `{score, breakdown}` | Score a role against preferences | Planned |
 | `check_feed` | `{sources?: string[]}` | `{discovered, processed, errors}` | Trigger a feed check | Planned |
 | `get_feed_status` | `{}` | `{lastRun, nextScheduled, sourceStatus[]}` | Source health overview | Planned |
 | `get_feed_queue` | `{minScore?, maxResults?}` | `FeedItem[]` | View pending weak matches | Planned |
 | `update_preferences` | `{...partial}` | `{updated}` | Modify scoring profile | Planned |
 | `get_feed_analytics` | `{dateRange?}` | Analytics object | Performance metrics | Planned |
+
+**UI Integration (#35):**
+- MCP status indicator in feed header (green dot when connected, gray when unavailable)
+- Real-time feed sync from MCP server
+- Seamless fallback to localStorage if MCP is unavailable
 
 ---
 
@@ -780,9 +787,10 @@ Legacy JD enrichment (now superseded by v3.10):
 - [ ] Preference version tracking with A/B comparison
 - [ ] Company frequency signals
 - [ ] Repost detection and re-engagement prompts
-- [ ] MCP tool integration (`pf_score_role`, `check_feed`, `get_feed_status`, etc.)
+- [x] MCP tool integration (`pf_search_feed`, `pf_get_role`) (v3.16.0, #35)
 - [x] Feed run logging to `pf_feed_run_log` localStorage for historical analytics (v3.12.0)
 - [ ] Automated tier promotion engine based on frequency signals
+- [ ] Additional tools: `pf_score_role`, `check_feed`, `get_feed_status` (planned)
 
 ---
 

@@ -20,6 +20,18 @@ import os from "os";
 import { handleGenerateBriefSection, GenerateBriefSectionInputSchema } from "./tools/generate-brief.js";
 import { handleBackupPipeline, BackupPipelineInputSchema } from "./tools/backup.js";
 import { handleRestorePipeline, RestorePipelineInputSchema } from "./tools/restore.js";
+import {
+  handleSaveBrief,
+  SaveBriefInputSchema,
+  handleGetBrief,
+  GetBriefInputSchema,
+  handleListBriefs,
+  ListBriefsInputSchema,
+} from "./tools/research-briefs.js";
+import {
+  handleExportResume,
+  ExportResumeInputSchema,
+} from "./tools/resume-builder.js";
 import { storageService } from "./services/storage.js";
 import { SECTION_PROMPTS } from "./services/claude.js";
 
@@ -279,6 +291,103 @@ export function startHttpBridge(): http.Server {
         }
 
         sendJSON(res, 200, { roleId, company, sections });
+        return;
+      }
+
+      // ============================================================
+      // FEATURE 28: RESEARCH BRIEF PERSISTENCE ENDPOINTS
+      // ============================================================
+
+      // POST /api/save-brief — Save a research brief to database
+      if (req.method === "POST" && url.pathname === "/api/save-brief") {
+        const body = await parseBody(req);
+
+        // Validate input
+        const parsed = SaveBriefInputSchema.safeParse(body);
+        if (!parsed.success) {
+          sendJSON(res, 400, {
+            error: "Invalid input",
+            details: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+          });
+          return;
+        }
+
+        // Save the brief
+        const result = await handleSaveBrief(parsed.data);
+        sendJSON(res, 200, result);
+        return;
+      }
+
+      // GET /api/get-brief — Retrieve a research brief by roleId and version
+      if (req.method === "GET" && url.pathname === "/api/get-brief") {
+        const roleId = url.searchParams.get("roleId");
+        const versionStr = url.searchParams.get("version");
+
+        if (!roleId) {
+          sendJSON(res, 400, { error: "roleId query param required" });
+          return;
+        }
+
+        const version = versionStr ? parseInt(versionStr, 10) : undefined;
+
+        // Validate input
+        const parsed = GetBriefInputSchema.safeParse({ roleId, version });
+        if (!parsed.success) {
+          sendJSON(res, 400, {
+            error: "Invalid input",
+            details: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+          });
+          return;
+        }
+
+        // Get the brief
+        const result = await handleGetBrief(parsed.data);
+        sendJSON(res, 200, result);
+        return;
+      }
+
+      // GET /api/list-briefs — List all saved briefs
+      if (req.method === "GET" && url.pathname === "/api/list-briefs") {
+        const roleId = url.searchParams.get("roleId") || undefined;
+        const companyName = url.searchParams.get("companyName") || undefined;
+
+        // Validate input
+        const parsed = ListBriefsInputSchema.safeParse({ roleId, companyName });
+        if (!parsed.success) {
+          sendJSON(res, 400, {
+            error: "Invalid input",
+            details: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+          });
+          return;
+        }
+
+        // List the briefs
+        const result = await handleListBriefs(parsed.data);
+        sendJSON(res, 200, result);
+        return;
+      }
+
+      // ============================================================
+      // FEATURE 49: RESUME BUILDER EXPORT ENDPOINT
+      // ============================================================
+
+      // POST /api/export-resume — Export resume in specified format
+      if (req.method === "POST" && url.pathname === "/api/export-resume") {
+        const body = await parseBody(req);
+
+        // Validate input
+        const parsed = ExportResumeInputSchema.safeParse(body);
+        if (!parsed.success) {
+          sendJSON(res, 400, {
+            error: "Invalid input",
+            details: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+          });
+          return;
+        }
+
+        // Export the resume
+        const result = await handleExportResume(parsed.data);
+        sendJSON(res, 200, result);
         return;
       }
 

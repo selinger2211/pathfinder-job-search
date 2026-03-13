@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/research-brief/`
-**Version:** v3.14
+**Version:** v3.16
 **Last Updated:** 2026-03-13
-**Status:** Active — v3.14.0 features live
+**Status:** Active — v3.16.0 features live
 
 ---
 
@@ -763,8 +763,14 @@ When all sections are generated, the brief is automatically:
 - Compiled into a PDF via `html2pdf.js` and stored in IndexedDB
 - Attached to the pipeline role's `artifacts[]` array for discovery from the Pipeline module
 
-**Status: Planned** — MCP-based artifact persistence:
-The system will also save the brief to the MCP server as a `research_brief` artifact:
+**Status: Implemented (v3.16.0)** — MCP-based artifact persistence (#28):
+The brief is saved to the MCP server as a `research_brief` artifact via tools:
+- `pf_save_brief` — Saves brief with metadata to SQLite research_briefs table
+- `pf_get_brief` — Retrieves a specific brief by ID
+- `pf_list_briefs` — Lists all briefs for a company/role with pagination
+- `pf_compare_briefs` — Compares two briefs side-by-side showing changes
+
+Each brief artifact includes:
 ```
 Type: research_brief
 Filename: research-brief_{company}_{roleTitle}_{date}.html
@@ -772,7 +778,9 @@ Tags: [company, roleId, "complete", date]
 Metadata: { sectionsGenerated: 13, inputsMissing: [...], generatedAt: ISO }
 ```
 
-Previous versions will never be overwritten — each generation creates a new artifact, supporting version comparison: "How did my prep evolve between the recruiter screen and the onsite?"
+Previous versions are never overwritten — each generation creates a new artifact, supporting version comparison: "How did my prep evolve between the recruiter screen and the onsite?"
+
+UI includes "Save to Server" button (saves immediately) and "Brief History" dropdown (lists all saved versions with timestamps for easy retrieval).
 
 ### Export Formats
 
@@ -827,7 +835,7 @@ Previous versions will never be overwritten — each generation creates a new ar
 - MCP artifacts for brief storage (using localStorage + IndexedDB instead)
 - `pf_save_citation` tool (citations stored locally)
 
-### Phase 2: Smart Caching & Invalidation (Partial)
+### Phase 2: Smart Caching & Invalidation (Complete — v3.16.0)
 
 **Shipped:**
 - Per-section refresh capability via `refreshSection()`
@@ -835,11 +843,11 @@ Previous versions will never be overwritten — each generation creates a new ar
 - Auto-save to localStorage
 - PDF generation and IndexedDB storage
 - Auto-generation on first visit to a role
-
-**Status: Planned:**
-- Invalidation trigger detection (JD changes, profile updates, etc.)
+- Invalidation trigger detection (JD changes, profile updates, etc.) (#51)
 - Stale/fresh/degraded badges beyond "Fresh"
-- Cross-module invalidation (Pipeline edits trigger brief staleness)
+- Cross-module invalidation signals (Pipeline, Company, Comp, Debrief) (#51)
+- Section-level staleness tracking with source hashing (#51)
+- Smart regeneration of only stale sections (#51)
 
 ### Phase 3: Deep Integrations (Partial)
 
@@ -854,7 +862,7 @@ Previous versions will never be overwritten — each generation creates a new ar
 - Interviewer name research (LinkedIn profile fetch)
 - Cross-module invalidation signals
 
-### Phase 4: Polish (Partial)
+### Phase 4: Polish (Complete — v3.16.0)
 
 **Shipped:**
 - Section keyboard shortcuts (0-9, Shift+0-3)
@@ -862,11 +870,11 @@ Previous versions will never be overwritten — each generation creates a new ar
 - Generation progress bar (batch progress) (v2.2.0)
 - Citation popovers with source links (v2.2.0)
 - G keyboard shortcut to trigger generate (v2.2.0)
-
-**Status: Planned:**
-- Export to Markdown and HTML
-- Brief version comparison (diff two briefs for the same role)
-- Keyboard shortcuts for citation navigation (C to toggle, etc.)
+- Export to Markdown and HTML (v3.13.0)
+- Enhanced citation popovers (URL, date, trust level, refresh button) (#52)
+- Improved progress bar with section names and ETA (#52)
+- Keyboard shortcuts (G/E/R/Esc/arrows) (#52)
+- Sticky section navigation sidebar (200px left) (#52)
 
 ---
 
