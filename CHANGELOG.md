@@ -4,6 +4,37 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.18.5 — 2026-03-13
+
+### QA Pass: Fix Feed log crash, Pipeline display bugs
+
+Full QA sweep across all 11 modules. Found and fixed 3 bugs:
+
+**Job Feed: Fix renderFeedLog crash**
+- `run.sources` was undefined for some feed run entries, causing `TypeError: Cannot read properties of undefined (reading 'join')` on every page load
+- Added optional chaining with fallback: `(run.sources || []).join(', ') || 'Unknown'`
+
+**Pipeline: Fix "undefined" tier badge on newly added roles**
+- Roles added from Feed without a `tier` field showed "undefined" as the badge text
+- Now defaults to "watching" when tier is missing
+
+**Pipeline: Fix "NaNd" days-in-stage for ISO date strings**
+- Roles with ISO date strings (e.g., `"2026-03-13T03:04:50.789Z"`) in `dateAdded`/`lastActivity` produced NaN when subtracted from `Date.now()`
+- All date calculations now handle both timestamp numbers and ISO strings via `new Date().getTime()`
+- Fixed in: `getDaysInStage()`, stale detection, table view sort, and table view render
+
+---
+
+## v3.18.4 — 2026-03-13
+
+### Bug Fix: Feed crash — loadData not defined
+
+- Feature #24 dedup badge called undefined functions `loadData()` and `checkPipelineDedup()`
+- Replaced with existing `loadRoles()` and `checkPipelineStatus()`
+- This ReferenceError was crashing the entire `renderFeedCards()` function, showing 0 cards
+
+---
+
 ## v3.18.3 — 2026-03-13
 
 ### Pipeline: Restore estimated total comp on role cards

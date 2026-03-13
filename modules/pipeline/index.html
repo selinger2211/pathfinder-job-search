@@ -4451,9 +4451,11 @@
      * RETURNS: number of days (rounded down)
      */
     function getDaysInStage(role) {
-      const stageEntryTime = role.lastActivity || role.dateAdded;
+      const raw = role.lastActivity || role.dateAdded;
+      // Handle both timestamp numbers and ISO date strings
+      const stageEntryTime = typeof raw === 'string' ? new Date(raw).getTime() : raw;
       const days = Math.floor((Date.now() - stageEntryTime) / (1000 * 60 * 60 * 24));
-      return days;
+      return isNaN(days) ? 0 : days;
     }
 
     /**
@@ -4484,7 +4486,8 @@
 
       // ====== STALE DETECTION ======
       // Check if role hasn't been updated in 14+ days (1,209,600,000 ms)
-      const lastActivityTime = role.lastActivity || role.dateAdded || 0;
+      const rawLastActivity = role.lastActivity || role.dateAdded || 0;
+      const lastActivityTime = typeof rawLastActivity === 'string' ? new Date(rawLastActivity).getTime() : rawLastActivity;
       const daysSinceUpdate = Math.floor((Date.now() - lastActivityTime) / (1000 * 60 * 60 * 24));
       const isStale = daysSinceUpdate >= 14;
       const staleClass = isStale ? 'stale' : '';
@@ -4527,7 +4530,7 @@
               }; font-weight: 500; margin-top: 2px;" title="${tcEstimate.compType} | ${tcEstimate.level} | ${tcEstimate.calibrationMode} | Confidence: ${tcEstimate.confidence.label} (${tcEstimate.confidence.score}pts)">${tcEstimate.label} <span style="font-size: 0.85em; opacity: 0.7;">(${tcEstimate.confidence.label.toLowerCase()})</span></div>` : ''}
             </div>` : `<div style="font-size: var(--text-xs); color: var(--text-tertiary); margin: var(--space-2) 0;">Recruiter: ${role.contact?.name || 'Unknown'}</div>`}
           <div class="role-card-badges">
-            <span class="badge badge-filled" style="background: ${getColorForTier(role.tier)}; color: white; font-size: var(--text-xs);">${role.tier}</span>
+            <span class="badge badge-filled" style="background: ${getColorForTier(role.tier || 'watching')}; color: white; font-size: var(--text-xs);">${role.tier || 'watching'}</span>
             ${isOpaque ? `<span class="badge badge-outlined" style="border-color: var(--text-tertiary); color: var(--text-tertiary);">Opaque</span>` : (role.title === 'Exploratory' ? '<span class="badge badge-outlined" style="border-color: var(--warning); color: var(--warning);">Inbound</span>' : `<span class="badge badge-outlined" style="border-color: ${role.positioning === 'ic' ? 'var(--info)' : 'var(--stage-screen)'}; color: ${role.positioning === 'ic' ? 'var(--info)' : 'var(--stage-screen)'};">${role.positioning === 'ic' ? 'IC' : 'Mgmt'}</span>`)}
             ${staleBadgeHtml}
           </div>
@@ -7551,9 +7554,10 @@
             bVal = TIERS.indexOf(b.tier);
           } else if (sortColumn === 'days') {
             const now = Date.now();
-            const lastUpdate = a.lastActivity || a.dateAdded;
-            const daysSinceA = Math.floor((now - lastUpdate) / (1000 * 60 * 60 * 24));
-            const daysSinceB = Math.floor((now - (b.lastActivity || b.dateAdded)) / (1000 * 60 * 60 * 24));
+            const rawA = a.lastActivity || a.dateAdded;
+            const rawB = b.lastActivity || b.dateAdded;
+            const daysSinceA = Math.floor((now - (typeof rawA === 'string' ? new Date(rawA).getTime() : rawA)) / (1000 * 60 * 60 * 24));
+            const daysSinceB = Math.floor((now - (typeof rawB === 'string' ? new Date(rawB).getTime() : rawB)) / (1000 * 60 * 60 * 24));
             aVal = daysSinceA;
             bVal = daysSinceB;
           } else if (sortColumn === 'score') {
@@ -7574,7 +7578,8 @@
       // Render rows
       tbody.innerHTML = filtered.map(role => {
         const company = getCompanies().find(c => c.name === role.company);
-        const days = Math.floor((Date.now() - (role.lastActivity || role.dateAdded)) / (1000 * 60 * 60 * 24));
+        const rawDate = role.lastActivity || role.dateAdded;
+        const days = Math.floor((Date.now() - (typeof rawDate === 'string' ? new Date(rawDate).getTime() : rawDate)) / (1000 * 60 * 60 * 24));
         return `
           <tr onclick="openRoleDetail('${role.id}'); closeRoleDetail();">
             <td>

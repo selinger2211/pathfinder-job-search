@@ -5931,7 +5931,7 @@
           <div class="log-details">
             <div class="log-summary">Found ${run.found} roles, ${run.scored40plus} matched (40+)</div>
             <div class="log-info">
-              Sources: ${run.sources.join(', ')}<br>
+              Sources: ${(run.sources || []).join(', ') || 'Unknown'}<br>
               ${run.errors > 0 ? `<span style="color: var(--danger);">⚠️ ${run.errors} error(s)</span>` : 'All sources OK'}
             </div>
           </div>
