@@ -3081,6 +3081,258 @@
       return 'in-range';
     }
 
+    // ================================================================
+    // TOTAL COMP ESTIMATION ENGINE v2 (v3.18.3)
+    // Classification-first total comp estimator for PM roles.
+    // Ported from Job Feed module — same engine, same accuracy.
+    //
+    // CORE PRINCIPLE: Never estimate total comp until the posted compensation
+    // type has been classified. This prevents double-counting errors — e.g.,
+    // if a posting says "$200K-$301K total target cash" and we naively multiply
+    // by 1.5x as if it were base salary, we'd wildly overestimate.
+    //
+    // STEP 1: Detect posted range type (BASE_SALARY / TOTAL_TARGET_CASH / OTE / UNKNOWN)
+    // STEP 2: Detect role archetype (IC_PM / MANAGER_PM / UNKNOWN)
+    // STEP 3: Infer seniority level from title + JD signals
+    // STEP 4: Determine calibration mode (PUBLIC / STARTUP / GENERIC)
+    // STEP 5: Apply the right formula based on detected type
+    // STEP 6: Score confidence
+    // ================================================================
+
+    /**
+     * Normalize company stage name for calibration mode lookup.
+     */
+    function normalizeCompStage(stage) {
+      if (!stage) return '';
+      const map = {
+        'Series B+': 'Series B',
+        'Late-stage': 'Late-stage / Pre-IPO',
+        'Pre-IPO': 'Late-stage / Pre-IPO',
+        'Private': 'Bootstrapped'
+      };
+      return map[stage] || stage;
+    }
+
+    /**
+     * Detect what type of compensation range is posted.
+     * Priority: OTE > TOTAL_TARGET_CASH > BASE_SALARY > UNKNOWN
+     */
+    function detectCompType(salaryText, jdText) {
+      const text = ((salaryText || '') + ' ' + (jdText || '')).toLowerCase();
+
+      const otePatterns = ['on-target earnings', 'on target earnings', ' ote ', 'commission eligible',
+        'variable comp', 'quota', 'attainment'];
+      if (otePatterns.some(p => text.includes(p))) return 'OTE';
+
+      const tccPatterns = ['total target cash', 'total target compensation',
+        'inclusive of bonus', 'inclusive of bonus or commission',
+        'cash compensation', 'target cash', 'total cash'];
+      if (tccPatterns.some(p => text.includes(p))) return 'TOTAL_TARGET_CASH';
+
+      const basePatterns = ['base salary', 'annual base pay', 'salary range',
+        'pay range', 'base compensation', 'base pay'];
+      if (basePatterns.some(p => text.includes(p))) return 'BASE_SALARY';
+
+      return 'UNKNOWN';
+    }
+
+    /**
+     * Detect whether the role is IC or people-manager from JD text.
+     */
+    function detectRoleArchetype(title, jdText) {
+      const text = ((title || '') + ' ' + (jdText || '')).toLowerCase();
+
+      const managerSignals = ['manage a team', 'build or lead a team', 'direct reports',
+        'people manager', 'coach pms', 'hire and develop', 'org design',
+        'build the team', 'player-coach', 'people leader', 'manage engineers',
+        'manage product managers', 'growing the team', 'staff management',
+        'reporting to you', 'build and lead', 'lead a team of'];
+      const icSignals = ['individual contributor', ' ic role', ' ic position',
+        'no direct reports', 'hands-on ic', 'deep technical', 'principal ic',
+        'staff-level ic', 'cross-functional influence', 'own strategy and execution'];
+
+      const hasManager = managerSignals.some(s => text.includes(s));
+      const hasIC = icSignals.some(s => text.includes(s));
+
+      if (hasManager && !hasIC) return 'MANAGER_PM';
+      if (hasIC && !hasManager) return 'IC_PM';
+      return 'UNKNOWN';
+    }
+
+    /**
+     * Infer PM seniority level from title + JD text.
+     * Returns: 'mid', 'senior', 'principal'
+     */
+    function inferPMLevel(title, jdText) {
+      const titleLower = (title || '').toLowerCase();
+      const text = (jdText || '').toLowerCase();
+
+      const principalTitles = ['principal', 'staff', 'group pm', 'group product',
+        'director of product', 'director, product', 'head of product'];
+      if (principalTitles.some(t => titleLower.includes(t))) return 'principal';
+
+      if (titleLower.includes('senior') || titleLower.includes('sr.') || titleLower.includes('sr ')) {
+        const principalSignals = ['executive communication', 'org-wide', 'company-wide',
+          'platform ownership', 'multi-product', '10+ years', '12+ years',
+          'technical architecture'];
+        if (principalSignals.some(s => text.includes(s))) return 'principal';
+        return 'senior';
+      }
+
+      return 'mid';
+    }
+
+    /**
+     * Determine calibration mode based on company stage.
+     */
+    function getCalibrationMode(stage) {
+      const s = normalizeCompStage(stage);
+      if (s === 'Public' || s === 'Late-stage / Pre-IPO') return 'PUBLIC_CALIBRATED';
+      if (['Seed', 'Series A', 'Series B', 'Series C+'].includes(s)) return 'STARTUP_HEURISTIC';
+      if (s === 'Bootstrapped') return 'STARTUP_HEURISTIC';
+      return 'GENERIC_FALLBACK';
+    }
+
+    /**
+     * Get base-to-TC multiplier range for BASE_SALARY type postings.
+     */
+    function getBaseTCMultiplier(calibrationMode, level) {
+      if (calibrationMode === 'PUBLIC_CALIBRATED') {
+        if (level === 'principal') return [1.35, 1.55];
+        if (level === 'senior')    return [1.30, 1.45];
+        return [1.25, 1.40]; // mid
+      }
+      if (calibrationMode === 'STARTUP_HEURISTIC') {
+        if (level === 'principal') return [1.15, 1.45];
+        if (level === 'senior')    return [1.10, 1.35];
+        return [1.05, 1.25]; // mid
+      }
+      // GENERIC_FALLBACK
+      if (level === 'principal') return [1.20, 1.45];
+      if (level === 'senior')    return [1.15, 1.35];
+      return [1.10, 1.30]; // mid
+    }
+
+    /**
+     * Get equity add-on percentage for TOTAL_TARGET_CASH type postings.
+     * TCC already includes bonus — only add equity estimate.
+     */
+    function getTCCEquityAddon(calibrationMode, level) {
+      if (calibrationMode === 'PUBLIC_CALIBRATED') {
+        if (level === 'principal') return [0.20, 0.45];
+        if (level === 'senior')    return [0.15, 0.35];
+        return [0.10, 0.25]; // mid
+      }
+      if (calibrationMode === 'STARTUP_HEURISTIC') {
+        if (level === 'principal') return [0.10, 0.30];
+        if (level === 'senior')    return [0.08, 0.20];
+        return [0.05, 0.15]; // mid
+      }
+      // GENERIC_FALLBACK
+      if (level === 'principal') return [0.10, 0.35];
+      if (level === 'senior')    return [0.08, 0.25];
+      return [0.05, 0.20]; // mid
+    }
+
+    /**
+     * Calculate confidence score for the estimation.
+     * Higher = more reliable. Maps to High/Medium/Low label.
+     */
+    function calculateCompConfidence(compType, calibrationMode, level, titleText, jdText, roleArchetype) {
+      let score = 0;
+
+      if (compType === 'BASE_SALARY') score += 20;
+      else if (compType === 'TOTAL_TARGET_CASH') score += 20;
+      else if (compType === 'UNKNOWN') score -= 20;
+      if (compType === 'OTE') score -= 15;
+
+      if (calibrationMode === 'PUBLIC_CALIBRATED') score += 20;
+      else if (calibrationMode === 'STARTUP_HEURISTIC') score += 10;
+
+      const hasJD = (jdText || '').length > 300;
+      if (hasJD) score += 15;
+      else score += 5;
+
+      if (roleArchetype === 'IC_PM' || roleArchetype === 'MANAGER_PM') score += 10;
+
+      let label = 'Low';
+      if (score >= 55) label = 'High';
+      else if (score >= 35) label = 'Medium';
+
+      return { score, label };
+    }
+
+    /**
+     * MAIN ENTRY POINT: Estimate total compensation from pipeline role data.
+     * Classification-first approach: detect comp type BEFORE applying formulas.
+     * INPUT: salaryData = { min, max, raw } from extractSalaryFromJD, role = pipeline role object
+     * RETURNS: Full estimation result with breakdowns and metadata, or null
+     */
+    function estimateTotalComp(salaryData, role) {
+      if (!salaryData) return null;
+
+      const jdText = (role.jdText || '').toLowerCase();
+      const salaryText = salaryData.raw || '';
+      const title = role.title || '';
+      const companyStage = role.tier || '';
+
+      // STEP 1: Classify the posted compensation type
+      const compType = detectCompType(salaryText, jdText);
+
+      // STEP 2: Detect role archetype
+      const roleArchetype = detectRoleArchetype(title, jdText);
+
+      // STEP 3: Infer seniority level
+      const level = inferPMLevel(title, jdText);
+
+      // STEP 4: Determine calibration mode
+      const calibrationMode = getCalibrationMode(companyStage);
+
+      // STEP 5: Apply the right formula based on detected type
+      let estLow, estHigh;
+      let formulaUsed = '';
+
+      if (compType === 'BASE_SALARY' || compType === 'UNKNOWN') {
+        const [lowMult, highMult] = compType === 'UNKNOWN'
+          ? [1.15, 1.40]
+          : getBaseTCMultiplier(calibrationMode, level);
+        estLow = Math.round(salaryData.min * lowMult);
+        estHigh = Math.round(salaryData.max * highMult);
+        formulaUsed = compType === 'UNKNOWN' ? 'unknown_fallback' : 'base_to_tc';
+
+      } else if (compType === 'TOTAL_TARGET_CASH') {
+        const [lowEq, highEq] = getTCCEquityAddon(calibrationMode, level);
+        estLow = Math.round(salaryData.min * (1 + lowEq));
+        estHigh = Math.round(salaryData.max * (1 + highEq));
+        formulaUsed = 'tcc_plus_equity';
+
+      } else if (compType === 'OTE') {
+        estLow = salaryData.min;
+        estHigh = salaryData.max;
+        formulaUsed = 'ote_passthrough';
+      }
+
+      // GUARDRAIL: Cap multiplier at 1.65x posted max
+      const maxAllowed = Math.round(salaryData.max * 1.65);
+      if (estHigh > maxAllowed) estHigh = maxAllowed;
+
+      // STEP 6: Calculate confidence
+      const confidence = calculateCompConfidence(
+        compType, calibrationMode, level, title, jdText, roleArchetype
+      );
+
+      return {
+        estLow,
+        estHigh,
+        compType,
+        level,
+        calibrationMode,
+        formulaUsed,
+        confidence,
+        label: `Est. TC: ${formatSalary(estLow)}–${formatSalary(estHigh)}`
+      };
+    }
+
     /**
      * Global handler: replaces an <img> with a colored letter circle
      * when the Clearbit logo fails to load (CORS, 404, etc.).
@@ -4248,8 +4500,10 @@
       const salaryDisplay = salaryData
         ? formatSalaryRange(salaryData)
         : 'Salary unknown';
+      // v3.18.3: Show both base salary and estimated total comp on cards
+      const tcEstimate = estimateTotalComp(salaryData, role.title);
       const salaryTitle = salaryData
-        ? `Base: ${salaryData.raw}`
+        ? `Base: ${salaryData.raw}${tcEstimate ? ` | ${tcEstimate.label}` : ''}`
         : 'No salary data in job description';
       const companyDesc = getCompanyDescription(role.company);
 
@@ -4263,7 +4517,15 @@
             </div>
           </div>
           <div class="role-card-title">${role.title}${role.title === 'Exploratory' ? ' <span style="font-size: 10px; opacity: 0.6;">🔍</span>' : ''}${role.title === 'TBD' && isOpaque ? ' <span style="font-size: 10px; opacity: 0.6; margin-left: 4px;">pending</span>' : ''}</div>
-          ${!isOpaque ? `<div class="role-card-salary ${salaryEval}" title="${salaryTitle}">${salaryEval === 'below' ? '⚠️ ' : ''}${salaryDisplay}</div>` : `<div style="font-size: var(--text-xs); color: var(--text-tertiary); margin: var(--space-2) 0;">Recruiter: ${role.contact?.name || 'Unknown'}</div>`}
+          ${!isOpaque ? `
+            <div class="role-card-salary ${salaryEval}" title="${salaryTitle}" style="line-height: 1.5;">
+              ${salaryEval === 'below' ? '⚠️ ' : ''}${salaryDisplay}
+              ${tcEstimate ? `<div style="font-size: 0.85em; color: ${
+                tcEstimate.confidence.label === 'High' ? 'var(--success, #22c55e)' :
+                tcEstimate.confidence.label === 'Medium' ? 'var(--accent, #6366f1)' :
+                'var(--text-tertiary)'
+              }; font-weight: 500; margin-top: 2px;" title="${tcEstimate.compType} | ${tcEstimate.level} | ${tcEstimate.calibrationMode} | Confidence: ${tcEstimate.confidence.label} (${tcEstimate.confidence.score}pts)">${tcEstimate.label} <span style="font-size: 0.85em; opacity: 0.7;">(${tcEstimate.confidence.label.toLowerCase()})</span></div>` : ''}
+            </div>` : `<div style="font-size: var(--text-xs); color: var(--text-tertiary); margin: var(--space-2) 0;">Recruiter: ${role.contact?.name || 'Unknown'}</div>`}
           <div class="role-card-badges">
             <span class="badge badge-filled" style="background: ${getColorForTier(role.tier)}; color: white; font-size: var(--text-xs);">${role.tier}</span>
             ${isOpaque ? `<span class="badge badge-outlined" style="border-color: var(--text-tertiary); color: var(--text-tertiary);">Opaque</span>` : (role.title === 'Exploratory' ? '<span class="badge badge-outlined" style="border-color: var(--warning); color: var(--warning);">Inbound</span>' : `<span class="badge badge-outlined" style="border-color: ${role.positioning === 'ic' ? 'var(--info)' : 'var(--stage-screen)'}; color: ${role.positioning === 'ic' ? 'var(--info)' : 'var(--stage-screen)'};">${role.positioning === 'ic' ? 'IC' : 'Mgmt'}</span>`)}

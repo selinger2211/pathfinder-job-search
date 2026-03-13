@@ -4,6 +4,24 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.18.3 — 2026-03-13
+
+### Pipeline: Restore estimated total comp on role cards
+
+Ported the full classification-first TC estimation engine from Job Feed into Pipeline. Role cards now show both base salary and estimated total comp with confidence scoring.
+
+**Engine features (identical to Job Feed):**
+- Comp type detection: BASE_SALARY vs TOTAL_TARGET_CASH vs OTE vs UNKNOWN
+- Role archetype classification: IC_PM vs MANAGER_PM
+- Level inference: mid / senior / principal (from title + JD signals)
+- Calibration modes: PUBLIC_CALIBRATED / STARTUP_HEURISTIC / GENERIC_FALLBACK
+- Confidence scoring: High / Medium / Low with point-based methodology
+- Guardrail: TC estimate capped at 1.65x posted max
+- Color-coded confidence: green (High), purple (Medium), gray (Low)
+- Hover tooltip shows full methodology breakdown
+
+---
+
 ## v3.18.2 — 2026-03-13
 
 ### Bug Fix: Feed items disappearing
