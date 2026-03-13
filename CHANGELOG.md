@@ -4,6 +4,26 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.9.0 — 2026-03-12
+
+### What Changed — Research Brief Auto-Generation + Pipeline UX Fixes
+
+**User asked:** "if I go to a page and there is nothing there, it has never been run, you should just generate the brief" / "these logos I cannot decipher" (comms dropdown) / Apify public-actor-disabled error
+
+**Changes:**
+
+1. **Research Brief auto-generation (v3.9.0)** — When navigating to a Research Brief page with no cached brief, the brief auto-generates immediately. No more empty "Click Generate Brief" state. If a cached brief exists, it shows instantly. Briefs persist until the user explicitly regenerates.
+
+2. **Brief attached to pipeline roles** — After generation, a `briefArtifactId` and `briefGeneratedAt` are written to the role in `pf_roles`. An artifact entry (`type: 'research_brief'`) is added to the role's `artifacts[]` array. Makes briefs discoverable from Pipeline.
+
+3. **Generate → Regenerate button** — Button dynamically switches between "Generate Brief" (first run) and "Regenerate Brief" (when a cached brief exists). "Clear Cache" button renamed to "Clear & Regenerate" and now auto-triggers a fresh generation instead of showing an empty state.
+
+4. **Pipeline comms dropdown labels** — Per-contact channel `<select>` in Pipeline detail panel now shows text labels ("✉️ Email", "💼 LinkedIn", etc.) instead of bare emoji that were unreadable at small sizes. Dropdown widened from 90px → 105px.
+
+5. **Apify public-actor-disabled error** — New 403 error variant (`public-actor-disabled`) now handled with a clear message: "Your Apify plan does not support running public actors." Batch enrichment early-aborts on this error to prevent wasting retries.
+
+---
+
 ## v3.8.5 — 2026-03-12
 
 ### What Changed — Apify Credit Conservation

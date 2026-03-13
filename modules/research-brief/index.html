@@ -974,9 +974,9 @@
             <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i>
             Generate Brief
           </button>
-          <button class="btn btn-ghost" id="clearCacheBtn" style="display: none;" aria-label="Clear cached sections">
+          <button class="btn btn-ghost" id="clearCacheBtn" style="display: none;" aria-label="Clear cache and regenerate brief">
             <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-            Clear Cache
+            Clear & Regenerate
           </button>
         </div>
       </div>
@@ -3208,6 +3208,63 @@ The HTML content should come first, followed by the citations block. Do not incl
       });
     }
 
+    /* ====== BRIEF LIFECYCLE HELPERS (v3.9.0) ====== */
+
+    /**
+     * Toggles the main generate button between "Generate" and "Regenerate"
+     * depending on whether a cached brief already exists.
+     * INPUT: hasCachedBrief (boolean) — true = show "Regenerate", false = show "Generate"
+     * OUTPUT: button label and icon are updated
+     */
+    function updateGenerateButtonLabel(hasCachedBrief) {
+      const btn = document.getElementById('generateBtn');
+      if (!btn) return;
+      if (hasCachedBrief) {
+        btn.innerHTML = '<i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i> Regenerate Brief';
+        btn.setAttribute('aria-label', 'Regenerate research brief');
+      } else {
+        btn.innerHTML = '<i data-lucide="sparkles" style="width: 16px; height: 16px;"></i> Generate Brief';
+        btn.setAttribute('aria-label', 'Generate research brief');
+      }
+      lucide.createIcons();
+    }
+
+    /**
+     * Attaches a brief reference to the pipeline role in pf_roles.
+     * This makes the brief discoverable from the Pipeline module and
+     * persists the brief metadata beyond just localStorage section cache.
+     * INPUT: role (object), company (object), briefId (string)
+     * OUTPUT: role in pf_roles is updated with briefArtifactId + briefGeneratedAt
+     */
+    function attachBriefToRole(role, company, briefId) {
+      try {
+        const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+        const pipelineRole = roles.find(r => r.id === role.id);
+        if (!pipelineRole) return;
+
+        // Update brief metadata on the role
+        pipelineRole.briefArtifactId = briefId;
+        pipelineRole.briefGeneratedAt = new Date().toISOString();
+
+        // Also add to the role's artifacts array (v2.5.0 format) if not already there
+        if (!pipelineRole.artifacts) pipelineRole.artifacts = [];
+        // Remove old research_brief artifact if exists (we're replacing it)
+        pipelineRole.artifacts = pipelineRole.artifacts.filter(a => a.type !== 'research_brief');
+        pipelineRole.artifacts.push({
+          type: 'research_brief',
+          filename: `${company.name}_${role.title}_Brief.html`,
+          date: new Date().toISOString(),
+          notes: 'Auto-generated research brief',
+          briefId: briefId
+        });
+
+        localStorage.setItem('pf_roles', JSON.stringify(roles));
+        console.log(`[Brief] Attached brief ${briefId} to role ${role.id}`);
+      } catch (e) {
+        console.warn('[Brief] Failed to attach brief to pipeline role:', e);
+      }
+    }
+
     /**
      * Handles when user selects a role from the dropdown
      * Loads company data, populates sidebar, shows section list
@@ -3278,22 +3335,21 @@ The HTML content should come first, followed by the citations block. Do not incl
         || getCachedSection(companySlug, nr.id, 0) !== null;
 
       if (hasCachedSections) {
-        // Restore previously generated brief from cache
+        // ====== CACHED BRIEF EXISTS — show it immediately (v3.9.0) ======
+        // Brief persists until the user explicitly regenerates. No need to
+        // click anything — just navigate to the page and your brief is there.
         document.getElementById('sectionsArea').innerHTML = '';
         restoreCachedBrief(companySlug, nr, nc);
+        // Update button to "Regenerate" since a brief already exists
+        updateGenerateButtonLabel(true);
       } else {
-        // Show empty state — no previously generated brief found
-        document.getElementById('sectionsArea').innerHTML = `
-          <div class="empty-state">
-            <div class="empty-state-icon">📋</div>
-            <div class="empty-state-text">
-              <p>Ready to generate your research brief.</p>
-              <p style="font-size: var(--text-sm); margin-top: var(--space-2);">
-                Click "Generate Brief" to create a comprehensive interview prep document.
-              </p>
-            </div>
-          </div>
-        `;
+        // ====== NO CACHED BRIEF — auto-generate immediately (v3.9.0) ======
+        // User should never see an empty "click to generate" state.
+        // If they navigated here, they want a brief — so just make one.
+        updateGenerateButtonLabel(false);
+        // Small delay to let the UI finish rendering the sidebar before
+        // kicking off the generation (prevents visual jank)
+        setTimeout(() => generateBrief(), 300);
       }
 
       // Update saved briefs panel and list for this role
@@ -3537,6 +3593,14 @@ The HTML content should come first, followed by the citations block. Do not incl
       // Auto-save the complete brief to localStorage
       saveBriefToStorage();
 
+      // v3.9.0: Attach brief reference to the pipeline role so the brief
+      // is discoverable from Pipeline and persists beyond section cache
+      const briefId = `${companySlug}_${role.id}_${Date.now()}`;
+      attachBriefToRole(role, company, briefId);
+
+      // Switch button to "Regenerate" since a brief now exists
+      updateGenerateButtonLabel(true);
+
       state.isGenerating = false;
       lucide.createIcons();
     }
@@ -3657,33 +3721,28 @@ The HTML content should come first, followed by the citations block. Do not incl
     }
 
     /**
-     * Clears all cached sections for the selected role
+     * Clears all cached sections for the selected role and auto-regenerates.
+     * v3.9.0: No more empty "click to generate" state — clearing cache
+     * immediately triggers a fresh generation so the user always has a brief.
      * INPUT: none
-     * OUTPUT: all cache entries removed, user is prompted to regenerate
+     * OUTPUT: cache cleared, new brief generation starts automatically
      */
     function clearCache() {
       const role = state.selectedRole;
       const company = state.selectedCompany;
       if (!role || !company) return;
 
-      if (!confirm('Clear all cached sections for this role? You\'ll need to regenerate them.')) {
+      if (!confirm('Clear cached brief and regenerate? This will create a completely fresh brief.')) {
         return;
       }
 
       const companySlug = getCompanySlug(company.name);
       clearAllCachedSections(companySlug, role.id);
 
-      // Clear the display
-      document.getElementById('sectionsArea').innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state-icon">🗑️</div>
-          <div class="empty-state-text">
-            <p>Cache cleared. Click "Generate Brief" to create a fresh brief.</p>
-          </div>
-        </div>
-      `;
-
       document.getElementById('tocSidebar').style.display = 'none';
+
+      // Auto-regenerate immediately — no empty state (v3.9.0)
+      generateBrief();
     }
 
     /**

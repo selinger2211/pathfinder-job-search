@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v3.8.5
+**Status:** v3.9.0
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v3.9.0 | 2026-03-12 | **Research Brief auto-generation** — Briefs auto-generate on first visit (no manual "Generate" click). Cached briefs persist until explicit regeneration. Brief artifacts attached to pipeline roles (`briefArtifactId` + `artifacts[]`). "Generate" button becomes "Regenerate" when brief exists. "Clear Cache" now auto-regenerates. **Pipeline comms dropdown** — Added text labels to per-contact channel dropdown (was emoji-only). **Feed Apify error** — Handle `public-actor-disabled` 403 error with clear upgrade message. |
 | v3.8.5 | 2026-03-12 | **Apify credit conservation** — maxItems 10→1 (only enrich once if we can get it). Re-enrich guard skips already-enriched roles. Batch early-abort on 401/403/not-rented errors. |
 | v3.8.4 | 2026-03-12 | **Pipeline logo system + feed stats bar** — Ported full logo system from Pipeline: ATS-aware domain extraction, DOMAIN_OVERRIDES, colorful letter-initial fallbacks. Stats bar shows total roles, unique companies, stage breakdown. Logo pattern documented as Rule 7 in CLAUDE_CONTEXT. |
 | v3.8.2 | 2026-03-12 | **On-demand enrichment only** — Disabled auto-enrich on page load to conserve Apify credits. Per-card "⚡ Enrich" and batch "Enrich JDs" buttons still work. Page load shows stub count instead. Auto-enrich code preserved as commented block for easy re-enable. |

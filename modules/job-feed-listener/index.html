@@ -2449,6 +2449,14 @@
             `or rent this actor at console.apify.com.`
           );
         }
+        // v3.8.6: Handle "public-actor-disabled" — plan doesn't allow public actors
+        if (startResponse.status === 403 && errText.includes('public-actor-disabled')) {
+          throw new Error(
+            'Your Apify plan does not support running public actors. ' +
+            'Upgrade your plan at console.apify.com/billing, or switch to ' +
+            'a private/rented actor in sidebar settings.'
+          );
+        }
         throw new Error(`Apify API error (${startResponse.status}): ${errText.slice(0, 200)}`);
       }
 
@@ -2727,8 +2735,10 @@
             showToast('Apify credit limit reached', 'error');
             break;
           }
-          if (err.message.includes('401') || err.message.includes('403') || err.message.includes('not-rented')) {
-            showToast('Apify auth error — check token in settings', 'error');
+          if (err.message.includes('401') || err.message.includes('403')
+              || err.message.includes('not-rented') || err.message.includes('public-actor-disabled')
+              || err.message.includes('does not support running public')) {
+            showToast('Apify auth/plan error — check settings or upgrade plan', 'error');
             break;
           }
           if (badge) {

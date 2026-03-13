@@ -1280,7 +1280,7 @@
       border-radius: var(--radius-sm);
       background: var(--bg-elevated);
       color: var(--text-primary);
-      width: 90px;
+      min-width: 105px;
     }
     .conn-quick-log button {
       font-size: var(--text-xs);
@@ -5182,12 +5182,12 @@
               ${commsHtml}
               <!-- Quick-add comms input -->
               <div class="conn-quick-log">
-                <select id="ql-channel-${cardId}" onclick="event.stopPropagation();">
-                  <option value="email">✉️</option>
-                  <option value="linkedin">💼</option>
-                  <option value="phone">📞</option>
-                  <option value="video">🎥</option>
-                  <option value="in-person">🤝</option>
+                <select id="ql-channel-${cardId}" onclick="event.stopPropagation();" style="font-size: var(--text-xs); min-width: 100px;">
+                  <option value="email">✉️ Email</option>
+                  <option value="linkedin">💼 LinkedIn</option>
+                  <option value="phone">📞 Phone</option>
+                  <option value="video">🎥 Video</option>
+                  <option value="in-person">🤝 In Person</option>
                 </select>
                 <textarea id="ql-note-${cardId}" placeholder="Log a note..." onclick="event.stopPropagation();"></textarea>
                 <button class="btn btn-primary" onclick="event.stopPropagation(); quickLogComms('${escapeHtml(conn.name)}', '${cardId}');">Log</button>

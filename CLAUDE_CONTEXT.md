@@ -195,7 +195,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.8.5
+**Current Version:** v3.9.0
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -205,7 +205,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 | Pipeline | ~100% | Kanban, CRUD, drag-drop, IndexedDB resume, comms log, URL import, CSV export, company view, fit assessment, keyboard shortcuts, **Clay enrichment display**, **enrichment badges**, **stage analytics + funnel chart**, **stale role detection (14d)**, **Google Favicon logos**, **collapsible comms log**, **Artifacts section (replaces Resume Sent)**, **Research Brief trigger button** | — |
 | Dashboard | ~100% | 12-rule nudge engine, streak, action queue, feed review, interview intelligence, pipeline funnel, activity feed, weekly stats, real-time storage listener, **GCal card (next 3 events + countdown)**, **sync status indicator**, **quick actions row**, **debrief pending badge**, **outreach queue indicator** | — |
 | Job Feed | ~100% | Scoring engine, preference editor, manual entry, dedup, quick-check filter, auto-pipeline, analytics, snooze, career page URL import, Sources tab, **error handling, a11y, visual polish** | — |
-| Research Brief | ~100% | Claude API, 14 section prompts, caching, citation system, localStorage artifact save, saved briefs panel, **error handling, a11y, visual polish**, **URL param deep-linking (`?roleId=X`)** | — |
+| Research Brief | ~100% | Claude API, 14 section prompts, caching, citation system, localStorage artifact save, saved briefs panel, **error handling, a11y, visual polish**, **URL param deep-linking (`?roleId=X`)**, **auto-generate on first visit**, **brief attached to pipeline roles** | — |
 | Resume Builder | ~100% | Phase 1 JD analysis, Phase 2 streaming, cover letter, bullet bank, keyword gap, version history, DOCX/PDF export, **error handling, a11y, export validation** | — |
 | Outreach | ~100% | 8 message types, sequence scheduling, response tracking, templates, history/analytics, Gmail integration, Draft Queue, **email validation, a11y, error handling** | — |
 | Mock Interview | ~100% | Multi-turn Claude, 7 types, 100+ question bank (11 companies), session playback, performance trends, custom questions, practice tracking, company-calibrated sessions, **a11y, error handling, input sanitization** | — |
@@ -218,6 +218,11 @@ These are the actual field shapes for objects stored in shared localStorage keys
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.9.0)
+- **Research Brief auto-generation**: Briefs auto-generate on first visit (no manual "Generate" click needed). Cached briefs persist until explicit regeneration. Brief metadata (`briefArtifactId`, `briefGeneratedAt`) attached to pipeline roles in `pf_roles`. Generate button becomes "Regenerate" when brief exists. "Clear Cache" renamed to "Clear & Regenerate" and auto-triggers fresh generation.
+- **Pipeline comms dropdown**: Per-contact channel dropdown now shows text labels ("✉️ Email", "💼 LinkedIn", etc.) instead of bare emoji. Widened from 90px → 105px.
+- **Apify public-actor-disabled error**: New 403 error type handled with clear upgrade message. Batch enrichment early-aborts on this error.
 
 ### Recently Fixed (v3.8.5)
 - **Apify credit conservation**: maxItems 10→1 (only enrich once if we can get it). Re-enrich guard skips already-enriched roles. Batch early-abort on auth errors.
