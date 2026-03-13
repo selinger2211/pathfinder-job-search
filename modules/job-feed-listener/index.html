@@ -500,6 +500,22 @@
       background: var(--bg-base);
       font-weight: 500;
       white-space: nowrap;
+      cursor: pointer;
+      transition: all var(--duration-default) var(--ease-default);
+      border: 1px solid transparent;
+      user-select: none;
+    }
+    .feed-stat-chip:hover {
+      background: var(--bg-subtle);
+      border-color: var(--border);
+    }
+    .feed-stat-chip.active-filter {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .feed-stat-chip.active-filter .stat-count {
+      color: #fff;
     }
     .feed-stat-chip .stat-count {
       font-weight: 700;
@@ -3379,8 +3395,8 @@
         'Principal Product Manager', 'Sr. Principal Product Manager'
       ],
       seniority: 'senior',
-      primaryDomains: ['AdTech', 'AI/ML', 'Data Platforms'],
-      secondaryDomains: ['Enterprise SaaS', 'Fintech'],
+      primaryDomains: ['AdTech', 'AI/ML', 'Data Platforms', 'Cloud/Infrastructure', 'Analytics'],
+      secondaryDomains: ['Enterprise SaaS', 'Fintech', 'LegalTech', 'Marketplace'],
       excludedDomains: ['Crypto', 'Gaming', 'Consumer Social'],
       companyStage: ['Series B', 'Series C+', 'Late-stage / Pre-IPO', 'Public'],
       minHeadcount: 100,
@@ -4181,7 +4197,8 @@
       currentTab: 'feed',
       companies: [], // For dedup and tracking
       pendingRole: null, // Role awaiting pipeline confirmation
-      pendingRoleScore: null
+      pendingRoleScore: null,
+      activeFilter: null // v3.20.1: Active stat pill filter — {type: 'stage'|'companies', value: 'Public'} or null
     };
 
     // Load companies from localStorage
@@ -5944,6 +5961,13 @@
      * INPUT: reads from state.feedItems
      * OUTPUT: updates #feedStatsBar HTML
      */
+    /**
+     * Render feed stats bar — total roles, unique companies, and breakdown
+     * by company stage. Pills are clickable filters that toggle card visibility.
+     * v3.20.1: Pills now act as toggleable filters
+     * INPUT: reads from state.feedItems, state.activeFilter
+     * OUTPUT: updates #feedStatsBar HTML
+     */
     function renderFeedStats() {
       const bar = document.getElementById('feedStatsBar');
       if (!bar) return;
@@ -5969,24 +5993,87 @@
       const sortedStages = Object.entries(stageCounts)
         .sort((a, b) => b[1] - a[1]);
 
-      // Build HTML
-      const stageChips = sortedStages.map(([stage, count]) =>
-        `<span class="feed-stat-chip"><span class="stat-count">${count}</span> ${stage}</span>`
-      ).join('');
+      // Helper: check if a filter is active
+      const af = state.activeFilter;
+      const isActive = (type, value) => af && af.type === type && af.value === value;
+
+      // Build stage chips — each clickable to filter
+      const stageChips = sortedStages.map(([stage, count]) => {
+        const active = isActive('stage', stage) ? ' active-filter' : '';
+        const safeStage = stage.replace(/'/g, "\\'");
+        return `<span class="feed-stat-chip${active}" onclick="toggleStatFilter('stage','${safeStage}')" title="Click to filter by ${stage}"><span class="stat-count">${count}</span> ${stage}</span>`;
+      }).join('');
 
       // Get last run indicator
       const lastRunText = getLastRunIndicator();
       const lastRunCount = getLastRunCount();
 
+      // "roles" chip resets filter (shows all)
+      const rolesActive = !af ? ' active-filter' : '';
+      const companiesActive = isActive('all-companies', 'all') ? ' active-filter' : '';
+
       bar.innerHTML = `
-        <span class="feed-stat-total">${items.length} roles</span>
+        <span class="feed-stat-chip${rolesActive}" onclick="toggleStatFilter(null, null)" title="Show all roles"><span class="stat-count">${items.length}</span> roles</span>
         <span class="feed-stat-divider"></span>
-        <span class="feed-stat-chip"><span class="stat-count">${totalCompanies}</span> companies</span>
+        <span class="feed-stat-chip${companiesActive}" onclick="toggleStatFilter('all-companies','all')" title="Click to show unique companies"><span class="stat-count">${totalCompanies}</span> companies</span>
         <span class="feed-stat-divider"></span>
         ${stageChips}
         <span class="feed-stat-divider"></span>
-        <span class="feed-stat-chip" style="font-size:var(--text-xs);color:var(--text-secondary);" title="Last feed processing run">Last run: ${lastRunText}${lastRunCount > 0 ? ` | ${lastRunCount} scored` : ''}</span>
+        <span class="feed-stat-chip" style="font-size:var(--text-xs);color:var(--text-secondary);cursor:default;" title="Last feed processing run">Last run: ${lastRunText}${lastRunCount > 0 ? ` | ${lastRunCount} scored` : ''}</span>
       `;
+    }
+
+    /**
+     * Toggle a stat pill filter on/off. Clicking an active filter deactivates it.
+     * v3.20.1: Makes stat bar pills act as card filters
+     * @param {string|null} type - Filter type: 'stage', 'all-companies', or null to reset
+     * @param {string|null} value - Filter value (e.g. 'Public', 'Late-stage / Pre-IPO')
+     */
+    function toggleStatFilter(type, value) {
+      const af = state.activeFilter;
+
+      // If clicking the already-active filter, or clicking "roles" (null) — clear filter
+      if (!type || (af && af.type === type && af.value === value)) {
+        state.activeFilter = null;
+      } else {
+        state.activeFilter = { type, value };
+      }
+
+      // Re-render stats (to update active states) and cards (to apply filter)
+      renderFeedStats();
+      renderFeedCards();
+    }
+
+    /**
+     * Get the currently visible feed items after applying the active stat filter.
+     * v3.20.1: Filters feedItems based on stat pill selection
+     * @returns {Array} Filtered feed items
+     */
+    function getFilteredFeedItems() {
+      const items = state.feedItems;
+      const af = state.activeFilter;
+      if (!af) return items;
+
+      if (af.type === 'stage') {
+        return items.filter(item => {
+          const stage = normalizeStage(item.stage) || 'Unknown';
+          return stage === af.value;
+        });
+      }
+
+      if (af.type === 'all-companies') {
+        // Deduplicate by company — show one card per unique company (highest score)
+        const seen = new Map();
+        items.forEach(item => {
+          const key = (item.company || '').toLowerCase().trim();
+          if (!seen.has(key) || item.score > seen.get(key).score) {
+            seen.set(key, item);
+          }
+        });
+        return Array.from(seen.values());
+      }
+
+      return items;
     }
 
     // ============================================================
@@ -6219,13 +6306,24 @@
         return;
       }
 
+      // v3.20.1: Apply stat pill filter before rendering
+      const visibleItems = getFilteredFeedItems();
+
+      // Show filter-active indicator if filtering
+      const filterNotice = state.activeFilter
+        ? `<div style="grid-column: 1 / -1; padding: 8px 12px; background: var(--primary); color: #fff; border-radius: var(--radius-sm); font-size: var(--text-sm); display: flex; justify-content: space-between; align-items: center;">
+            <span>Showing ${visibleItems.length} of ${state.feedItems.length} roles — filtered by <strong>${state.activeFilter.type === 'stage' ? state.activeFilter.value : 'unique companies'}</strong></span>
+            <span onclick="toggleStatFilter(null,null)" style="cursor:pointer; text-decoration: underline;">Clear filter</span>
+          </div>`
+        : '';
+
       // Analyze and render tier suggestions
       const companies = loadCompanies();
       const roles = loadRoles();
       const suggestions = analyzeTierSuggestions(companies, roles);
-      const suggestionBanners = renderTierSuggestionBanners(suggestions);
+      const suggestionBanners = state.activeFilter ? '' : renderTierSuggestionBanners(suggestions);
 
-      container.innerHTML = suggestionBanners + state.feedItems.map(item => {
+      container.innerHTML = filterNotice + suggestionBanners + visibleItems.map(item => {
         const scoreClass = item.score >= 80 ? 'score-high' : item.score >= 60 ? 'score-medium' : 'score-low';
         const scorePercent = item.score;
 

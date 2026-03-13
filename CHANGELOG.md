@@ -4,6 +4,24 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.20.1 — 2026-03-13
+
+### Feed: Domain Expansion + Stat Pill Filters
+
+**Expanded domain preferences (v3.20.1)**
+- Added Cloud/Infrastructure and Analytics as primary domains
+- Added LegalTech and Marketplace as secondary domains
+- Improves domain scoring for companies like Google, Amplitude, Sigma, Harvey, Uber, Zillow
+
+**Stat pills now act as filters (v3.20.1)**
+- Stage pills (Public, Late-stage, etc.) filter feed cards to that stage only
+- "Companies" pill deduplicates to show one card per company (highest score)
+- "Roles" pill resets to show all cards (also acts as clear-filter)
+- Active filter highlighted with primary color; filter notice banner shows count
+- Click again to toggle off; "Clear filter" link in banner
+
+---
+
 ## v3.20.0 — 2026-03-13
 
 ### Feed: Compact Cards + Detail Sidebar + Logo & Salary Fixes
