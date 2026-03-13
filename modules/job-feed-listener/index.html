@@ -1516,6 +1516,9 @@
       font-weight: 700;
       color: var(--text-primary);
       line-height: 1.3;
+      /* v3.20.2: Allow full title to display — no truncation */
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
     .fd-close {
       width: 32px;
@@ -1600,10 +1603,12 @@
       border-radius: var(--radius-sm);
       font-size: var(--text-xs);
       color: var(--text-secondary);
-      transition: background var(--duration-fast) var(--ease-default);
+      transition: all var(--duration-fast) var(--ease-default);
+      cursor: pointer;
     }
     .fd-conn-item:hover {
       background: var(--bg-subtle);
+      color: var(--accent);
     }
     .fd-conn-avatar {
       width: 24px;
@@ -5344,8 +5349,15 @@
       if (linkedinUrl) sourceHTML += `<span class="fd-meta-badge"><a href="${linkedinUrl}" target="_blank" onclick="event.stopPropagation()">LinkedIn ↗</a></span>`;
       if (sourceUrl) sourceHTML += `<span class="fd-meta-badge"><a href="${sourceUrl}" target="_blank" onclick="event.stopPropagation()">${linkedinUrl ? 'Email ↗' : item.source + ' ↗'}</a></span>`;
       sourceHTML += `<span class="fd-meta-badge">${item.posted}</span>`;
-      sourceHTML += `<span class="fd-meta-badge">${item.domain || 'Unknown'}</span>`;
-      sourceHTML += `<span class="fd-meta-badge">${item.location || 'Not listed'}${item.remote ? ' (Remote)' : ''}</span>`;
+      // v3.20.2: Only show domain/location pills if they have real values
+      if (item.domain && item.domain !== 'Unknown') {
+        sourceHTML += `<span class="fd-meta-badge">${item.domain}</span>`;
+      }
+      if (item.location && item.location !== 'Not listed') {
+        sourceHTML += `<span class="fd-meta-badge">${item.location}${item.remote ? ' (Remote)' : ''}</span>`;
+      } else if (item.remote) {
+        sourceHTML += `<span class="fd-meta-badge">Remote</span>`;
+      }
       if (item.scoring.leaderIC) sourceHTML += `<span class="fd-meta-badge" style="color: var(--primary); font-weight: 600;">${item.scoring.leaderIC}</span>`;
 
       // Comp display — full version
@@ -5368,30 +5380,43 @@
         `;
       }
 
-      // LinkedIn connections — show names
+      // v3.20.2: LinkedIn connections — clickable links to LinkedIn search/profile
       let connectionsHTML = '';
       const net = item.networkInfo;
       if (net && net.total > 0) {
         const connItems = [];
+
+        /**
+         * Build a LinkedIn search URL for a person at a company.
+         * Uses LinkedIn's people search with name + company as keywords,
+         * which reliably surfaces the right profile as the top result.
+         */
+        const linkedInSearchUrl = (personName) => {
+          const query = encodeURIComponent(`${personName} ${item.company}`);
+          return `https://www.linkedin.com/search/results/people/?keywords=${query}`;
+        };
+
         // Tracked connections first (higher signal)
         for (const name of net.tracked) {
           const initials = name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+          const url = linkedInSearchUrl(name);
           connItems.push(`
-            <div class="fd-conn-item">
+            <a href="${url}" target="_blank" class="fd-conn-item" onclick="event.stopPropagation();" style="text-decoration: none; color: inherit;">
               <div class="fd-conn-avatar">${initials}</div>
               <span style="flex: 1;">${name}</span>
               <span class="fd-conn-tracked">Tracked</span>
-            </div>
+            </a>
           `);
         }
         // LinkedIn connections
         for (const name of net.linkedin) {
           const initials = name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+          const url = linkedInSearchUrl(name);
           connItems.push(`
-            <div class="fd-conn-item">
+            <a href="${url}" target="_blank" class="fd-conn-item" onclick="event.stopPropagation();" style="text-decoration: none; color: inherit;">
               <div class="fd-conn-avatar">${initials}</div>
               <span style="flex: 1;">${name}</span>
-            </div>
+            </a>
           `);
         }
         connectionsHTML = `
@@ -6929,6 +6954,11 @@
       'apple': 'apple.com',
       'sofi': 'sofi.com',
       'blackrock': 'blackrock.com',
+      'netflix': 'netflix.com',
+      'stripe': 'stripe.com',
+      'directv': 'directv.com',
+      'uber': 'uber.com',
+      'geico': 'geico.com',
     };
 
     /**

@@ -8,7 +8,7 @@
 
 Pathfinder is an agentic job search system with 11 standalone HTML modules sharing data via localStorage + IndexedDB. Each module is a single `index.html` file in `modules/`. There is no backend server required for core functionality — Claude API calls happen directly from the browser via `modules/shared/claude-api.js`.
 
-**Current Version:** v3.20.1 (as of 2026-03-13)
+**Current Version:** v3.20.2 (as of 2026-03-13)
 **Last Major Features:** Stat pill filters (v3.20.1), domain expansion (v3.20.1), compact feed cards with detail sidebar (v3.20.0), Clearbit logo upgrade (v3.20.0), salary extraction from JD text (v3.19.5). All 53 planned features now implemented.
 **Status:** Feed stat pills are clickable filters (stage, companies), expanded domain prefs (Cloud/Infrastructure, Analytics, LegalTech, Marketplace), compact cards 4-per-row with detail sidebar
 

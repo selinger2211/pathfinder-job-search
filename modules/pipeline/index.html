@@ -2887,6 +2887,18 @@
       'bc ventures': 'bcventures.com',
       'enriches lab': 'enricheslab.com',
       'notion': 'notion.so',
+      // v3.20.2: Sync overrides from Feed — companies whose names don't map cleanly to domains
+      'google': 'google.com',
+      'meta': 'meta.com',
+      'apple': 'apple.com',
+      'sofi': 'sofi.com',
+      'blackrock': 'blackrock.com',
+      'netflix': 'netflix.com',
+      'stripe': 'stripe.com',
+      'directv': 'directv.com',
+      'yahoo': 'yahoo.com',
+      'uber': 'uber.com',
+      'geico': 'geico.com',
     };
 
     function getCompanyDomain(companyName, url) {
@@ -2916,12 +2928,15 @@
             if (pathMatch) return pathMatch[1] + '.com';
           }
           // LinkedIn: linkedin.com/company/stripe → stripe.com
+          // v3.20.2: If it's a LinkedIn job URL (/jobs/view/...) with no /company/ match,
+          // fall through to company-name fallback — don't return linkedin.com as domain
           if (hostname.includes('linkedin.com')) {
             const pathMatch = url.match(/company\/([a-z0-9-]+)/i);
             if (pathMatch) return pathMatch[1].replace(/-/g, '') + '.com';
+            // No /company/ in URL — skip to name-based fallback below
           }
-          // If not an ATS, use the hostname directly (e.g., stripe.com/jobs → stripe.com)
-          if (!hostname.includes('workday') && !hostname.includes('greenhouse') &&
+          // If not an ATS or LinkedIn, use the hostname directly (e.g., stripe.com/jobs → stripe.com)
+          else if (!hostname.includes('workday') && !hostname.includes('greenhouse') &&
               !hostname.includes('lever') && !hostname.includes('ashby')) {
             return hostname.replace(/^www\./, '');
           }

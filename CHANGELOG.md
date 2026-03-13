@@ -4,6 +4,28 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.20.2 — 2026-03-13
+
+### Feed Sidebar Polish + Pipeline Logo Fix
+
+**Sidebar title no longer truncated (v3.20.2)**
+- Long role titles now wrap fully instead of clipping at top of sidebar
+
+**LinkedIn contacts are clickable (v3.20.2)**
+- Each connection name links to LinkedIn people search (name + company)
+- Opens in new tab — hover highlights in accent color
+
+**Meta pills cleaned up (v3.20.2)**
+- Removed "Unknown" domain pill and "Not listed" location pill — only shows real values
+- Remote-only roles still show "Remote" pill
+
+**Pipeline logo LinkedIn icon fix (v3.20.2)**
+- Fixed LinkedIn job URLs (`/jobs/view/...`) falling through to `linkedin.com` as domain
+- Added domain overrides for Netflix, Stripe, DIRECTV, Uber, GEICO (synced across Feed + Pipeline)
+- LinkedIn URLs without `/company/` path now correctly fall through to company-name-based domain
+
+---
+
 ## v3.20.1 — 2026-03-13
 
 ### Feed: Domain Expansion + Stat Pill Filters
