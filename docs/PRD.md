@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v3.8.0
+**Status:** v3.8.1
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v3.8.1 | 2026-03-12 | **Async Apify enrichment + billing early-abort** — Replaced sync Apify API call (hard 300s timeout) with async 3-step pattern: start run → poll status every 15s (up to 10 min) → fetch dataset on success. Fixes happitap actor timeouts (browser-based scraping takes 5+ min). Auto-enrich loop now breaks immediately on 402 billing errors instead of trying all remaining roles. |
 | v3.8.0 | 2026-03-12 | **Classification-first comp estimation engine** — Complete rewrite: detects posted comp type (BASE_SALARY/TOTAL_TARGET_CASH/OTE/UNKNOWN) before applying formulas. TCC gets equity add-on only (no full TC multiplier). PM level inference (mid/senior/principal). Calibration modes (public/startup/generic). Confidence scoring (High/Medium/Low). Hard cap 1.65x. Cards show TC range + confidence. New `docs/skill-comp-estimation.md` spec. |
 | v3.7.0 | 2026-03-12 | **Expanded company stages, comp estimation engine, leader/IC awareness** — 7 granular stage options (Seed→Public→Bootstrapped) with backward-compat `normalizeStage()`. New `estimateTotalComp()` estimates total comp from listed base using archetype ratios (Public 55%, Seed 80%). Cards show estimated total + hover breakdown. Scoring uses estimated total. Leader/IC JD signal detection with size-aware bonus (+5 small co leader, +2 larger). |
 | v3.6.1 | 2026-03-12 | **Auto-enrich on load, comp slider cleanup, happitap fix** — Feed auto-enriches stub JDs on page load (background, with progress). Removed Max Total slider (no cap on upside). Unified slider scale (both 50-1000K). Fixed happitap actor: keywords as array, `datePosted: '30d'`, `proxyCountry: 'US'`. |

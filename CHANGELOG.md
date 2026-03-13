@@ -4,6 +4,20 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.8.1 — 2026-03-12
+
+### What Changed — Async Apify Enrichment + Billing Early-Abort
+
+**User reported:** "I'm still not seeing JDs being enriched" — happitap actor was timing out at the 300-second sync API limit on every enrichment attempt, and then 402 billing errors were not being caught (looped through all 17 roles).
+
+**Changes:**
+
+1. **Feed: Async Apify run + poll pattern** — Replaced synchronous API endpoint (`run-sync-get-dataset-items`, 300s hard timeout) with async 3-step pattern: POST to start run → poll status every 15s → fetch dataset items on success. Supports up to 10 minutes per actor run (40 polls × 15s). Logs progress: "Apify run started: {id}", "Still waiting... (Xs elapsed)", "Run succeeded after ~Xs".
+
+2. **Feed: Early abort on billing errors** — Auto-enrich loop now breaks immediately on 402 ("free tier limit reached") instead of trying all remaining roles. Shows toast warning. Previously tried all 17 roles individually, each failing instantly.
+
+---
+
 ## v3.8.0 — 2026-03-12
 
 ### What Changed — Classification-First Comp Estimation Engine

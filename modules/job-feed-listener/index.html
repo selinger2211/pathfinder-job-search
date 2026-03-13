@@ -2354,32 +2354,36 @@
     }
 
     /**
-     * Call Apify's synchronous run API to scrape LinkedIn job listings.
-     * This makes ONE API call that starts the actor, waits for completion,
-     * and returns the dataset items (job listings) directly.
+     * Call Apify actor using ASYNC run + poll pattern.
+     * The old sync endpoint (`run-sync-get-dataset-items`) has a hard 300s timeout
+     * that kills slow actors (like happitap which runs a real browser).
+     *
+     * NEW APPROACH (3 steps):
+     * 1. POST to start the actor run (returns immediately with run ID)
+     * 2. Poll the run status every 15 seconds until SUCCEEDED/FAILED/TIMED-OUT
+     * 3. Fetch dataset items from the completed run
      *
      * INPUT: title (string), company (string), location (string), token (string), maxItems (int)
      * OUTPUT: Promise<Array<Object>> — array of job objects with description, title, etc.
-     * THROWS: Error if API call fails, token invalid, actor expired, or timeout
+     * THROWS: Error if API call fails, token invalid, actor expired, or max poll time exceeded
      */
     async function callApifyLinkedInScraper(title, company, location, token, maxItems = 5) {
       const actorId = getApifyActorId().replace('/', '~');
-      const endpoint = `https://api.apify.com/v2/acts/${actorId}/run-sync-get-dataset-items`;
-
       const input = buildApifyInput(title, company, location, maxItems);
 
-      const response = await fetch(`${endpoint}?token=${encodeURIComponent(token)}`, {
+      // STEP 1: Start the actor run (returns immediately with run metadata)
+      const startEndpoint = `https://api.apify.com/v2/acts/${actorId}/runs`;
+      const startResponse = await fetch(`${startEndpoint}?token=${encodeURIComponent(token)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input)
       });
 
-      if (!response.ok) {
-        const errText = await response.text();
-        if (response.status === 401) throw new Error('Invalid Apify token — check Settings.');
-        if (response.status === 402) throw new Error('Apify free tier limit reached this month.');
-        // Catch the "actor-is-not-rented" error and show a helpful message
-        if (response.status === 403 && errText.includes('actor-is-not-rented')) {
+      if (!startResponse.ok) {
+        const errText = await startResponse.text();
+        if (startResponse.status === 401) throw new Error('Invalid Apify token — check Settings.');
+        if (startResponse.status === 402) throw new Error('Apify free tier limit reached this month.');
+        if (startResponse.status === 403 && errText.includes('actor-is-not-rented')) {
           const currentActor = getApifyActorId();
           throw new Error(
             `Actor "${currentActor}" requires a paid rental. ` +
@@ -2387,10 +2391,58 @@
             `or rent this actor at console.apify.com.`
           );
         }
-        throw new Error(`Apify API error (${response.status}): ${errText.slice(0, 200)}`);
+        throw new Error(`Apify API error (${startResponse.status}): ${errText.slice(0, 200)}`);
       }
 
-      return await response.json();
+      const runData = await startResponse.json();
+      const runId = runData?.data?.id;
+      if (!runId) throw new Error('Apify run started but no run ID returned.');
+
+      console.log(`[Enrich] Apify run started: ${runId} — polling for completion...`);
+
+      // STEP 2: Poll run status every 15 seconds (max 10 minutes = 40 polls)
+      const POLL_INTERVAL_MS = 15000;  // 15 seconds between checks
+      const MAX_POLLS = 40;            // 40 × 15s = 10 minutes max wait
+      const statusEndpoint = `https://api.apify.com/v2/actor-runs/${runId}`;
+
+      for (let poll = 0; poll < MAX_POLLS; poll++) {
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
+
+        const statusResponse = await fetch(`${statusEndpoint}?token=${encodeURIComponent(token)}`);
+        if (!statusResponse.ok) {
+          console.warn(`[Enrich] Status poll failed (${statusResponse.status}), retrying...`);
+          continue;
+        }
+
+        const statusData = await statusResponse.json();
+        const status = statusData?.data?.status;
+
+        if (status === 'SUCCEEDED') {
+          console.log(`[Enrich] Run ${runId} succeeded after ~${(poll + 1) * 15}s`);
+
+          // STEP 3: Fetch dataset items from the completed run
+          const datasetId = statusData?.data?.defaultDatasetId;
+          if (!datasetId) throw new Error('Run succeeded but no dataset ID found.');
+
+          const itemsEndpoint = `https://api.apify.com/v2/datasets/${datasetId}/items`;
+          const itemsResponse = await fetch(`${itemsEndpoint}?token=${encodeURIComponent(token)}`);
+          if (!itemsResponse.ok) throw new Error(`Failed to fetch dataset items (${itemsResponse.status})`);
+
+          return await itemsResponse.json();
+        }
+
+        if (status === 'FAILED' || status === 'ABORTED' || status === 'TIMED-OUT') {
+          throw new Error(`Apify run ${status.toLowerCase()}. Check actor logs at console.apify.com.`);
+        }
+
+        // Still RUNNING or READY — keep polling
+        if (poll % 4 === 3) {
+          console.log(`[Enrich] Still waiting... (${(poll + 1) * 15}s elapsed, status: ${status})`);
+        }
+      }
+
+      // If we get here, we've exceeded the max poll time
+      throw new Error(`Apify run timed out after ${MAX_POLLS * 15}s. Actor may be too slow.`);
     }
 
     /**
@@ -5473,9 +5525,15 @@
               failed++;
               console.warn(`[Auto-enrich] Failed for "${role.title}": ${err.message}`);
               // If it's a token/auth error, stop trying (don't burn through roles)
+              // Stop on auth, billing, or rental errors — no point trying more roles
               if (err.message.includes('403') || err.message.includes('401') || err.message.includes('not-rented')) {
                 console.warn('[Auto-enrich] Auth error — stopping auto-enrichment');
                 showToast('Apify token issue — check sidebar settings', 'warning');
+                break;
+              }
+              if (err.message.includes('402') || err.message.includes('free tier limit')) {
+                console.warn('[Auto-enrich] Billing limit — stopping auto-enrichment');
+                showToast('Apify free tier limit reached this month', 'warning');
                 break;
               }
             }

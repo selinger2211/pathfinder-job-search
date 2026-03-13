@@ -185,7 +185,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.8.0
+**Current Version:** v3.8.1
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -208,6 +208,10 @@ These are the actual field shapes for objects stored in shared localStorage keys
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.8.1)
+- **Async Apify enrichment**: Replaced sync API (300s hard timeout) with async run + poll pattern (up to 10 min). Happitap actor was timing out every time on the sync endpoint.
+- **Billing early-abort**: Auto-enrich loop now breaks on first 402 error instead of trying all 17 roles.
 
 ### Recently Fixed (v3.8.0)
 - **Classification-first comp estimator**: Detects posted comp type (BASE_SALARY / TOTAL_TARGET_CASH / OTE / UNKNOWN) before applying formulas. TCC postings get equity add-on only (no full TC multiplier). PM level inference (mid/senior/principal) with calibration modes (public/startup/generic). Confidence scoring (High/Medium/Low). Hard cap at 1.65x. Adobe estimate dropped from $513K to $170K–$395K range.
