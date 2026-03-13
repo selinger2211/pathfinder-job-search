@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/dashboard/`
-**Version:** v3.12
+**Version:** v3.13
 **Last Updated:** 2026-03-13
-**Status:** Active — v3.11 features live
+**Status:** Active — v3.13.0 features live
 
 ---
 
@@ -937,7 +937,7 @@ What has been implemented:
 - [x] Mutual connections surfacing (pf_connections + pf_linkedin_network)
 - [x] Last comms snippet display (80 chars)
 - [x] Sync Status Banner (pf_sync_log integration)
-- [ ] Feed Review section with detailed match analysis
+- [x] Feed Review section with detailed match analysis (v3.13.0)
 - [ ] Interview Intelligence card (requires 10+ debriefs)
 
 ### Phase 2: Nudge Refinement & Analytics (Planned)

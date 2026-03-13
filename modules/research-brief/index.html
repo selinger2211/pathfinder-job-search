@@ -3425,6 +3425,7 @@ The HTML content should come first, followed by the citations block. Do not incl
     /**
      * Initializes the entire UI when the page loads
      * Loads demo data, populates role selector, sets up event listeners
+     * FEATURE #20: Also checks for pending cache invalidations
      * INPUT: none
      * OUTPUT: UI is ready to use
      */
@@ -3454,6 +3455,18 @@ The HTML content should come first, followed by the citations block. Do not incl
         if (targetRole) {
           document.getElementById('roleSelect').value = targetRole.id;
           selectRole(targetRole.id);
+
+          // FEATURE #20: Check for invalidations after loading role
+          setTimeout(() => {
+            const invalidation = checkForInvalidations(targetRole.id);
+            if (invalidation.sectionsToInvalidate.length > 0) {
+              invalidation.sectionsToInvalidate.forEach(sectionNum => {
+                markSectionAsStale(sectionNum);
+              });
+              showInvalidationBanner(invalidation);
+            }
+          }, 500);
+
           return; // Skip default selection
         }
       }
@@ -3463,6 +3476,17 @@ The HTML content should come first, followed by the citations block. Do not incl
       if (roles.length > 0) {
         document.getElementById('roleSelect').value = roles[0].id;
         selectRole(roles[0].id);
+
+        // FEATURE #20: Check for invalidations after loading role
+        setTimeout(() => {
+          const invalidation = checkForInvalidations(roles[0].id);
+          if (invalidation.sectionsToInvalidate.length > 0) {
+            invalidation.sectionsToInvalidate.forEach(sectionNum => {
+              markSectionAsStale(sectionNum);
+            });
+            showInvalidationBanner(invalidation);
+          }
+        }, 500);
       }
     }
 
@@ -4221,12 +4245,103 @@ The HTML content should come first, followed by the citations block. Do not incl
     }
 
     /**
-     * Exports the entire brief as a standalone HTML file
-     * The file includes CSS, styles, and all section content
+     * FEATURE #21: Export dropdown with multiple formats (HTML, Markdown, PDF)
+     * Shows export menu allowing user to choose format
+     * INPUT: none
+     * OUTPUT: export menu appears or processes export
+     */
+    function showExportMenu() {
+      const role = state.selectedRole;
+      const company = state.selectedCompany;
+      if (!role || !company) return;
+
+      const menu = document.createElement('div');
+      menu.style.cssText = `
+        position: absolute;
+        background: var(--bg-elevated);
+        border: 1px solid var(--bg-subtle);
+        border-radius: var(--radius-md);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        z-index: 100;
+        min-width: 160px;
+        overflow: hidden;
+      `;
+
+      menu.innerHTML = `
+        <button onclick="exportBriefAsHTML()" style="
+          width: 100%;
+          padding: var(--space-3) var(--space-4);
+          background: transparent;
+          border: none;
+          border-radius: 0;
+          cursor: pointer;
+          text-align: left;
+          color: var(--text-primary);
+          font-size: var(--text-sm);
+          transition: background var(--duration-fast) var(--ease-default);
+        " onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">
+          <i data-lucide="file-text" style="width: 16px; height: 16px; margin-right: 8px; vertical-align: -3px;"></i> HTML
+        </button>
+        <button onclick="exportBriefAsMarkdown()" style="
+          width: 100%;
+          padding: var(--space-3) var(--space-4);
+          background: transparent;
+          border: none;
+          border-radius: 0;
+          cursor: pointer;
+          text-align: left;
+          color: var(--text-primary);
+          font-size: var(--text-sm);
+          transition: background var(--duration-fast) var(--ease-default);
+          border-top: 1px solid var(--bg-subtle);
+        " onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">
+          <i data-lucide="markdown" style="width: 16px; height: 16px; margin-right: 8px; vertical-align: -3px;"></i> Markdown
+        </button>
+        <button onclick="exportBriefAsPDF()" style="
+          width: 100%;
+          padding: var(--space-3) var(--space-4);
+          background: transparent;
+          border: none;
+          border-radius: 0;
+          cursor: pointer;
+          text-align: left;
+          color: var(--text-primary);
+          font-size: var(--text-sm);
+          transition: background var(--duration-fast) var(--ease-default);
+          border-top: 1px solid var(--bg-subtle);
+        " onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">
+          <i data-lucide="file-pdf" style="width: 16px; height: 16px; margin-right: 8px; vertical-align: -3px;"></i> PDF
+        </button>
+      `;
+
+      document.body.appendChild(menu);
+      lucide.createIcons();
+
+      // Position menu near export button
+      const exportBtn = document.getElementById('exportBtn');
+      if (exportBtn) {
+        const rect = exportBtn.getBoundingClientRect();
+        menu.style.top = (rect.bottom + 8) + 'px';
+        menu.style.left = (rect.left - 160 + rect.width) + 'px';
+      }
+
+      // Close on outside click
+      const closeHandler = (e) => {
+        if (!menu.contains(e.target) && !document.getElementById('exportBtn').contains(e.target)) {
+          menu.remove();
+          document.removeEventListener('click', closeHandler);
+        }
+      };
+      setTimeout(() => document.addEventListener('click', closeHandler), 0);
+    }
+
+    /**
+     * FEATURE #21: Export brief as standalone HTML with inline CSS
+     * Generates a self-contained HTML file with dark/light theme awareness
      * INPUT: none
      * OUTPUT: HTML file is downloaded to user's computer
      */
-    function exportBrief() {
+    function exportBriefAsHTML() {
       const role = state.selectedRole;
       const company = state.selectedCompany;
       if (!role || !company) return;
@@ -4237,6 +4352,7 @@ The HTML content should come first, followed by the citations block. Do not incl
         month: 'long',
         day: 'numeric'
       });
+      const now = new Date().toLocaleString();
 
       const html = `<!DOCTYPE html>
 <html lang="en">
@@ -4253,6 +4369,12 @@ The HTML content should come first, followed by the citations block. Do not incl
       color: #1f2937;
       line-height: 1.6;
     }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #111827;
+        color: #f3f4f6;
+      }
+    }
     .container {
       max-width: 900px;
       margin: 0 auto;
@@ -4260,6 +4382,14 @@ The HTML content should come first, followed by the citations block. Do not incl
     }
     h1 { font-size: 32px; font-weight: 700; margin-bottom: 10px; }
     .subtitle { color: #6b7280; margin-bottom: 60px; font-size: 16px; }
+    .footer {
+      margin-top: 80px;
+      padding-top: 40px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 12px;
+      color: #9ca3af;
+      text-align: center;
+    }
     .section {
       margin-bottom: 60px;
       padding-bottom: 40px;
@@ -4271,6 +4401,9 @@ The HTML content should come first, followed by the citations block. Do not incl
       font-weight: 600;
       margin-bottom: 20px;
       color: #111827;
+    }
+    @media (prefers-color-scheme: dark) {
+      .section h2 { color: #f3f4f6; }
     }
     .section p {
       margin-bottom: 16px;
@@ -4284,7 +4417,7 @@ The HTML content should come first, followed by the citations block. Do not incl
       margin-bottom: 12px;
     }
     .section strong { font-weight: 600; }
-    .section em { font-style: italic; color: #6b7280; }
+    .section em { font-style: italic; }
     @media print {
       body { padding: 0; margin: 0; }
       .container { padding: 40px; }
@@ -4295,8 +4428,12 @@ The HTML content should come first, followed by the citations block. Do not incl
 <body>
   <div class="container">
     <h1>${company.name}</h1>
-    <p class="subtitle">Interview Prep Brief for ${role.title} | ${timestamp}</p>
+    <p class="subtitle">Interview Prep Brief for ${role.title} | Generated ${timestamp}</p>
     ${briefHtml}
+    <div class="footer">
+      <p>Generated by Pathfinder on ${now}</p>
+      <p>Keep this brief confidential and use only for interview preparation</p>
+    </div>
   </div>
 </body>
 </html>`;
@@ -4305,11 +4442,122 @@ The HTML content should come first, followed by the citations block. Do not incl
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${company.name}_${role.title.replace(/\s+/g, '_')}_Brief.html`;
+      a.download = `${company.name.replace(/\s+/g, '-')}_${role.title.replace(/\s+/g, '-')}-brief.html`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+    }
+
+    /**
+     * FEATURE #21: Export brief as Markdown format
+     * Converts HTML sections to clean Markdown with proper formatting
+     * Citations are rendered as footnotes
+     * INPUT: none
+     * OUTPUT: Markdown file is downloaded to user's computer
+     */
+    function exportBriefAsMarkdown() {
+      const role = state.selectedRole;
+      const company = state.selectedCompany;
+      if (!role || !company) return;
+
+      const timestamp = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      const now = new Date().toLocaleString();
+
+      // Extract sections from DOM
+      const sectionsEl = document.getElementById('sectionsArea');
+      const sectionElements = sectionsEl.querySelectorAll('.section');
+
+      let markdown = `# ${company.name} — Interview Prep Brief\n\n`;
+      markdown += `**${role.title}** | Generated ${timestamp}\n\n`;
+      markdown += `---\n\n`;
+
+      sectionElements.forEach((sectionEl) => {
+        const titleEl = sectionEl.querySelector('.section-title');
+        const contentEl = sectionEl.querySelector('.section-content');
+
+        if (titleEl) {
+          const sectionNum = sectionEl.id.match(/\d+/)?.[0] || '';
+          markdown += `## ${sectionNum ? sectionNum + '. ' : ''}${titleEl.textContent.trim()}\n\n`;
+        }
+
+        if (contentEl) {
+          // Convert HTML to Markdown
+          let content = contentEl.innerHTML;
+
+          // Convert strong tags
+          content = content.replace(/<strong>(.*?)<\/strong>/g, '**$1**');
+          // Convert em tags
+          content = content.replace(/<em>(.*?)<\/em>/g, '*$1*');
+          // Convert paragraph tags
+          content = content.replace(/<p>(.*?)<\/p>/g, '$1\n\n');
+          // Convert unordered lists
+          content = content.replace(/<ul>(.*?)<\/ul>/gs, (match, items) => {
+            return items.replace(/<li>(.*?)<\/li>/g, '- $1\n') + '\n';
+          });
+          // Convert ordered lists
+          content = content.replace(/<ol>(.*?)<\/ol>/gs, (match, items) => {
+            return items.replace(/<li>(.*?)<\/li>/g, '1. $1\n') + '\n';
+          });
+          // Remove citation markers
+          content = content.replace(/<span class="citation-marker".*?\[\d+\]<\/span>/g, '');
+          // Clean up extra whitespace
+          content = content.replace(/\n{3,}/g, '\n\n');
+
+          markdown += content.trim() + '\n\n';
+        }
+      });
+
+      markdown += `---\n\n`;
+      markdown += `*Generated by Pathfinder on ${now}*\n`;
+      markdown += `*Keep this brief confidential and use only for interview preparation*\n`;
+
+      const blob = new Blob([markdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${company.name.replace(/\s+/g, '-')}_${role.title.replace(/\s+/g, '-')}-brief.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    /**
+     * FEATURE #21: Export brief as PDF (delegates to existing PDF export)
+     * INPUT: none
+     * OUTPUT: PDF file is downloaded to user's computer
+     */
+    function exportBriefAsPDF() {
+      // Use html2pdf library (already loaded in page)
+      const role = state.selectedRole;
+      const company = state.selectedCompany;
+      if (!role || !company) return;
+
+      const element = document.getElementById('sectionsArea');
+      const opt = {
+        margin: 10,
+        filename: `${company.name.replace(/\s+/g, '-')}_${role.title.replace(/\s+/g, '-')}-brief.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+      };
+
+      html2pdf().set(opt).from(element).save();
+    }
+
+    /**
+     * Exports the entire brief as a standalone HTML file
+     * The file includes CSS, styles, and all section content
+     * INPUT: none
+     * OUTPUT: HTML file is downloaded to user's computer
+     */
+    function exportBrief() {
+      showExportMenu();
     }
 
     /**
@@ -4319,6 +4567,162 @@ The HTML content should come first, followed by the citations block. Do not incl
      */
     function printBrief() {
       window.print();
+    }
+
+    /* ====== FEATURE #20: AUTO CACHE INVALIDATION ====== */
+    /**
+     * Checks localStorage for pending invalidations and shows banner if found
+     * On page load, detects if underlying data (roles, companies, comp data) changed
+     * and marks affected sections as stale
+     * INPUT: roleId (string) - the role to check invalidations for
+     * OUTPUT: {sectionsToInvalidate: number[], reasons: string[]}
+     */
+    function checkForInvalidations(roleId) {
+      const result = {
+        sectionsToInvalidate: [],
+        reasons: []
+      };
+
+      try {
+        const invalidationKey = localStorage.getItem('pf_brief_invalidation');
+        if (!invalidationKey) return result;
+
+        const invalidations = JSON.parse(invalidationKey);
+
+        // Check if any invalidations apply to this role
+        if (invalidations.roleId === roleId) {
+          // JD text changed — invalidate JD-dependent sections: 1,2,3,5,6,7
+          if (invalidations.jdChanged) {
+            result.sectionsToInvalidate.push(1, 2, 3, 5, 6, 7);
+            result.reasons.push('Job description has changed');
+          }
+
+          // Company fields changed — invalidate company sections: 4,8,9
+          if (invalidations.companyChanged) {
+            result.sectionsToInvalidate.push(4, 8, 9);
+            result.reasons.push('Company information has been updated');
+          }
+
+          // Compensation data changed — invalidate section 10
+          if (invalidations.compDataChanged) {
+            result.sectionsToInvalidate.push(10);
+            result.reasons.push('Compensation data has been updated');
+          }
+        }
+
+        // Clear the invalidation flag after reading
+        localStorage.removeItem('pf_brief_invalidation');
+
+      } catch (e) {
+        console.warn('Error checking invalidations:', e);
+      }
+
+      return result;
+    }
+
+    /**
+     * Shows a banner when stale sections are detected
+     * Allows user to regenerate affected sections with one click
+     * INPUT: invalidation object from checkForInvalidations
+     * OUTPUT: banner is displayed at top of brief content
+     */
+    function showInvalidationBanner(invalidation) {
+      if (invalidation.sectionsToInvalidate.length === 0) return;
+
+      const briefArea = document.querySelector('.brief-content');
+      if (!briefArea) return;
+
+      const banner = document.createElement('div');
+      banner.style.cssText = `
+        background: rgba(251, 191, 36, 0.1);
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        border-radius: var(--radius-md);
+        padding: var(--space-4);
+        margin-bottom: var(--space-6);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-4);
+      `;
+
+      let reasonText = invalidation.reasons.join(', ');
+
+      banner.innerHTML = `
+        <div style="flex: 1;">
+          <div style="font-weight: 600; color: rgb(217, 119, 6); margin-bottom: var(--space-1);">
+            <i data-lucide="alert-circle" style="width: 16px; height: 16px; vertical-align: -2px; margin-right: 8px;"></i>
+            Data Changed — Stale Sections Detected
+          </div>
+          <div style="font-size: var(--text-sm); color: var(--text-secondary);">
+            ${reasonText}. Sections ${invalidation.sectionsToInvalidate.join(', ')} are marked stale.
+          </div>
+        </div>
+        <button onclick="regenerateStaleSection()" style="
+          padding: var(--space-2) var(--space-3);
+          background: rgb(251, 191, 36);
+          color: #000;
+          border: none;
+          border-radius: var(--radius-sm);
+          cursor: pointer;
+          font-weight: 600;
+          font-size: var(--text-sm);
+          white-space: nowrap;
+          transition: opacity var(--duration-fast) var(--ease-default);
+        " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+          Regenerate Stale Sections
+        </button>
+      `;
+
+      const sectionsArea = document.getElementById('sectionsArea');
+      if (sectionsArea) {
+        sectionsArea.insertBefore(banner, sectionsArea.firstChild);
+        lucide.createIcons();
+      }
+
+      // Store stale sections in state for regeneration
+      state.staleInvalidation = invalidation;
+    }
+
+    /**
+     * Regenerates only the stale sections that were marked by invalidation
+     * INPUT: none (uses state.staleInvalidation)
+     * OUTPUT: affected sections are regenerated with fresh content
+     */
+    function regenerateStaleSection() {
+      if (!state.staleInvalidation) return;
+
+      const role = state.selectedRole;
+      const company = state.selectedCompany;
+      if (!role || !company) return;
+
+      // Regenerate each stale section
+      state.staleInvalidation.sectionsToInvalidate.forEach((sectionNum) => {
+        // Clear cache for this section
+        const companySlug = getCompanySlug(company.name);
+        const cacheKey = `pf_brief_${companySlug}_${role.id}_section${sectionNum}`;
+        localStorage.removeItem(cacheKey);
+
+        // Regenerate
+        refreshSection(sectionNum);
+      });
+
+      // Remove the banner
+      const banner = document.querySelector('[style*="rgb(251, 191, 36)"]');
+      if (banner) banner.remove();
+
+      // Clear the stale invalidation state
+      state.staleInvalidation = null;
+    }
+
+    /**
+     * Marks sections as stale visually with a "Stale" badge
+     * Called when invalidation is detected
+     * INPUT: sectionNum (number)
+     * OUTPUT: section is marked with "Stale" status badge
+     */
+    function markSectionAsStale(sectionNum) {
+      const status = { label: 'Stale', cssClass: 'section-status-badge stale' };
+      updateSectionStatusBadge(sectionNum, status);
     }
 
     /**

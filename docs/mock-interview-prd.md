@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/mock-interview/`
-**Version:** v1.0.0
-**Last Updated:** 2026-03-10
-**Status:** Draft — pending approval
+**Version:** v3.13
+**Last Updated:** 2026-03-13
+**Status:** Active — v3.13.0 features live
 
 ---
 
@@ -929,7 +929,7 @@ interface CompanyInterviewQuestionCache {
 
 ### Phase 2: Intelligence & Calibration (Week 3–4)
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.13.0)** — JD-calibrated questions via Claude. Cached per role+type. Post-session summary with strengths/improvements. Analytics tab with sessions/week, type coverage, streak, top areas.
 
 **MCP Tools:**
 - `pf_scrape_interview_questions` — Weekly background job to cache company questions

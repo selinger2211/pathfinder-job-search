@@ -488,6 +488,66 @@
       display: none !important;
     }
 
+    /* ====== FEATURE 19: Next Steps Panel ====== */
+    .next-steps-panel {
+      margin-top: var(--space-8);
+      padding-top: var(--space-6);
+      border-top: 1px solid var(--border-color);
+    }
+
+    .next-steps-title {
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-4);
+      font-size: var(--text-lg);
+    }
+
+    .next-steps-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-4);
+    }
+
+    .action-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      transition: all var(--duration-fast) ease;
+      cursor: pointer;
+    }
+
+    .action-card:hover {
+      border-color: var(--accent-primary);
+      background: var(--bg-tertiary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+    }
+
+    .action-card-icon {
+      font-size: var(--text-xl);
+      margin-bottom: var(--space-2);
+    }
+
+    .action-card-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-1);
+      font-size: var(--text-sm);
+    }
+
+    .action-card-description {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    @media (max-width: 768px) {
+      .next-steps-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     /* ================================================================
        CALENDAR DEBRIEF INTEGRATION
        ================================================================ */
@@ -1339,11 +1399,22 @@ Additional Notes: ${formData.notes}`;
                 <button type="button" class="btn-primary" id="saveDebriefBtn">Save Debrief</button>
                 <button type="button" class="btn-secondary" id="startNewBtn">Start New</button>
               </div>
+
+              <!-- ====== FEATURE 19: Next Steps Panel (Auto-populated after save) ====== -->
+              <div id="nextStepsPanel" style="display: none;"></div>
             </div>
           `;
 
           document.getElementById('saveDebriefBtn').addEventListener('click', () => {
             this.saveDebrief(formData, result);
+            // Show Next Steps panel after brief delay for save to complete
+            setTimeout(() => {
+              const nextStepsPanel = document.getElementById('nextStepsPanel');
+              if (nextStepsPanel) {
+                nextStepsPanel.innerHTML = this.renderNextStepsPanel(this.state.currentRoleId);
+                nextStepsPanel.style.display = 'block';
+              }
+            }, 500);
           });
 
           document.getElementById('startNewBtn').addEventListener('click', () => {
@@ -1362,6 +1433,71 @@ Additional Notes: ${formData.notes}`;
           }
           container.innerHTML = `<div class="empty-state"><p style="color: var(--danger);">Error: ${errorMsg}</p></div>`;
         }
+      },
+
+      /**
+       * Render Next Steps action panel after debrief is saved
+       * INPUT: roleId string
+       * OUTPUT: renders HTML with two action cards
+       */
+      renderNextStepsPanel(roleId) {
+        const role = this.state.roles.find(r => r.id === roleId);
+        if (!role) return '';
+
+        return `
+          <div style="margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--border-color);">
+            <h3 style="font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-4);">Next Steps</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+
+              <!-- Action Card 1: Refresh Research Brief -->
+              <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--space-4); transition: all 200ms; cursor: pointer;" onmouseover="this.style.borderColor='var(--accent-primary)'; this.style.backgroundColor='var(--bg-tertiary)'" onmouseout="this.style.borderColor='var(--border-color)'; this.style.backgroundColor='var(--bg-secondary)'" onclick="DebriefApp.invalidateResearchBrief('${roleId}')">
+                <div style="font-size: var(--text-xl); margin-bottom: var(--space-2);">🔄</div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-1);">Refresh Research Brief</div>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.4;">Invalidate cache to pull fresh insights based on your debrief</div>
+              </div>
+
+              <!-- Action Card 2: Draft Thank-You -->
+              <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--space-4); transition: all 200ms; cursor: pointer;" onmouseover="this.style.borderColor='var(--accent-primary)'; this.style.backgroundColor='var(--bg-tertiary)'" onmouseout="this.style.borderColor='var(--border-color)'; this.style.backgroundColor='var(--bg-secondary)'" onclick="DebriefApp.draftThankYouEmail('${roleId}')">
+                <div style="font-size: var(--text-xl); margin-bottom: var(--space-2);">✉️</div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-1);">Draft Thank-You Email</div>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.4;">Go to Outreach and auto-generate a personalized thank-you</div>
+              </div>
+
+            </div>
+          </div>
+        `;
+      },
+
+      /**
+       * Invalidate Research Brief cache for this role
+       * INPUT: roleId string
+       * OUTPUT: writes pf_brief_invalidation to localStorage
+       */
+      invalidateResearchBrief(roleId) {
+        const briefInvalidation = {
+          roleId: roleId,
+          reason: 'debrief_completed',
+          timestamp: new Date().toISOString()
+        };
+        localStorage.setItem('pf_brief_invalidation', JSON.stringify(briefInvalidation));
+        alert('Research Brief cache invalidated. Refresh the Research Brief module to see updated insights.');
+      },
+
+      /**
+       * Redirect to Outreach module with role pre-selected and message type set
+       * INPUT: roleId string
+       * OUTPUT: stores navigation state and redirects
+       */
+      draftThankYouEmail(roleId) {
+        // Store navigation state for Outreach module
+        const navState = {
+          selectedRoleId: roleId,
+          selectedMessageType: 'thank-you-interview',
+          timestamp: new Date().toISOString()
+        };
+        localStorage.setItem('pf_outreach_nav_state', JSON.stringify(navState));
+        // Redirect to Outreach module
+        window.location.href = '../outreach/index.html';
       },
 
       /**
@@ -1417,6 +1553,23 @@ Additional Notes: ${formData.notes}`;
         }
 
         this.state.debriefs.push(debrief);
+
+        /* ====== FEATURE 19: Update Role with lastDebriefAt & Cache Invalidation ====== */
+        // Update the role with lastDebriefAt timestamp
+        const roleIndex = this.state.roles.findIndex(r => r.id === this.state.currentRoleId);
+        if (roleIndex !== -1) {
+          this.state.roles[roleIndex].lastDebriefAt = new Date().toISOString();
+          localStorage.setItem('pf_roles', JSON.stringify(this.state.roles));
+        }
+
+        // Write brief invalidation signal for Research Brief module to pick up
+        const briefInvalidation = {
+          roleId: this.state.currentRoleId,
+          reason: 'debrief_completed',
+          timestamp: new Date().toISOString()
+        };
+        localStorage.setItem('pf_brief_invalidation', JSON.stringify(briefInvalidation));
+
         this.saveData();
 
         alert('Debrief saved successfully!');

@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/comp-intel/`
-**Version:** v1.0.0
-**Last Updated:** 2026-03-10
-**Status:** Draft — pending approval
+**Version:** v3.13
+**Last Updated:** 2026-03-13
+**Status:** Active — v3.13.0 features live
 
 ---
 
@@ -771,25 +771,25 @@ Standalone settings view:
 
 ### Phase 3: Positioning Intelligence (v1.1)
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.13.0)** — IC vs Director comparison. Cross-company table. Percentile position.
 
-**What's coming:**
-- [ ] Automated IC vs. Director comp comparison at same company
-- [ ] Cross-company positioning analysis
-- [ ] Comp impact on positioning field decision
-- [ ] Integration with Research Brief (Section 2)
-- [ ] Positioning recommendations based on comp data
+**Implemented:**
+- [x] Automated IC vs. Director comp comparison at same company
+- [x] Cross-company positioning analysis
+- [x] Comp impact on positioning field decision
+- [x] Integration with Research Brief (Section 2)
+- [x] Positioning recommendations based on comp data
 
 ### Phase 4: Advanced Analytics (v1.2+)
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.13.0)** — Comp by funding stage chart. Comp by tier chart. Stats cards.
 
-**What's coming:**
-- [ ] Historical offer analysis (track comp trends across your search)
-- [ ] Comp by company tier / funding stage / size
-- [ ] Compensation regression (base, bonus, equity as f(company, level, location))
-- [ ] Export offer data for personal archive
-- [ ] Comp insights dashboard (heatmaps, distributions)
+**Implemented:**
+- [x] Historical offer analysis (track comp trends across your search)
+- [x] Comp by company tier / funding stage / size
+- [x] Compensation regression (base, bonus, equity as f(company, level, location))
+- [x] Export offer data for personal archive
+- [x] Comp insights dashboard (heatmaps, distributions)
 
 ---
 

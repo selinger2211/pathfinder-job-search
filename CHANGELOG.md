@@ -4,6 +4,63 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.13.0 — 2026-03-13
+
+### What Changed — Cross-Module Wiring: 12 Tier 2 Features (10 Modules)
+
+**Summary:** Major release completing second-order integrations across 10 modules. Tier 2 "Cross-Module Wiring" features connect modules that were previously standalone, enabling context to flow bidirectionally through the entire system.
+
+**Changes:**
+
+**Dashboard Module (#15):**
+1. **Feed Review Section** — "New Matches" card showing top 5 unreviewed feed items not yet in pipeline. Each item shows match score, company, title, source, with Accept/Snooze/Dismiss action buttons. Reads from `pf_artifacts` feed metadata. Feeds qualified matches into Pipeline discovery stage.
+
+**Outreach Module (#17, #18):**
+2. **Thank You (Interview) Message Type** — New message type pulling debrief data for personalized thank-yous per interviewer. Reads `pf_debrief[roleId].interviewerNotes` to surface what was discussed, automatically generates opening ("Thank you for the discussion about...") grounded in interview context.
+
+3. **InMail (LinkedIn) Message Type** — New message type with 200 character preview limit, 1900 character full limit. Includes preview mode showing how message renders on LinkedIn. Shared connections display (top 3 mutual connections ranked by seniority) with "mention connection?" option.
+
+**Debrief Module (#19):**
+4. **Next Steps Panel** — After debrief save, summary screen shows two action cards: "Refresh Research Brief" (button) and "Draft Thank-You" (button). On "Refresh" click, writes `pf_brief_invalidation` signal to localStorage with affected section IDs (1-13). Updates `role.lastDebriefAt` timestamp for tracking interview completeness.
+
+**Research Brief Module (#20, #21):**
+5. **Auto Cache Invalidation** — On brief load, checks `pf_brief_invalidation` signal. For invalidated sections, displays yellow banner: "⚠️ [Sections 1, 5, 7] are stale due to recent interview debrief. Data has changed." "Regenerate Stale Sections" button reruns only those sections without clearing others. Respects stale section state across browser refresh.
+
+6. **Export Formats (HTML + Markdown)** — Alongside existing PDF export, added HTML export (standalone file with embedded CSS, all sections, citations, source links) and Markdown export (pasted into notes apps or shared with mentors). Export dropdown menu consolidates all three formats with download buttons.
+
+**Calendar Module (#22, #23):**
+7. **Confidence Scoring Algorithm** — Event detection weighted signal system: Title keyword (+40), attendee domain (+30), recruiter match (+25), description content (+15), duration (+10), attendee count (+5). Score 0-100: ≥70 auto-link, 40-69 suggestion buttons, <40 ignore. Matched events auto-advance pipeline stage (Applied → Screen, Screen → Interviewing) based on confidence.
+
+8. **Interviewer Linking** — Extract attendee names/emails from calendar events. Match against `pf_connections` (explicit) and `pf_linkedin_network` (inferred). Interviewer cards display name, title, seniority badge (IC/Manager/Director/VP), connection status, previous interactions (if any). Research Brief Section 5 auto-populated with interviewer context.
+
+**Job Feed Module (#24):**
+9. **Automatic Dedup vs Pipeline** — On feed score completion, compare each discovered role against `pf_roles` and recent closed roles (90d). Exact match: Same company + title + URL → skip, update `lastSeenDate`. Fuzzy match: Same company + similar title (edit distance <3) → badge "Possible Duplicate" with manual review button. Repost detection: Same title, new URL after ghosted role → "Repost Candidate" badge. Badges prevent accidental duplicates.
+
+**Pipeline Module (#26):**
+10. **Interview & Offer Substages** — Expanded `interviewing` and `offer` stages with substates for fine-grained tracking. Within `interviewing`: Phone Screen, Technical, Onsite, Final Round, Team Match. Within `offer`: Verbal, Written, Negotiating, Accepted, Declined. Substates optional; shown in stage transition UI as radio buttons, saved to `role.interviewing.substate` and `role.offer.substate`.
+
+**Mock Interview Module (#30, #31):**
+11. **Intelligence & Calibration** — JD-calibrated question generation: Claude reads full JD + company profile + fit assessment gaps to generate targeted questions per interview type. Questions cached per role+type in `pf_mock_calibrated_questions` localStorage (TTL 1 week). Post-session summary card displays: overall score, score distribution (% 5s/4s/3s), strongest answers (with why), weakest answers (gaps), framework compliance %, fit progress vs session. Analytics tab shows sessions/week, type coverage heatmap, current streak, top improvement areas.
+
+**Comp Intelligence Module (#32, #33):**
+12. **Positioning Intelligence** — IC vs Director comparison table at same company: Side-by-side columns showing base/bonus/equity for Staff IC vs Director track. Cross-company table showing compensation for same level across 5-10 tracked companies. Percentile position display: "You're targeting comp at 65th percentile for Senior PM at [company]" based on Levels.fyi benchmarks. Integration with Research Brief Section 2 (Compensation).
+
+13. **Advanced Analytics** — Historical offer tracking: Chart showing comp trends across your search (offer timeline on X-axis, total comp on Y-axis). Comp by funding stage chart (Seed vs Series A/B/C vs Growth vs Public). Comp by company tier chart (Hot/Active/Watching). Stats cards: Average offer, highest/lowest, negotiation success rate (counter → acceptance), offer-to-hire conversion %.
+
+**Resume Builder Module (#38):**
+14. **Feedback Loops** — Post-generation keyword gap analysis: System scans JD against selected bullets, identifies uncovered keywords with frequency ranking. Claude-generated bullet suggestions queued in Bullet Bank with "Approve" / "Reject" buttons. "Add to Bullet Bank" buttons on each approved suggestion. Feedback loop: Resume generation → gaps identified → new bullets proposed → bullet bank grows → future resumes cover more keywords automatically.
+
+**Files modified:** `modules/dashboard/`, `modules/outreach/`, `modules/debrief/`, `modules/research-brief/`, `modules/calendar/`, `modules/job-feed-listener/`, `modules/pipeline/`, `modules/mock-interview/`, `modules/comp-intel/`, `modules/resume-tailor/`
+
+**Data layer updates:**
+- Added `pf_brief_invalidation` localStorage key (signal for stale sections)
+- Added `pf_feed_snoozed` localStorage key (snoozed feed items)
+- Added `pf_feed_dismissed` localStorage key (dismissed feed items)
+- Added `pf_mock_calibrated_questions` localStorage key (cached questions per role+type)
+- Added `pf_outreach_nav_state` localStorage key (outreach module UI state)
+
+---
+
 ## v3.12.0 — 2026-03-13
 
 ### What Changed — Tier 1 Quick Wins: 14 Features (Dashboard, Research Brief, Pipeline, Feed, Calendar)

@@ -290,21 +290,21 @@ Backward transitions allowed at any point (e.g., revert from SCREEN to APPLIED i
 
 **Substate Details:**
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
-
-Interview and offer substages allow fine-grained tracking within those stages:
+> **Status: Implemented (v3.13.0)** — Interview & Offer Substages now live.
 
 Within `interviewing`:
-- `prep` — You're preparing, interview not yet scheduled
-- `in_loop` — Currently in the interview process (scheduling or completed rounds)
-- `take_home` — Take-home assignment assigned or in progress
-- `awaiting_decision` — Interviews complete, waiting for decision
+- `Phone Screen` — Initial screening call
+- `Technical` — Technical/coding interview
+- `Onsite` — Onsite/system design interview
+- `Final Round` — Final round interview
+- `Team Match` — Team matching/cultural fit interview
 
 Within `offer`:
-- `received` — Offer just received, awaiting your review
-- `evaluating` — You're reviewing terms
-- `negotiating` — Back-and-forth on terms
-- `decision_pending` — Waiting on company response to your counter, or ready to decide
+- `Verbal` — Verbal offer received
+- `Written` — Written offer received
+- `Negotiating` — Back-and-forth on terms
+- `Accepted` — Offer accepted by candidate
+- `Declined` — Offer declined by candidate
 
 Interview and offer substages would complement the 8-stage pipeline. All substates are optional. Use them if helpful; omit if not needed.
 

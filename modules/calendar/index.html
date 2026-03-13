@@ -1885,6 +1885,9 @@
                 // Populate role dropdown in add event modal
                 populateRoleDropdown();
 
+                // Auto-classify pending events (Feature 22: Confidence Scoring)
+                autoClassifyPendingEvents();
+
                 // Render initial views
                 renderWeekView();
                 updateUpcomingEventList();
@@ -2078,6 +2081,9 @@
             // Clear form and close modal
             document.getElementById('addEventForm').reset();
             closeModal('addEventModal');
+
+            // Auto-classify new event (Feature 22)
+            autoClassifyPendingEvents();
 
             // Refresh views
             renderWeekView();
@@ -2410,6 +2416,302 @@
             }, 3000);
         }
 
+        /* ====== FEATURE 22: CONFIDENCE SCORING ALGORITHM ====== */
+
+        /**
+         * Compute a confidence score (0-100) that a calendar event relates to a specific role.
+         * Scoring logic:
+         *   - Company name match in event title/description: +40 points
+         *   - Role title keywords in event title: +25 points
+         *   - Contact/interviewer name match against pf_connections: +20 points
+         *   - Time proximity to last stage change: +15 points (bonus if within 2 weeks)
+         *
+         * @param {Object} event - Calendar event object with title, company, description, date, interviewers
+         * @param {Array} roles - Array of role objects from pf_roles (each has id, title, company, stage, stageChangedAt)
+         * @param {Array} connections - Array of connection objects from pf_connections (each has name, email)
+         * @returns {Object} { roleId, confidence, matchReasons[] } — returns best match or null if no match
+         *
+         * @example
+         * const result = classifyCalendarEvent(event, roles, connections);
+         * // result = { roleId: 'role-123', confidence: 75, matchReasons: ['company_match', 'role_keyword'] }
+         */
+        function classifyCalendarEvent(event, roles, connections) {
+            if (!event || !roles || roles.length === 0) {
+                return null;
+            }
+
+            const eventText = (event.title + ' ' + (event.company || '') + ' ' + (event.description || '')).toLowerCase();
+            const attendeeEmails = (event.interviewers || []).map(a => a.toLowerCase());
+            let bestMatch = null;
+            let highestConfidence = 0;
+
+            // Evaluate event against each role
+            roles.forEach(role => {
+                let score = 0;
+                const matchReasons = [];
+
+                // --- Company match: +40 points ---
+                // Check if role's company name appears in event text
+                if (role.company && eventText.includes(role.company.toLowerCase())) {
+                    score += 40;
+                    matchReasons.push('company_match');
+                }
+
+                // --- Role title keywords: +25 points ---
+                // Check if any keywords from role title appear in event title/description
+                if (role.title) {
+                    const roleKeywords = role.title.toLowerCase().split(/\s+/);
+                    const matches = roleKeywords.filter(keyword => eventText.includes(keyword));
+                    if (matches.length > 0) {
+                        score += 25;
+                        matchReasons.push('role_keyword');
+                    }
+                }
+
+                // --- Contact/interviewer name match: +20 points ---
+                // Check if any event attendees match connection names or emails
+                if (connections && attendeeEmails.length > 0) {
+                    const matchedConnection = connections.find(conn => {
+                        const connEmail = (conn.email || '').toLowerCase();
+                        const connName = (conn.name || '').toLowerCase();
+                        return attendeeEmails.some(attendee =>
+                            attendee === connEmail || attendee.includes(connName.split(' ')[0])
+                        );
+                    });
+                    if (matchedConnection) {
+                        score += 20;
+                        matchReasons.push('interviewer_match');
+                    }
+                }
+
+                // --- Time proximity to last stage change: +15 points ---
+                // Bonus if event is within 2 weeks of role's last stage change
+                if (role.stageChangedAt) {
+                    const eventDate = new Date(event.date);
+                    const stageChangeDate = new Date(role.stageChangedAt);
+                    const daysDiff = Math.abs((eventDate - stageChangeDate) / (1000 * 60 * 60 * 24));
+                    if (daysDiff <= 14) {
+                        score += 15;
+                        matchReasons.push('time_proximity');
+                    }
+                }
+
+                // Track best match
+                if (score > highestConfidence) {
+                    highestConfidence = score;
+                    bestMatch = {
+                        roleId: role.id,
+                        confidence: Math.min(score, 100),
+                        matchReasons: matchReasons
+                    };
+                }
+            });
+
+            return bestMatch && highestConfidence > 0 ? bestMatch : null;
+        }
+
+        /**
+         * Auto-classify all pending calendar events and update their linkedRoleId and confidence.
+         * Called after role changes or event additions.
+         * Auto-links events with confidence ≥70 to the role (writes to event.linkedRoleId).
+         */
+        function autoClassifyPendingEvents() {
+            const allEvents = getStorageData('calendar_events') || [];
+            const roles = getStorageData('roles') || [];
+            const connections = getStorageData('connections') || [];
+
+            let updateCount = 0;
+            allEvents.forEach(event => {
+                const result = classifyCalendarEvent(event, roles, connections);
+                if (result) {
+                    // Always store confidence score
+                    event.confidenceScore = result.confidence;
+                    event.matchReasons = result.matchReasons;
+
+                    // Auto-link if confidence ≥70
+                    if (result.confidence >= 70 && !event.linkedRoleId) {
+                        event.linkedRoleId = result.roleId;
+                        event.autoLinked = true;
+                        updateCount++;
+                    }
+                }
+            });
+
+            if (updateCount > 0) {
+                saveStorageData('calendar_events', allEvents);
+            }
+        }
+
+        /* ====== FEATURE 23: INTERVIEWER LINKING ====== */
+
+        /**
+         * Parse event attendees and match them against connections and LinkedIn network.
+         * For each attendee email/name, search pf_connections and pf_linkedin_network for a match.
+         *
+         * @param {Array} attendees - Array of attendee strings (emails or names)
+         * @param {Array} connections - Array of connection objects from pf_connections
+         * @param {Array} linkedinNetwork - Array of LinkedIn profile objects from pf_linkedin_network
+         * @returns {Object} { matched: [], unmatched: [] }
+         *   - matched[]: { name, title, company, email, linkedinUrl, seniority, isTracked }
+         *   - unmatched[]: { name, suggestion: 'Add to Connections?' }
+         *
+         * @example
+         * const result = matchInterviewers(event.interviewers, connections, linkedinNetwork);
+         * // result = { matched: [...], unmatched: [...] }
+         */
+        function matchInterviewers(attendees, connections, linkedinNetwork) {
+            if (!attendees || attendees.length === 0) {
+                return { matched: [], unmatched: [] };
+            }
+
+            const matched = [];
+            const unmatched = [];
+            const connections_ = connections || [];
+            const linkedin_ = linkedinNetwork || [];
+
+            attendees.forEach(attendee => {
+                const attendeeLower = attendee.toLowerCase().trim();
+                let found = false;
+
+                // First try to match against pf_connections
+                const connMatch = connections_.find(conn => {
+                    const email = (conn.email || '').toLowerCase();
+                    const name = (conn.name || '').toLowerCase();
+                    return attendeeLower === email || attendeeLower === name || attendeeLower.includes(name);
+                });
+
+                if (connMatch) {
+                    matched.push({
+                        name: connMatch.name,
+                        title: connMatch.title || 'Unknown title',
+                        company: connMatch.company || 'Unknown company',
+                        email: connMatch.email,
+                        linkedinUrl: connMatch.linkedinUrl || null,
+                        seniority: connMatch.seniority || 'Unknown',
+                        isTracked: true
+                    });
+                    found = true;
+                } else {
+                    // Try to match against pf_linkedin_network
+                    const linkedinMatch = linkedin_.find(profile => {
+                        const profileEmail = (profile.email || '').toLowerCase();
+                        const profileName = (profile.name || '').toLowerCase();
+                        return attendeeLower === profileEmail || attendeeLower === profileName ||
+                               attendeeLower.includes(profileName.split(' ')[0]);
+                    });
+
+                    if (linkedinMatch) {
+                        matched.push({
+                            name: linkedinMatch.name,
+                            title: linkedinMatch.title || 'Unknown title',
+                            company: linkedinMatch.company || 'Unknown company',
+                            email: linkedinMatch.email,
+                            linkedinUrl: linkedinMatch.linkedinUrl,
+                            seniority: linkedinMatch.seniority || 'Unknown',
+                            isTracked: false
+                        });
+                        found = true;
+                    }
+                }
+
+                // If no match, add to unmatched
+                if (!found) {
+                    unmatched.push({
+                        name: attendee,
+                        suggestion: 'Add to Connections?'
+                    });
+                }
+            });
+
+            return { matched, unmatched };
+        }
+
+        /**
+         * Render interviewer cards below event details in the modal.
+         * Shows matched interviewers with context (title, company, seniority).
+         * For unmatched attendees, shows "Add to Connections?" suggestion button.
+         *
+         * @param {Object} result - Result from matchInterviewers() { matched: [], unmatched: [] }
+         * @returns {String} HTML string with interviewer cards
+         */
+        function renderInterviewerSection(result) {
+            let html = '<div style="margin-top: 20px;">';
+            html += '<div style="font-size: 12px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 12px; text-transform: uppercase;">Interviewers</div>';
+            html += '<div style="display: flex; flex-direction: column; gap: 10px;">';
+
+            // Render matched interviewers
+            result.matched.forEach(interviewer => {
+                const seniorityColor = getSeniorityColor(interviewer.seniority);
+                html += `
+                    <div style="padding: 12px; background: var(--bg-secondary); border-radius: var(--radius-sm); border: 1px solid var(--border); transition: all 0.2s ease;">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: var(--text-primary); font-size: 14px;">${escapeHtml(interviewer.name)}</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">${escapeHtml(interviewer.title)}</div>
+                                <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">${escapeHtml(interviewer.company)}</div>
+                                <div style="display: flex; gap: 8px; margin-top: 8px; align-items: center;">
+                                    <span style="display: inline-block; padding: 2px 8px; background: ${seniorityColor}; color: var(--bg-base); border-radius: 3px; font-size: 11px; font-weight: 600;">${escapeHtml(interviewer.seniority)}</span>
+                                    ${interviewer.email ? `<span style="font-size: 11px; color: var(--text-tertiary);">${escapeHtml(interviewer.email)}</span>` : ''}
+                                </div>
+                            </div>
+                            ${interviewer.linkedinUrl ? `
+                                <a href="${escapeHtml(interviewer.linkedinUrl)}" target="_blank" style="padding: 6px 12px; background: #0a66c2; color: white; border-radius: var(--radius-sm); text-decoration: none; font-size: 12px; font-weight: 600; transition: background 0.2s ease;" onmouseover="this.style.background='#094fa1'" onmouseout="this.style.background='#0a66c2';">LinkedIn</a>
+                            ` : ''}
+                        </div>
+                        ${interviewer.isTracked ? `
+                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); font-size: 12px; color: var(--accent);">
+                                <i data-lucide="check-circle" width="14" height="14" style="display: inline-block; margin-right: 4px; vertical-align: middle;"></i> In your pipeline
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+
+            // Render unmatched attendees
+            result.unmatched.forEach(attendee => {
+                html += `
+                    <div style="padding: 12px; background: var(--bg-tertiary); border-radius: var(--radius-sm); border: 1px dashed var(--border); display: flex; align-items: center; justify-content: space-between;">
+                        <div style="font-size: 13px; color: var(--text-secondary);">
+                            <span style="font-weight: 600;">${escapeHtml(attendee.name)}</span> — Unknown
+                        </div>
+                        <button style="padding: 4px 8px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-size: 12px; cursor: pointer; transition: background 0.2s ease;" onmouseover="this.style.background='var(--accent-hover)'" onmouseout="this.style.background='var(--accent)'">${attendee.suggestion}</button>
+                    </div>
+                `;
+            });
+
+            html += '</div></div>';
+            return html;
+        }
+
+        /**
+         * Get color badge for seniority level.
+         * Maps seniority strings to theme colors.
+         *
+         * @param {String} seniority - Seniority level (e.g., 'Executive', 'Manager', 'IC')
+         * @returns {String} CSS color value
+         */
+        function getSeniorityColor(seniority) {
+            if (!seniority) return 'var(--text-tertiary)';
+            const level = seniority.toLowerCase();
+            if (level.includes('executive') || level.includes('director') || level.includes('c-level')) return 'var(--error)';
+            if (level.includes('manager') || level.includes('lead')) return 'var(--warning)';
+            if (level.includes('junior') || level.includes('entry')) return 'var(--info)';
+            return 'var(--success)';
+        }
+
+        /**
+         * Escape HTML special characters to prevent injection attacks.
+         *
+         * @param {String} text - Text to escape
+         * @returns {String} Escaped text safe for HTML insertion
+         */
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         // ============================================================================
         // DATE & TIME UTILITIES
         // ============================================================================
@@ -2651,6 +2953,28 @@
                         companyEl.textContent = evt.company;
                         eventCard.appendChild(companyEl);
 
+                        // Add confidence badge to week view cards (Feature 22)
+                        if (evt.confidenceScore !== undefined) {
+                            const confidenceBadge = document.createElement('div');
+                            const confidence = Math.round(evt.confidenceScore);
+                            let badgeColor = 'var(--text-tertiary)';
+                            if (confidence >= 70) {
+                                badgeColor = 'var(--success)';
+                            } else if (confidence >= 40) {
+                                badgeColor = 'var(--warning)';
+                            }
+                            confidenceBadge.style.display = 'inline-block';
+                            confidenceBadge.style.marginTop = '6px';
+                            confidenceBadge.style.padding = '2px 6px';
+                            confidenceBadge.style.borderRadius = 'var(--radius-sm)';
+                            confidenceBadge.style.fontSize = '10px';
+                            confidenceBadge.style.fontWeight = '600';
+                            confidenceBadge.style.backgroundColor = badgeColor;
+                            confidenceBadge.style.color = 'var(--bg-base)';
+                            confidenceBadge.textContent = `${confidence}%`;
+                            eventCard.appendChild(confidenceBadge);
+                        }
+
                         dayContent.appendChild(eventCard);
                     });
                 }
@@ -2776,6 +3100,38 @@
                 metaText.textContent = evt.roleId ? 'Linked' : 'Unlinked';
                 meta.appendChild(metaText);
                 item.appendChild(meta);
+
+                // Add confidence score badge (Feature 22)
+                if (evt.confidenceScore !== undefined) {
+                    const confidenceBadge = document.createElement('span');
+                    const confidence = Math.round(evt.confidenceScore);
+                    let badgeClass = 'event-confidence-badge';
+                    let badgeColor = 'var(--text-tertiary)';
+                    let badgeText = 'Low';
+
+                    if (confidence >= 70) {
+                        badgeClass += ' high';
+                        badgeColor = 'var(--success)';
+                        badgeText = 'High';
+                    } else if (confidence >= 40) {
+                        badgeClass += ' medium';
+                        badgeColor = 'var(--warning)';
+                        badgeText = 'Medium';
+                    }
+
+                    confidenceBadge.className = badgeClass;
+                    confidenceBadge.style.display = 'inline-block';
+                    confidenceBadge.style.padding = '2px 8px';
+                    confidenceBadge.style.borderRadius = 'var(--radius-sm)';
+                    confidenceBadge.style.fontSize = '11px';
+                    confidenceBadge.style.fontWeight = '600';
+                    confidenceBadge.style.backgroundColor = badgeColor;
+                    confidenceBadge.style.color = 'var(--bg-base)';
+                    confidenceBadge.style.marginLeft = '8px';
+                    confidenceBadge.textContent = `${badgeText} (${confidence}%)`;
+                    confidenceBadge.title = `Confidence: ${confidence}%`;
+                    meta.appendChild(confidenceBadge);
+                }
 
                 // Add debrief button for past interview events without debriefs
                 if (eventNeedsDebrief(evt, debriefs)) {
@@ -4253,6 +4609,65 @@
                         <div style="font-size: 14px; color: var(--text-primary); white-space: pre-wrap;">${event.prepNotes}</div>
                     </div>
                 `;
+            }
+
+            // Add confidence score badge (Feature 22)
+            if (event.confidenceScore !== undefined) {
+                const confidence = Math.round(event.confidenceScore);
+                let badgeColor = 'var(--text-tertiary)';
+                let badgeLabel = 'Low';
+
+                if (confidence >= 70) {
+                    badgeColor = 'var(--success)';
+                    badgeLabel = 'High';
+                } else if (confidence >= 40) {
+                    badgeColor = 'var(--warning)';
+                    badgeLabel = 'Medium';
+                }
+
+                html += `
+                    <div>
+                        <div style="font-size: 12px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 4px;">Confidence Score</div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="display: inline-block; padding: 4px 12px; background: ${badgeColor}; color: var(--bg-base); border-radius: var(--radius-sm); font-weight: 600; font-size: 13px;">${badgeLabel} (${confidence}%)</span>
+                            ${event.matchReasons && event.matchReasons.length > 0 ? `
+                                <span style="font-size: 12px; color: var(--text-secondary); font-style: italic;">Matched on: ${event.matchReasons.join(', ')}</span>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Add interviewer matching section (Feature 23)
+            if (event.interviewers && event.interviewers.length > 0) {
+                const connections = getStorageData('connections') || [];
+                const linkedinNetwork = getStorageData('linkedin_network') || [];
+                const interviewerResult = matchInterviewers(event.interviewers, connections, linkedinNetwork);
+                if (interviewerResult.matched.length > 0 || interviewerResult.unmatched.length > 0) {
+                    html += renderInterviewerSection(interviewerResult);
+                }
+            }
+
+            // Add auto-link suggestion for 40-69 confidence (Feature 22)
+            if (event.confidenceScore !== undefined && event.confidenceScore >= 40 && event.confidenceScore < 70 && !event.linkedRoleId) {
+                const roles = getStorageData('roles') || [];
+                const connections = getStorageData('connections') || [];
+                const classifyResult = classifyCalendarEvent(event, roles, connections);
+                if (classifyResult && classifyResult.roleId) {
+                    const linkedRole = roles.find(r => r.id === classifyResult.roleId);
+                    if (linkedRole) {
+                        html = html.replace('</div>', `
+                                    <div style="padding: 12px; background: var(--warning); border-radius: var(--radius-sm); color: var(--bg-base); display: flex; align-items: center; justify-content: space-between;">
+                                        <div>
+                                            <div style="font-weight: 600; margin-bottom: 4px;">Auto-Link Suggestion</div>
+                                            <div style="font-size: 12px;">Link to <strong>${escapeHtml(linkedRole.title)}</strong> at <strong>${escapeHtml(linkedRole.company)}</strong>?</div>
+                                        </div>
+                                        <button onclick="linkEventToRole({id: '${event.id}'}, {id: '${classifyResult.roleId}'});" style="background: var(--bg-base); color: var(--warning); border: none; padding: 6px 12px; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; font-size: 12px; white-space: nowrap;">Link →</button>
+                                    </div>
+                                </div>
+                        `);
+                    }
+                }
             }
 
             // Check if this is a past interview event that needs debrief

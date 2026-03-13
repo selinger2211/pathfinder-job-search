@@ -1934,7 +1934,8 @@ ${needMoreQuestions ?
         // Extract and save questions and stories from conversation
         this.extractAndSaveSessionData(sessionData);
 
-        alert('Session saved!');
+        // FEATURE #31: Generate session summary
+        this.generateAndShowSessionSummary(sessionData);
 
         this.state.sessionActive = false;
         this.idleState.style.display = 'flex';
@@ -1945,6 +1946,474 @@ ${needMoreQuestions ?
         // Refresh history
         this.sessions = this.dataStore.getSessions();
         this.renderSessionHistory();
+      }
+
+      /* ====== FEATURE #30: MOCK INTERVIEW INTELLIGENCE & CALIBRATION ====== */
+      /**
+       * Generate calibrated interview questions based on JD and company style
+       * Uses Claude to create questions tailored to the selected role and company
+       * INPUT: roleId (string), interviewType (string)
+       * OUTPUT: Returns array of calibrated questions
+       */
+      async generateCalibratedQuestions(roleId, interviewType) {
+        try {
+          // Get role JD text from localStorage
+          const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+          const role = roles.find(r => r.id === roleId);
+          if (!role || !role.jdText) {
+            return null; // No JD available, use default questions
+          }
+
+          // Get company interview style
+          const companies = JSON.parse(localStorage.getItem('pf_companies') || '[]');
+          const company = companies.find(c => c.id === role.companyId);
+          const interviewStyle = company?.interviewStyle || 'balanced approach';
+
+          const systemPrompt = `You are a hiring manager at a top tech company. Generate 5 interview questions tailored to a specific role.
+Return ONLY valid JSON array format: [{ text: "question", theme: "theme" }]
+Questions should be insightful and directly relate to the job description and company style.
+Do NOT include markdown, explanations, or code blocks.`;
+
+          const userPrompt = `Generate 5 ${interviewType} interview questions for this role:
+
+Job Description: ${role.jdText.substring(0, 1000)}
+
+Company Interview Style: ${interviewStyle}
+
+Create questions that explore key competencies from the JD.`;
+
+          const result = await PF.claude.generate(systemPrompt, userPrompt, { maxTokens: 1024 });
+
+          let questions = [];
+          try {
+            questions = JSON.parse(result.content);
+          } catch (e) {
+            console.warn('Could not parse calibrated questions');
+            return null;
+          }
+
+          // Cache calibrated questions
+          const cacheKey = `pf_mock_calibrated_questions_${roleId}_${interviewType}`;
+          const cached = {
+            questions,
+            generatedAt: new Date().toISOString(),
+            roleId,
+            interviewType
+          };
+          localStorage.setItem(cacheKey, JSON.stringify(cached));
+
+          return questions;
+        } catch (error) {
+          console.warn('Could not generate calibrated questions:', error);
+          return null;
+        }
+      }
+
+      /**
+       * Get calibrated questions or fall back to default bank
+       * Checks cache first, then generates if needed
+       * INPUT: roleId (string), interviewType (string)
+       * OUTPUT: Array of questions (calibrated or default)
+       */
+      async getQuestionsForSession(roleId, interviewType) {
+        // Check cache first
+        const cacheKey = `pf_mock_calibrated_questions_${roleId}_${interviewType}`;
+        const cached = localStorage.getItem(cacheKey);
+
+        if (cached) {
+          try {
+            const data = JSON.parse(cached);
+            return data.questions;
+          } catch (e) {
+            console.warn('Cached questions corrupt');
+          }
+        }
+
+        // Try to generate new calibrated questions
+        const calibrated = await this.generateCalibratedQuestions(roleId, interviewType);
+        if (calibrated) {
+          return calibrated;
+        }
+
+        // Fall back to default question bank
+        return QUESTION_BANK.filter(q => q.type === interviewType).slice(0, 5);
+      }
+
+      /* ====== FEATURE #31: SESSION SUMMARY & ANALYTICS ====== */
+      /**
+       * Generate a summary of the interview session using Claude
+       * Provides Key Strengths and Areas to Improve based on conversation
+       * INPUT: sessionData (object with conversation)
+       * OUTPUT: summary object with strengths and improvements
+       */
+      async generateSessionSummary(sessionData) {
+        try {
+          const systemPrompt = `You are an expert interview coach analyzing a mock interview session.
+Provide a brief, actionable summary of the candidate's performance.
+Return ONLY valid JSON format: { strengths: [str, str, str], improvements: [str, str, str], overallScore: 1-10 }
+Do NOT include markdown, explanations, or code blocks.`;
+
+          const userPrompt = `Analyze this mock interview:
+
+Type: ${sessionData.type}
+Difficulty: ${sessionData.difficulty}
+
+Answers provided:
+${sessionData.conversation
+  .filter(m => m.role === 'user')
+  .map(m => m.content)
+  .join('\n\n')}
+
+Provide 2-3 key strengths and 2-3 areas for improvement. Include an overall score (1-10).`;
+
+          const result = await PF.claude.generate(systemPrompt, userPrompt, { maxTokens: 512 });
+
+          let summary = { strengths: [], improvements: [], overallScore: 7 };
+          try {
+            summary = JSON.parse(result.content);
+          } catch (e) {
+            console.warn('Could not parse session summary');
+          }
+
+          // Store summary in session
+          sessionData.summary = summary;
+          sessionData.endedAt = new Date().toISOString();
+          const duration = Math.round(
+            (new Date(sessionData.endedAt) - new Date(sessionData.startedAt)) / 1000 / 60
+          );
+          sessionData.durationMinutes = duration;
+
+          // Save to localStorage
+          const sessions = JSON.parse(localStorage.getItem('pf_mock_sessions') || '[]');
+          const existing = sessions.find(s => s.id === sessionData.id);
+          if (existing) {
+            Object.assign(existing, sessionData);
+          } else {
+            sessions.push(sessionData);
+          }
+          localStorage.setItem('pf_mock_sessions', JSON.stringify(sessions));
+
+          return summary;
+        } catch (error) {
+          console.warn('Could not generate session summary:', error);
+          return { strengths: ['Good practice session'], improvements: ['Continue practicing'], overallScore: 7 };
+        }
+      }
+
+      /**
+       * Display session summary card after interview ends
+       * Shows strengths, improvements, and action buttons
+       * INPUT: sessionData (object with summary)
+       * OUTPUT: summary card is displayed in DOM
+       */
+      async generateAndShowSessionSummary(sessionData) {
+        try {
+          const summary = await this.generateSessionSummary(sessionData);
+
+          // Show summary in a modal/card
+          const card = document.createElement('div');
+          card.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-elevated);
+            border: 1px solid var(--bg-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 10000;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+          `;
+
+          const duration = sessionData.durationMinutes || 0;
+
+          card.innerHTML = `
+            <h2 style="margin: 0 0 var(--space-4) 0; color: var(--text-primary);">Session Summary</h2>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-6);">
+              <div>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary); text-transform: uppercase; margin-bottom: var(--space-1);">Duration</div>
+                <div style="font-size: 20px; font-weight: 700; color: var(--text-primary);">${duration}m</div>
+              </div>
+              <div>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary); text-transform: uppercase; margin-bottom: var(--space-1);">Score</div>
+                <div style="font-size: 20px; font-weight: 700; color: var(--accent);">${summary.overallScore}/10</div>
+              </div>
+            </div>
+
+            <div style="margin-bottom: var(--space-6);">
+              <h3 style="margin: 0 0 var(--space-2) 0; font-size: var(--text-sm); color: rgb(34, 197, 94);">Your Strengths</h3>
+              <ul style="list-style: none; padding: 0; margin: 0;">
+                ${summary.strengths.map(s => `
+                  <li style="padding: var(--space-2) 0; color: var(--text-primary); border-bottom: 1px solid var(--bg-subtle);">
+                    <i data-lucide="check-circle" style="width: 16px; height: 16px; margin-right: 8px; vertical-align: -2px; color: rgb(34, 197, 94);"></i>
+                    ${s}
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+
+            <div style="margin-bottom: var(--space-6);">
+              <h3 style="margin: 0 0 var(--space-2) 0; font-size: var(--text-sm); color: rgb(251, 191, 36);">Areas to Improve</h3>
+              <ul style="list-style: none; padding: 0; margin: 0;">
+                ${summary.improvements.map(i => `
+                  <li style="padding: var(--space-2) 0; color: var(--text-primary); border-bottom: 1px solid var(--bg-subtle);">
+                    <i data-lucide="alert-circle" style="width: 16px; height: 16px; margin-right: 8px; vertical-align: -2px; color: rgb(251, 191, 36);"></i>
+                    ${i}
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+
+            <div style="display: flex; gap: var(--space-3);">
+              <button onclick="this.parentElement.parentElement.remove()" style="
+                flex: 1;
+                padding: var(--space-3);
+                background: var(--accent);
+                color: white;
+                border: none;
+                border-radius: var(--radius-sm);
+                cursor: pointer;
+                font-weight: 600;
+                transition: opacity var(--duration-fast) var(--ease-default);
+              " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                Done
+              </button>
+              <button onclick="app.practiceBankQuestion('', '${sessionData.type}', '${sessionData.difficulty}'); this.parentElement.parentElement.remove();" style="
+                flex: 1;
+                padding: var(--space-3);
+                background: var(--bg-subtle);
+                color: var(--text-primary);
+                border: 1px solid var(--bg-subtle);
+                border-radius: var(--radius-sm);
+                cursor: pointer;
+                font-weight: 600;
+                transition: all var(--duration-fast) var(--ease-default);
+              " onmouseover="this.style.background='var(--bg-surface)'" onmouseout="this.style.background='var(--bg-subtle)'">
+                Practice Again
+              </button>
+            </div>
+          `;
+
+          document.body.appendChild(card);
+          lucide.createIcons();
+
+          // Auto-close after 5 seconds
+          setTimeout(() => {
+            if (card.parentElement) {
+              card.remove();
+            }
+          }, 5000);
+
+        } catch (error) {
+          console.warn('Could not show session summary:', error);
+          alert('Session saved! Continue practicing to improve.');
+        }
+      }
+
+      /**
+       * FEATURE #31: Render analytics tab with trends and performance data
+       * Shows sessions per week, practiced question types, streaks, and top areas
+       * INPUT: None (reads from localStorage and sessionData)
+       * OUTPUT: Analytics dashboard is displayed
+       */
+      renderAnalytics() {
+        const container = document.getElementById('analyticsContainer');
+        if (!container) return;
+
+        // Get session data
+        const sessions = JSON.parse(localStorage.getItem('pf_mock_sessions') || '[]');
+        if (sessions.length === 0) {
+          container.innerHTML = '<p style="color: var(--text-secondary);">Complete 3+ sessions to see analytics.</p>';
+          return;
+        }
+
+        // Calculate metrics
+        const metrics = this.calculateAnalyticsMetrics(sessions);
+
+        let html = `<div style="display: flex; flex-direction: column; gap: var(--space-6);">`;
+
+        // Sessions per week chart
+        html += `
+          <div>
+            <h3 style="margin: 0 0 var(--space-4) 0; font-size: var(--text-lg); font-weight: 600; color: var(--text-primary);">
+              Sessions This Week
+            </h3>
+            <div style="display: flex; align-items: flex-end; gap: var(--space-2); height: 100px;">
+              ${metrics.sessionsPerDay.map((count, i) => `
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                  <div style="
+                    width: 100%;
+                    background: var(--accent);
+                    border-radius: var(--radius-sm);
+                    height: ${Math.max(count * 30, 8)}px;
+                    margin-bottom: var(--space-1);
+                    transition: opacity var(--duration-fast) var(--ease-default);
+                  " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></div>
+                  <span style="font-size: var(--text-xs); color: var(--text-secondary);">${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+
+        // Most practiced question types
+        html += `
+          <div>
+            <h3 style="margin: 0 0 var(--space-3) 0; font-size: var(--text-lg); font-weight: 600; color: var(--text-primary);">
+              Interview Type Coverage
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+              ${Object.entries(metrics.typeBreakdown).map(([type, count]) => `
+                <div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-1);">
+                    <span style="font-size: var(--text-sm); color: var(--text-primary);">${type}</span>
+                    <span style="font-weight: 600; color: var(--accent);">${count}</span>
+                  </div>
+                  <div style="background: var(--bg-surface); border-radius: var(--radius-sm); height: 6px;">
+                    <div style="
+                      background: var(--accent);
+                      height: 100%;
+                      width: ${(count / Math.max(...Object.values(metrics.typeBreakdown))) * 100}%;
+                      border-radius: var(--radius-sm);
+                    "></div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+
+        // Practice streak
+        html += `
+          <div>
+            <h3 style="margin: 0 0 var(--space-3) 0; font-size: var(--text-lg); font-weight: 600; color: var(--text-primary);">
+              Current Streak
+            </h3>
+            <div style="padding: var(--space-4); background: var(--bg-surface); border-radius: var(--radius-md); text-align: center;">
+              <div style="font-size: 32px; font-weight: 700; color: rgb(34, 197, 94); margin-bottom: var(--space-1);">
+                ${metrics.streakDays}
+              </div>
+              <div style="font-size: var(--text-sm); color: var(--text-secondary);">
+                Consecutive days of practice
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Top 3 strongest areas
+        if (metrics.topAreas.length > 0) {
+          html += `
+            <div>
+              <h3 style="margin: 0 0 var(--space-3) 0; font-size: var(--text-lg); font-weight: 600; color: var(--text-primary);">
+                Top Strengths (Based on Feedback)
+              </h3>
+              <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                ${metrics.topAreas.map((area, i) => `
+                  <div style="
+                    padding: var(--space-3);
+                    background: var(--bg-surface);
+                    border-left: 3px solid var(--accent);
+                    border-radius: var(--radius-sm);
+                  ">
+                    <div style="display: flex; align-items: center; gap: var(--space-2);">
+                      <span style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 24px;
+                        height: 24px;
+                        background: var(--accent);
+                        color: white;
+                        border-radius: 50%;
+                        font-weight: 700;
+                        font-size: var(--text-xs);
+                      ">${i + 1}</span>
+                      <span style="font-size: var(--text-sm); color: var(--text-primary);">${area}</span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        html += `</div>`;
+        container.innerHTML = html;
+      }
+
+      /**
+       * Calculate analytics metrics from session data
+       * INPUT: sessions (array)
+       * OUTPUT: Object with calculated metrics for display
+       */
+      calculateAnalyticsMetrics(sessions) {
+        const now = new Date();
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        // Sessions per day (last 7 days)
+        const sessionsPerDay = [0, 0, 0, 0, 0, 0, 0];
+        sessions.forEach(s => {
+          const sessionDate = new Date(s.startedAt);
+          if (sessionDate >= weekAgo) {
+            const dayOfWeek = sessionDate.getDay();
+            sessionsPerDay[dayOfWeek]++;
+          }
+        });
+
+        // Interview type breakdown
+        const typeBreakdown = {};
+        sessions.forEach(s => {
+          typeBreakdown[s.type] = (typeBreakdown[s.type] || 0) + 1;
+        });
+
+        // Practice streak (consecutive days)
+        let streakDays = 0;
+        for (let i = 0; i < 365; i++) {
+          const checkDate = new Date(now);
+          checkDate.setDate(checkDate.getDate() - i);
+          const dayStart = new Date(checkDate.setHours(0, 0, 0, 0));
+          const dayEnd = new Date(checkDate.setHours(23, 59, 59, 999));
+
+          const hasSession = sessions.some(s => {
+            const sDate = new Date(s.startedAt);
+            return sDate >= dayStart && sDate <= dayEnd;
+          });
+
+          if (hasSession) {
+            streakDays++;
+          } else if (i > 0) {
+            break;
+          }
+        }
+
+        // Top areas from summaries
+        const areaScores = {};
+        sessions.forEach(s => {
+          if (s.summary && s.summary.strengths) {
+            s.summary.strengths.forEach(strength => {
+              // Extract theme from strength (e.g., "Clear communication" -> "Communication")
+              const theme = strength.split(' ').slice(1).join(' ').substring(0, 30);
+              areaScores[theme] = (areaScores[theme] || 0) + 1;
+            });
+          }
+        });
+
+        const topAreas = Object.entries(areaScores)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(([area]) => area);
+
+        return {
+          sessionsPerDay,
+          typeBreakdown,
+          streakDays,
+          topAreas
+        };
       }
 
       /**

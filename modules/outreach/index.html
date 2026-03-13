@@ -506,6 +506,59 @@
       font-size: var(--text-sm);
     }
 
+    /* ====== FEATURE 18: InMail Preview & Character Counter ====== */
+    .inmail-preview {
+      background: linear-gradient(135deg, #f0f4f8 0%, #fafbfc 100%);
+      border: 1px solid #ccc;
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin: var(--space-4) 0;
+      max-width: 500px;
+    }
+
+    .inmail-preview-header {
+      background: white;
+      padding: var(--space-3);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-3);
+      border: 1px solid #e5e7eb;
+    }
+
+    .inmail-preview-avatar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: var(--accent);
+      color: white;
+      border-radius: 50%;
+      font-weight: 600;
+      margin-right: var(--space-2);
+    }
+
+    .inmail-preview-sender {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .inmail-preview-message {
+      background: white;
+      padding: var(--space-3);
+      border-radius: var(--radius-sm);
+      border: 1px solid #e5e7eb;
+      font-size: var(--text-sm);
+      line-height: 1.5;
+      color: var(--text-primary);
+    }
+
+    /* Character count warning for InMail */
+    .char-count.danger {
+      color: var(--danger);
+      font-weight: 600;
+    }
+
     @media (max-width: 768px) {
       .outreach-container {
         flex-direction: column;
@@ -530,6 +583,10 @@
       .message-tab {
         padding: var(--space-1) var(--space-2);
         font-size: var(--text-xs);
+      }
+
+      .inmail-preview {
+        max-width: 100%;
       }
     }
   </style>
@@ -671,6 +728,14 @@
         description: 'Post-interview follow-up',
         charLimit: 700,
         isEmail: true,
+      },
+      {
+        id: 'inmail-linkedin',
+        name: 'InMail (LinkedIn)',
+        description: 'LinkedIn message with research',
+        charLimit: 1900,
+        isEmail: false,
+        subjectLimit: 200,
       },
       {
         id: 'recruiter-response',
@@ -1012,12 +1077,36 @@
       }
     }
 
+    /* Safely retrieve debriefs with error handling */
+    function getDebriefs() {
+      try {
+        const data = localStorage.getItem('pf_debriefs');
+        return data ? JSON.parse(data) : [];
+      } catch (error) {
+        console.warn('Failed to parse debriefs:', error);
+        return [];
+      }
+    }
+
+    /**
+     * Get the latest debrief for a specific role
+     * INPUT: roleId string
+     * OUTPUT: debrief object or null if not found
+     */
+    function getLatestDebriefForRole(roleId) {
+      const debriefs = getDebriefs();
+      const roleDebriefs = debriefs.filter(d => d.roleId === roleId);
+      if (roleDebriefs.length === 0) return null;
+      const sorted = roleDebriefs.sort((a, b) => new Date(b.date) - new Date(a.date));
+      return sorted[0];
+    }
+
     // ────────────────────────────────────────────────────────
     // CLAUDE PROMPT GENERATION
     // ────────────────────────────────────────────────────────
 
     function buildOutreachPrompt(messageType, context) {
-      const { company, role, connection, userBackground } = context;
+      const { company, role, connection, userBackground, debrief, linkedinNetwork } = context;
 
       const antiTemplateRules = `
 CRITICAL RULES — Must follow these exactly:
@@ -1099,15 +1188,37 @@ STRICT LIMIT: ${MESSAGE_TYPES.find(t => t.id === messageType).charLimit} charact
 
         case 'thank-you-interview':
           typeSpecificGuidance = `
-PURPOSE: Follow-up after an interview
+PURPOSE: Follow-up after an interview with personalized debrief details
 STRUCTURE:
-1. Thank them for their time
-2. One specific thing you discussed
-3. How you see yourself contributing to that topic
-4. Next steps: "Looking forward to hearing from you"
-5. Optional: reference a specific question and your research
-FORMAT: 4-5 sentences
+1. Thank them for their time and name them specifically
+2. One specific thing you discussed (from your debrief notes if available)
+3. How you see yourself contributing to that topic or area
+4. Reference something specific: a question they asked, a challenge they mentioned, or your shared interest
+5. Next steps: "Looking forward to hearing from you"
+FORMAT: 4-5 sentences, genuine and specific
 STRICT LIMIT: ${MESSAGE_TYPES.find(t => t.id === messageType).charLimit} characters`;
+          break;
+
+        case 'inmail-linkedin':
+          typeSpecificGuidance = `
+PURPOSE: Research-based LinkedIn InMail to start a conversation
+CONSTRAINTS:
+- Subject line max 200 characters
+- Body max 1900 characters
+- No emoji, professional tone
+- Make it personal and specific
+
+STRUCTURE:
+1. Subject: Compelling hook (company news, shared connection, specific interest)
+2. Body opening: Reference something specific about them/company
+3. Credibility: One concrete relevant experience
+4. Mutual value: Why talking makes sense for both
+5. Soft ask: "Open to a quick chat?"
+FORMAT: 2-4 short paragraphs in body
+MUST INCLUDE:
+- Specific company detail or shared connection
+- How your background is relevant
+- Clear reason for reaching out now`;
           break;
 
         case 'recruiter-response':
@@ -1153,7 +1264,71 @@ OUTPUT FORMAT:
 - No citations or footnotes needed
 - Keep it concise and direct`;
 
-      const userPrompt = `Generate a ${MESSAGE_TYPES.find(t => t.id === messageType).name.toLowerCase()} message with these specifics:
+      let userPrompt = '';
+
+      if (messageType === 'thank-you-interview' && debrief) {
+        /* ====== FEATURE 17: Thank You (Interview) with Debrief Context ====== */
+        userPrompt = `Generate a thank-you email after an interview with these debrief notes:
+
+RECIPIENT:
+- Name: ${connection.name}
+- Title: ${connection.title}
+- Company: ${company.name}
+
+INTERVIEW DEBRIEF NOTES:
+${debrief.sections.overall ? `Overall Impression: ${debrief.sections.overall}` : ''}
+${debrief.sections.landed ? `What Went Well: ${debrief.sections.landed}` : ''}
+${debrief.sections.didntLand ? `Areas to Follow Up: ${debrief.sections.didntLand}` : ''}
+${debrief.sections.questions && debrief.sections.questions.length > 0
+  ? `Key Topics Discussed: ${debrief.sections.questions.slice(0, 2).join(', ')}`
+  : ''}
+
+INTERVIEWER NAME: ${debrief.sections.interviewerNames || connection.name}
+
+YOUR BACKGROUND:
+${userBackground.bullets && userBackground.bullets.length > 0
+  ? '- ' + userBackground.bullets.slice(0, 2).join('\n- ')
+  : '- Not specified'}
+
+Create a warm, specific thank-you that references 1-2 things you discussed (from the debrief notes above). Make it personal and genuine.`;
+      } else if (messageType === 'inmail-linkedin') {
+        /* ====== FEATURE 18: InMail (LinkedIn) with Research Context ====== */
+        let sharedConnectionsText = '';
+        if (linkedinNetwork && linkedinNetwork.length > 0) {
+          sharedConnectionsText = `\nSHARED CONNECTIONS: ${linkedinNetwork.slice(0, 2).map(c => c.name).join(', ')}`;
+        }
+
+        userPrompt = `Generate a LinkedIn InMail message to start a conversation:
+
+RECIPIENT:
+- Name: ${connection.name}
+- Title: ${connection.title}
+- Company: ${company.name}${sharedConnectionsText}
+
+COMPANY CONTEXT:
+- Name: ${company.name}
+- Mission: ${company.mission || 'Not specified'}
+- Domain: ${company.domain || 'Not specified'}
+
+ROLE CONTEXT:
+- Title: ${role.title}
+- Description: ${role.description || role.jd || 'See job description'}
+
+YOUR BACKGROUND:
+${userBackground.bullets && userBackground.bullets.length > 0
+  ? '- ' + userBackground.bullets.slice(0, 3).join('\n- ')
+  : '- Not specified'}
+
+Generate BOTH a subject line (max 200 chars) and message body (max 1900 chars).
+FORMAT:
+Subject: [compelling subject line]
+
+[message body - 2-4 short paragraphs]
+
+Reference something specific: shared connection, company news, their role, or a challenge they likely face.`;
+      } else {
+        /* ====== Standard Message Types ====== */
+        userPrompt = `Generate a ${MESSAGE_TYPES.find(t => t.id === messageType).name.toLowerCase()} message with these specifics:
 
 RECIPIENT:
 - Name: ${connection.name}
@@ -1176,6 +1351,7 @@ ${userBackground.bullets && userBackground.bullets.length > 0
   : '- Not specified'}
 
 Create a compelling, specific message that references at least one concrete detail about the company, role, or person. Make it sound authentic.`;
+      }
 
       return { systemPrompt, userPrompt };
     }
@@ -1212,11 +1388,37 @@ Create a compelling, specific message that references at least one concrete deta
       updateUI();
 
       try {
+        /* ====== FEATURE 17 & 18: Gather Debrief and LinkedIn Network Data ====== */
+        let debrief = null;
+        let linkedinNetwork = [];
+
+        if (messageType === 'thank-you-interview') {
+          debrief = getLatestDebriefForRole(roleId);
+          if (!debrief) {
+            showToast('No debrief found — complete a debrief first for a personalized thank-you', 'warning');
+            AppState.isGenerating = false;
+            updateUI();
+            return;
+          }
+        }
+
+        if (messageType === 'inmail-linkedin') {
+          try {
+            const network = JSON.parse(localStorage.getItem('pf_linkedin_network') || '[]');
+            linkedinNetwork = network.filter(n => n.companiesInCommon && n.companiesInCommon.includes(company.name));
+          } catch (e) {
+            console.warn('Could not load LinkedIn network data');
+            linkedinNetwork = [];
+          }
+        }
+
         const context = {
           company,
           role,
           connection,
           userBackground: { bullets: bullets.map(b => b.text).slice(0, 5) },
+          debrief,
+          linkedinNetwork,
         };
 
         const { systemPrompt, userPrompt } = buildOutreachPrompt(messageType, context);
@@ -1352,6 +1554,36 @@ Create a compelling, specific message that references at least one concrete deta
       `;
     }
 
+    /**
+     * Render LinkedIn InMail preview showing how it appears in LinkedIn
+     * INPUT: messageBody (string with Subject: line)
+     * OUTPUT: HTML string showing preview
+     */
+    function renderInMailPreview(messageBody) {
+      const subjectMatch = messageBody.match(/^Subject:\s*(.+?)(?:\n|$)/i);
+      const subject = subjectMatch ? subjectMatch[1] : '(no subject)';
+      const body = messageBody.replace(/^Subject:\s*.+?\n/i, '').trim();
+
+      const senderInitial = AppState.selectedConnectionId ? AppState.selectedConnectionId.charAt(0).toUpperCase() : 'U';
+
+      return `
+        <div class="inmail-preview">
+          <div style="font-size: var(--text-xs); color: var(--text-tertiary); margin-bottom: var(--space-2); font-weight: 500;">LinkedIn Preview</div>
+          <div class="inmail-preview-header">
+            <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);">
+              <div class="inmail-preview-avatar">${senderInitial}</div>
+              <div>
+                <div class="inmail-preview-sender">You</div>
+                <div style="font-size: var(--text-xs); color: var(--text-tertiary);">Message</div>
+              </div>
+            </div>
+            <div style="font-weight: 600; color: var(--text-primary); word-break: break-word;">${subject}</div>
+          </div>
+          <div class="inmail-preview-message">${body.split('\n').join('<br>')}</div>
+        </div>
+      `;
+    }
+
     function renderMessageTabs() {
       const container = document.getElementById('message-tabs');
       container.innerHTML = MESSAGE_TYPES
@@ -1396,13 +1628,33 @@ Create a compelling, specific message that references at least one concrete deta
       const charCount = AppState.currentMessage.length;
       const isOverLimit = charCount > messageType.charLimit;
 
+      /* ====== FEATURE 18: InMail Character Tracking ====== */
+      let subjectCharCount = 0;
+      let bodyCharCount = 0;
+      let charCountDisplay = `${charCount} / ${messageType.charLimit} characters`;
+
+      if (messageType.id === 'inmail-linkedin' && AppState.currentMessage) {
+        const lines = AppState.currentMessage.split('\n');
+        const subjectMatch = AppState.currentMessage.match(/^Subject:\s*(.+?)(?:\n|$)/i);
+        if (subjectMatch) {
+          subjectCharCount = subjectMatch[1].length;
+          bodyCharCount = AppState.currentMessage.replace(/^Subject:\s*.+?\n/i, '').length;
+          const isSubjectOverLimit = subjectCharCount > (messageType.subjectLimit || 200);
+          const isBodyOverLimit = bodyCharCount > messageType.charLimit;
+          charCountDisplay = `Subject: ${subjectCharCount} / ${messageType.subjectLimit || 200} | Body: ${bodyCharCount} / ${messageType.charLimit}`;
+          if (isSubjectOverLimit || isBodyOverLimit) {
+            charCountDisplay = `<span style="color: var(--danger); font-weight: 600;">⚠️ ${charCountDisplay}</span>`;
+          }
+        }
+      }
+
       panel.innerHTML = `
         <div class="editor-header">
           <div>
             <h2 class="editor-title">${messageType.name}</h2>
             <div class="editor-meta">
               <span>${messageType.description}</span>
-              <span>${charCount} / ${messageType.charLimit} characters</span>
+              <span>${charCountDisplay}</span>
             </div>
           </div>
         </div>
@@ -1422,6 +1674,7 @@ Create a compelling, specific message that references at least one concrete deta
           <div class="char-count ${isOverLimit ? 'warning' : ''}">
             ${isOverLimit ? '⚠️ ' : '✓ '} ${charCount} / ${messageType.charLimit} characters
           </div>
+          ${messageType.id === 'inmail-linkedin' ? renderInMailPreview(AppState.currentMessage) : ''}
           `
               : `
           <div class="message-content empty">
@@ -2042,6 +2295,36 @@ Create a compelling, specific message that references at least one concrete deta
     // ────────────────────────────────────────────────────────
 
     function initializeApp() {
+      /* ====== FEATURE 19: Handle Navigation from Debrief Module ====== */
+      // Check if we're being launched from Debrief to draft a thank-you
+      try {
+        const navState = JSON.parse(localStorage.getItem('pf_outreach_nav_state'));
+        if (navState && navState.selectedRoleId) {
+          // Pre-select the role and message type
+          AppState.selectedMessageType = navState.selectedMessageType || 'thank-you-interview';
+
+          // Find company for this role and pre-select it
+          const roles = getRoles();
+          const targetRole = roles.find(r => r.id === navState.selectedRoleId);
+          if (targetRole) {
+            AppState.selectedCompanyId = targetRole.company || targetRole.companyId;
+            AppState.selectedRoleId = navState.selectedRoleId;
+
+            // Try to find and select the first connection for this company
+            const connections = getConnections();
+            const companyConnections = connections.filter(c => c.company === AppState.selectedCompanyId || c.companyId === AppState.selectedCompanyId);
+            if (companyConnections.length > 0) {
+              AppState.selectedConnectionId = companyConnections[0].name;
+            }
+          }
+
+          // Clear the nav state after consuming it
+          localStorage.removeItem('pf_outreach_nav_state');
+        }
+      } catch (e) {
+        console.warn('Could not parse outreach nav state');
+      }
+
       renderSidebar();
       renderMessageTabs();
       renderEditorPanel();

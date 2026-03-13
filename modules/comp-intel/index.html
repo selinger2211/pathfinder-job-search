@@ -1887,7 +1887,9 @@
           <button class="comp-tab active" data-tab="dashboard">Dashboard</button>
           <button class="comp-tab" data-tab="visualization">Visualization</button>
           <button class="comp-tab" data-tab="comparison">Comparison</button>
+          <button class="comp-tab" data-tab="positioning">Positioning</button>
           <button class="comp-tab" data-tab="aggregate">Aggregate</button>
+          <button class="comp-tab" data-tab="analytics">Analytics</button>
           <button class="comp-tab" data-tab="scorecard">Scorecard</button>
           <button class="comp-tab" data-tab="entry">Edit Comp Data</button>
           <button class="comp-tab" data-tab="benchmarks">Benchmarks</button>
@@ -1909,9 +1911,19 @@
           ${renderComparisonTable(getPipelineRoles(), getCompData(), prefs)}
         </div>
 
+        <!-- Positioning Tab: IC vs Manager, cross-company analysis -->
+        <div class="comp-tab-content" data-tab="positioning">
+          ${renderPositioningTab(role, getCompData(), getPipelineRoles(), getPipelineCompanies(), prefs)}
+        </div>
+
         <!-- Aggregate Tab: Stats -->
         <div class="comp-tab-content" data-tab="aggregate">
           ${renderAggregateStats(getPipelineRoles(), getCompData(), prefs)}
+        </div>
+
+        <!-- Analytics Tab: Funding stage, tier, trends -->
+        <div class="comp-tab-content" data-tab="analytics">
+          ${renderAnalyticsTab(getCompData(), getPipelineRoles(), getPipelineCompanies())}
         </div>
 
         <!-- Scorecard Tab: Negotiation 25-point system -->
@@ -2177,6 +2189,354 @@
           <div id="negotiationOutput" style="margin-top: var(--space-4);"></div>
         </div>
       `;
+    }
+
+    /* ====== FEATURE 32: POSITIONING INTELLIGENCE ====== */
+    /**
+     * Analyzes role positioning: IC vs Director comp, percentile within tracked roles
+     * INPUT: compData (all roles), roles (pipeline), companies (company metadata)
+     * OUTPUT: analysis object with positioning metrics
+     */
+    function analyzePositioning(compData, roles, companies) {
+      const rolesWithComp = roles.filter(r => compData[r.id]);
+
+      if (rolesWithComp.length === 0) {
+        return { isEmpty: true };
+      }
+
+      // Group roles by positioning (IC vs Manager)
+      const icRoles = [];
+      const managerRoles = [];
+
+      rolesWithComp.forEach(role => {
+        const total = (compData[role.id].baseMax || 0) +
+                     (compData[role.id].bonusTarget ? (compData[role.id].baseMax * compData[role.id].bonusTarget / 100) : 0) +
+                     (compData[role.id].signingBonus || 0);
+
+        const positioningType = role.positioning === 'ic' ? 'ic' : 'manager';
+        const entry = {
+          role,
+          data: compData[role.id],
+          total
+        };
+
+        if (positioningType === 'ic') {
+          icRoles.push(entry);
+        } else {
+          managerRoles.push(entry);
+        }
+      });
+
+      // Calculate ranges and percentiles
+      const allTotals = rolesWithComp.map(r => {
+        const d = compData[r.id];
+        return (d.baseMax || 0) + (d.bonusTarget ? (d.baseMax * d.bonusTarget / 100) : 0) + (d.signingBonus || 0);
+      }).sort((a, b) => a - b);
+
+      return {
+        isEmpty: false,
+        icRoles: icRoles.sort((a, b) => b.total - a.total),
+        managerRoles: managerRoles.sort((a, b) => b.total - a.total),
+        allTotals,
+        avgTotal: Math.round(allTotals.reduce((a, b) => a + b, 0) / allTotals.length),
+        medianTotal: allTotals[Math.floor(allTotals.length / 2)]
+      };
+    }
+
+    /**
+     * Renders positioning analysis tab
+     * Shows IC vs Manager ranges, cross-company comparison, percentile indicators
+     */
+    function renderPositioningTab(role, compData, roles, companies, prefs) {
+      const analysis = analyzePositioning(compData, roles, companies);
+
+      if (analysis.isEmpty) {
+        return `
+          <div class="empty-state">
+            <p class="empty-state-text">Need at least one role with comp data to analyze positioning.</p>
+          </div>
+        `;
+      }
+
+      const currentRoleTotal = (compData[role.id]?.baseMax || 0) +
+                              (compData[role.id]?.bonusTarget ? (compData[role.id].baseMax * compData[role.id].bonusTarget / 100) : 0) +
+                              (compData[role.id]?.signingBonus || 0);
+
+      // Calculate percentile for current role
+      const percentile = Math.round((analysis.allTotals.filter(v => v <= currentRoleTotal).length / analysis.allTotals.length) * 100);
+      const percentileLabel = percentile >= 75 ? 'Top Quartile' : percentile >= 50 ? 'Above Median' : percentile >= 25 ? 'Below Median' : 'Bottom Quartile';
+      const percentileColor = percentile >= 75 ? '#22c55e' : percentile >= 50 ? '#eab308' : percentile >= 25 ? '#f97316' : '#ef4444';
+
+      let html = `
+        <div style="padding: var(--space-4);">
+          <h3 style="font-weight: 600; margin-bottom: var(--space-4); color: var(--text-primary);">Positioning Analysis</h3>
+
+          <!-- Your Position Indicator -->
+          <div class="comp-card" style="margin-bottom: var(--space-6);">
+            <div class="comp-card-header">Your Position in Market</div>
+            <div style="display: flex; align-items: center; gap: var(--space-4); margin-top: var(--space-4);">
+              <div>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1);">Total Comp</div>
+                <div style="font-size: var(--text-2xl); font-weight: 700; color: var(--text-primary);">${formatCurrency(currentRoleTotal)}</div>
+              </div>
+              <div>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1);">Percentile</div>
+                <div style="font-size: var(--text-2xl); font-weight: 700; color: ${percentileColor};">${percentile}th</div>
+              </div>
+              <div style="flex: 1;">
+                <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-2);">${percentileLabel}</div>
+                <div style="background: var(--bg-surface); border-radius: var(--radius-sm); height: 8px; overflow: hidden;">
+                  <div style="background: ${percentileColor}; height: 100%; width: ${percentile}%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- IC vs Manager Comparison -->
+          ${analysis.icRoles.length > 0 || analysis.managerRoles.length > 0 ? `
+            <div class="comp-card" style="margin-bottom: var(--space-6);">
+              <div class="comp-card-header">IC vs Manager Comparison</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-top: var(--space-4);">
+                ${analysis.icRoles.length > 0 ? `
+                  <div>
+                    <div style="font-size: var(--text-sm); font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-2);">IC Roles (${analysis.icRoles.length})</div>
+                    ${analysis.icRoles.slice(0, 3).map(entry => `
+                      <div style="padding: var(--space-2); background: var(--bg-elevated); border-radius: var(--radius-sm); margin-bottom: var(--space-2); font-size: var(--text-xs);">
+                        <div style="font-weight: 600; color: var(--text-primary);">${entry.role.title}</div>
+                        <div style="color: var(--text-secondary);">${entry.role.company}</div>
+                        <div style="color: var(--accent); font-weight: 600; margin-top: var(--space-1);">${formatCurrency(entry.total)}</div>
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : ''}
+                ${analysis.managerRoles.length > 0 ? `
+                  <div>
+                    <div style="font-size: var(--text-sm); font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-2);">Manager/Director Roles (${analysis.managerRoles.length})</div>
+                    ${analysis.managerRoles.slice(0, 3).map(entry => `
+                      <div style="padding: var(--space-2); background: var(--bg-elevated); border-radius: var(--radius-sm); margin-bottom: var(--space-2); font-size: var(--text-xs);">
+                        <div style="font-weight: 600; color: var(--text-primary);">${entry.role.title}</div>
+                        <div style="color: var(--text-secondary);">${entry.role.company}</div>
+                        <div style="color: var(--accent); font-weight: 600; margin-top: var(--space-1);">${formatCurrency(entry.total)}</div>
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Cross-Company Comparison Table -->
+          <div class="comp-card">
+            <div class="comp-card-header">Cross-Company Comp Summary</div>
+            <div style="overflow-x: auto; margin-top: var(--space-4);">
+              <table class="comp-table">
+                <thead>
+                  <tr>
+                    <th>Company</th>
+                    <th>Role</th>
+                    <th>Level</th>
+                    <th>Base</th>
+                    <th>Total Comp</th>
+                    <th>vs Median</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${analysis.icRoles.concat(analysis.managerRoles).sort((a, b) => b.total - a.total).map(entry => {
+                    const vsMedian = Math.round((entry.total - analysis.medianTotal) / analysis.medianTotal * 100);
+                    const vsColor = vsMedian >= 0 ? '#22c55e' : '#ef4444';
+                    return `
+                      <tr>
+                        <td><strong>${entry.role.company}</strong></td>
+                        <td>${entry.role.title}</td>
+                        <td>${entry.role.positioning === 'ic' ? 'IC' : 'Manager'}</td>
+                        <td>${formatCurrency(entry.data.baseMax || 0)}</td>
+                        <td style="font-weight: 600;">${formatCurrency(entry.total)}</td>
+                        <td style="color: ${vsColor}; font-weight: 600;">${vsMedian > 0 ? '+' : ''}${vsMedian}%</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+
+      return html;
+    }
+
+    /* ====== FEATURE 33: ADVANCED ANALYTICS ====== */
+    /**
+     * Calculates comprehensive comp analytics including funding stage, company tier, historical trends
+     * INPUT: compData, companies
+     * OUTPUT: analytics object with segmented analysis
+     */
+    function calculateCompAnalytics(compData, roles, companies) {
+      const rolesWithComp = roles.filter(r => compData[r.id]);
+
+      if (rolesWithComp.length === 0) {
+        return { isEmpty: true };
+      }
+
+      const compByFundingStage = {};
+      const compByTier = {};
+      const allCompValues = [];
+
+      rolesWithComp.forEach(role => {
+        const total = (compData[role.id].baseMax || 0) +
+                     (compData[role.id].bonusTarget ? (compData[role.id].baseMax * compData[role.id].bonusTarget / 100) : 0) +
+                     (compData[role.id].signingBonus || 0);
+        allCompValues.push(total);
+
+        const company = companies[role.company] || {};
+        const fundingStage = company.fundingStage || 'unknown';
+        const tier = company.tier || 'active';
+
+        // Group by funding stage
+        if (!compByFundingStage[fundingStage]) {
+          compByFundingStage[fundingStage] = [];
+        }
+        compByFundingStage[fundingStage].push(total);
+
+        // Group by company tier
+        if (!compByTier[tier]) {
+          compByTier[tier] = [];
+        }
+        compByTier[tier].push(total);
+      });
+
+      // Calculate averages
+      const stageDatas = Object.entries(compByFundingStage).map(([stage, values]) => ({
+        stage,
+        avg: Math.round(values.reduce((a, b) => a + b, 0) / values.length),
+        count: values.length
+      }));
+
+      const tierDatas = Object.entries(compByTier).map(([tier, values]) => ({
+        tier,
+        avg: Math.round(values.reduce((a, b) => a + b, 0) / values.length),
+        count: values.length
+      }));
+
+      const avgTotal = Math.round(allCompValues.reduce((a, b) => a + b, 0) / allCompValues.length);
+      const maxComp = Math.max(...allCompValues);
+      const minComp = Math.min(...allCompValues);
+      const rolesAboveTarget = rolesWithComp.filter(r => {
+        const total = (compData[r.id].baseMax || 0) +
+                     (compData[r.id].bonusTarget ? (compData[r.id].baseMax * compData[r.id].bonusTarget / 100) : 0) +
+                     (compData[r.id].signingBonus || 0);
+        return total > avgTotal;
+      }).length;
+
+      return {
+        isEmpty: false,
+        stageDatas,
+        tierDatas,
+        avgTotal,
+        maxComp,
+        minComp,
+        maxCompRole: rolesWithComp.find(r => {
+          const d = compData[r.id];
+          const total = (d.baseMax || 0) + (d.bonusTarget ? (d.baseMax * d.bonusTarget / 100) : 0) + (d.signingBonus || 0);
+          return total === maxComp;
+        }),
+        rolesAboveTarget,
+        totalRoles: rolesWithComp.length
+      };
+    }
+
+    /**
+     * Renders advanced analytics tab
+     * Shows comp by funding stage, company tier, statistics cards
+     */
+    function renderAnalyticsTab(compData, roles, companies) {
+      const analytics = calculateCompAnalytics(compData, roles, companies);
+
+      if (analytics.isEmpty) {
+        return `
+          <div class="empty-state">
+            <p class="empty-state-text">Need comp data to generate analytics. Add compensation data to roles first.</p>
+          </div>
+        `;
+      }
+
+      const maxBar = Math.max(...analytics.stageDatas.map(d => d.avg), ...analytics.tierDatas.map(d => d.avg));
+
+      let html = `
+        <div style="padding: var(--space-4);">
+          <h3 style="font-weight: 600; margin-bottom: var(--space-4); color: var(--text-primary);">Comp Analytics</h3>
+
+          <!-- Statistics Cards -->
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-bottom: var(--space-6);">
+            <div class="comp-card">
+              <div class="comp-card-header">Average Total Comp</div>
+              <div style="font-size: var(--text-2xl); font-weight: 700; color: var(--accent); margin-top: var(--space-2);">${formatCurrency(analytics.avgTotal)}</div>
+              <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-1);">Across ${analytics.totalRoles} roles</div>
+            </div>
+
+            <div class="comp-card">
+              <div class="comp-card-header">Highest Offer</div>
+              <div style="font-size: var(--text-2xl); font-weight: 700; color: #22c55e; margin-top: var(--space-2);">${formatCurrency(analytics.maxComp)}</div>
+              <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-1);">${analytics.maxCompRole?.company || 'N/A'}</div>
+            </div>
+
+            <div class="comp-card">
+              <div class="comp-card-header">Roles Above Average</div>
+              <div style="font-size: var(--text-2xl); font-weight: 700; color: var(--accent); margin-top: var(--space-2);">${analytics.rolesAboveTarget}/${analytics.totalRoles}</div>
+              <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-1);">Above target</div>
+            </div>
+          </div>
+
+          <!-- Comp by Funding Stage -->
+          <div class="comp-card" style="margin-bottom: var(--space-6);">
+            <div class="comp-card-header">Comp by Funding Stage</div>
+            <div style="margin-top: var(--space-4);">
+              ${analytics.stageDatas.length > 0 ? analytics.stageDatas.map(data => {
+                const width = (data.avg / maxBar) * 100;
+                return `
+                  <div style="margin-bottom: var(--space-3);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-1); font-size: var(--text-sm);">
+                      <span style="font-weight: 600; color: var(--text-primary);">${data.stage.charAt(0).toUpperCase() + data.stage.slice(1)}</span>
+                      <span style="color: var(--accent); font-weight: 600;">${formatCurrency(data.avg)}</span>
+                    </div>
+                    <div style="background: var(--bg-surface); border-radius: var(--radius-sm); height: 24px; overflow: hidden;">
+                      <div style="background: var(--accent); height: 100%; width: ${width}%; display: flex; align-items: center; justify-content: flex-end; padding-right: var(--space-2); color: white; font-size: var(--text-xs); font-weight: 600;">
+                        ${data.count}
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('') : '<p style="color: var(--text-secondary); font-size: var(--text-sm);">No funding stage data</p>'}
+            </div>
+          </div>
+
+          <!-- Comp by Company Tier -->
+          <div class="comp-card">
+            <div class="comp-card-header">Comp by Company Tier</div>
+            <div style="margin-top: var(--space-4);">
+              ${analytics.tierDatas.length > 0 ? analytics.tierDatas.map(data => {
+                const width = (data.avg / maxBar) * 100;
+                const tierLabel = data.tier === 'hot' ? '🔥 Hot' : data.tier === 'active' ? '💼 Active' : '👀 Watching';
+                return `
+                  <div style="margin-bottom: var(--space-3);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-1); font-size: var(--text-sm);">
+                      <span style="font-weight: 600; color: var(--text-primary);">${tierLabel}</span>
+                      <span style="color: var(--accent); font-weight: 600;">${formatCurrency(data.avg)}</span>
+                    </div>
+                    <div style="background: var(--bg-surface); border-radius: var(--radius-sm); height: 24px; overflow: hidden;">
+                      <div style="background: var(--accent); height: 100%; width: ${width}%; display: flex; align-items: center; justify-content: flex-end; padding-right: var(--space-2); color: white; font-size: var(--text-xs); font-weight: 600;">
+                        ${data.count}
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('') : '<p style="color: var(--text-secondary); font-size: var(--text-sm);">No tier data</p>'}
+            </div>
+          </div>
+        </div>
+      `;
+
+      return html;
     }
 
     /**

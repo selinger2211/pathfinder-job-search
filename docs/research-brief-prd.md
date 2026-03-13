@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/research-brief/`
-**Version:** v2.2.0 (browser-first architecture)
+**Version:** v3.13
 **Last Updated:** 2026-03-13
-**Status:** Browser-first implementation complete; planned features documented as "Status: Planned"
+**Status:** Active — v3.13.0 features live
 
 ---
 
@@ -682,7 +682,7 @@ Each section is cached as an artifact in the MCP server (type: `research_brief`,
 
 ### Automatic Invalidation Triggers
 
-> **Status: Planned** — Not yet implemented. Future enhancement to detect stale cache and invalidate sections intelligently.
+> **Status: Implemented (v3.13.0)** — Checks pf_brief_invalidation on load, displays banner for stale sections, provides "Regenerate Stale Sections" button.
 
 The system will monitor for data changes and invalidate cached sections:
 
@@ -779,10 +779,13 @@ Previous versions will never be overwritten — each generation creates a new ar
 **Shipped:**
 - **PDF** — auto-generated and stored in IndexedDB; attached to pipeline role
 
-**Status: Planned:**
+**Status: Implemented (v3.13.0):**
 - **HTML export** — Standalone file with embedded CSS, all sections, citations, and source links
+- **Markdown export** — For pasting into notes apps or sharing with mentors
+- **Export dropdown menu** — Quick access to all export formats
+
+**Status: Planned:**
 - **Print** — Browser print dialog with print-optimized CSS (no sidebars, clean headers)
-- **Markdown** — For pasting into notes apps or sharing with mentors
 
 ---
 

@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/job-feed-listener/`
-**Version:** v1.1.0
-**Last Updated:** 2026-03-10
-**Status:** Draft — pending approval
+**Version:** v3.13
+**Last Updated:** 2026-03-13
+**Status:** Active — v3.13.0 features live
 
 ---
 
@@ -292,7 +292,7 @@ All three platforms expose their full job posting data via free public APIs, mak
 
 ### 5.3 Stage 3: Deduplicate
 
-> **Status: Planned** — Automatic dedup vs. pipeline is planned for Phase 3. Currently, manual dedup review occurs at feed card level.
+> **Status: Implemented (v3.13.0)** — Exact + fuzzy matching. "In Pipeline" and "Possible Duplicate" badges.
 
 Before scoring, check for duplicates against the existing pipeline:
 

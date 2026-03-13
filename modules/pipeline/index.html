@@ -790,6 +790,45 @@
     }
 
     /* ================================================================
+       FEATURE 26: INTERVIEW & OFFER SUBSTAGES
+       Fine-grained stage tracking for interviewing and offer stages
+       ================================================================ */
+
+    .substage-group {
+      display: flex;
+      gap: var(--space-2);
+      align-items: flex-end;
+    }
+
+    .substage-group .form-group {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    .substage-pill {
+      display: inline-block;
+      background: var(--accent-subtle);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: var(--space-1);
+    }
+
+    .substage-badge {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      padding: 1px 6px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ================================================================
        MODAL DIALOG STYLES
        The "Add New Role" popup form appears when user clicks "New Role".
        ================================================================ */
@@ -2261,18 +2300,29 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Current Stage</label>
-          <select id="form-stage" class="form-select" aria-label="What stage is this job search in: Discovered, Researching, Outreach, Applied, Screen, Interviewing, Offer, or Closed">
-            <option value="discovered">Discovered</option>
-            <option value="researching">Researching</option>
-            <option value="outreach">Outreach</option>
-            <option value="applied">Applied</option>
-            <option value="screen">Screen</option>
-            <option value="interviewing">Interviewing</option>
-            <option value="offer">Offer</option>
-            <option value="closed">Closed</option>
-          </select>
+        <!-- FEATURE 26: Stage and Substage selectors -->
+        <div class="substage-group">
+          <div class="form-group">
+            <label class="form-label">Current Stage</label>
+            <select id="form-stage" class="form-select" aria-label="What stage is this job search in: Discovered, Researching, Outreach, Applied, Screen, Interviewing, Offer, or Closed">
+              <option value="discovered">Discovered</option>
+              <option value="researching">Researching</option>
+              <option value="outreach">Outreach</option>
+              <option value="applied">Applied</option>
+              <option value="screen">Screen</option>
+              <option value="interviewing">Interviewing</option>
+              <option value="offer">Offer</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+
+          <!-- Substage dropdown: appears only for interviewing or offer stages -->
+          <div class="form-group" id="substage-group" style="display: none;">
+            <label class="form-label">Substage</label>
+            <select id="form-substage" class="form-select" aria-label="Fine-grained substage within interviewing or offer">
+              <option value="">— None —</option>
+            </select>
+          </div>
         </div>
 
         <!-- Inbound Outreach: captures who reached out and how -->
@@ -3394,6 +3444,49 @@
       localStorage.setItem('pf_companies', JSON.stringify(companies));
     }
 
+    // ================================================================
+    // FEATURE 26: INTERVIEW & OFFER SUBSTAGES
+    // ================================================================
+
+    /**
+     * Get available substages for a given main stage
+     * INPUT: stage (string, e.g., 'interviewing', 'offer')
+     * OUTPUT: array of substage strings, or empty array if stage has no substages
+     */
+    function getSubstages(stage) {
+      const substages = {
+        interviewing: ['Phone Screen', 'Technical', 'Onsite', 'Final Round', 'Team Match'],
+        offer: ['Verbal Offer', 'Written Offer', 'Negotiating', 'Accepted', 'Declined']
+      };
+      return substages[stage] || [];
+    }
+
+    /**
+     * Update substage dropdown options when stage changes
+     * Shows substage selector only for interviewing and offer stages
+     */
+    function updateSubstageDropdown() {
+      const stageSelect = document.getElementById('form-stage');
+      const substageGroup = document.getElementById('substage-group');
+      const substageSelect = document.getElementById('form-substage');
+
+      if (!stageSelect || !substageGroup || !substageSelect) return;
+
+      const currentStage = stageSelect.value;
+      const substages = getSubstages(currentStage);
+
+      if (substages.length > 0) {
+        // Show substage dropdown and populate options
+        substageGroup.style.display = 'flex';
+        substageSelect.innerHTML = '<option value="">— None —</option>' +
+          substages.map(s => `<option value="${s.toLowerCase()}">${s}</option>`).join('');
+      } else {
+        // Hide substage dropdown for other stages
+        substageGroup.style.display = 'none';
+        substageSelect.value = '';
+      }
+    }
+
     /**
      * Saves an updated list of jobs to browser memory
      * INPUT: roles = array of job/role objects
@@ -4140,6 +4233,14 @@
     });
 
     /* ================================================================
+       FEATURE 26: Update substage dropdown when stage changes
+       ================================================================ */
+    const formStage = document.getElementById('form-stage');
+    if (formStage) {
+      formStage.addEventListener('change', updateSubstageDropdown);
+    }
+
+    /* ================================================================
        URL IMPORT: Fetch and parse job postings from external URLs
        ================================================================ */
 
@@ -4426,6 +4527,7 @@
       const positioning = document.getElementById('form-positioning').value;
       const tier = document.getElementById('form-tier').value;
       const stage = document.getElementById('form-stage').value;
+      const substage = document.getElementById('form-substage')?.value || ''; // Feature 26: Optional substage
       const jdText = document.getElementById('form-jd').value.trim();
 
       // Contact / inbound outreach fields (optional)
@@ -4457,6 +4559,7 @@
         positioning,
         tier,
         stage: effectiveStage,
+        substage: substage || null, // Feature 26: Optional fine-grained substage
         // Outreach tracking fields (PRD v1.3.8 — opaque recruiter outreach)
         recruiterSource: contactName ? contactSource : '',
         knownContext: contactContext ? [{
@@ -4504,6 +4607,8 @@
       document.getElementById('form-positioning').value = 'ic';
       document.getElementById('form-tier').value = 'active';
       document.getElementById('form-stage').value = 'discovered';
+      document.getElementById('form-substage').value = ''; // Feature 26: Reset substage
+      updateSubstageDropdown(); // Feature 26: Update substage dropdown visibility
       document.getElementById('form-jd').value = '';
       document.getElementById('form-contact-name').value = '';
       document.getElementById('form-contact-title').value = '';

@@ -271,11 +271,66 @@ Object with boolean flags per nudge rule:
 
 **Purpose:** Track nudge dismissals so they don't immediately resurface. After reEligibleAt passes, nudge can fire again.
 
+### pf_brief_invalidation — BriefInvalidation (v3.13.0)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| roleId | string | yes | Role whose brief is stale |
+| invalidatedSections | number[] | yes | Section numbers (0-13) that need regeneration |
+| reason | string | yes | "debrief_completed" / "jd_updated" / "positioning_changed" / "manual" |
+| timestamp | string | yes | ISO timestamp when invalidation fired |
+
+**Purpose:** Signal from Debrief Agent to Research Brief that cached sections are stale and need regeneration. Brief checks this on load and displays "Regenerate Stale Sections" button.
+
+### pf_feed_snoozed — FeedSnoozed[] (v3.13.0)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| feedItemId | string | yes | ID of snoozed feed item |
+| snoozedAt | string | yes | ISO timestamp |
+| reAppearAt | string | yes | ISO timestamp when item resurfaces (typically 7 days later) |
+
+**Purpose:** Track snoozed job feed items (via Feed Review "Snooze" button) so they don't clutter the review queue until the snooze period expires.
+
+### pf_feed_dismissed — FeedDismissed[] (v3.13.0)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| feedItemId | string | yes | ID of dismissed feed item |
+| dismissedAt | string | yes | ISO timestamp |
+| reason | string | no | "not_interested" / "duplicate" / "wrong_level" / etc. |
+
+**Purpose:** Track permanently dismissed feed items so they don't reappear in future feed runs.
+
+### pf_mock_calibrated_questions — CalbratedQuestions (v3.13.0)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| roleId | string | yes | Target role ID |
+| interviewType | string | yes | "behavioral" / "product_strategy" / "design" / etc. |
+| questions | Question[] | yes | Array of JD-calibrated questions |
+| generatedAt | string | yes | ISO timestamp |
+| expiresAt | string | yes | ISO timestamp (1 week TTL) |
+
+**Purpose:** Cache JD-calibrated questions per role+type so they're reusable across multiple mock sessions without regenerating via Claude every time.
+
+### pf_outreach_nav_state — OutreachNavState (v3.13.0)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| selectedTab | string | yes | "compose" / "history" / "drafts" |
+| selectedRoleId | string | no | Currently selected role (if in compose tab) |
+| selectedMessageType | string | no | Currently selected message type (if in compose) |
+| draftId | string | no | Current draft ID being edited |
+| lastVisitedAt | string | yes | ISO timestamp for UX continuity |
+
+**Purpose:** Preserve Outreach module navigation state across page reloads so users don't lose context when switching modules and returning.
+
 ---
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.12.0
+**Current Version:** v3.13.0
 **Last Updated:** 2026-03-13
 
 ### Implementation Status
@@ -300,6 +355,22 @@ Object with boolean flags per nudge rule:
 - JD enrichment: roles without LinkedIn URLs or ATS links rely on DuckDuckGo web search fallback — coverage is good but not 100%
 - CORS proxy 1 (allorigins.win) tends to timeout; proxy 2 (corsproxy.io) works reliably as fallback
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.13.0)
+- **Dashboard Feed Review Section**: Top 5 unreviewed feed items with Accept/Snooze/Dismiss buttons.
+- **Outreach Thank You (Interview)**: New message type pulling debrief data for personalized thank-yous per interviewer.
+- **Outreach InMail**: LinkedIn InMail with 200/1900 character limits, preview mode, shared connections display.
+- **Debrief Next Steps Panel**: "Refresh Research Brief" + "Draft Thank-You" action cards, writes `pf_brief_invalidation` signal, updates `role.lastDebriefAt`.
+- **Research Brief Auto Cache Invalidation**: Checks `pf_brief_invalidation` on load, displays stale section banners, "Regenerate Stale Sections" button.
+- **Research Brief Export Formats**: HTML and Markdown export alongside PDF, dropdown menu.
+- **Calendar Confidence Scoring Algorithm**: 0-100 score with auto-match at 70+, suggestion buttons 40-69.
+- **Calendar Interviewer Linking**: Match attendees to connections/LinkedIn network, seniority badges.
+- **Job Feed Automatic Dedup**: Exact + fuzzy matching vs pipeline, "In Pipeline" and "Possible Duplicate" badges.
+- **Pipeline Interview & Offer Substages**: Phone Screen/Technical/Onsite/Final Round/Team Match for interviews; Verbal/Written/Negotiating/Accepted/Declined for offers.
+- **Mock Interview Intelligence & Calibration**: JD-calibrated questions cached per role+type, post-session summary, analytics tab.
+- **Comp Intelligence Positioning Intelligence**: IC vs Director comparison, cross-company table, percentile position.
+- **Comp Intelligence Advanced Analytics**: Comp by funding stage chart, comp by tier chart, stats cards.
+- **Resume Builder Feedback Loops**: Keyword gap analysis, Claude-generated bullet suggestions, "Add to Bullet Bank" buttons.
 
 ### Recently Fixed (v3.12.0)
 - **Dashboard Conversion Funnel**: Stage-to-stage conversion rates bar chart after 10+ closed roles.

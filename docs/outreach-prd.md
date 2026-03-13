@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/outreach/`
-**Version:** v1.0.0
-**Last Updated:** 2026-03-10
-**Status:** Draft — pending approval
+**Version:** v3.13
+**Last Updated:** 2026-03-13
+**Status:** Active — v3.13.0 features live
 
 ---
 
@@ -324,7 +324,7 @@ Best,
 
 #### 3.3.5 InMail (3-5 sentences)
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.13.0)** — LinkedIn InMail with 200/1900 character limits, preview mode, and shared connections display.
 
 **Purpose:** LinkedIn InMail to someone you haven't reached out to yet.
 
@@ -415,7 +415,7 @@ Best,
 
 **Constraints:** Pull specific details from the Debrief Agent's notes for this interview. Don't be generic.
 
-> **Status: Planned** — Debrief integration not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.13.0)** — Debrief integration active. Pulls interview context and generates personalized thank-yous.
 
 #### 3.3.8 Recruiter Response (3-5 sentences)
 

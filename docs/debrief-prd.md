@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/debrief/`
-**Version:** v1.0.0
-**Last Updated:** 2026-03-10
-**Status:** Draft — pending approval
+**Version:** v3.13
+**Last Updated:** 2026-03-13
+**Status:** Active — v3.13.0 features live
 
 ---
 
@@ -746,7 +746,7 @@ When an interview ends (detected via Calendar), user receives a notification:
 
 ### Phase 2: Research Brief & Outreach Integration (Week 3–4)
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.13.0)** — Next Steps Panel shows "Refresh Research Brief" + "Draft Thank-You" action cards. Writes pf_brief_invalidation signal. Updates role.lastDebriefAt.
 
 **MCP Tools:**
 - Enhanced `pf_finalize_debrief` — Trigger research brief refresh

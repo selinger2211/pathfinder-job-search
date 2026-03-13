@@ -4656,6 +4656,25 @@
               </div>
             </div>
 
+            <!-- FEATURE 24: Dedup badge (In Pipeline or Possible Duplicate) -->
+            ${(() => {
+              const { roles } = loadData();
+              const dedupResult = checkPipelineDedup(item, roles);
+
+              if (dedupResult.matchType === 'exact') {
+                return `<div class="dedup-warning" style="margin: var(--space-2) 0 0;">
+                  <div class="dedup-warning-title">✓ In Pipeline</div>
+                  <div class="dedup-warning-text">This role already exists in your pipeline at stage: <strong>${dedupResult.matchedRole.stage}</strong></div>
+                </div>`;
+              } else if (dedupResult.matchType === 'fuzzy') {
+                return `<div class="dedup-warning" style="margin: var(--space-2) 0 0; border-left-color: var(--warning);">
+                  <div class="dedup-warning-title">⚠️ Possible Duplicate</div>
+                  <div class="dedup-warning-text">Might match: <strong>${dedupResult.matchedRole.title}</strong> (stage: ${dedupResult.matchedRole.stage})</div>
+                </div>`;
+              }
+              return '';
+            })()}
+
             <!-- JD quality indicator + one-click enrich button + view full JD button (Bug #4) -->
             <div style="display: flex; align-items: center; gap: 6px; margin: var(--space-2) 0 0; flex-wrap: wrap;">
               ${(() => {
@@ -4918,6 +4937,67 @@
       `).join('');
     }
 
+    // ================================================================
+    // FEATURE 24: AUTOMATIC DEDUP VS PIPELINE
+    // ================================================================
+
+    /**
+     * Check if a feed item matches an existing pipeline role
+     * Returns { isDuplicate, matchType, matchedRole }
+     * matchType: "exact" (same company + title) or "fuzzy" (same company + similar title)
+     * INPUT: feedItem (from pf_feed_queue), pipelineRoles (from pf_roles)
+     * OUTPUT: {isDuplicate: bool, matchType: string|null, matchedRole: object|null}
+     */
+    function checkPipelineDedup(feedItem, pipelineRoles) {
+      if (!feedItem || !pipelineRoles || pipelineRoles.length === 0) {
+        return { isDuplicate: false, matchType: null, matchedRole: null };
+      }
+
+      const feedCompany = (feedItem.company || '').toLowerCase().trim();
+      const feedTitle = (feedItem.title || '').toLowerCase().trim();
+
+      // Check exact match: same company + same title
+      for (const role of pipelineRoles) {
+        const roleCompany = (role.company || '').toLowerCase().trim();
+        const roleTitle = (role.title || '').toLowerCase().trim();
+
+        if (feedCompany === roleCompany && feedTitle === roleTitle) {
+          return { isDuplicate: true, matchType: 'exact', matchedRole: role };
+        }
+      }
+
+      // Check fuzzy match: same company + similar title (Levenshtein/keyword overlap)
+      // Normalize titles: remove Senior/Staff/Lead prefixes, lowercase, split to words
+      const normalizeTitleForFuzzy = (title) => {
+        return title
+          .toLowerCase()
+          .replace(/\b(senior|staff|lead|principal|junior|jr|sr|v\.p|vp|vice president)\b/g, '')
+          .trim()
+          .split(/\s+/)
+          .filter(w => w.length > 0);
+      };
+
+      const feedWords = new Set(normalizeTitleForFuzzy(feedTitle));
+      for (const role of pipelineRoles) {
+        const roleCompany = (role.company || '').toLowerCase().trim();
+        if (feedCompany !== roleCompany) continue; // Must be same company
+
+        const roleWords = new Set(normalizeTitleForFuzzy(role.title));
+        if (feedWords.size === 0 || roleWords.size === 0) continue;
+
+        // Calculate word overlap percentage
+        const intersection = new Set([...feedWords].filter(w => roleWords.has(w)));
+        const overlap = intersection.size / Math.max(feedWords.size, roleWords.size);
+
+        // Fuzzy match if >=60% word overlap
+        if (overlap >= 0.6) {
+          return { isDuplicate: true, matchType: 'fuzzy', matchedRole: role };
+        }
+      }
+
+      return { isDuplicate: false, matchType: null, matchedRole: null };
+    }
+
     // ============================================================
     // ROLE ACTION HANDLERS
     // ============================================================
@@ -4929,6 +5009,29 @@
     function acceptRole(roleId) {
       const role = state.feedItems.find(r => r.id === roleId);
       if (!role) return;
+
+      // ====== FEATURE 24: DEDUP CHECK ======
+      // Check if this role looks like a duplicate of an existing pipeline role
+      const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+      const dedupResult = checkPipelineDedup(role, roles);
+
+      if (dedupResult.matchType === 'exact') {
+        const proceed = confirm(
+          `This looks like a duplicate!\n\n` +
+          `Feed: ${role.title} at ${role.company}\n` +
+          `Pipeline: ${dedupResult.matchedRole.title} (stage: ${dedupResult.matchedRole.stage})\n\n` +
+          `Add to pipeline anyway?`
+        );
+        if (!proceed) return;
+      } else if (dedupResult.matchType === 'fuzzy') {
+        const proceed = confirm(
+          `Possible Duplicate\n\n` +
+          `Feed: ${role.title} at ${role.company}\n` +
+          `Pipeline: ${dedupResult.matchedRole.title} (stage: ${dedupResult.matchedRole.stage})\n\n` +
+          `These might be the same role. Add anyway?`
+        );
+        if (!proceed) return;
+      }
 
       // ====== SALARY GATE ======
       // If the role has a listed salary that's below the user's minimum,

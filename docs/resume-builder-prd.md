@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/resume-tailor/`
-**Version:** v1.0.0
-**Last Updated:** 2026-03-10
-**Status:** Draft — pending approval
+**Version:** v3.13
+**Last Updated:** 2026-03-13
+**Status:** Active — v3.13.0 features live
 
 ---
 
@@ -484,12 +484,12 @@ What exists today:
 
 ### Phase 3: Feedback Loops & Intelligence (v2.1+)
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.13.0)** — Keyword gap analysis with frequency. Claude-generated bullet suggestions. "Add to Bullet Bank" buttons.
 
-- [ ] Keyword gap analysis post-generation
-- [ ] Suggested Bullets section in Bullet Bank tab
-- [ ] Research Brief → Resume Builder automatic data flow
-- [ ] Resume Builder → Pipeline fit assessment writeback
+- [x] Keyword gap analysis post-generation
+- [x] Suggested Bullets section in Bullet Bank tab
+- [x] Research Brief → Resume Builder automatic data flow
+- [x] Resume Builder → Pipeline fit assessment writeback
 - [ ] Cover letter generation
 - [ ] Bulk generation (generate resumes for all active roles in one click)
 

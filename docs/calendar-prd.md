@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/calendar/`
-**Version:** v1.1.0
-**Last Updated:** 2026-03-10
-**Status:** Draft — pending approval
+**Version:** v3.13
+**Last Updated:** 2026-03-13
+**Status:** Active — v3.13.0 features live
 
 ---
 
@@ -230,7 +230,7 @@ The agent scans Google Calendar events and classifies them using a weighted sign
 
 ### Classification Algorithm
 
-> **Status: Planned** — Confidence scoring with these thresholds not yet fully implemented. Spec retained for future development.
+> **Status: Implemented (v3.13.0)** — Confidence scoring with auto-match at 70+, suggestion buttons 40-69. JD-calibrated questions cached per role+type.
 
 1. **Parse event:** Extract title, description, attendee list, duration, start time
 2. **Company lookup:** Check if any attendee domain matches a company in pipeline
@@ -498,7 +498,7 @@ Nudges display in a chronological queue on the right sidebar of Dashboard:
 
 ### 8.3 Interviewer Linking
 
-> **Status: Planned** — Interviewer-connection linking and Research Brief auto-population not yet fully implemented. Spec retained for future development.
+> **Status: Implemented (v3.13.0)** — Match attendees to connections/LinkedIn network. Interviewer cards with seniority badges.
 
 **Research Brief Section 8 — Interviewer Insights**
 
