@@ -4,6 +4,42 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.19.1 — 2026-03-13
+
+### Feed: Scoring Transparency & Accuracy Overhaul
+
+**Scoring re-calculation after JD enrichment**
+- Scores now re-calculate immediately after single or batch JD enrichment
+- Previously scores were stale — calculated on stub JDs and never updated
+- Feed re-sorts by updated scores after enrichment completes
+
+**JD confidence label fix**
+- Renamed misleading "X% match" next to Full JD badge to "JD confidence: X%"
+- Added tooltip explaining this is enrichment confidence, not a role match score
+- Fixed same label in JD detail panel ("Match: X%" → "JD Confidence: X%")
+
+**Remote location scoring fix**
+- Now detects remote eligibility from 3 signals: `role.remote` flag, location string containing "remote", and JD text mentioning remote/WFH
+- Zillow (and similar roles) no longer penalized with Location 0 when they're clearly remote
+- Same fix applied to quick-check filter for consistency
+
+**Score breakdown layout upgrade**
+- Replaced wrapping inline text chips with a clean 7-column mini-grid
+- Labels on top, color-coded values below, consistent alignment across all cards
+- Added "⚠ Scored on stub JD — enrich for accuracy" warning for stub-JD items
+- Leader/IC badge moved to dedicated meta row below the grid
+- Hover tooltips show dimension name, score, and weight
+
+### Research Brief: Generation Error Fix
+
+**Fixed "Cannot set properties of null (setting 'textContent')" crash**
+- Root cause: `updateGenerationProgress()` used `textContent` on a parent div, which destroyed child `<span>` elements. Parallel section generation then crashed when trying to find those destroyed spans.
+- Fix: Use `innerHTML` to preserve span structure, with null guards on all element lookups
+- Added null guard to `updateProgress()` as defensive safety net
+- All batch-1 sections (1-8) now generate successfully in parallel
+
+---
+
 ## v3.19.0 — 2026-03-13
 
 ### Resume Builder: Complete Rewrite

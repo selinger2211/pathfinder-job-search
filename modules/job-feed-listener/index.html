@@ -926,38 +926,64 @@
       background: var(--danger);
     }
 
-    /* Score breakdown — visible inline below the score bar */
+    /* v3.19.1: Score breakdown as a clean 7-column mini-grid instead of
+       wrapping inline text. Each dimension gets a fixed column with the
+       label on top and the color-coded value below. */
     .score-breakdown {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 2px 6px;
-      margin-top: var(--space-1);
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      margin-top: var(--space-2);
       font-size: 10px;
       font-family: var(--font-mono);
       color: var(--text-tertiary);
-      line-height: 1.4;
     }
 
-    /* Individual score dimension chip */
+    /* Individual score dimension cell */
     .score-dim {
-      display: inline-flex;
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 2px;
+      gap: 1px;
+      padding: 3px 2px;
+      border-radius: 3px;
+      background: var(--bg-base);
     }
 
     /* Dimension label */
     .score-dim-label {
       opacity: 0.7;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
     /* Dimension value — color-coded by score quality */
     .score-dim-val {
-      font-weight: 600;
+      font-weight: 700;
+      font-size: 12px;
     }
 
     .score-dim-val.high { color: var(--success); }     /* 70+ */
     .score-dim-val.medium { color: var(--warning); }    /* 40-69 */
     .score-dim-val.low { color: var(--danger); }        /* 0-39 */
+
+    /* Stub JD warning + leader/IC badge row below the grid */
+    .score-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: var(--space-1);
+      font-size: 9px;
+    }
+    .stub-jd-warning {
+      color: var(--warning);
+      font-style: italic;
+    }
+    .leader-ic-badge {
+      color: var(--primary);
+      font-weight: 600;
+    }
 
     /* Location and details */
     .card-details {
@@ -3670,8 +3696,21 @@
       try {
         const jd = await enrichRoleJD(role);
         if (jd) {
-          showToast(`✅ JD enriched: ${role.title} at ${role.company}`, 'success');
-          renderFeedCards(); // Re-render to show updated JD
+          // v3.19.1: Re-score this role now that we have the full JD.
+          // Previously we only re-rendered without re-scoring, meaning
+          // scores calculated on stub JDs stayed stale even after enrichment.
+          const scoring = scoreRole(role, state.preferences);
+          if (scoring) {
+            role.score = scoring.score;
+            role.scoring = scoring.breakdown;
+          }
+          // Re-sort all items by updated scores
+          state.feedItems.sort((a, b) => b.score - a.score);
+          // Save updated scores to localStorage
+          localStorage.setItem('pf_feed_queue', JSON.stringify(state.feedItems));
+
+          showToast(`✅ JD enriched + re-scored: ${role.title} at ${role.company} (${scoring ? scoring.score : '?'}/100)`, 'success');
+          renderFeedCards(); // Re-render with updated JD and scores
           updateEnrichmentStatus();
         } else {
           showToast(`No JD found for ${role.title} at ${role.company}`, 'warning');
@@ -3753,7 +3792,16 @@
         }
       }
 
-      showToast(`JD enrichment complete: ${enriched} enriched, ${failed} failed`, enriched > 0 ? 'success' : 'warning');
+      // v3.19.1: Re-score ALL feed items after batch enrichment.
+      // Many items may now have full JDs, which dramatically changes keyword/domain/title scores.
+      state.feedItems = state.feedItems.map(role => {
+        const scoring = scoreRole(role, state.preferences);
+        if (!scoring) return role;
+        return { ...role, score: scoring.score, scoring: scoring.breakdown };
+      }).sort((a, b) => b.score - a.score);
+      localStorage.setItem('pf_feed_queue', JSON.stringify(state.feedItems));
+
+      showToast(`JD enrichment complete: ${enriched} enriched, ${failed} failed — all scores re-calculated`, enriched > 0 ? 'success' : 'warning');
       renderFeedCards();
       updateEnrichmentStatus();
       if (enrichAllBtn) enrichAllBtn.disabled = false;
@@ -4216,13 +4264,19 @@
       });
 
       // Check 3: Location OK?
+      // v3.19.1: Also detect remote from location string and JD text
       const prefsLocations = prefs.locations || [];
       const excludedLocations = prefs.excludedLocations || [];
       const inExcludedLocation = excludedLocations.some(loc =>
         role.location ? role.location.toLowerCase().includes(loc.toLowerCase()) : false
       );
+      const qcRoleLocation = (role.location || '').toLowerCase();
+      const qcJdText = (role.jd || '').toLowerCase();
+      const qcIsRemote = role.remote ||
+        qcRoleLocation.includes('remote') ||
+        /\b(remote|work from home|wfh|fully remote|remote-first)\b/i.test(qcJdText);
       const locationOK = !inExcludedLocation && (
-        (prefsLocations.includes('Remote') && role.remote) ||
+        (prefsLocations.includes('Remote') && qcIsRemote) ||
         (role.location && prefsLocations.some(loc =>
           role.location.toLowerCase().includes(loc.toLowerCase())
         ))
@@ -4715,7 +4769,7 @@
         metaHTML += `<span class="jd-panel-meta-badge">From: ${item.jdEnrichSource}</span>`;
       }
       if (item.jdEnrichConfidence) {
-        metaHTML += `<span class="jd-panel-meta-badge">Match: ${item.jdEnrichConfidence}%</span>`;
+        metaHTML += `<span class="jd-panel-meta-badge">JD Confidence: ${item.jdEnrichConfidence}%</span>`;
       }
 
       // Render JD text with basic HTML formatting (wrap paragraphs)
@@ -4890,14 +4944,25 @@
         roleLocation.includes(loc.toLowerCase())
       );
 
+      // v3.19.1: Detect remote eligibility from multiple signals, not just the
+      // role.remote flag. Many jobs are listed as remote but the flag isn't set
+      // in the feed data. We check: (1) role.remote boolean, (2) location field
+      // contains "remote", (3) JD mentions "remote" or "work from home".
+      const isRemoteRole = role.remote ||
+        roleLocation.includes('remote') ||
+        (hasFullJD && /\b(remote|work from home|wfh|fully remote|remote-first)\b/i.test(jdText));
+
       if (inExcludedLocation) {
         locationScore = 0;
-      } else if (prefsLocations.includes('Remote') && role.remote) {
+      } else if (prefsLocations.includes('Remote') && isRemoteRole) {
         locationScore = 100;
       } else if (roleLocation && prefsLocations.some(loc =>
         roleLocation.includes(loc.toLowerCase())
       )) {
         locationScore = 100;
+      } else if (isRemoteRole) {
+        // Role is remote but user didn't list Remote as a preference — partial credit
+        locationScore = 50;
       } else {
         locationScore = 0;
       }
@@ -5535,26 +5600,25 @@
               </div>
               <div class="score-breakdown">
                 ${(() => {
-                  // Build color-coded score dimension chips
+                  // v3.19.1: Clean 7-column grid with label on top, value below
                   const dims = [
                     { label: 'Title', val: item.scoring.title, weight: 20 },
                     { label: 'Domain', val: item.scoring.domain, weight: 20 },
-                    { label: 'Keywords', val: item.scoring.keywords, weight: 15 },
-                    { label: 'Location', val: item.scoring.location, weight: 15 },
-                    { label: 'Network', val: item.scoring.network || 0, weight: 15 },
+                    { label: 'Keys', val: item.scoring.keywords, weight: 15 },
+                    { label: 'Loc', val: item.scoring.location, weight: 15 },
+                    { label: 'Net', val: item.scoring.network || 0, weight: 15 },
                     { label: 'Stage', val: item.scoring.stage, weight: 10 },
                     { label: 'Comp', val: item.scoring.comp || 0, weight: 5 },
                   ];
-                  let html = dims.map(d => {
+                  return dims.map(d => {
                     const tier = d.val >= 70 ? 'high' : d.val >= 40 ? 'medium' : 'low';
-                    return `<span class="score-dim"><span class="score-dim-label">${d.label}</span> <span class="score-dim-val ${tier}">${d.val}</span></span>`;
+                    return `<span class="score-dim" title="${d.label}: ${d.val}/100 (${d.weight}% weight)"><span class="score-dim-label">${d.label}</span><span class="score-dim-val ${tier}">${d.val}</span></span>`;
                   }).join('');
-                  // Show leader/IC badge if detected
-                  if (item.scoring.leaderIC) {
-                    html += `<span class="score-dim"><span class="score-dim-label" style="color: var(--primary); font-weight: 600;">${item.scoring.leaderIC}</span></span>`;
-                  }
-                  return html;
                 })()}
+              </div>
+              <div class="score-meta-row">
+                ${item.hasFullJD === false ? '<span class="stub-jd-warning">⚠ Scored on stub JD — enrich for accuracy</span>' : '<span></span>'}
+                ${item.scoring.leaderIC ? `<span class="leader-ic-badge">${item.scoring.leaderIC}</span>` : ''}
               </div>
             </div>
 
@@ -5581,7 +5645,7 @@
                     + `<button class="enrich-btn" onclick="event.stopPropagation(); enrichSingleRole('${item.id}')" title="Fetch full JD from source">⚡ Enrich</button>`;
                 } else {
                   return `<span class="jd-badge jd-full">✓ Full JD</span>`
-                    + (item.jdEnrichConfidence ? `<span style="font-size: 10px; color: var(--text-tertiary);">${item.jdEnrichConfidence}% match</span>` : '')
+                    + (item.jdEnrichConfidence ? `<span style="font-size: 10px; color: var(--text-tertiary);" title="How confident we are this is the correct JD (not a match score)">JD confidence: ${item.jdEnrichConfidence}%</span>` : '')
                     + `<button class="enrich-btn" style="margin-left: auto;" onclick="event.stopPropagation(); openJDPanel('${item.id}', ${JSON.stringify(item).replace(/"/g, '&quot;')})" title="View full job description">📖 View JD</button>`;
                 }
               })()}
@@ -7536,7 +7600,8 @@
           return {
             ...role,
             score: scoring.score,
-            scoring: scoring.breakdown
+            scoring: scoring.breakdown,
+            hasFullJD: scoring.hasFullJD  // v3.19.1: Track JD quality for UI display
           };
         })
         .filter(item => item !== null)

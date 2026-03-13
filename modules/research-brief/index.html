@@ -5797,6 +5797,7 @@ The HTML content should come first, followed by the citations block. Do not incl
      */
     function updateProgress(completed, total) {
       const progressEl = document.getElementById('tocProgress');
+      if (!progressEl) return; // Guard against missing DOM element
       if (completed != null && total != null) {
         progressEl.textContent = `${completed}/${total} sections complete`;
       } else {
@@ -6109,14 +6110,23 @@ The HTML content should come first, followed by the citations block. Do not incl
         etaText = ` (~${estimatedRemainSec}s remaining)`;
       }
 
-      // FEATURE #52: Update progress text with section name
-      document.getElementById('generationProgressCurrent').textContent = currentSection;
-      document.getElementById('generationProgressTotal').textContent = totalSections;
-      document.getElementById('generationProgressSectionName').textContent = sectionName;
+      // BUG FIX (v3.19.1): Use innerHTML to preserve child spans instead of
+      // textContent which destroys them. Previous code used textContent on the
+      // parent div, which nuked the <span> children. Then parallel section
+      // generation calls would crash with "Cannot set properties of null
+      // (setting 'textContent')" because the spans no longer existed.
+      const currentEl = document.getElementById('generationProgressCurrent');
+      const totalEl = document.getElementById('generationProgressTotal');
+      const nameEl = document.getElementById('generationProgressSectionName');
+      if (currentEl) currentEl.textContent = currentSection;
+      if (totalEl) totalEl.textContent = totalSections;
+      if (nameEl) nameEl.textContent = sectionName;
 
-      // Show detailed progress: "Generating: Company Culture (section 4 of 13)..."
-      const progressDiv = text.querySelector('div') || text;
-      progressDiv.textContent = `Generating: ${sectionName} (section ${currentSection} of ${totalSections})...${etaText}`;
+      // Update the progress summary text. Use innerHTML to keep the span structure intact.
+      const progressDiv = text.querySelector('div');
+      if (progressDiv) {
+        progressDiv.innerHTML = `Generating: ${sectionName} (section <span id="generationProgressCurrent">${currentSection}</span> of <span id="generationProgressTotal">${totalSections}</span>)...${etaText}`;
+      }
 
       // Clear completion message
       const completionEl = document.getElementById('generationProgressCompletion');
