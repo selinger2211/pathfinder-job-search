@@ -4,6 +4,24 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.18.6 — 2026-03-13
+
+### QA Pass #2: Fix Feed card display and log field mismatches
+
+Second QA sweep. Found and fixed 2 Feed display bugs:
+
+**Feed cards: Fix "undefined · undefined" for missing domain/location**
+- 4 feed items (RingCentral, BlackRock, 2x Yahoo) had no `domain` or `location` fields
+- Added fallback guards: `item.domain || 'Unknown'` and `item.location || 'Not listed'`
+- Fixed in both main feed card view and snoozed card view
+
+**Feed Log: Fix "Found undefined roles, undefined matched" display**
+- Log entries used field names (`found`, `scored40plus`, `sources`) that didn't match actual data schema (`totalRoles`, `scored`, `source`)
+- Updated template to check both old and new field names for backwards compatibility
+- Sources field now handles both array (`sources`) and string (`source`) formats
+
+---
+
 ## v3.18.5 — 2026-03-13
 
 ### QA Pass: Fix Feed log crash, Pipeline display bugs
