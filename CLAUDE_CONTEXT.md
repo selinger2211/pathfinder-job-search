@@ -49,6 +49,7 @@ Every module has a standalone PRD in `docs/`:
 - `docs/comp-intelligence-prd.md`
 - `docs/calendar-prd.md`
 - `docs/artifacts-mcp-prd.md`
+- `docs/sync-hub-prd.md` ← NEW (was missing, created v3.11)
 
 ### System-Level Policy Docs (added v3.11.0)
 
