@@ -4,6 +4,30 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.8.0 — 2026-03-12
+
+### What Changed — Classification-First Comp Estimation Engine
+
+**User requested:** "we need to update the compensation logic it's off" — old engine naively divided listed salary by a flat ratio (e.g., Public = 0.55), producing wild overestimates when postings already disclosed total target cash. Adobe $282K base was being estimated at $513K total.
+
+**Changes:**
+
+1. **Feed: Classification-first comp estimator (v2)** — Complete rewrite of the comp estimation engine. Core principle: detect the posted compensation TYPE before applying any formula. Four detected types: `BASE_SALARY` (apply TC multiplier), `TOTAL_TARGET_CASH` (add equity only — never multiply by TC ratio), `OTE` (pass through, flag cautious), `UNKNOWN` (conservative 1.15–1.40x fallback). Prevents double-counting when postings already include bonus in their range.
+
+2. **Feed: PM seniority inference** — New `inferPMLevel(title, jdText)` classifies roles as mid/senior/principal from title keywords + JD reinforcement signals (executive communication, platform ownership, 10+ years). Multipliers scale by level.
+
+3. **Feed: Calibration modes** — `getCalibrationMode(stage)` returns `PUBLIC_CALIBRATED`, `STARTUP_HEURISTIC`, or `GENERIC_FALLBACK`. Each mode has its own multiplier ranges.
+
+4. **Feed: Confidence scoring** — `calculateCompConfidence()` scores reliability based on comp type clarity, calibration quality, JD availability, and role archetype. Maps to High/Medium/Low labels shown on cards.
+
+5. **Feed: Card display shows TC range + confidence** — Cards show "→ ~$170K–$395K TC (low)" with color-coded confidence. Hover tooltip shows full classification details.
+
+6. **Feed: Hard guardrails** — TC multiplier capped at 1.65x. TCC postings never get base-salary multiplier. OTE flagged as low confidence for PM roles.
+
+7. **Skill: Comp estimation spec** — New `docs/skill-comp-estimation.md` with full methodology.
+
+---
+
 ## v3.7.0 — 2026-03-12
 
 ### What Changed — Expanded Company Stages, Comp Estimation Engine, Leader/IC Awareness

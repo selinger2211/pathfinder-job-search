@@ -185,7 +185,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.7.0
+**Current Version:** v3.8.0
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -208,6 +208,10 @@ These are the actual field shapes for objects stored in shared localStorage keys
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.8.0)
+- **Classification-first comp estimator**: Detects posted comp type (BASE_SALARY / TOTAL_TARGET_CASH / OTE / UNKNOWN) before applying formulas. TCC postings get equity add-on only (no full TC multiplier). PM level inference (mid/senior/principal) with calibration modes (public/startup/generic). Confidence scoring (High/Medium/Low). Hard cap at 1.65x. Adobe estimate dropped from $513K to $170K–$395K range.
+- **Comp estimation skill doc**: `docs/skill-comp-estimation.md` — full spec with multiplier tables, equity heuristics, confidence rubric, guardrails.
 
 ### Recently Fixed (v3.7.0)
 - **Expanded company stages**: 7 granular options (Seed/Angel, Series A, Series B, Series C+, Late-stage/Pre-IPO, Public, Bootstrapped/Private) replacing old 4-stage set. `normalizeStage()` provides backward compat for old values.
