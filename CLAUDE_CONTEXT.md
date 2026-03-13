@@ -185,7 +185,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.4.0
+**Current Version:** v3.5.0
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -208,6 +208,12 @@ These are the actual field shapes for objects stored in shared localStorage keys
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.5.0)
+- **JD-first scoring engine**: `scoreRole()` rewritten with `searchText` pattern — scans full JD when available, falls back to title+company+domain for stubs. New tier: target title found in JD body = 75/100 Role Fit. `hasFullJD` flag in score breakdown.
+- **mustHaveKeywords activation**: `prefs.mustHaveKeywords` now 60% weight in Keyword dimension via composite formula: `(mustHaveRatio × 100 × 0.6) + (boostScore × 0.4)`. Keywords went from 0→38 for most cards.
+- **Apify actor swap**: Replaced `bebity/linkedin-jobs-scraper` (trial expired, 403) with `valig/linkedin-jobs-scraper` (consumption-based, free). `buildApifyInput()` auto-detects actor type (field-based vs searchUrl-based). `companyName` sent as array per valig spec.
+- **Configurable actor ID**: New `pf_apify_actor` localStorage key + sidebar UI field. Users can swap actors without code changes. `getApifyActorId()` falls back to `DEFAULT_APIFY_ACTOR`.
 
 ### Recently Fixed (v3.4.0)
 - **Apify JD enrichment engine**: Feed roles with stub JDs can now be enriched with full JD text via Apify's `bebity/linkedin-jobs-scraper` actor. Per-card "⚡ Enrich" button, batch "Enrich JDs" header button with live progress counter, JD quality badges (yellow "Stub JD" / green "Full JD"), Apify API token settings in sidebar (`pf_apify_key`). Fuzzy matching scores company name + title (40+ confidence required). Enriched roles get `jdEnriched`, `jdEnrichedAt`, `jdEnrichSource`, `jdEnrichConfidence` metadata. Free tier = $5/mo compute.

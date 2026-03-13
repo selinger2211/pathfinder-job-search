@@ -258,12 +258,13 @@ Each extracted role is scored against the user profile. The scoring model produc
 
 | Dimension | Weight | How It's Calculated |
 |-----------|--------|-------------------|
-| Title/Level Match | 25% | Title maps to target titles? Seniority in range? Exact title match = full points, adjacent = half |
-| Domain Match | 25% | JD domain intersects `primaryDomains` (full) or `secondaryDomains` (half)? `excludedDomains` = instant disqualify |
-| Keyword Relevance | 20% | Count of `boostKeywords` found in JD text, weighted by position (title > first paragraph > body). Penalize for `excludeKeywords` |
+| Role Fit | 20% | **JD-first (v3.5.0):** When full JD exists, scans JD for target title keywords (100=exact title match, 75=title found in JD body, 50=seniority match). When stub JD only, falls back to title-only matching (v3.3 behavior). |
+| Domain Match | 20% | Uses `searchText` (full JD when available, title+company+domain when stub). `primaryDomains` = full points, `secondaryDomains` = half. `excludedDomains` = instant disqualify. |
+| Keyword Relevance | 15% | **Composite score (v3.5.0):** 60% `mustHaveKeywords` fulfillment ratio + 40% `boostKeywords` density. Both scan `searchText` (JD-first, title-fallback). Formula: `keywordScore = (mustHaveRatio × 100 × 0.6) + (boostScore × 0.4)`. |
 | Location Match | 15% | Role's location/remote policy matches preferences? Remote = full points if preferred, on-site in excluded location = 0 |
+| Network Signal | 10% | LinkedIn connections at the company (from `pf_linkedin_network`). 3+ = full, 1-2 = half, 0 = zero. |
 | Company Stage | 10% | Company stage/size matches `companyStage` and `minHeadcount`? |
-| Comp Signal | 5% | If salary range disclosed, does it overlap with `compRange`? No disclosure = neutral (don't penalize) |
+| Comp Signal | 10% | If salary range disclosed, does it overlap with `compRange`? No disclosure = neutral (don't penalize) |
 
 **Score Interpretation:**
 

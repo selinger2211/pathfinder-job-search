@@ -4,6 +4,26 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.5.0 — 2026-03-12
+
+### What Changed — JD-First Scoring Engine + Apify Actor Swap
+
+**User requested:** "update our Match Score to use the JD not the title" + "or both...fallback on title if no JD" + "i'm also getting an error on the enrich"
+
+**Changes:**
+
+1. **Feed: JD-first scoring engine** — Complete rewrite of `scoreRole()`. When a role has a full JD (via Apify enrichment), all title-matching and keyword-scanning now reads the JD text instead of just the title. A `searchText` variable selects the richest available text: full JD when present, title+company+domain when only a stub exists. New scoring tier: target title found in JD (but not in actual title) scores 75/100 in the Role Fit dimension (between exact title match at 100 and seniority-only fallback at 50).
+
+2. **Feed: mustHaveKeywords activation** — `prefs.mustHaveKeywords` (e.g., "product manager", "strategy") was defined in preferences but never wired into the scoring engine. Now incorporated as 60% weight in the Keyword Relevance dimension via a composite formula: `keywordScore = (mustHaveRatio × 100 × 0.6) + (boostScore × 0.4)`. This moved keyword scores from 0 to 38 for most cards.
+
+3. **Feed: Apify actor swap to valig** — Replaced `bebity/linkedin-jobs-scraper` (free trial expired, 403 "actor-is-not-rented") with `valig/linkedin-jobs-scraper` (consumption-based pricing from $5/mo free credits, no rental fee required). New `buildApifyInput()` function auto-detects actor type and sends the correct input format: field-based actors (valig, data_wizard) get `{ title, location, companyName[], rows }`, while searchUrl-based actors (bebity, curious_coder) get `{ searchUrl, count }`.
+
+4. **Feed: Configurable Apify actor** — New "Actor ID (advanced)" field in sidebar settings. Actor ID stored in `pf_apify_actor` localStorage key with `getApifyActorId()` fallback to `DEFAULT_APIFY_ACTOR`. Users can swap actors without code changes if a free trial expires. Button renamed from "Save Token" to "Save Settings".
+
+5. **Feed: Improved error handling** — Specific 403 "actor-is-not-rented" error message with actionable guidance (switch actor in sidebar or rent at console.apify.com). 401/402 errors get descriptive messages. JD extraction handles 6 field name variants across different Apify actors.
+
+---
+
 ## v3.4.0 — 2026-03-12
 
 ### What Changed — Apify-Powered JD Enrichment Engine
