@@ -867,14 +867,14 @@
     <div class="nav-brand"><span>P</span>athfinder</div>
     <div class="nav-links">
       <a href="../dashboard/index.html">Dashboard</a>
-      <a href="../pipeline/index.html">Pipeline</a>
-      <a href="index.html" class="active">Research</a>
-      <a href="../resume-tailor/index.html">Resume</a>
       <a href="../job-feed-listener/index.html">Feed</a>
+      <a href="../pipeline/index.html">Pipeline</a>
+      <a href="../research-brief/index.html" class="active">Research</a>
+      <a href="../resume-tailor/index.html">Resume</a>
       <a href="../outreach/index.html">Outreach</a>
+      <a href="../comp-intel/index.html">Comp</a>
       <a href="../mock-interview/index.html">Mock</a>
       <a href="../debrief/index.html">Debrief</a>
-      <a href="../comp-intel/index.html">Comp</a>
       <a href="../calendar/index.html">Calendar</a>
       <a href="../sync/">Sync Hub</a>
     </div>
@@ -2335,6 +2335,8 @@ Questions must be SPECIFIC to this role. Every question needs a "why they'd ask 
 
 CRITICAL: Your output MUST be valid HTML only — never markdown. Use semantic HTML tags: <h3>, <p>, <ul>, <li>, <ol>, <table>, <strong>, <em>. Do NOT use markdown syntax like **bold**, *italic*, ## headers, or - list items. Include citation markers as [n] where n maps to the citations array you return alongside the content.
 
+CRITICAL: The company in the <company> tag is the AUTHORITATIVE source of truth. If the JD in <jd> mentions a DIFFERENT company name, the JD was incorrectly matched — use the company name from <company> and ignore the wrong company references in the JD. NEVER generate content about a different company than what's in <company>.
+
 Be direct. No filler. No "in today's rapidly evolving landscape." Every sentence should give the reader something they can use in an interview or a decision.
 
 When data is sourced from recruiter intel (knownContext entries), clearly label it: "Based on recruiter intel, not confirmed JD."
@@ -2377,8 +2379,25 @@ The HTML content should come first, followed by the citations block. Do not incl
       contextBlock += `  Tech Stack: ${context.company.techStack || "Not specified"}\n`;
       contextBlock += `</company>\n\n`;
 
-      if (context.role.jdText) {
-        contextBlock += `<jd>\n${context.role.jdText}\n</jd>\n\n`;
+      // ====== JD VALIDATION (v3.10.0) ======
+      // Guard against mismatched JDs — if Apify (or any scraper) returned a JD
+      // for the WRONG company, the AI will confidently write about that company
+      // instead. We check if the JD mentions a different company name prominently
+      // and discard it if so.
+      let jdToUse = context.role.jdText || '';
+      if (jdToUse && context.company.name) {
+        const companyLower = context.company.name.toLowerCase();
+        const jdLower = jdToUse.toLowerCase().slice(0, 500); // Check first 500 chars
+        // If the JD doesn't mention the company at all in its first 500 chars,
+        // it might be a mismatched JD. Add an explicit instruction.
+        if (!jdLower.includes(companyLower) && !jdLower.includes(companyLower.split(' ')[0].toLowerCase())) {
+          jdToUse = `IMPORTANT: This JD may have been incorrectly matched. ` +
+            `The role is at ${context.company.name}, but the JD below may reference a different company. ` +
+            `ALWAYS use ${context.company.name} as the company — ignore any other company names in the JD.\n\n` + jdToUse;
+        }
+      }
+      if (jdToUse) {
+        contextBlock += `<jd>\n${jdToUse}\n</jd>\n\n`;
       } else {
         contextBlock += `<jd>No job description available. Use role hints and known context as a substitute.</jd>\n\n`;
       }

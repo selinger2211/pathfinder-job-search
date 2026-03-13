@@ -4,6 +4,30 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.10.0 — 2026-03-12
+
+### What Changed — Free JD Enrichment Engine + Nav Reorder + Logo Fixes
+
+**User asked:** "no let's drop apify" / "we'll do it ourselves" / "also another bug: the research for ring central picked up yahoo" / "let's go back to enriching all by default on load" / "the order of tabs are not in the optimal order" / "noticing some logos are linkedin when they should not be" / "for those do a good search with title and the company name"
+
+**Changes:**
+
+1. **Replaced Apify with free direct JD enrichment engine** — Zero cost, no API keys. Three strategies tried in order: (1) LinkedIn CORS proxy — fetches LinkedIn job page via proxy chain (allorigins.win → corsproxy.io → codetabs.com), extracts JSON-LD structured data. (2) ATS public APIs — Greenhouse, Lever, Ashby free endpoints. (3) DuckDuckGo job board search — searches title + company name, prioritizes Indeed/Glassdoor/BuiltIn results, extracts JD via JSON-LD or HTML container patterns. Company name validation ensures extracted JD matches the target role.
+
+2. **Auto-enrichment re-enabled on page load** — Background async loop enriches all stub JDs with 1.5s delay between fetches. Progress shown in header: "(enriching X/Y...)". Toast notification on completion.
+
+3. **Research Brief company mismatch guard** — JD validation checks if first 500 chars mention company name; prepends warning if not. System prompt declares `<company>` tag as authoritative truth, ignoring mismatched JD company references.
+
+4. **Feed logo fix** — `renderCardLogo()` now always uses `getCompanyDomain()` instead of `item.domain` (which contains industry category like "Enterprise SaaS / AI", not a web domain).
+
+5. **LinkedIn favicon fix** — `getCompanyDomain()` now skips LinkedIn job URLs (`/jobs/view/...`) instead of returning "linkedin.com" as domain. Falls through to name-based fallback for proper company favicon.
+
+6. **Nav tabs reordered chronologically** across all 11 modules: Dashboard → Feed → Pipeline → Research → Resume → Outreach → Comp → Mock → Debrief → Calendar → Sync Hub.
+
+7. **Sidebar Apify UI removed** — Replaced with simple "JD Enrichment" info panel explaining the zero-config approach. No API keys, no settings to configure.
+
+---
+
 ## v3.9.0 — 2026-03-12
 
 ### What Changed — Research Brief Auto-Generation + Pipeline UX Fixes

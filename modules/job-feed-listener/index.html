@@ -1021,7 +1021,7 @@
 
     /* ================================================================
        JD ENRICHMENT STYLES
-       Visual indicators for JD quality + Apify enrichment controls.
+       Visual indicators for JD quality + enrichment controls.
        ================================================================ */
 
     /* JD quality badge — shows whether the role has a real JD or just a stub */
@@ -1143,34 +1143,7 @@
       background: linear-gradient(transparent, var(--bg-subtle));
     }
 
-    /* Apify settings section in sidebar */
-    .apify-settings {
-      margin-top: var(--space-4);
-      padding-top: var(--space-4);
-      border-top: 1px solid var(--bg-subtle);
-    }
-
-    .apify-status {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: var(--text-xs);
-      margin-top: var(--space-2);
-    }
-
-    .apify-status-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-    }
-
-    .apify-status-dot.connected {
-      background: var(--success);
-    }
-
-    .apify-status-dot.disconnected {
-      background: var(--text-tertiary);
-    }
+    /* Enrichment info section in sidebar */
 
     /* Tab navigation */
     .tab-nav {
@@ -1655,14 +1628,14 @@
     <div class="nav-brand"><span>P</span>athfinder</div>
     <div class="nav-links">
       <a href="../dashboard/index.html">Dashboard</a>
+      <a href="../job-feed-listener/index.html" class="active">Feed</a>
       <a href="../pipeline/index.html">Pipeline</a>
       <a href="../research-brief/index.html">Research</a>
       <a href="../resume-tailor/index.html">Resume</a>
-      <a href="index.html" class="active">Feed</a>
       <a href="../outreach/index.html">Outreach</a>
+      <a href="../comp-intel/index.html">Comp</a>
       <a href="../mock-interview/index.html">Mock</a>
       <a href="../debrief/index.html">Debrief</a>
-      <a href="../comp-intel/index.html">Comp</a>
       <a href="../calendar/index.html">Calendar</a>
       <a href="../sync/">Sync Hub</a>
     </div>
@@ -1822,38 +1795,16 @@
           Save Preferences
         </button>
 
-        <!-- ====== APIFY JD ENRICHMENT SETTINGS ====== -->
-        <!-- Apify powers automatic JD fetching. Free tier = $5/mo compute. -->
-        <div class="apify-settings">
-          <div class="sidebar-section-title">JD Enrichment (Apify)</div>
-          <div class="pref-group">
-            <label class="pref-label" for="apifyApiKey">API Token</label>
-            <input type="password" class="pref-input" id="apifyApiKey"
-              placeholder="apify_api_..."
-              aria-label="Apify API token for JD enrichment"
-              style="font-family: monospace; font-size: 11px;">
-            <div class="apify-status" id="apifyStatus">
-              <span class="apify-status-dot disconnected" id="apifyStatusDot"></span>
-              <span id="apifyStatusText">Not connected</span>
-            </div>
+        <!-- ====== JD ENRICHMENT INFO ====== -->
+        <!-- Direct enrichment via CORS proxies + ATS APIs. No API keys needed. -->
+        <div style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--bg-subtle);">
+          <div class="sidebar-section-title">JD Enrichment</div>
+          <div style="font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.5;">
+            JDs are fetched directly from LinkedIn and ATS platforms (Greenhouse, Lever, Ashby).
+            No API keys needed — click <strong>⚡ Enrich</strong> on any card or use
+            <strong>Enrich JDs</strong> in the header to batch-fetch all.
           </div>
-          <div class="pref-group" style="margin-top: var(--space-2);">
-            <label class="pref-label" for="apifyActorId">Actor ID
-              <span style="font-weight: 400; color: var(--text-tertiary);">(advanced)</span>
-            </label>
-            <input type="text" class="pref-input" id="apifyActorId"
-              placeholder="valig/linkedin-jobs-scraper"
-              aria-label="Apify actor ID for LinkedIn job scraping"
-              style="font-family: monospace; font-size: 11px;">
-            <span style="font-size: 10px; color: var(--text-tertiary); line-height: 1.3; display: block; margin-top: 2px;">
-              Default: valig/linkedin-jobs-scraper (free). Change if an actor's trial expires.
-            </span>
-          </div>
-          <button class="btn btn-secondary btn-sm" id="saveApifyKeyBtn"
-            style="width: 100%; margin-top: var(--space-2);"
-            aria-label="Save Apify settings">
-            Save Settings
-          </button>
+          <div id="enrichmentStatus" style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-2);"></div>
         </div>
       </div>
 
@@ -1870,7 +1821,7 @@
                 <line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line>
               </svg>
             </button>
-            <button class="enrich-all-btn" id="enrichAllBtn" title="Fetch full JDs for all roles via Apify" aria-label="Enrich all job descriptions">
+            <button class="enrich-all-btn" id="enrichAllBtn" title="Fetch full JDs from LinkedIn and ATS platforms" aria-label="Enrich all job descriptions">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
@@ -2224,43 +2175,21 @@
 
 
     // ============================================================
-    // APIFY JD ENRICHMENT ENGINE
+    // DIRECT JD ENRICHMENT ENGINE
     // ============================================================
     //
-    // Fetches full job descriptions for Feed roles via Apify's API.
-    // Uses a LinkedIn jobs scraper actor to search for "{title} {company}"
-    // and match the best result back to the Feed role using fuzzy matching.
+    // Fetches full job descriptions directly from job posting pages
+    // using CORS proxies and public ATS APIs. Zero cost, no API keys.
     //
-    // Default actor: `logical_scrapers/linkedin-jobs-scraper` (consumption-based,
-    // works with Apify's free $5/month credits — no rental fee required).
+    // Strategies (tried in order):
+    // 1. LinkedIn CORS proxy — fetch the LinkedIn job page via allorigins.win,
+    //    extract JSON-LD structured data containing the full JD.
+    // 2. ATS public APIs — Greenhouse, Lever, Ashby have free JSON APIs
+    //    that return full job descriptions without authentication.
+    // 3. Alternative CORS proxies — if allorigins fails, try corsproxy.io
     //
-    // The actor ID is configurable via sidebar settings or `pf_apify_actor`
-    // in localStorage — so users can swap to any compatible actor.
-    //
-    // API pattern: POST /v2/acts/{actorId}/run-sync-get-dataset-items
-    //   → Starts the actor, waits for completion, returns results in one call.
-    //
-    // Storage:
-    //   - Apify API token: `pf_apify_key`
-    //   - Custom actor ID: `pf_apify_actor` (optional, falls back to default)
+    // Storage: No API keys needed. All strategies are free and unlimited.
     // ============================================================
-
-    /**
-     * Default Apify actor for LinkedIn job scraping.
-     * `logical_scrapers/linkedin-jobs-scraper` uses consumption-based pricing (no rental).
-     * It accepts keywords + location inputs.
-     * Can be overridden via localStorage key `pf_apify_actor`.
-     */
-    const DEFAULT_APIFY_ACTOR = 'logical_scrapers/linkedin-jobs-scraper';
-
-    /**
-     * Get the current Apify actor ID (user-configured or default).
-     * INPUT: none
-     * OUTPUT: string — actor ID like "valig/linkedin-jobs-scraper"
-     */
-    function getApifyActorId() {
-      return localStorage.getItem('pf_apify_actor') || DEFAULT_APIFY_ACTOR;
-    }
 
     /**
      * Minimum JD length (in characters) to consider it a "full" JD.
@@ -2290,43 +2219,10 @@
     }
 
     /**
-     * Get the stored Apify API token from localStorage.
-     * INPUT: none
-     * OUTPUT: string (API token) or null if not set
+     * Update the enrichment status indicator in the sidebar.
+     * Shows button state and stub count.
      */
-    function getApifyToken() {
-      return localStorage.getItem('pf_apify_key') || null;
-    }
-
-    /**
-     * Save the Apify API token to localStorage.
-     * INPUT: token string
-     * OUTPUT: none (side effect: writes to localStorage)
-     */
-    function saveApifyToken(token) {
-      localStorage.setItem('pf_apify_key', token);
-      updateApifyStatus();
-    }
-
-    /**
-     * Update the Apify connection status indicator in the sidebar.
-     * Shows green dot + "Connected" if token is set, gray + "Not connected" otherwise.
-     */
-    function updateApifyStatus() {
-      const dot = document.getElementById('apifyStatusDot');
-      const text = document.getElementById('apifyStatusText');
-      const token = getApifyToken();
-
-      if (dot && text) {
-        if (token && token.length > 10) {
-          dot.className = 'apify-status-dot connected';
-          text.textContent = 'Token saved';
-        } else {
-          dot.className = 'apify-status-dot disconnected';
-          text.textContent = 'Not connected';
-        }
-      }
-
+    function updateEnrichmentStatus() {
       // Update the "Enrich All" button state
       const enrichAllBtn = document.getElementById('enrichAllBtn');
       if (enrichAllBtn) {
@@ -2335,194 +2231,264 @@
         if (progress) {
           progress.textContent = stubCount > 0 ? `(${stubCount} need JDs)` : '(all enriched)';
         }
-        enrichAllBtn.disabled = !token || stubCount === 0;
+        enrichAllBtn.disabled = stubCount === 0;
       }
     }
 
+    const CORS_PROXIES = [
+      url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+      url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+    ];
+
     /**
-     * Build the input payload for the Apify LinkedIn jobs scraper.
-     * Supports four actor input format families (v3.6.0):
-     *   - Keywords-based: { keywords, location, maxResults } (logical_scrapers, happitap)
-     *   - Field-based: { title, location, companyName[], rows } (valig, data_wizard)
-     *   - SearchUrl-based: { searchUrl, count } (bebity, curious_coder)
-     *
-     * INPUT: title (string), company (string), location (string), maxItems (int)
-     * OUTPUT: object — input payload for the Apify actor
+     * Fetch a URL through a CORS proxy. Tries multiple proxies in order.
+     * INPUT: url (string) — the target URL to fetch
+     * OUTPUT: Promise<string|null> — the response text, or null if all proxies fail
      */
-    function buildApifyInput(title, company, location, maxItems = 5) {
-      const actorId = getApifyActorId();
-      const loc = location || 'United States';
-      // Strip "Remote" from location for LinkedIn search (use keywords instead)
-      const cleanLoc = loc.replace(/remote\s*\(?/i, '').replace(/\)/, '').trim() || 'United States';
-
-      // ====== ACTOR FORMAT DETECTION (v3.6.0) ======
-      // Each Apify actor has its own input schema. We detect the format
-      // based on the actor ID prefix and build the right payload.
-
-      // Group 1: Keywords-based actors (free, consumption-based)
-      const keywordsActors = ['logical_scrapers/', 'happitap/', 'fetchclub/'];
-      const usesKeywords = keywordsActors.some(prefix => actorId.includes(prefix));
-
-      // Group 2: SearchUrl-based actors (rental required after free trial)
-      const searchUrlActors = ['bebity/', 'curious_coder/', 'scrapio/'];
-      const usesSearchUrl = searchUrlActors.some(prefix => actorId.includes(prefix));
-
-      if (usesKeywords) {
-        // Keywords-based actors (logical_scrapers, happitap, fetchclub)
-        // These are consumption-based (no rental fee), just use Apify credits
-        // Note: happitap expects keywords as an ARRAY + requires datePosted field.
-        // logical_scrapers takes a keywords string. We detect per-actor quirks.
-        const isHappitap = actorId.includes('happitap/');
-        if (isHappitap) {
-          return {
-            keywords: [`${title}`, company],
-            location: cleanLoc,
-            datePosted: '30d',       // happitap requires this field
-            maxResults: maxItems,
-            proxyCountry: 'US'       // happitap uses flat proxyCountry, NOT proxy object
-          };
+    async function fetchViaCorsProxy(url) {
+      for (let i = 0; i < CORS_PROXIES.length; i++) {
+        const proxyUrl = CORS_PROXIES[i](url);
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
+          const response = await fetch(proxyUrl, {
+            signal: controller.signal,
+            headers: { 'Accept': 'text/html,application/json' }
+          });
+          clearTimeout(timeout);
+          if (response.ok) {
+            const text = await response.text();
+            if (text && text.length > 200) return text; // Got real content
+          }
+        } catch (err) {
+          console.warn(`[Enrich] CORS proxy ${i + 1} failed for ${url}:`, err.message);
         }
-        return {
-          keywords: `${title} ${company}`,
-          location: cleanLoc,
-          maxResults: maxItems,
-          proxy: { useApifyProxy: true }
-        };
-      } else if (usesSearchUrl) {
-        // SearchUrl-based actors (bebity, curious_coder)
-        const keywords = encodeURIComponent(`${title} ${company}`);
-        const searchUrl = `https://www.linkedin.com/jobs/search/?keywords=${keywords}&location=${encodeURIComponent(cleanLoc)}`;
-        return {
-          searchUrl: searchUrl,
-          scrapeCompany: false,
-          startPage: 0,
-          count: maxItems,
-          proxy: { useApifyProxy: true }
-        };
-      } else {
-        // Field-based actors (valig, data_wizard, harvestapi)
-        return {
-          title: `${title}`,
-          location: cleanLoc,
-          companyName: [company],  // valig expects an array
-          rows: maxItems,
-          proxy: { useApifyProxy: true }
-        };
       }
+      return null;
     }
 
     /**
-     * Call Apify actor using ASYNC run + poll pattern.
-     * The old sync endpoint (`run-sync-get-dataset-items`) has a hard 300s timeout
-     * that kills slow actors (like happitap which runs a real browser).
-     *
-     * NEW APPROACH (3 steps):
-     * 1. POST to start the actor run (returns immediately with run ID)
-     * 2. Poll the run status every 15 seconds until SUCCEEDED/FAILED/TIMED-OUT
-     * 3. Fetch dataset items from the completed run
-     *
-     * INPUT: title (string), company (string), location (string), token (string), maxItems (int)
-     * OUTPUT: Promise<Array<Object>> — array of job objects with description, title, etc.
-     * THROWS: Error if API call fails, token invalid, actor expired, or max poll time exceeded
+     * Strip HTML tags from a string, preserving readable text.
+     * Converts <br>, <p>, <li> to newlines for readability.
+     * INPUT: html (string) — HTML content
+     * OUTPUT: string — plain text
      */
-    async function callApifyLinkedInScraper(title, company, location, token, maxItems = 5) {
-      const actorId = getApifyActorId().replace('/', '~');
-      const input = buildApifyInput(title, company, location, maxItems);
-
-      // STEP 1: Start the actor run (returns immediately with run metadata)
-      const startEndpoint = `https://api.apify.com/v2/acts/${actorId}/runs`;
-      const startResponse = await fetch(`${startEndpoint}?token=${encodeURIComponent(token)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(input)
-      });
-
-      if (!startResponse.ok) {
-        const errText = await startResponse.text();
-        if (startResponse.status === 401) throw new Error('Invalid Apify token — check Settings.');
-        if (startResponse.status === 402) throw new Error('Apify free tier limit reached this month.');
-        if (startResponse.status === 403 && errText.includes('actor-is-not-rented')) {
-          const currentActor = getApifyActorId();
-          throw new Error(
-            `Actor "${currentActor}" requires a paid rental. ` +
-            `Switch to a free actor (like valig/linkedin-jobs-scraper) in sidebar settings, ` +
-            `or rent this actor at console.apify.com.`
-          );
-        }
-        // v3.8.6: Handle "public-actor-disabled" — plan doesn't allow public actors
-        if (startResponse.status === 403 && errText.includes('public-actor-disabled')) {
-          throw new Error(
-            'Your Apify plan does not support running public actors. ' +
-            'Upgrade your plan at console.apify.com/billing, or switch to ' +
-            'a private/rented actor in sidebar settings.'
-          );
-        }
-        throw new Error(`Apify API error (${startResponse.status}): ${errText.slice(0, 200)}`);
-      }
-
-      const runData = await startResponse.json();
-      const runId = runData?.data?.id;
-      if (!runId) throw new Error('Apify run started but no run ID returned.');
-
-      console.log(`[Enrich] Apify run started: ${runId} — polling for completion...`);
-
-      // STEP 2: Poll run status every 15 seconds (max 10 minutes = 40 polls)
-      const POLL_INTERVAL_MS = 15000;  // 15 seconds between checks
-      const MAX_POLLS = 40;            // 40 × 15s = 10 minutes max wait
-      const statusEndpoint = `https://api.apify.com/v2/actor-runs/${runId}`;
-
-      for (let poll = 0; poll < MAX_POLLS; poll++) {
-        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
-
-        const statusResponse = await fetch(`${statusEndpoint}?token=${encodeURIComponent(token)}`);
-        if (!statusResponse.ok) {
-          console.warn(`[Enrich] Status poll failed (${statusResponse.status}), retrying...`);
-          continue;
-        }
-
-        const statusData = await statusResponse.json();
-        const status = statusData?.data?.status;
-
-        if (status === 'SUCCEEDED') {
-          console.log(`[Enrich] Run ${runId} succeeded after ~${(poll + 1) * 15}s`);
-
-          // STEP 3: Fetch dataset items from the completed run
-          const datasetId = statusData?.data?.defaultDatasetId;
-          if (!datasetId) throw new Error('Run succeeded but no dataset ID found.');
-
-          const itemsEndpoint = `https://api.apify.com/v2/datasets/${datasetId}/items`;
-          const itemsResponse = await fetch(`${itemsEndpoint}?token=${encodeURIComponent(token)}`);
-          if (!itemsResponse.ok) throw new Error(`Failed to fetch dataset items (${itemsResponse.status})`);
-
-          return await itemsResponse.json();
-        }
-
-        if (status === 'FAILED' || status === 'ABORTED' || status === 'TIMED-OUT') {
-          throw new Error(`Apify run ${status.toLowerCase()}. Check actor logs at console.apify.com.`);
-        }
-
-        // Still RUNNING or READY — keep polling
-        if (poll % 4 === 3) {
-          console.log(`[Enrich] Still waiting... (${(poll + 1) * 15}s elapsed, status: ${status})`);
-        }
-      }
-
-      // If we get here, we've exceeded the max poll time
-      throw new Error(`Apify run timed out after ${MAX_POLLS * 15}s. Actor may be too slow.`);
+    function stripHtmlTags(html) {
+      return html
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<li[^>]*>/gi, '• ')
+        .replace(/<\/h[1-6]>/gi, '\n\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
     }
 
     /**
-     * Score how well an Apify result matches a Feed role.
+     * Extract job description from LinkedIn page HTML.
+     * Tries JSON-LD first (most reliable), then falls back to HTML parsing.
+     * INPUT: html (string) — full page HTML
+     * OUTPUT: object|null — { description, title, company, salary } or null
+     */
+    function extractLinkedInJD(html) {
+      // Strategy A: JSON-LD structured data (most reliable)
+      const jsonLdMatches = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+      if (jsonLdMatches) {
+        for (const match of jsonLdMatches) {
+          try {
+            const jsonStr = match.replace(/<script[^>]*>/i, '').replace(/<\/script>/i, '').trim();
+            const data = JSON.parse(jsonStr);
+            // Handle both single object and array formats
+            const items = Array.isArray(data) ? data : [data];
+            for (const item of items) {
+              if (item['@type'] === 'JobPosting' && item.description) {
+                return {
+                  description: stripHtmlTags(item.description),
+                  title: item.title || null,
+                  company: item.hiringOrganization?.name || null,
+                  salary: item.baseSalary?.value
+                    ? `${item.baseSalary.currency || '$'}${item.baseSalary.value.minValue || ''}${item.baseSalary.value.maxValue ? '-' + item.baseSalary.value.maxValue : ''}`
+                    : null
+                };
+              }
+            }
+          } catch (e) {
+            // JSON parse failed, try next match
+          }
+        }
+      }
+
+      // Strategy B: Direct HTML extraction from LinkedIn's "show-more" div
+      const showMoreMatch = html.match(/<div[^>]*class=["'][^"']*show-more-less-html__markup[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
+      if (showMoreMatch && showMoreMatch[1]) {
+        const cleaned = stripHtmlTags(showMoreMatch[1]);
+        if (cleaned.length > 100) {
+          return { description: cleaned, title: null, company: null, salary: null };
+        }
+      }
+
+      // Strategy C: Look for job description in meta tags
+      const descMeta = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([\s\S]*?)["']/i);
+      if (descMeta && descMeta[1] && descMeta[1].length > 200) {
+        return { description: stripHtmlTags(descMeta[1]), title: null, company: null, salary: null };
+      }
+
+      return null;
+    }
+
+    /**
+     * Try to extract a JD from an ATS (Applicant Tracking System) API.
+     * Greenhouse, Lever, and Ashby all have free public JSON APIs.
+     * INPUT: url (string) — the job posting URL
+     * OUTPUT: Promise<object|null> — { description, title, company, salary } or null
+     */
+    async function fetchFromAtsApi(url) {
+      if (!url) return null;
+      const lowerUrl = url.toLowerCase();
+
+      try {
+        // ====== GREENHOUSE ======
+        // URL formats: boards.greenhouse.io/{board}/jobs/{id} or job-boards.greenhouse.io/...
+        if (lowerUrl.includes('greenhouse.io')) {
+          const ghMatch = url.match(/greenhouse\.io\/([^\/]+)\/jobs\/(\d+)/i);
+          if (ghMatch) {
+            const [, board, jobId] = ghMatch;
+            const apiUrl = `https://boards-api.greenhouse.io/v1/boards/${board}/jobs/${jobId}`;
+            const response = await fetch(apiUrl);
+            if (response.ok) {
+              const data = await response.json();
+              return {
+                description: stripHtmlTags(data.content || ''),
+                title: data.title || null,
+                company: data.company?.name || null,
+                salary: null
+              };
+            }
+          }
+        }
+
+        // ====== LEVER ======
+        // URL format: jobs.lever.co/{company}/{id}
+        if (lowerUrl.includes('lever.co')) {
+          const leverMatch = url.match(/lever\.co\/([^\/]+)\/([a-f0-9-]+)/i);
+          if (leverMatch) {
+            const [, company, postingId] = leverMatch;
+            const apiUrl = `https://api.lever.co/v0/postings/${company}/${postingId}`;
+            const response = await fetch(apiUrl);
+            if (response.ok) {
+              const data = await response.json();
+              // Lever returns sections as arrays of "lists" and "content"
+              let desc = data.descriptionPlain || '';
+              if (data.lists) {
+                for (const list of data.lists) {
+                  desc += `\n\n${list.text}\n`;
+                  if (list.content) desc += stripHtmlTags(list.content);
+                }
+              }
+              if (data.additional) desc += '\n\n' + stripHtmlTags(data.additional);
+              return {
+                description: desc.trim(),
+                title: data.text || null,
+                company: null,
+                salary: null
+              };
+            }
+          }
+        }
+
+        // ====== ASHBY ======
+        // URL format: jobs.ashbyhq.com/{company}/{id}
+        if (lowerUrl.includes('ashbyhq.com')) {
+          const ashbyMatch = url.match(/ashbyhq\.com\/([^\/]+)\/([a-f0-9-]+)/i);
+          if (ashbyMatch) {
+            const [, company, jobId] = ashbyMatch;
+            // Ashby's public API endpoint
+            const apiUrl = `https://api.ashbyhq.com/posting-api/job-board/${company}`;
+            const response = await fetch(apiUrl);
+            if (response.ok) {
+              const data = await response.json();
+              const job = data.jobs?.find(j => j.id === jobId);
+              if (job) {
+                return {
+                  description: stripHtmlTags(job.descriptionHtml || job.description || ''),
+                  title: job.title || null,
+                  company: job.organizationName || null,
+                  salary: null
+                };
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn(`[Enrich] ATS API fetch failed for ${url}:`, err.message);
+      }
+
+      return null;
+    }
+
+    /**
+     * Find the best LinkedIn job URL for a role.
+     * Checks feedMetadata.linkedinJobUrl, role.url, and feedMetadata.applyUrl.
+     * INPUT: role (object) — Feed role object
+     * OUTPUT: string|null — LinkedIn job URL or null
+     */
+    function findLinkedInUrl(role) {
+      const candidates = [
+        role.feedMetadata?.linkedinJobUrl,
+        role.url,
+        role.feedMetadata?.applyUrl
+      ].filter(Boolean);
+
+      for (const url of candidates) {
+        if (url.includes('linkedin.com/jobs/view/') || url.includes('linkedin.com/jobs/')) {
+          return url;
+        }
+      }
+      return null;
+    }
+
+    /**
+     * Find the best ATS URL for a role.
+     * Checks role.url, feedMetadata.applyUrl, and feedMetadata.linkedinJobUrl.
+     * INPUT: role (object) — Feed role object
+     * OUTPUT: string|null — ATS URL or null
+     */
+    function findAtsUrl(role) {
+      const candidates = [
+        role.url,
+        role.feedMetadata?.applyUrl,
+        role.feedMetadata?.linkedinJobUrl
+      ].filter(Boolean);
+
+      const atsPatterns = ['greenhouse.io', 'lever.co', 'ashbyhq.com'];
+      for (const url of candidates) {
+        if (atsPatterns.some(p => url.toLowerCase().includes(p))) {
+          return url;
+        }
+      }
+      return null;
+    }
+
+    /**
+     * Score how well a result matches a Feed role.
      * Uses fuzzy matching on company name and title to find the best match.
-     * INPUT: apifyJob (object from Apify), feedRole (object from Feed)
+     * INPUT: job (object from any source), feedRole (object from Feed)
      * OUTPUT: number 0-100 (match confidence)
      */
-    function matchConfidence(apifyJob, feedRole) {
+    function matchConfidence(job, feedRole) {
       let score = 0;
-      // Handle multiple field name patterns from different Apify actors
-      const aCompany = (apifyJob.companyName || apifyJob.company || apifyJob.companyname || '').toLowerCase().trim();
+      // Handle multiple field name patterns from different sources
+      const aCompany = (job.companyName || job.company || job.companyname || '').toLowerCase().trim();
       const fCompany = (feedRole.company || '').toLowerCase().trim();
-      const aTitle = (apifyJob.title || apifyJob.position || apifyJob.jobTitle || '').toLowerCase().trim();
+      const aTitle = (job.title || job.position || job.jobTitle || '').toLowerCase().trim();
       const fTitle = (feedRole.title || '').toLowerCase().trim();
 
       // Company name matching (50 points max)
@@ -2555,80 +2521,186 @@
     }
 
     /**
-     * Enrich a single Feed role with a full JD via Apify.
-     * If the role already has a LinkedIn URL, we search for that specific role.
-     * Otherwise, we build a search query from company + title.
+     * Enrich a single Feed role with a full JD using direct fetching.
+     * Tries multiple strategies in order: LinkedIn CORS proxy, ATS APIs,
+     * then search fallback. No API keys required — all methods are free.
      *
      * INPUT: role (Feed item object)
      * OUTPUT: Promise<string|null> — the full JD text, or null if enrichment failed
      * SIDE EFFECTS: Updates the role's jd field in state and localStorage
      */
     async function enrichRoleJD(role) {
-      // Skip roles that already have a full JD (prevents wasting Apify credits)
+      // Skip roles that already have a full JD
       if (role.jdEnriched && role.jd && role.jd.length >= MIN_FULL_JD_LENGTH) {
         console.log(`[Enrich] Skipping "${role.title}" at ${role.company} — already enriched`);
         return role.jd;
       }
 
-      const token = getApifyToken();
-      if (!token) throw new Error('No Apify token. Add your token in the sidebar settings.');
+      console.log(`[Enrich] Starting direct enrichment for "${role.title}" at ${role.company}...`);
 
-      console.log(`[Enrich] Searching Apify (${getApifyActorId()}) for "${role.title}" at ${role.company}...`);
-
-      // Call the Apify actor with title, company, and location
-      // Request only 1 result — we only need 1 match. If the top result
-      // doesn't match with 40%+ confidence, trying more won't help (v3.8.5)
-      const results = await callApifyLinkedInScraper(role.title, role.company, role.location, token, 1);
-
-      if (!results || results.length === 0) {
-        console.warn(`[Enrich] No results from Apify for "${role.title}" at ${role.company}`);
-        return null;
-      }
-
-      // Find the best-matching result using fuzzy matching
-      let bestMatch = null;
-      let bestScore = 0;
-
-      for (const job of results) {
-        const confidence = matchConfidence(job, role);
-        if (confidence > bestScore) {
-          bestScore = confidence;
-          bestMatch = job;
+      // ====== STRATEGY 1: LinkedIn CORS Proxy ======
+      const linkedinUrl = findLinkedInUrl(role);
+      if (linkedinUrl) {
+        console.log(`[Enrich] Trying LinkedIn CORS proxy for ${linkedinUrl}...`);
+        try {
+          const html = await fetchViaCorsProxy(linkedinUrl);
+          if (html) {
+            const extracted = extractLinkedInJD(html);
+            if (extracted && extracted.description && extracted.description.length >= MIN_FULL_JD_LENGTH) {
+              console.log(`[Enrich] ✅ LinkedIn direct: "${role.title}" at ${role.company} (${extracted.description.length} chars)`);
+              role.jd = extracted.description;
+              role.jdEnriched = true;
+              role.jdEnrichedAt = new Date().toISOString();
+              role.jdEnrichSource = 'linkedin-direct';
+              role.jdEnrichConfidence = 95; // Direct URL = high confidence
+              if (!role.salary && extracted.salary) role.salary = extracted.salary;
+              saveFeedQueue(state.feedItems);
+              return role.jd;
+            }
+          }
+        } catch (err) {
+          console.warn(`[Enrich] LinkedIn CORS failed:`, err.message);
         }
       }
 
-      // Require at least 40% confidence to accept the match
-      if (!bestMatch || bestScore < 40) {
-        console.warn(`[Enrich] No confident match for "${role.title}" at ${role.company} (best: ${bestScore}%)`);
-        return null;
+      // ====== STRATEGY 2: ATS Public APIs ======
+      const atsUrl = findAtsUrl(role);
+      if (atsUrl) {
+        console.log(`[Enrich] Trying ATS API for ${atsUrl}...`);
+        try {
+          const atsResult = await fetchFromAtsApi(atsUrl);
+          if (atsResult && atsResult.description && atsResult.description.length >= MIN_FULL_JD_LENGTH) {
+            console.log(`[Enrich] ✅ ATS API: "${role.title}" at ${role.company} (${atsResult.description.length} chars)`);
+            role.jd = atsResult.description;
+            role.jdEnriched = true;
+            role.jdEnrichedAt = new Date().toISOString();
+            role.jdEnrichSource = 'ats-api';
+            role.jdEnrichConfidence = 98; // ATS API = very high confidence
+            if (!role.salary && atsResult.salary) role.salary = atsResult.salary;
+            saveFeedQueue(state.feedItems);
+            return role.jd;
+          }
+        } catch (err) {
+          console.warn(`[Enrich] ATS API failed:`, err.message);
+        }
       }
 
-      // Extract the full JD text — handle field name variants across Apify actors
-      const fullJD = bestMatch.description || bestMatch.descriptionText || bestMatch.jobDescription
-        || bestMatch.descriptionHtml || bestMatch.job_description || bestMatch.details || '';
-      if (fullJD.length < MIN_FULL_JD_LENGTH) {
-        console.warn(`[Enrich] Match found but JD too short (${fullJD.length} chars)`);
-        return null;
+      // ====== STRATEGY 3: Web Search for JD on Job Boards ======
+      // Search DuckDuckGo for the role on job boards like Indeed, Glassdoor, BuiltIn, etc.
+      // Then fetch the best result and extract the JD text.
+      console.log(`[Enrich] Trying web search for "${role.title}" at ${role.company}...`);
+      try {
+        const searchQuery = encodeURIComponent(`${role.title} ${role.company} job description`);
+        const searchUrl = `https://html.duckduckgo.com/html/?q=${searchQuery}`;
+        const searchHtml = await fetchViaCorsProxy(searchUrl);
+        if (searchHtml) {
+          // Extract result URLs from DuckDuckGo HTML results
+          // DuckDuckGo HTML wraps links in redirect URLs — extract the actual destination
+          const linkMatches = [...searchHtml.matchAll(/uddg=([^&"]+)/g)];
+          const resultUrls = linkMatches
+            .map(m => {
+              try { return decodeURIComponent(m[1]); } catch { return null; }
+            })
+            .filter(u => u && !u.includes('duckduckgo.com'))
+            .slice(0, 5); // Top 5 results
+
+          console.log(`[Enrich] Web search found ${resultUrls.length} result URLs`);
+
+          // Prioritize job board URLs, then try any result
+          const jobBoardDomains = ['indeed.com', 'glassdoor.com', 'builtin.com', 'ziprecruiter.com',
+            'dice.com', 'simplyhired.com', 'wellfound.com', 'linkedin.com/jobs'];
+          const sortedUrls = resultUrls.sort((a, b) => {
+            const aIsJobBoard = jobBoardDomains.some(d => a.includes(d));
+            const bIsJobBoard = jobBoardDomains.some(d => b.includes(d));
+            if (aIsJobBoard && !bIsJobBoard) return -1;
+            if (!aIsJobBoard && bIsJobBoard) return 1;
+            return 0;
+          });
+
+          for (const resultUrl of sortedUrls) {
+            try {
+              console.log(`[Enrich] Fetching result: ${resultUrl.substring(0, 80)}...`);
+              const pageHtml = await fetchViaCorsProxy(resultUrl);
+              if (!pageHtml || pageHtml.length < 500) continue;
+
+              let jdText = '';
+
+              // LinkedIn job page — use JSON-LD extraction
+              if (resultUrl.includes('linkedin.com/jobs')) {
+                const extracted = extractLinkedInJD(pageHtml);
+                if (extracted && extracted.description) jdText = extracted.description;
+              } else {
+                // Generic extraction: try JSON-LD first, then large text blocks
+                const jsonLdMatch = pageHtml.match(/<script[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+                if (jsonLdMatch) {
+                  for (const match of jsonLdMatch) {
+                    try {
+                      const content = match.replace(/<script[^>]*>/, '').replace(/<\/script>/, '');
+                      const data = JSON.parse(content);
+                      if (data.description && data.description.length > 200) {
+                        jdText = stripHtmlTags(data.description);
+                        break;
+                      }
+                      if (data['@type'] === 'JobPosting' && data.description) {
+                        jdText = stripHtmlTags(data.description);
+                        break;
+                      }
+                    } catch { /* parse error, skip */ }
+                  }
+                }
+
+                // Fallback: extract text from common JD containers
+                if (!jdText || jdText.length < MIN_FULL_JD_LENGTH) {
+                  // Try common JD container patterns
+                  const containerPatterns = [
+                    /class\s*=\s*["'][^"']*job[_-]?desc[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|section)/i,
+                    /class\s*=\s*["'][^"']*description[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|section)/i,
+                    /id\s*=\s*["'][^"']*job[_-]?desc[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|section)/i,
+                    /class\s*=\s*["'][^"']*posting[_-]?body[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|section)/i
+                  ];
+                  for (const pattern of containerPatterns) {
+                    const match = pageHtml.match(pattern);
+                    if (match && match[1]) {
+                      const extracted = stripHtmlTags(match[1]);
+                      if (extracted.length >= MIN_FULL_JD_LENGTH) {
+                        jdText = extracted;
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+
+              // Validate: JD should mention the company name (fuzzy check)
+              if (jdText && jdText.length >= MIN_FULL_JD_LENGTH) {
+                const companyFirst = role.company.toLowerCase().split(' ')[0];
+                const jdLower = jdText.toLowerCase();
+                const companyMatch = jdLower.includes(companyFirst) || jdLower.includes(role.company.toLowerCase());
+
+                if (companyMatch) {
+                  console.log(`[Enrich] ✅ Web search: "${role.title}" at ${role.company} from ${new URL(resultUrl).hostname} (${jdText.length} chars)`);
+                  role.jd = jdText;
+                  role.jdEnriched = true;
+                  role.jdEnrichedAt = new Date().toISOString();
+                  role.jdEnrichSource = 'web-search';
+                  role.jdEnrichConfidence = 75; // Web search = moderate-high confidence
+                  saveFeedQueue(state.feedItems);
+                  return role.jd;
+                } else {
+                  console.log(`[Enrich] Web result didn't mention "${companyFirst}" — skipping`);
+                }
+              }
+            } catch (err) {
+              console.warn(`[Enrich] Failed to fetch result URL:`, err.message);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn(`[Enrich] Web search failed:`, err.message);
       }
 
-      console.log(`[Enrich] ✅ Found JD for "${role.title}" at ${role.company} (${fullJD.length} chars, ${bestScore}% confidence)`);
-
-      // Update the role in state
-      role.jd = fullJD;
-      role.jdEnriched = true;
-      role.jdEnrichedAt = new Date().toISOString();
-      role.jdEnrichSource = 'apify-linkedin';
-      role.jdEnrichConfidence = bestScore;
-
-      // Also grab salary if Apify found one and we don't have it
-      if (!role.salary && bestMatch.salary) {
-        role.salary = bestMatch.salary;
-      }
-
-      // Persist to localStorage
-      saveFeedQueue(state.feedItems);
-
-      return fullJD;
+      console.warn(`[Enrich] All strategies exhausted for "${role.title}" at ${role.company}`);
+      return null;
     }
 
     /**
@@ -2655,7 +2727,7 @@
         if (jd) {
           showToast(`✅ JD enriched: ${role.title} at ${role.company}`, 'success');
           renderFeedCards(); // Re-render to show updated JD
-          updateApifyStatus();
+          updateEnrichmentStatus();
         } else {
           showToast(`No JD found for ${role.title} at ${role.company}`, 'warning');
           if (badge) {
@@ -2677,17 +2749,11 @@
 
     /**
      * Batch-enrich all roles that have stub JDs.
-     * Runs sequentially (not parallel) to stay within Apify rate limits.
+     * Runs sequentially to manage rate limits from free CORS/ATS services.
      * INPUT: none
      * OUTPUT: none (side effects: API calls, UI updates, localStorage writes)
      */
     async function enrichAllRoles() {
-      const token = getApifyToken();
-      if (!token) {
-        showToast('Add your Apify token in the sidebar first', 'warning');
-        return;
-      }
-
       const stubRoles = state.feedItems.filter(isStubJD);
       if (stubRoles.length === 0) {
         showToast('All roles already have full JDs', 'success');
@@ -2730,17 +2796,6 @@
         } catch (err) {
           console.error(`[Enrich] Failed for ${role.company}:`, err);
           failed++;
-          // Stop batch on billing, auth, or rental errors — no point trying more roles
-          if (err.message.includes('free tier limit') || err.message.includes('402')) {
-            showToast('Apify credit limit reached', 'error');
-            break;
-          }
-          if (err.message.includes('401') || err.message.includes('403')
-              || err.message.includes('not-rented') || err.message.includes('public-actor-disabled')
-              || err.message.includes('does not support running public')) {
-            showToast('Apify auth/plan error — check settings or upgrade plan', 'error');
-            break;
-          }
           if (badge) {
             badge.className = 'jd-badge jd-stub';
             badge.textContent = '📄 Stub JD';
@@ -2755,7 +2810,7 @@
 
       showToast(`JD enrichment complete: ${enriched} enriched, ${failed} failed`, enriched > 0 ? 'success' : 'warning');
       renderFeedCards();
-      updateApifyStatus();
+      updateEnrichmentStatus();
       if (enrichAllBtn) enrichAllBtn.disabled = false;
     }
 
@@ -4232,9 +4287,7 @@
                 const stub = isStubJD(item);
                 if (stub) {
                   return `<span class="jd-badge jd-stub">📄 Stub JD</span>`
-                    + (getApifyToken()
-                      ? `<button class="enrich-btn" onclick="event.stopPropagation(); enrichSingleRole('${item.id}')" title="Fetch full JD via Apify">⚡ Enrich</button>`
-                      : `<span style="font-size: 10px; color: var(--text-tertiary);">Add Apify token to enrich</span>`);
+                    + `<button class="enrich-btn" onclick="event.stopPropagation(); enrichSingleRole('${item.id}')" title="Fetch full JD from source">⚡ Enrich</button>`;
                 } else {
                   return `<span class="jd-badge jd-full">✓ Full JD</span>`
                     + (item.jdEnrichConfidence ? `<span style="font-size: 10px; color: var(--text-tertiary);">${item.jdEnrichConfidence}% match</span>` : '');
@@ -4658,13 +4711,17 @@
             if (pathMatch) return pathMatch[1] + '.com';
           }
           // LinkedIn: linkedin.com/company/stripe → stripe.com
+          // Job URLs (/jobs/view/...) don't contain company info — skip to name fallback
           if (hostname.includes('linkedin.com')) {
             const pathMatch = url.match(/company\/([a-z0-9-]+)/i);
             if (pathMatch) return pathMatch[1].replace(/-/g, '') + '.com';
+            // For non-company LinkedIn URLs (jobs, posts, etc.), skip URL extraction
+            // and fall through to the name-based fallback below
           }
           // Direct company site (e.g., stripe.com/jobs → stripe.com)
           if (!hostname.includes('workday') && !hostname.includes('greenhouse') &&
-              !hostname.includes('lever') && !hostname.includes('ashby')) {
+              !hostname.includes('lever') && !hostname.includes('ashby') &&
+              !hostname.includes('linkedin.com')) {
             return hostname.replace(/^www\./, '');
           }
         } catch (e) { /* invalid URL, fall through */ }
@@ -4721,7 +4778,9 @@
      * OUTPUT: HTML string — <img> tag with onerror fallback
      */
     function renderCardLogo(item) {
-      const domain = item.domain || getCompanyDomain(item.company || '', item.url || '');
+      // NOTE: item.domain is the INDUSTRY category (e.g., "Enterprise SaaS / AI"),
+      // NOT a web domain. Always use getCompanyDomain() which resolves actual domains.
+      const domain = getCompanyDomain(item.company || '', item.url || item.feedMetadata?.linkedinJobUrl || '');
       const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
       const safeName = (item.company || '').replace(/'/g, "\\'");
       return `<img src="${logoUrl}" alt="${item.company || ''}" onerror="handleLogoError(this,'${safeName}','card-logo-img')">`;
@@ -5721,20 +5780,16 @@
       renderFeedLog();
       updateSnoozedBadge();
 
-      // ====== AUTO-ENRICH DISABLED (v3.8.2) ======
-      // Was: auto-enrich stub JDs on page load (v3.6.1). Disabled to conserve
-      // Apify credits. Enrichment is now on-demand only via per-card "⚡ Enrich"
-      // button and the batch "Enrich JDs" header button.
-      // To re-enable: uncomment the block below.
-      /*
-      const autoEnrichToken = getApifyToken();
+      // ====== AUTO-ENRICH ON PAGE LOAD (v3.10.0) ======
+      // Now that enrichment is free (CORS proxy + ATS APIs, no API keys),
+      // auto-enrich all stub JDs in the background on every page load.
       const stubRoles = state.feedItems.filter(isStubJD);
-      if (autoEnrichToken && stubRoles.length > 0) {
-        console.log(`[Feed] Auto-enriching ${stubRoles.length} stub JDs in background...`);
-        const enrichProgress = document.getElementById('enrichProgress');
+      const enrichProgress = document.getElementById('enrichProgress');
+      if (stubRoles.length > 0) {
         if (enrichProgress) {
           enrichProgress.textContent = `(enriching 0/${stubRoles.length}...)`;
         }
+        console.log(`[Feed] Auto-enriching ${stubRoles.length} stub JDs in background...`);
         (async () => {
           let enriched = 0;
           let failed = 0;
@@ -5743,39 +5798,39 @@
               const jd = await enrichRoleJD(role);
               if (jd) {
                 enriched++;
+                // Re-score with the new JD data
                 const scoring = scoreRole(role, state.preferences);
                 if (scoring) { role.score = scoring.score; role.scoring = scoring.breakdown; }
                 state.feedItems.sort((a, b) => b.score - a.score);
                 renderFeedCards();
-              } else { failed++; }
+              } else {
+                failed++;
+              }
             } catch (err) {
               failed++;
               console.warn(`[Auto-enrich] Failed for "${role.title}": ${err.message}`);
-              if (err.message.includes('403') || err.message.includes('401') || err.message.includes('not-rented')) {
-                console.warn('[Auto-enrich] Auth error — stopping'); showToast('Apify token issue', 'warning'); break;
-              }
-              if (err.message.includes('402') || err.message.includes('free tier limit')) {
-                console.warn('[Auto-enrich] Billing limit — stopping'); showToast('Apify limit reached', 'warning'); break;
-              }
             }
-            if (enrichProgress) { enrichProgress.textContent = `(enriching ${enriched + failed}/${stubRoles.length}...)`; }
+            if (enrichProgress) {
+              enrichProgress.textContent = `(enriching ${enriched + failed}/${stubRoles.length}...)`;
+            }
+            // Small delay between fetches to avoid hammering CORS proxies
+            if (enriched + failed < stubRoles.length) {
+              await new Promise(r => setTimeout(r, 1500));
+            }
           }
           if (enrichProgress) {
-            const remaining = stubRoles.length - enriched - failed;
             enrichProgress.textContent = enriched > 0
-              ? `(${enriched} enriched${remaining > 0 ? `, ${remaining} remaining` : ''})`
+              ? `(${enriched} enriched${failed > 0 ? `, ${failed} failed` : ''})`
               : `(${stubRoles.length} need JDs)`;
           }
-          if (enriched > 0) { showToast(`Auto-enriched ${enriched} JDs`, 'success'); updateApifyStatus(); }
-          console.log(`[Auto-enrich] Done: ${enriched} enriched, ${failed} failed, ${stubRoles.length - enriched - failed} remaining`);
+          if (enriched > 0) {
+            showToast(`Auto-enriched ${enriched} JD${enriched > 1 ? 's' : ''}`, 'success');
+            updateEnrichmentStatus();
+          }
+          console.log(`[Auto-enrich] Done: ${enriched} enriched, ${failed} failed`);
         })();
-      }
-      */
-      // Instead, just show how many stubs need enrichment so user knows
-      const stubCount = state.feedItems.filter(isStubJD).length;
-      const enrichProgress = document.getElementById('enrichProgress');
-      if (enrichProgress && stubCount > 0) {
-        enrichProgress.textContent = `(${stubCount} need JDs)`;
+      } else if (enrichProgress) {
+        enrichProgress.textContent = '(all enriched)';
       }
 
       // Event handlers
@@ -5898,41 +5953,8 @@
         sidebar.classList.toggle('collapsed');
       });
 
-      // ====== APIFY SETTINGS HANDLERS ======
-
-      // Load saved Apify token and actor ID into input fields on page load
-      const savedApifyKey = getApifyToken();
-      const apifyInput = document.getElementById('apifyApiKey');
-      if (savedApifyKey && apifyInput) {
-        apifyInput.value = savedApifyKey;
-      }
-      const savedActorId = localStorage.getItem('pf_apify_actor');
-      const actorInput = document.getElementById('apifyActorId');
-      if (savedActorId && actorInput) {
-        actorInput.value = savedActorId;
-      }
-      updateApifyStatus();
-
-      // Save Apify settings button (token + actor ID)
-      document.getElementById('saveApifyKeyBtn').addEventListener('click', () => {
-        const token = document.getElementById('apifyApiKey').value.trim();
-        if (!token) {
-          showToast('Please enter your Apify API token', 'warning');
-          return;
-        }
-        saveApifyToken(token);
-
-        // Save custom actor ID if provided (otherwise use default)
-        const actorId = document.getElementById('apifyActorId').value.trim();
-        if (actorId) {
-          localStorage.setItem('pf_apify_actor', actorId);
-        } else {
-          localStorage.removeItem('pf_apify_actor'); // Fall back to default
-        }
-
-        showToast(`Apify settings saved (actor: ${getApifyActorId()})`, 'success');
-        renderFeedCards(); // Re-render to show enrich buttons
-      });
+      // ====== ENRICHMENT STATUS ======
+      updateEnrichmentStatus();
 
       // Enrich All JDs button
       document.getElementById('enrichAllBtn').addEventListener('click', () => {
