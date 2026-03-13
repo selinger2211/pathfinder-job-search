@@ -2334,11 +2334,13 @@ ${sessionData.conversation
         const difficultySelect = document.getElementById('difficultySelect');
         if (difficultySelect) difficultySelect.value = difficulty;
 
-        // Mark as practiced
+        // Mark as practiced and update UI immediately (v3.6.0 live-update)
         const practicedIds = JSON.parse(localStorage.getItem('pf_practiced_questions')) || [];
         if (!practicedIds.includes(questionId)) {
           practicedIds.push(questionId);
           localStorage.setItem('pf_practiced_questions', JSON.stringify(practicedIds));
+          // Re-render question bank so the "practiced" badge appears without refresh
+          this.renderQuestionBankUI();
         }
 
         // Switch to interview tab

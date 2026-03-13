@@ -2601,8 +2601,9 @@ The HTML content should come first, followed by the citations block. Do not incl
       const status = document.getElementById('apiKeyStatus');
       const key = input.value.trim();
 
-      if (!key) {
-        status.textContent = 'Please enter an API key.';
+      // Guard: ignore if user submits the masked placeholder or empty value
+      if (!key || key === '••••••••••••••••' || key.startsWith('••')) {
+        status.textContent = key ? 'Key already saved. Enter a new key to replace it.' : 'Please enter an API key.';
         status.style.color = 'rgb(239, 68, 68)';
         return;
       }
@@ -2617,8 +2618,12 @@ The HTML content should come first, followed by the citations block. Do not incl
         status.textContent = 'Key saved. Stored locally in your browser.';
         status.style.color = 'var(--text-tertiary)';
 
-        // Reset to password after 3s
-        setTimeout(() => { input.type = 'password'; input.value = key; }, 3000);
+        // Reset to password field after 3s — show masked placeholder, never expose full key
+        setTimeout(() => {
+          input.type = 'password';
+          input.value = '••••••••••••••••';  // Visual indicator that a key is saved
+          input.setAttribute('data-has-key', 'true');
+        }, 3000);
       } catch (e) {
         console.warn('Failed to save API key:', e);
         status.textContent = 'Error saving key. Check browser storage.';

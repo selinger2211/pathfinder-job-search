@@ -4,6 +4,30 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.6.0 — 2026-03-12
+
+### What Changed — Settings Live-Update, Comp Sliders, Cross-Module Bug Fixes
+
+**User reported:** "when I make a change to the settings, e.g., changing my desired compensation ranges on the UI I have to refresh for them to take effect in the UI, also wouldn't a slider be better for compensation?" + "look to all UI settings for the display issue — this gets added to the skill"
+
+**Changes:**
+
+1. **Feed: Compensation range sliders** — Replaced number inputs with range sliders (`<input type="range">`) for Min Base, Target Total, and Max Total compensation. Each slider shows a live-updating `$XK` label during drag. Debounced save (500ms idle) persists to `pf_preferences` and re-scores all feed cards instantly. Slider ranges: Min Base 50-800K, Target Total 50-1500K, Max Total 50-1500K. No page refresh needed.
+
+2. **Feed: Company stage checkbox live-update** — Toggling company stage checkboxes (Series B+, Late-stage, Pre-IPO, Public) now immediately saves preferences, re-scores all feed cards, and re-renders the grid with a toast confirmation. Previously, checkbox changes updated in-memory state but required a page refresh to take effect.
+
+3. **Feed: Apify actor support for free actors** — Changed default actor from `valig` (expired) to `logical_scrapers/linkedin-jobs-scraper` (consumption-based, free). Added support for 3 actor input format families: keywords-based (`logical_scrapers`, `happitap`, `fetchclub`), searchUrl-based (`bebity`, `curious_coder`), and field-based (`valig`, `data_wizard`). Auto-detects format from actor ID.
+
+4. **Feed: Null guard on role.location in scoreRole()** — Fixed `TypeError: Cannot read properties of undefined (reading 'toLowerCase')` crash when a feed role has no `location` field. Now defaults to empty string.
+
+5. **Mock Interview: Practiced questions live-update** — Marking a question as practiced now calls `renderQuestionBankUI()` so the "practiced" badge appears immediately without a page refresh.
+
+6. **Research Brief: API key security fix** — After saving an API key, the input field now shows a masked placeholder (`••••••••••••••••`) instead of the full plaintext key. Previously, the full key was set back into `input.value` after 3 seconds. Added guard against re-submitting the masked placeholder.
+
+7. **Skill: Settings Live-Update Pattern added** — Created `docs/skill-patch-settings-live-update.md` documenting the mandatory 5-step live-update pattern (validate → update state → persist → re-render → feedback) and the debounced slider variant. This pattern is now a hard rule for all future settings work.
+
+---
+
 ## v3.5.2 — 2026-03-12
 
 ### What Changed — Stage Date/Time Manual Override for Analytics

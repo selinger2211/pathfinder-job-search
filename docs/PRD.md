@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v3.5.2
+**Status:** v3.6.0
 
 ---
 
@@ -2511,6 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v3.6.0 | 2026-03-12 | **Settings live-update + comp sliders** — Replaced comp number inputs with range sliders (instant label update + debounced re-score). Company stage checkboxes now live-update feed cards. Fixed null `role.location` crash in `scoreRole()`. Mock Interview practiced questions now re-render immediately. Research Brief API key no longer exposed in plaintext after save. Default Apify actor changed to `logical_scrapers` (free). Settings Live-Update Pattern documented as mandatory skill rule. |
 | v3.5.2 | 2026-03-12 | **Stage date/time manual override** — Stage history timeline now uses `datetime-local` inputs showing full date+time for each stage transition. Fixed bug where editing current stage's date (index -1) had no effect. New `formatDatetimeLocal()` helper handles timestamps and ISO strings. |
 | v3.5.1 | 2026-03-12 | **Bug fixes: Accept→Pipeline, dark mode cache, dismiss persist** — Feed `acceptRole()` now creates a full Pipeline role (stage: "discovered") + company entry with Google Favicon logo. `dismissRole()` persists feed queue removal to localStorage. Dark mode cache fix: `data-layer.js` now initializes `data-theme` attribute on `<html>` from `pf_theme` on every page load (all 11 modules). Cache-bust `?v=3.5.1` on shared CSS/JS links. Fixed `companyName` sent as array to valig Apify actor. |
 | v3.5.0 | 2026-03-12 | **JD-first scoring engine + Apify actor swap** — Rewrote `scoreRole()` to scan full JD text when available (falls back to title+company for stubs). `mustHaveKeywords` activated as 60% weight in Keyword dimension. Swapped Apify actor from `bebity` (expired) to `valig/linkedin-jobs-scraper` (consumption-based). Configurable actor ID via sidebar settings (`pf_apify_actor`). Improved error handling for 403/401/402. |

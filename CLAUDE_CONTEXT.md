@@ -185,7 +185,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.5.2
+**Current Version:** v3.6.0
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -208,6 +208,11 @@ These are the actual field shapes for objects stored in shared localStorage keys
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.6.0)
+- **Settings live-update pattern**: All settings now update the UI immediately without page refresh. Comp range inputs replaced with range sliders (debounced save + instant label). Company stage checkboxes re-score and re-render feed on toggle. Mock Interview practiced questions re-render question bank. Research Brief API key masked with placeholder (never exposed in plaintext). Settings Live-Update Pattern documented in `docs/skill-patch-settings-live-update.md` as mandatory rule.
+- **Apify actor swap (again)**: Default changed from `valig` (expired) to `logical_scrapers/linkedin-jobs-scraper` (consumption-based, free). `buildApifyInput()` now supports 3 format families: keywords-based, searchUrl-based, field-based.
+- **scoreRole null guard**: Fixed crash when `role.location` is undefined — now defaults to empty string.
 
 ### Recently Fixed (v3.5.2)
 - **Stage date/time override**: Stage history timeline uses `datetime-local` inputs (shows date + time). Fixed current stage date editing (index -1 was silently failing). New `formatDatetimeLocal()` helper. CSS for datetime-local inputs.

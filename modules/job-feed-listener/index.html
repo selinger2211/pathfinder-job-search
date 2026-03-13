@@ -241,31 +241,66 @@
     }
 
     /* Compensation range display */
-    .comp-display {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--space-2);
-      margin-bottom: var(--space-2);
-      font-size: var(--text-xs);
+    /* ====== COMPENSATION RANGE SLIDERS (v3.6.0) ====== */
+    .comp-slider-group {
+      margin-bottom: var(--space-3);
     }
 
-    .comp-item {
-      background: var(--bg-elevated);
-      padding: var(--space-2);
-      border-radius: var(--radius-sm);
-      border-left: 3px solid var(--accent);
-    }
-
-    .comp-item-label {
-      color: var(--text-tertiary);
-      font-weight: 500;
+    .comp-slider-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 4px;
     }
 
-    .comp-item-value {
+    .comp-slider-label {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .comp-slider-value {
+      font-size: var(--text-sm);
       color: var(--text-primary);
       font-weight: 700;
       font-family: var(--font-mono);
+    }
+
+    .comp-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--bg-subtle);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .comp-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: 2px solid var(--bg-base);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      transition: transform 0.15s ease;
+    }
+
+    .comp-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    .comp-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: 2px solid var(--bg-base);
     }
 
     /* Modal and overlay */
@@ -1665,26 +1700,33 @@
         <!-- Compensation Range -->
         <div class="sidebar-section-title">Compensation</div>
         <div class="pref-section">
-          <div class="comp-display">
-            <div class="comp-item">
-              <div class="comp-item-label">Min Base</div>
-              <div class="comp-item-value" id="minBaseDisplay">$285K</div>
+          <!-- ====== COMPENSATION RANGE SLIDERS (v3.6.0) ======
+               Each slider shows a live-updating $K label. Changes auto-save
+               and re-score feed cards without needing a page refresh. -->
+          <div class="comp-slider-group">
+            <div class="comp-slider-row">
+              <label class="comp-slider-label" for="minBase">Min Base</label>
+              <span class="comp-slider-value" id="minBaseDisplay">$285K</span>
             </div>
-            <div class="comp-item">
-              <div class="comp-item-label">Target Total</div>
-              <div class="comp-item-value" id="targetTotalDisplay">$350K</div>
-            </div>
-            <div class="comp-item">
-              <div class="comp-item-label">Max Total</div>
-              <div class="comp-item-value" id="maxTotalDisplay">$450K</div>
-            </div>
+            <input type="range" class="comp-slider" id="minBase" min="50" max="800" step="5" value="285"
+                   aria-label="Minimum base salary in thousands">
           </div>
-          <label class="pref-label" for="minBase">Min Base ($K)</label>
-          <input type="number" class="pref-input" id="minBase" placeholder="250" value="250" aria-label="Minimum base salary in thousands">
-          <label class="pref-label" for="targetTotal">Target Total ($K)</label>
-          <input type="number" class="pref-input" id="targetTotal" placeholder="300" value="300" aria-label="Target total compensation in thousands">
-          <label class="pref-label" for="maxTotal">Max Total ($K)</label>
-          <input type="number" class="pref-input" id="maxTotal" placeholder="450" value="450" aria-label="Maximum total compensation in thousands">
+          <div class="comp-slider-group">
+            <div class="comp-slider-row">
+              <label class="comp-slider-label" for="targetTotal">Target Total</label>
+              <span class="comp-slider-value" id="targetTotalDisplay">$350K</span>
+            </div>
+            <input type="range" class="comp-slider" id="targetTotal" min="50" max="1500" step="5" value="350"
+                   aria-label="Target total compensation in thousands">
+          </div>
+          <div class="comp-slider-group">
+            <div class="comp-slider-row">
+              <label class="comp-slider-label" for="maxTotal">Max Total</label>
+              <span class="comp-slider-value" id="maxTotalDisplay">$450K</span>
+            </div>
+            <input type="range" class="comp-slider" id="maxTotal" min="50" max="1500" step="5" value="450"
+                   aria-label="Maximum total compensation in thousands">
+          </div>
         </div>
 
         <!-- Must-Have Keywords -->
@@ -2144,7 +2186,7 @@
      * It accepts title, location, and companyName as inputs.
      * Can be overridden via localStorage key `pf_apify_actor`.
      */
-    const DEFAULT_APIFY_ACTOR = 'valig/linkedin-jobs-scraper';
+    const DEFAULT_APIFY_ACTOR = 'logical_scrapers/linkedin-jobs-scraper';
 
     /**
      * Get the current Apify actor ID (user-configured or default).
@@ -2234,8 +2276,9 @@
 
     /**
      * Build the input payload for the Apify LinkedIn jobs scraper.
-     * Supports multiple actor input formats:
-     *   - Field-based: { title, location, companyName, rows } (valig, data_wizard)
+     * Supports four actor input format families (v3.6.0):
+     *   - Keywords-based: { keywords, location, maxResults } (logical_scrapers, happitap)
+     *   - Field-based: { title, location, companyName[], rows } (valig, data_wizard)
      *   - SearchUrl-based: { searchUrl, count } (bebity, curious_coder)
      *
      * INPUT: title (string), company (string), location (string), maxItems (int)
@@ -2247,12 +2290,28 @@
       // Strip "Remote" from location for LinkedIn search (use keywords instead)
       const cleanLoc = loc.replace(/remote\s*\(?/i, '').replace(/\)/, '').trim() || 'United States';
 
-      // Different actors have different input schemas.
-      // We detect which format to use based on the actor ID.
+      // ====== ACTOR FORMAT DETECTION (v3.6.0) ======
+      // Each Apify actor has its own input schema. We detect the format
+      // based on the actor ID prefix and build the right payload.
+
+      // Group 1: Keywords-based actors (free, consumption-based)
+      const keywordsActors = ['logical_scrapers/', 'happitap/', 'fetchclub/'];
+      const usesKeywords = keywordsActors.some(prefix => actorId.includes(prefix));
+
+      // Group 2: SearchUrl-based actors (rental required after free trial)
       const searchUrlActors = ['bebity/', 'curious_coder/', 'scrapio/'];
       const usesSearchUrl = searchUrlActors.some(prefix => actorId.includes(prefix));
 
-      if (usesSearchUrl) {
+      if (usesKeywords) {
+        // Keywords-based actors (logical_scrapers, happitap, fetchclub)
+        // These are consumption-based (no rental fee), just use Apify credits
+        return {
+          keywords: `${title} ${company}`,
+          location: cleanLoc,
+          maxResults: maxItems,
+          proxy: { useApifyProxy: true }
+        };
+      } else if (usesSearchUrl) {
         // SearchUrl-based actors (bebity, curious_coder)
         const keywords = encodeURIComponent(`${title} ${company}`);
         const searchUrl = `https://www.linkedin.com/jobs/search/?keywords=${keywords}&location=${encodeURIComponent(cleanLoc)}`;
@@ -3207,17 +3266,18 @@
       const prefsLocations = prefs.locations || [];
       const excludedLocations = prefs.excludedLocations || [];
 
-      // Check excluded locations
+      // Check excluded locations (guard against missing location field)
+      const roleLocation = (role.location || '').toLowerCase();
       const inExcludedLocation = excludedLocations.some(loc =>
-        role.location.toLowerCase().includes(loc.toLowerCase())
+        roleLocation.includes(loc.toLowerCase())
       );
 
       if (inExcludedLocation) {
         locationScore = 0;
       } else if (prefsLocations.includes('Remote') && role.remote) {
         locationScore = 100;
-      } else if (prefsLocations.some(loc =>
-        role.location.toLowerCase().includes(loc.toLowerCase())
+      } else if (roleLocation && prefsLocations.some(loc =>
+        roleLocation.includes(loc.toLowerCase())
       )) {
         locationScore = 100;
       } else {
@@ -3427,10 +3487,26 @@
         if (el) {
           el.checked = (prefs.companyStage || []).includes(stage);
           el.onchange = (e) => {
+            /* ====== STAGE CHECKBOX LIVE-UPDATE (v3.6.0) ======
+               When user toggles a company stage checkbox, immediately
+               save preferences and re-score + re-render feed cards. */
             const selected = Array.from(document.querySelectorAll('input[id^="stage"]:checked'))
               .map(c => c.value);
             prefs.companyStage = selected;
             state.preferences = prefs;
+            savePreferences(prefs);
+            // Re-score all items with updated preferences
+            const freshItems = loadFeedQueue();
+            state.feedItems = freshItems
+              .map(role => {
+                const scoring = scoreRole(role, prefs);
+                if (!scoring) return null;
+                return { ...role, score: scoring.score, scoring: scoring.breakdown };
+              })
+              .filter(item => item !== null)
+              .sort((a, b) => b.score - a.score);
+            renderFeedCards();
+            showToast('Stage preferences updated', 'success');
           };
         }
       });
@@ -4932,7 +5008,29 @@
       updateSnoozedBadge();
 
       // Event handlers
-      document.getElementById('savePrefsBtn').addEventListener('click', () => {
+      // ====== COMPENSATION SLIDER LIVE-UPDATE (v3.6.0) ======
+      // Each slider updates its display label in real-time on drag,
+      // then debounce-saves preferences and re-scores feed cards.
+      let compSaveTimer = null;
+
+      /**
+       * Update comp display labels from current slider values.
+       * Called on every slider input event for instant visual feedback.
+       */
+      function updateCompDisplays() {
+        const minK = parseInt(document.getElementById('minBase').value) || 285;
+        const targetK = parseInt(document.getElementById('targetTotal').value) || 350;
+        const maxK = parseInt(document.getElementById('maxTotal').value) || 450;
+        document.getElementById('minBaseDisplay').textContent = `$${minK}K`;
+        document.getElementById('targetTotalDisplay').textContent = `$${targetK}K`;
+        document.getElementById('maxTotalDisplay').textContent = `$${maxK}K`;
+      }
+
+      /**
+       * Save comp preferences and re-score all feed cards.
+       * Called after a debounce when sliders stop moving.
+       */
+      function saveCompAndRescore() {
         const minK = parseInt(document.getElementById('minBase').value) || 285;
         const targetK = parseInt(document.getElementById('targetTotal').value) || 350;
         const maxK = parseInt(document.getElementById('maxTotal').value) || 450;
@@ -4948,7 +5046,6 @@
         };
 
         savePreferences(updated);
-        showToast('Preferences saved! Re-scoring feed...', 'success');
 
         // Re-score all items from localStorage feed queue
         const freshItems = loadFeedQueue();
@@ -4956,17 +5053,27 @@
           .map(role => {
             const scoring = scoreRole(role, updated);
             if (!scoring) return null;
-
-            return {
-              ...role,
-              score: scoring.score,
-              scoring: scoring.breakdown
-            };
+            return { ...role, score: scoring.score, scoring: scoring.breakdown };
           })
           .filter(item => item !== null)
           .sort((a, b) => b.score - a.score);
 
         renderFeedCards();
+        showToast('Preferences updated', 'success');
+      }
+
+      // Wire up all 3 comp sliders: instant display + debounced save
+      ['minBase', 'targetTotal', 'maxTotal'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+          updateCompDisplays();  // Instant visual feedback on drag
+          clearTimeout(compSaveTimer);
+          compSaveTimer = setTimeout(saveCompAndRescore, 500);  // Save after 500ms idle
+        });
+      });
+
+      // ====== SAVE PREFS BUTTON (for non-slider settings) ======
+      document.getElementById('savePrefsBtn').addEventListener('click', () => {
+        saveCompAndRescore();
       });
 
       // Add Role Manually button
