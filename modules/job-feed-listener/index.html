@@ -3947,10 +3947,18 @@
                              (roleCompanyLower.length >= 4 && companyLower.includes(roleCompanyLower));
         if (!companyMatch) continue;
 
-        // Title match: either contains the other, or both contain "product manager"
+        // Title match: either contains the other, or both share the same specific role term
+        // (e.g., "product manager" in both). The old check was too loose — matching
+        // "Senior PM, AI" against "Sr. Director of Product" just because both had "product".
+        // v3.18.2: Require matching on a meaningful 2-word phrase, not just "product".
+        const specificRoleTerms = ['product manager', 'product management', 'head of product',
+                                    'director of product', 'group product', 'data product',
+                                    'technical product', 'principal product'];
+        const sharedRoleTerm = specificRoleTerms.some(term =>
+          titleLower.includes(term) && roleTitleLower.includes(term));
         const titleMatch = roleTitleLower.includes(titleLower) ||
                            titleLower.includes(roleTitleLower) ||
-                           (titleLower.includes('product') && roleTitleLower.includes('product'));
+                           sharedRoleTerm;
         if (!titleMatch) continue;
 
         // Found a match — check if it's at an active stage
@@ -7466,8 +7474,10 @@
         localStorage.setItem('pf_feed_queue', JSON.stringify(cleanedQueue));
       }
 
-      // v3.2.0: If queue is empty after cleanup, try loading Gmail seed data
-      // This loads real job emails extracted from Gmail by the Pathfinder agent
+      // v3.18.2: If queue is empty (including empty array), reload from Gmail seed data.
+      // This handles the case where localStorage pf_feed_queue exists but is empty ("[]"),
+      // which prevented the original v3.2.0 seed loader from re-populating the feed.
+      // The seed file contains real job emails extracted from Gmail by the Pathfinder agent.
       let rawFeedItems = cleanedQueue;
       if (rawFeedItems.length === 0) {
         try {

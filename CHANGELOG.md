@@ -4,6 +4,19 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.18.2 — 2026-03-13
+
+### Bug Fix: Feed items disappearing
+
+**Root cause:** The pipeline dedup filter (`checkPipelineStatus`) used an overly broad title match — any feed item with "product" in the title matched any pipeline role with "product" in the title at the same company. Since all PM roles contain "product", this was filtering out legitimate feed items (e.g., "Senior PM, AI" falsely matched "Sr. Director of Product" at RingCentral).
+
+**Fixes:**
+- Tightened pipeline dedup title matching to require specific 2-word role terms (e.g., "product manager", "head of product") instead of just the word "product"
+- Added detailed comment explaining the seed reload logic for when `pf_feed_queue` exists but is empty
+- Result: 17 feed items correctly displayed (was 0 due to false-positive dedup)
+
+---
+
 ## v3.18.1 — 2026-03-13
 
 ### Bug Fixes & UX Polish

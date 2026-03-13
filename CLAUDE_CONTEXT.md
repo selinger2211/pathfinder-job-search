@@ -8,9 +8,9 @@
 
 Pathfinder is an agentic job search system with 11 standalone HTML modules sharing data via localStorage + IndexedDB. Each module is a single `index.html` file in `modules/`. There is no backend server required for core functionality — Claude API calls happen directly from the browser via `modules/shared/claude-api.js`.
 
-**Current Version:** v3.18.1 (as of 2026-03-13)
+**Current Version:** v3.18.2 (as of 2026-03-13)
 **Last Major Features:** Calendar Phase 4 Intelligence & Feedback Loops (FINAL PLANNED FEATURE). All 53 planned features now implemented.
-**Status:** Roadmap Complete — Bug fixes and polish in progress (v3.18.1: removed Research Brief sidebar, fixed MCP offline indicator, fixed MCP tool files, fixed comp display)
+**Status:** Roadmap Complete — Bug fixes and polish in progress (v3.18.2: fixed feed pipeline dedup false positives, v3.18.1: removed Research Brief sidebar, fixed MCP offline indicator, fixed MCP tool files, fixed comp display)
 
 **Owner:** Ili Selinger (ilan.selinger@gmail.com)
 **Repo:** github.com/selinger2211/pathfinder-job-search
