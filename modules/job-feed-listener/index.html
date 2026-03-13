@@ -2585,31 +2585,95 @@
         }
       }
 
-      // ====== STRATEGY 3: Web Search for JD on Job Boards ======
-      // Search DuckDuckGo for the role on job boards like Indeed, Glassdoor, BuiltIn, etc.
-      // Then fetch the best result and extract the JD text.
+      // ====== STRATEGY 3: Web Search → ATS API or CORS Extraction ======
+      // Search for the EXACT job title + company name. Google results often include
+      // Greenhouse, Lever, Ashby, Built In, etc. — the same posting cross-listed.
+      // If we find an ATS URL in the results, we can use our existing free API fetchers.
+      // Example: "Principal Product Manager, AI - People & Places Amplitude"
+      //   → Greenhouse (free API!), LinkedIn, Teal, Built In all show up.
       console.log(`[Enrich] Trying web search for "${role.title}" at ${role.company}...`);
       try {
-        const searchQuery = encodeURIComponent(`${role.title} ${role.company} job description`);
+        // Use the EXACT title + company — this finds the same posting on multiple sites
+        const searchQuery = encodeURIComponent(`${role.title} ${role.company}`);
         const searchUrl = `https://html.duckduckgo.com/html/?q=${searchQuery}`;
         const searchHtml = await fetchViaCorsProxy(searchUrl);
         if (searchHtml) {
           // Extract result URLs from DuckDuckGo HTML results
-          // DuckDuckGo HTML wraps links in redirect URLs — extract the actual destination
+          // DuckDuckGo wraps links in redirect URLs — extract the actual destination
           const linkMatches = [...searchHtml.matchAll(/uddg=([^&"]+)/g)];
           const resultUrls = linkMatches
             .map(m => {
               try { return decodeURIComponent(m[1]); } catch { return null; }
             })
             .filter(u => u && !u.includes('duckduckgo.com'))
-            .slice(0, 5); // Top 5 results
+            .slice(0, 8); // Top 8 results — cast a wider net
 
           console.log(`[Enrich] Web search found ${resultUrls.length} result URLs`);
 
-          // Prioritize job board URLs, then try any result
-          const jobBoardDomains = ['indeed.com', 'glassdoor.com', 'builtin.com', 'ziprecruiter.com',
-            'dice.com', 'simplyhired.com', 'wellfound.com', 'linkedin.com/jobs'];
-          const sortedUrls = resultUrls.sort((a, b) => {
+          // ---- PHASE A: Check if any result is an ATS URL (Greenhouse/Lever/Ashby) ----
+          // These are gold — our fetchFromAtsApi() uses their FREE public JSON APIs
+          // (no CORS proxy needed, 98% confidence, structured data)
+          const atsUrls = resultUrls.filter(u =>
+            u.includes('greenhouse.io') || u.includes('lever.co') || u.includes('ashbyhq.com')
+          );
+          for (const atsUrl of atsUrls) {
+            try {
+              console.log(`[Enrich] 🎯 Found ATS URL in search results: ${atsUrl.substring(0, 80)}...`);
+              const atsResult = await fetchFromAtsApi(atsUrl);
+              if (atsResult && atsResult.description && atsResult.description.length >= MIN_FULL_JD_LENGTH) {
+                console.log(`[Enrich] ✅ ATS API via search: "${role.title}" at ${role.company} (${atsResult.description.length} chars)`);
+                role.jd = atsResult.description;
+                role.jdEnriched = true;
+                role.jdEnrichedAt = new Date().toISOString();
+                role.jdEnrichSource = 'ats-api-via-search';
+                role.jdEnrichConfidence = 95; // ATS API = very high confidence
+                if (!role.salary && atsResult.salary) role.salary = atsResult.salary;
+                saveFeedQueue(state.feedItems);
+                return role.jd;
+              }
+            } catch (err) {
+              console.warn(`[Enrich] ATS API from search result failed:`, err.message);
+            }
+          }
+
+          // ---- PHASE B: Check if any result is a LinkedIn job URL ----
+          // Use our existing CORS proxy + JSON-LD extraction
+          const linkedinUrls = resultUrls.filter(u =>
+            u.includes('linkedin.com/jobs/view')
+          );
+          for (const liUrl of linkedinUrls) {
+            try {
+              console.log(`[Enrich] Found LinkedIn URL in search results: ${liUrl.substring(0, 80)}...`);
+              const html = await fetchViaCorsProxy(liUrl);
+              if (html) {
+                const extracted = extractLinkedInJD(html);
+                if (extracted && extracted.description && extracted.description.length >= MIN_FULL_JD_LENGTH) {
+                  console.log(`[Enrich] ✅ LinkedIn via search: "${role.title}" at ${role.company} (${extracted.description.length} chars)`);
+                  role.jd = extracted.description;
+                  role.jdEnriched = true;
+                  role.jdEnrichedAt = new Date().toISOString();
+                  role.jdEnrichSource = 'linkedin-via-search';
+                  role.jdEnrichConfidence = 90; // LinkedIn via search = high confidence
+                  if (!role.salary && extracted.salary) role.salary = extracted.salary;
+                  saveFeedQueue(state.feedItems);
+                  return role.jd;
+                }
+              }
+            } catch (err) {
+              console.warn(`[Enrich] LinkedIn from search result failed:`, err.message);
+            }
+          }
+
+          // ---- PHASE C: Try other job board sites (Built In, Teal, Indeed, etc.) ----
+          // Fetch via CORS proxy and extract JD from JSON-LD or HTML containers
+          const otherUrls = resultUrls.filter(u =>
+            !u.includes('greenhouse.io') && !u.includes('lever.co') &&
+            !u.includes('ashbyhq.com') && !u.includes('linkedin.com')
+          );
+          // Prioritize known job boards over random sites
+          const jobBoardDomains = ['builtin.com', 'indeed.com', 'glassdoor.com', 'tealhq.com',
+            'ziprecruiter.com', 'dice.com', 'simplyhired.com', 'wellfound.com'];
+          const sortedOtherUrls = otherUrls.sort((a, b) => {
             const aIsJobBoard = jobBoardDomains.some(d => a.includes(d));
             const bIsJobBoard = jobBoardDomains.some(d => b.includes(d));
             if (aIsJobBoard && !bIsJobBoard) return -1;
@@ -2617,55 +2681,49 @@
             return 0;
           });
 
-          for (const resultUrl of sortedUrls) {
+          for (const resultUrl of sortedOtherUrls.slice(0, 3)) { // Try top 3 non-ATS results
             try {
-              console.log(`[Enrich] Fetching result: ${resultUrl.substring(0, 80)}...`);
+              console.log(`[Enrich] Fetching job board result: ${resultUrl.substring(0, 80)}...`);
               const pageHtml = await fetchViaCorsProxy(resultUrl);
               if (!pageHtml || pageHtml.length < 500) continue;
 
               let jdText = '';
 
-              // LinkedIn job page — use JSON-LD extraction
-              if (resultUrl.includes('linkedin.com/jobs')) {
-                const extracted = extractLinkedInJD(pageHtml);
-                if (extracted && extracted.description) jdText = extracted.description;
-              } else {
-                // Generic extraction: try JSON-LD first, then large text blocks
-                const jsonLdMatch = pageHtml.match(/<script[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
-                if (jsonLdMatch) {
-                  for (const match of jsonLdMatch) {
-                    try {
-                      const content = match.replace(/<script[^>]*>/, '').replace(/<\/script>/, '');
-                      const data = JSON.parse(content);
-                      if (data.description && data.description.length > 200) {
-                        jdText = stripHtmlTags(data.description);
-                        break;
-                      }
-                      if (data['@type'] === 'JobPosting' && data.description) {
-                        jdText = stripHtmlTags(data.description);
-                        break;
-                      }
-                    } catch { /* parse error, skip */ }
-                  }
+              // Try JSON-LD first — many job boards embed structured JobPosting data
+              const jsonLdMatch = pageHtml.match(/<script[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+              if (jsonLdMatch) {
+                for (const match of jsonLdMatch) {
+                  try {
+                    const content = match.replace(/<script[^>]*>/, '').replace(/<\/script>/, '');
+                    const data = JSON.parse(content);
+                    // Check for JobPosting schema (standard on most job boards)
+                    if (data['@type'] === 'JobPosting' && data.description) {
+                      jdText = stripHtmlTags(data.description);
+                      break;
+                    }
+                    if (data.description && data.description.length > 200) {
+                      jdText = stripHtmlTags(data.description);
+                      break;
+                    }
+                  } catch { /* parse error, skip */ }
                 }
+              }
 
-                // Fallback: extract text from common JD containers
-                if (!jdText || jdText.length < MIN_FULL_JD_LENGTH) {
-                  // Try common JD container patterns
-                  const containerPatterns = [
-                    /class\s*=\s*["'][^"']*job[_-]?desc[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|section)/i,
-                    /class\s*=\s*["'][^"']*description[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|section)/i,
-                    /id\s*=\s*["'][^"']*job[_-]?desc[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|section)/i,
-                    /class\s*=\s*["'][^"']*posting[_-]?body[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|section)/i
-                  ];
-                  for (const pattern of containerPatterns) {
-                    const match = pageHtml.match(pattern);
-                    if (match && match[1]) {
-                      const extracted = stripHtmlTags(match[1]);
-                      if (extracted.length >= MIN_FULL_JD_LENGTH) {
-                        jdText = extracted;
-                        break;
-                      }
+              // Fallback: extract text from common JD HTML containers
+              if (!jdText || jdText.length < MIN_FULL_JD_LENGTH) {
+                const containerPatterns = [
+                  /class\s*=\s*["'][^"']*job[_-]?desc[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|section)/i,
+                  /class\s*=\s*["'][^"']*description[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|section)/i,
+                  /id\s*=\s*["'][^"']*job[_-]?desc[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|section)/i,
+                  /class\s*=\s*["'][^"']*posting[_-]?body[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|section)/i
+                ];
+                for (const pattern of containerPatterns) {
+                  const match = pageHtml.match(pattern);
+                  if (match && match[1]) {
+                    const extracted = stripHtmlTags(match[1]);
+                    if (extracted.length >= MIN_FULL_JD_LENGTH) {
+                      jdText = extracted;
+                      break;
                     }
                   }
                 }
@@ -2683,7 +2741,7 @@
                   role.jdEnriched = true;
                   role.jdEnrichedAt = new Date().toISOString();
                   role.jdEnrichSource = 'web-search';
-                  role.jdEnrichConfidence = 75; // Web search = moderate-high confidence
+                  role.jdEnrichConfidence = 80; // Job board extraction = good confidence
                   saveFeedQueue(state.feedItems);
                   return role.jd;
                 } else {
