@@ -95,6 +95,16 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 - Model stored in `pf_claude_model` (default: `claude-sonnet-4-20250514`)
 - MCP HTTP bridge (localhost:3456) provides data sync + backup endpoints
 
+### 7. Company Logo Pattern (MANDATORY)
+Any module showing company logos MUST use the canonical logo system (ported from Pipeline → Feed in v3.8.4). Do NOT reinvent logo rendering. The pattern is:
+- `DOMAIN_OVERRIDES` — known tricky names (Amazon Ads → amazon.com, Notion → notion.so, etc.)
+- `getCompanyDomain(name, url)` — ATS-aware extraction (Workday, Greenhouse, Lever, Ashby, LinkedIn URLs)
+- `getCompanyColor(name)` — deterministic color from 16-color palette for fallback initials
+- `handleLogoError(img, name, cssClass)` — replaces broken `<img>` with colorful letter circle
+- `renderCardLogo(item)` or `companyLogoHtml(name, cssClass, url)` — returns full HTML with onerror fallback
+- CSS: `.card-logo` (container) + `.card-logo-fallback` (letter circle)
+- Source of truth: Pipeline module (`getCompanyDomain`, `companyLogoHtml`) and Feed module (`renderCardLogo`)
+
 ---
 
 ## Data Contracts (Shared Object Shapes)
@@ -185,7 +195,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.8.3
+**Current Version:** v3.8.4
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -209,9 +219,10 @@ These are the actual field shapes for objects stored in shared localStorage keys
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
-### Recently Fixed (v3.8.3)
-- **Feed card logos**: New `renderCardLogo()` uses Google Favicon API with `guessDomain()` fallback. Gmail/LinkedIn roles no longer show "undefined".
+### Recently Fixed (v3.8.4)
+- **Feed card logos**: Ported full Pipeline logo system — `DOMAIN_OVERRIDES`, `getCompanyDomain(name, url)` with ATS-aware extraction, `getCompanyColor(name)` for colorful letter fallbacks, `handleLogoError()` for graceful degradation.
 - **Feed stats bar**: Shows total roles, unique companies, and stage breakdown between tabs and cards.
+- **Logo pattern documented**: Rule 7 in Mandatory Rules section of CLAUDE_CONTEXT.md.
 
 ### Recently Fixed (v3.8.2)
 - **Auto-enrich disabled**: Switched JD enrichment from automatic-on-load to on-demand only. Per-card "⚡ Enrich" and batch "Enrich JDs" buttons still work. Conserves Apify credits. Auto-enrich code commented out (re-enable by uncommenting block in init).

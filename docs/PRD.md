@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v3.8.3
+**Status:** v3.8.4
 
 ---
 
@@ -2511,7 +2511,7 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
-| v3.8.3 | 2026-03-12 | **Logo fix + feed stats bar** — `renderCardLogo()` uses Google Favicon API with domain guessing + fallback initial. New stats bar shows total roles, unique companies, and stage breakdown. |
+| v3.8.4 | 2026-03-12 | **Pipeline logo system + feed stats bar** — Ported full logo system from Pipeline: ATS-aware domain extraction, DOMAIN_OVERRIDES, colorful letter-initial fallbacks. Stats bar shows total roles, unique companies, stage breakdown. Logo pattern documented as Rule 7 in CLAUDE_CONTEXT. |
 | v3.8.2 | 2026-03-12 | **On-demand enrichment only** — Disabled auto-enrich on page load to conserve Apify credits. Per-card "⚡ Enrich" and batch "Enrich JDs" buttons still work. Page load shows stub count instead. Auto-enrich code preserved as commented block for easy re-enable. |
 | v3.8.1 | 2026-03-12 | **Async Apify enrichment + billing early-abort** — Replaced sync Apify API call (hard 300s timeout) with async 3-step pattern: start run → poll status every 15s (up to 10 min) → fetch dataset on success. Fixes happitap actor timeouts (browser-based scraping takes 5+ min). Auto-enrich loop now breaks immediately on 402 billing errors instead of trying all remaining roles. |
 | v3.8.0 | 2026-03-12 | **Classification-first comp estimation engine** — Complete rewrite: detects posted comp type (BASE_SALARY/TOTAL_TARGET_CASH/OTE/UNKNOWN) before applying formulas. TCC gets equity add-on only (no full TC multiplier). PM level inference (mid/senior/principal). Calibration modes (public/startup/generic). Confidence scoring (High/Medium/Low). Hard cap 1.65x. Cards show TC range + confidence. New `docs/skill-comp-estimation.md` spec. |

@@ -755,10 +755,24 @@
       overflow: hidden;
     }
 
-    .card-logo img {
+    .card-logo img,
+    .card-logo-img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
+    }
+
+    /* Fallback when favicon fails — colorful letter circle */
+    .card-logo-fallback {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: #ffffff;
+      border-radius: var(--radius-sm);
     }
 
     /* Company and title info */
@@ -4546,7 +4560,7 @@
           c.name.toLowerCase() === feedRole.company.toLowerCase()
         );
         if (!companyExists && feedRole.company) {
-          const domain = feedRole.domain || guessDomain(feedRole.company);
+          const domain = feedRole.domain || getCompanyDomain(feedRole.company, feedRole.url);
           companies.push({
             name: feedRole.company,
             domain: domain,
@@ -4566,38 +4580,129 @@
       }
     }
 
-    /**
-     * Guess a company's domain from its name (for logo URLs).
-     * Simple heuristic: lowercase, remove spaces/special chars, append .com
-     * INPUT: "Adobe" → OUTPUT: "adobe.com"
+    /* ====== COMPANY LOGO SYSTEM (v3.8.4) ======
+     * Ported from Pipeline module — ATS-aware domain extraction,
+     * Google Favicon API, and colorful letter-initial fallback.
+     * Shared pattern: any new module that needs logos should copy this block.
      */
+
+    /** Known domain overrides for companies whose name doesn't map
+     *  cleanly to a domain (e.g., "Amazon Ads" → "amazon.com") */
+    const DOMAIN_OVERRIDES = {
+      'amazon ads': 'amazon.com',
+      'bounti.ai': 'bounti.ai',
+      'albertsons media': 'albertsons.com',
+      'activision blizzard': 'activisionblizzard.com',
+      'bc ventures': 'bcventures.com',
+      'enriches lab': 'enricheslab.com',
+      'notion': 'notion.so',
+      'google': 'google.com',
+      'meta': 'meta.com',
+      'apple': 'apple.com',
+      'sofi': 'sofi.com',
+      'blackrock': 'blackrock.com',
+    };
+
+    /**
+     * Derives a clean company domain for logo lookup.
+     * Handles ATS URLs (Workday, Greenhouse, Lever, Ashby) by extracting
+     * the company name from the URL structure.
+     * INPUT: company name (string), optional URL (string)
+     * OUTPUT: domain string (e.g., "stripe.com")
+     */
+    function getCompanyDomain(companyName, url) {
+      const override = DOMAIN_OVERRIDES[(companyName || '').toLowerCase()];
+      if (override) return override;
+
+      if (url) {
+        try {
+          const hostname = new URL(url).hostname.toLowerCase();
+          // Workday: ouryahoo.wd5.myworkdayjobs.com → yahoo.com
+          const wdMatch = hostname.match(/^(?:our)?([a-z]+)\.wd\d+\.myworkdayjobs\.com/);
+          if (wdMatch) return wdMatch[1] + '.com';
+          // Greenhouse: boards.greenhouse.io/stripe → stripe.com
+          if (hostname.includes('greenhouse.io')) {
+            const pathMatch = url.match(/greenhouse\.io\/([a-z0-9]+)/i);
+            if (pathMatch) return pathMatch[1] + '.com';
+          }
+          // Lever: jobs.lever.co/stripe → stripe.com
+          if (hostname.includes('lever.co')) {
+            const pathMatch = url.match(/lever\.co\/([a-z0-9]+)/i);
+            if (pathMatch) return pathMatch[1] + '.com';
+          }
+          // Ashby: jobs.ashbyhq.com/stripe → stripe.com
+          if (hostname.includes('ashbyhq.com')) {
+            const pathMatch = url.match(/ashbyhq\.com\/([a-z0-9]+)/i);
+            if (pathMatch) return pathMatch[1] + '.com';
+          }
+          // LinkedIn: linkedin.com/company/stripe → stripe.com
+          if (hostname.includes('linkedin.com')) {
+            const pathMatch = url.match(/company\/([a-z0-9-]+)/i);
+            if (pathMatch) return pathMatch[1].replace(/-/g, '') + '.com';
+          }
+          // Direct company site (e.g., stripe.com/jobs → stripe.com)
+          if (!hostname.includes('workday') && !hostname.includes('greenhouse') &&
+              !hostname.includes('lever') && !hostname.includes('ashby')) {
+            return hostname.replace(/^www\./, '');
+          }
+        } catch (e) { /* invalid URL, fall through */ }
+      }
+      // Fallback: derive from company name
+      return (companyName || '').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com';
+    }
+
+    /** Backward-compat alias — some older code calls guessDomain() */
     function guessDomain(companyName) {
-      if (!companyName) return '';
-      // Known overrides for tricky names
-      const overrides = {
-        'amazon ads': 'amazon.com', 'google': 'google.com',
-        'meta': 'meta.com', 'apple': 'apple.com',
-        'sofi': 'sofi.com', 'blackrock': 'blackrock.com'
-      };
-      const lower = companyName.toLowerCase().trim();
-      if (overrides[lower]) return overrides[lower];
-      return lower.replace(/[^a-z0-9]/g, '') + '.com';
+      return getCompanyDomain(companyName);
     }
 
     /**
-     * Render a company logo for a feed card. Tries Google Favicon first
-     * (using domain or guessed domain), falls back to first-letter initial.
-     * INPUT: feed item object (needs .company, optionally .domain)
-     * OUTPUT: HTML string — either an <img> tag or a letter initial
+     * Generates a consistent color for a company's letter-initial avatar.
+     * Uses a hash of the company name to pick from a curated palette.
+     * INPUT: company name string
+     * OUTPUT: hex color string
+     */
+    function getCompanyColor(name) {
+      const PALETTE = [
+        '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', // purples
+        '#ec4899', '#f43f5e', '#ef4444', '#f97316', // pinks/reds/orange
+        '#eab308', '#84cc16', '#22c55e', '#14b8a6', // greens
+        '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', // blues
+      ];
+      let hash = 0;
+      for (let i = 0; i < (name || '').length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return PALETTE[Math.abs(hash) % PALETTE.length];
+    }
+
+    /**
+     * Global handler: replaces an <img> with a colored letter circle
+     * when the favicon fails to load (CORS, 404, etc.).
+     * Called from onerror on logo <img> tags.
+     */
+    function handleLogoError(img, companyName, cssClass) {
+      const letter = (companyName || '?').charAt(0).toUpperCase();
+      const color = getCompanyColor(companyName);
+      const span = document.createElement('span');
+      span.className = (cssClass || '') + ' card-logo-fallback';
+      span.style.background = color;
+      span.textContent = letter;
+      img.replaceWith(span);
+    }
+
+    /**
+     * Render a company logo for a feed card. Uses Google Favicon API
+     * with ATS-aware domain extraction. On error, falls back to a
+     * colorful letter-initial circle (via handleLogoError).
+     * INPUT: feed item object (needs .company, optionally .domain/.url)
+     * OUTPUT: HTML string — <img> tag with onerror fallback
      */
     function renderCardLogo(item) {
-      const domain = item.domain || guessDomain(item.company || '');
-      if (domain) {
-        const initial = (item.company || '?').charAt(0).toUpperCase();
-        // Use Google Favicon API with onerror fallback to letter initial
-        return `<img src="https://www.google.com/s2/favicons?domain=${domain}&sz=128" alt="${item.company || ''}" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">`;
-      }
-      return (item.company || '?').charAt(0).toUpperCase();
+      const domain = item.domain || getCompanyDomain(item.company || '', item.url || '');
+      const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+      const safeName = (item.company || '').replace(/'/g, "\\'");
+      return `<img src="${logoUrl}" alt="${item.company || ''}" onerror="handleLogoError(this,'${safeName}','card-logo-img')">`;
     }
 
     /**

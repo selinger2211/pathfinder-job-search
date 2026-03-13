@@ -4,17 +4,19 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
-## v3.8.3 — 2026-03-12
+## v3.8.4 — 2026-03-12
 
-### What Changed — Logo Fix + Feed Stats Bar
+### What Changed — Pipeline Logo System + Feed Stats Bar
 
-**User reported:** "logos are all messed up on the job feed" — and requested total company count + count by company type.
+**User reported:** "logos are all messed up" / "use what we have in the pipeline" / "add this to your skill"
 
 **Changes:**
 
-1. **Feed: Fixed card logos** — New `renderCardLogo()` helper uses Google Favicon API with domain from `guessDomain()`. Falls back to first-letter initial on error. Previously `item.logo` was undefined for Gmail/LinkedIn-sourced roles, rendering "undefined" as text.
+1. **Feed: Full Pipeline logo system ported** — Replaced naive `guessDomain()` with Pipeline's battle-tested system: `DOMAIN_OVERRIDES` map, `getCompanyDomain(name, url)` with ATS-aware extraction (Workday, Greenhouse, Lever, Ashby, LinkedIn URLs), `getCompanyColor(name)` for consistent fallback colors, `handleLogoError()` for graceful degradation to colorful letter circles. `guessDomain()` kept as backward-compat alias.
 
-2. **Feed: Stats bar with counts** — New bar between tabs and cards shows: total roles, unique company count, and breakdown by company stage (e.g., "12 Public | 4 Late-stage / Pre-IPO | 2 Unknown"). Auto-updates on every card re-render.
+2. **Feed: Stats bar with counts** — New bar between tabs and cards: total roles, unique company count, stage breakdown. Auto-updates on every card re-render.
+
+3. **CLAUDE_CONTEXT: Logo pattern documented** — Rule 7 in Mandatory Rules documents the canonical logo system all modules must use. (Build skill is read-only; pattern documented in project context instead.)
 
 ---
 
