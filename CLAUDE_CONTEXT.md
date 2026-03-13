@@ -220,7 +220,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
 ### Recently Fixed (v3.9.0)
-- **Research Brief auto-generation**: Briefs auto-generate on first visit (no manual "Generate" click needed). Cached briefs persist until explicit regeneration. Brief metadata (`briefArtifactId`, `briefGeneratedAt`) attached to pipeline roles in `pf_roles`. Generate button becomes "Regenerate" when brief exists. "Clear Cache" renamed to "Clear & Regenerate" and auto-triggers fresh generation.
+- **Research Brief auto-generation + PDF persistence**: Briefs auto-generate on first visit (no manual "Generate" click needed). Cached briefs persist until explicit regeneration. After generation, a PDF is auto-rendered via `html2pdf.js` and stored in IndexedDB (`brief-{roleId}` key in `pf_resumes` DB). The role's `artifacts[]` entry has an `indexedDbKey` so Pipeline shows preview/download buttons for the PDF. Brief metadata (`briefArtifactId`, `briefGeneratedAt`) attached to pipeline roles. Generate button becomes "Regenerate" when brief exists. Pipeline sidebar shows "View Research Brief" when brief exists. "Clear Cache" renamed to "Clear & Regenerate" and auto-triggers fresh generation.
 - **Pipeline comms dropdown**: Per-contact channel dropdown now shows text labels ("✉️ Email", "💼 LinkedIn", etc.) instead of bare emoji. Widened from 90px → 105px.
 - **Apify public-actor-disabled error**: New 403 error type handled with clear upgrade message. Batch enrichment early-aborts on this error.
 

@@ -14,7 +14,7 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 1. **Research Brief auto-generation (v3.9.0)** — When navigating to a Research Brief page with no cached brief, the brief auto-generates immediately. No more empty "Click Generate Brief" state. If a cached brief exists, it shows instantly. Briefs persist until the user explicitly regenerates.
 
-2. **Brief attached to pipeline roles** — After generation, a `briefArtifactId` and `briefGeneratedAt` are written to the role in `pf_roles`. An artifact entry (`type: 'research_brief'`) is added to the role's `artifacts[]` array. Makes briefs discoverable from Pipeline.
+2. **Brief PDF auto-generated and attached to pipeline roles** — After generation, a PDF is rendered via `html2pdf.js` and stored in IndexedDB (`brief-{roleId}` key in `pf_resumes` DB). The role's `artifacts[]` entry gets an `indexedDbKey` so Pipeline shows preview/download buttons. Brief metadata (`briefArtifactId`, `briefGeneratedAt`) also written to role. Pipeline sidebar shows "View Research Brief" (with date) when a brief exists, "Generate Research Brief" when it doesn't.
 
 3. **Generate → Regenerate button** — Button dynamically switches between "Generate Brief" (first run) and "Regenerate Brief" (when a cached brief exists). "Clear Cache" button renamed to "Clear & Regenerate" and now auto-triggers a fresh generation instead of showing an empty state.
 
