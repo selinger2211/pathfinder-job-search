@@ -4,6 +4,22 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.5.2 — 2026-03-12
+
+### What Changed — Stage Date/Time Manual Override for Analytics
+
+**User requested:** "i'm going to need to be able to manually override date/time for some of the stages so we can get our analytics working properly."
+
+**Changes:**
+
+1. **Pipeline: datetime-local inputs in Stage History** — Stage history timeline now uses `<input type="datetime-local">` instead of `<input type="date">`. Each stage shows the full date AND time (e.g., "03/12/2026, 08:04 PM") and is editable by clicking the calendar icon. New `formatDatetimeLocal(ts)` helper function handles both numeric timestamps and ISO strings, formatting them as `YYYY-MM-DDTHH:MM` for the input.
+
+2. **Pipeline: Fix current stage date editing** — The change handler for stage history date inputs had a bug where editing the *current* stage's date (index `-1`) did nothing. The check `r.stageHistory[idx]` fails for index -1. Now properly detects index -1 and updates `role.lastActivity` instead of stageHistory array entry. Toast distinguishes "Current stage date updated" vs "Stage date updated".
+
+3. **Pipeline: CSS for datetime-local inputs** — Added `max-width: 180px` and matching hover/focus styles for `input[type="datetime-local"]` alongside existing `input[type="date"]` rules.
+
+---
+
 ## v3.5.1 — 2026-03-12
 
 ### What Changed — Bug Fixes: Accept→Pipeline, Dark Mode Cache, Dismiss Persist

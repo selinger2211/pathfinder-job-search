@@ -1764,6 +1764,7 @@
       font-family: var(--font-mono);
     }
 
+    .stage-timeline-date input[type="datetime-local"],
     .stage-timeline-date input[type="date"] {
       background: var(--bg-base);
       border: 1px solid transparent;
@@ -1773,12 +1774,15 @@
       font-family: var(--font-mono);
       padding: 1px 4px;
       cursor: pointer;
+      max-width: 180px;
     }
 
+    .stage-timeline-date input[type="datetime-local"]:hover,
     .stage-timeline-date input[type="date"]:hover {
       border-color: var(--bg-subtle);
     }
 
+    .stage-timeline-date input[type="datetime-local"]:focus,
     .stage-timeline-date input[type="date"]:focus {
       outline: none;
       border-color: var(--accent);
@@ -4972,16 +4976,30 @@
         });
       });
 
-      // Wire up stage history date edits
+      // ====== STAGE HISTORY DATE/TIME EDITS (v3.5.2) ======
+      // Each stage in the timeline has an editable datetime-local input.
+      // Index -1 = current stage (updates lastActivity on the role).
+      // Index 0+ = historical stages (updates stageHistory[idx].date).
       document.querySelectorAll('.stage-history-date').forEach(input => {
         input.addEventListener('change', (e) => {
           const idx = parseInt(e.target.dataset.historyIndex);
           const roles = getRoles();
           const r = roles.find(r => r.id === activeDetailRoleId);
-          if (r && r.stageHistory && r.stageHistory[idx]) {
-            r.stageHistory[idx].date = new Date(e.target.value).getTime();
+          if (!r) return;
+
+          const newTimestamp = new Date(e.target.value).getTime();
+          if (isNaN(newTimestamp)) return;
+
+          if (idx === -1) {
+            // Current stage — update the role's lastActivity
+            r.lastActivity = newTimestamp;
             saveRoles(roles);
-            showToast('Date updated', 'success');
+            showToast('Current stage date updated', 'success');
+          } else if (r.stageHistory && r.stageHistory[idx]) {
+            // Historical stage — update the specific entry's date
+            r.stageHistory[idx].date = newTimestamp;
+            saveRoles(roles);
+            showToast('Stage date updated', 'success');
           }
         });
       });
@@ -4992,7 +5010,32 @@
     }
 
     /**
-     * Builds the stage history timeline HTML
+     * Formats a timestamp (number or ISO string) into "YYYY-MM-DDTHH:MM"
+     * format for datetime-local inputs.
+     * INPUT: ts = timestamp (number ms), ISO string, or falsy
+     * RETURNS: string in "YYYY-MM-DDTHH:MM" format, or "" if invalid
+     */
+    function formatDatetimeLocal(ts) {
+      if (!ts) return '';
+      try {
+        const d = new Date(ts);
+        if (isNaN(d.getTime())) return '';
+        // Format as local datetime: YYYY-MM-DDTHH:MM
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const mins = String(d.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${mins}`;
+      } catch {
+        return '';
+      }
+    }
+
+    /**
+     * Builds the stage history timeline HTML with editable datetime inputs.
+     * Each stage transition shows the stage name + an editable datetime-local
+     * input so the user can manually correct dates for analytics accuracy.
      * INPUT: role object with stageHistory array
      * RETURNS: HTML string for the timeline
      */
@@ -5004,9 +5047,9 @@
           <div class="stage-timeline-item current">
             <span class="stage-timeline-stage">${role.stage}</span>
             <span class="stage-timeline-date">
-              <input type="date" class="stage-history-date" data-history-index="-1"
-                     value="${role.dateAdded ? new Date(role.dateAdded).toISOString().split('T')[0] : ''}"
-                     title="Date entered this stage">
+              <input type="datetime-local" class="stage-history-date" data-history-index="-1"
+                     value="${formatDatetimeLocal(role.dateAdded)}"
+                     title="Click to edit date/time for this stage">
               (current)
             </span>
           </div>
@@ -5015,28 +5058,26 @@
 
       let html = '';
 
-      // Show each historical stage with editable date
+      // Show each historical stage with editable datetime
       history.forEach((entry, idx) => {
-        const date = entry.date ? new Date(entry.date).toISOString().split('T')[0] : '';
         html += `
           <div class="stage-timeline-item">
             <span class="stage-timeline-stage">${entry.stage}</span>
             <span class="stage-timeline-date">
-              <input type="date" class="stage-history-date" data-history-index="${idx}"
-                     value="${date}" title="Edit date for this stage">
+              <input type="datetime-local" class="stage-history-date" data-history-index="${idx}"
+                     value="${formatDatetimeLocal(entry.date)}" title="Click to edit date/time">
             </span>
           </div>
         `;
       });
 
       // Current stage at the bottom
-      const currentDate = role.lastActivity ? new Date(role.lastActivity).toISOString().split('T')[0] : '';
       html += `
         <div class="stage-timeline-item current">
           <span class="stage-timeline-stage">${role.stage}</span>
           <span class="stage-timeline-date">
-            <input type="date" class="stage-history-date" data-history-index="-1"
-                   value="${currentDate}" title="Date entered current stage">
+            <input type="datetime-local" class="stage-history-date" data-history-index="-1"
+                   value="${formatDatetimeLocal(role.lastActivity)}" title="Click to edit date/time">
             (current)
           </span>
         </div>

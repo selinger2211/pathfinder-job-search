@@ -185,7 +185,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.5.1
+**Current Version:** v3.5.2
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -208,6 +208,9 @@ These are the actual field shapes for objects stored in shared localStorage keys
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.5.2)
+- **Stage date/time override**: Stage history timeline uses `datetime-local` inputs (shows date + time). Fixed current stage date editing (index -1 was silently failing). New `formatDatetimeLocal()` helper. CSS for datetime-local inputs.
 
 ### Recently Fixed (v3.5.1)
 - **Accept → Pipeline integration**: `acceptRole()` now creates a full Pipeline role (stage: "discovered") in `pf_roles` + company in `pf_companies` with Google Favicon logo. New helpers: `addRoleToPipeline()`, `guessDomain()`. Toast shows "→ Pipeline (Discovered)".
