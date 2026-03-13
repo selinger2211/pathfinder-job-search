@@ -154,14 +154,14 @@ Enrichment would happen async; the UI would show a spinner while loading. Failed
 
 ### Company Lookup & Web Search
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.12.0)** — DuckDuckGo instant answer API integration for company web search suggestions.
 
-When manually adding a company, the UI should provide web search suggestions:
+When manually adding a company or entering a company name in Pipeline:
 - User types company name
-- System suggests matching results from cached company list
-- For new companies, shows Google search results
+- System displays suggestions from cached company list
+- For new companies, shows DuckDuckGo instant answer results
 - User selects from suggestions or confirms manual entry
-- Selected company auto-populates `name`, `url`, and may populate `domain` from context
+- Selected company auto-populates `name`, `url`, and `domain` from DuckDuckGo data
 
 ---
 
@@ -252,7 +252,7 @@ interface StageTransition {
   from: string;                 // Previous stage (or null if initial)
   to: string;                   // New stage
   timestamp: string;            // ISO timestamp
-  reason?: string;              // **Status: Planned** — Optional reason field for why stage changed (user-provided)
+  reason?: string;              // **Status: Implemented (v3.12.0)** — Optional reason chips when changing stage, saved to stageHistory
 }
 
 interface CommLogEntry {

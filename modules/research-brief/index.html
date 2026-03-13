@@ -694,6 +694,263 @@
       font-style: italic;
     }
 
+    /* ================================================================
+       FEATURE #1: CITATION MARKERS & POPOVERS
+       ================================================================ */
+
+    /* Citation marker in text — superscript, blue, clickable */
+    .citation-marker {
+      display: inline;
+      font-size: 0.75em;
+      vertical-align: super;
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: underline;
+      text-decoration-color: var(--accent);
+      text-decoration-style: dashed;
+      transition: all var(--duration-fast) var(--ease-default);
+      font-weight: 600;
+    }
+
+    .citation-marker:hover {
+      color: rgb(79, 70, 229);
+      text-decoration-color: rgb(79, 70, 229);
+    }
+
+    /* Citation popover — appears on click */
+    .citation-popover {
+      position: absolute;
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      min-width: 240px;
+      max-width: 300px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      font-size: var(--text-sm);
+      line-height: 1.5;
+    }
+
+    .citation-popover-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+      word-break: break-word;
+    }
+
+    .citation-popover-url {
+      color: var(--accent);
+      text-decoration: none;
+      word-break: break-all;
+      margin-bottom: var(--space-2);
+      display: block;
+      font-size: 0.9em;
+    }
+
+    .citation-popover-url:hover {
+      text-decoration: underline;
+    }
+
+    .citation-popover-meta {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      font-size: 0.85em;
+      color: var(--text-secondary);
+      padding-top: var(--space-2);
+      border-top: 1px solid var(--bg-subtle);
+    }
+
+    .citation-popover-meta-item {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .citation-popover-meta-label {
+      font-weight: 500;
+      color: var(--text-secondary);
+      min-width: 60px;
+    }
+
+    .citation-popover-trust-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.8em;
+      font-weight: 500;
+    }
+
+    .citation-popover-trust-high {
+      background: rgba(34, 197, 94, 0.15);
+      color: rgb(34, 197, 94);
+    }
+
+    .citation-popover-trust-medium {
+      background: rgba(251, 191, 36, 0.15);
+      color: rgb(217, 119, 6);
+    }
+
+    .citation-popover-trust-low {
+      background: rgba(239, 68, 68, 0.15);
+      color: rgb(239, 68, 68);
+    }
+
+    /* ================================================================
+       FEATURE #2: SECTION STATUS BADGES
+       ================================================================ */
+
+    /* Status badge next to section title — "Fresh", "Cached", "Stale", "Error", "Generating..." */
+    .section-status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 0.75em;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .section-status-badge.fresh {
+      background: rgba(34, 197, 94, 0.15);
+      color: rgb(34, 197, 94);
+    }
+
+    .section-status-badge.cached {
+      background: rgba(59, 130, 246, 0.15);
+      color: rgb(59, 130, 246);
+    }
+
+    .section-status-badge.stale {
+      background: rgba(251, 191, 36, 0.15);
+      color: rgb(217, 119, 6);
+    }
+
+    .section-status-badge.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: rgb(239, 68, 68);
+    }
+
+    .section-status-badge.generating {
+      background: rgba(59, 130, 246, 0.15);
+      color: rgb(59, 130, 246);
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ================================================================
+       FEATURE #3: GENERATION PROGRESS BAR
+       ================================================================ */
+
+    /* Progress bar container at top */
+    .generation-progress-container {
+      position: fixed;
+      top: var(--nav-height);
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--bg-subtle);
+      z-index: 100;
+      opacity: 0;
+      transition: opacity var(--duration-normal) var(--ease-default);
+    }
+
+    .generation-progress-container.active {
+      opacity: 1;
+    }
+
+    .generation-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), rgb(79, 70, 229));
+      width: 0%;
+      transition: width var(--duration-normal) var(--ease-default);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.6);
+    }
+
+    .generation-progress-text {
+      position: fixed;
+      top: var(--nav-height);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-top: none;
+      border-radius: 0 0 var(--radius-md) var(--radius-md);
+      padding: var(--space-3) var(--space-4);
+      max-width: 400px;
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      z-index: 101;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration-normal) var(--ease-default);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .generation-progress-text.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .generation-progress-section-name {
+      font-weight: 600;
+      color: var(--accent);
+      margin-top: var(--space-1);
+    }
+
+    .generation-progress-completion {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-top: var(--space-3);
+      padding-top: var(--space-3);
+      border-top: 1px solid var(--bg-subtle);
+      color: var(--text-secondary);
+      font-size: 0.9em;
+    }
+
+    .generation-progress-completion.done {
+      color: rgb(34, 197, 94);
+      animation: fadeOutIn var(--duration-normal) var(--ease-default);
+    }
+
+    @keyframes fadeOutIn {
+      0% { opacity: 1; }
+      100% { opacity: 1; }
+    }
+
+    /* ================================================================
+       FEATURE #4: KEYBOARD SHORTCUT HINT
+       ================================================================ */
+
+    /* Hint text near generate button */
+    .keyboard-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: 4px 8px;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: var(--radius-sm);
+      font-size: 0.75em;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .keyboard-hint:hover {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.3);
+    }
+
     /* Sources aggregation section at end of brief */
     .sources-section {
       background: rgba(99, 102, 241, 0.05);
@@ -883,7 +1140,17 @@
     </div>
   </nav>
 
-  <div class="research-brief-container" style="margin-top: var(--nav-height);">
+  <!-- Progress bar for generation (Feature #3) -->
+  <div class="generation-progress-container" id="generationProgressContainer">
+    <div class="generation-progress-bar" id="generationProgressBar"></div>
+  </div>
+  <div class="generation-progress-text" id="generationProgressText">
+    <div>Generating section <span id="generationProgressCurrent">0</span> of <span id="generationProgressTotal">0</span>...</div>
+    <div class="generation-progress-section-name" id="generationProgressSectionName"></div>
+    <div class="generation-progress-completion" id="generationProgressCompletion"></div>
+  </div>
+
+  <div class="research-brief-container" style="margin-top: var(--nav-height); position: relative;">
     <!-- LEFT SIDEBAR: Context panel with role selector -->
     <div class="sidebar" id="sidebar">
       <div class="sidebar-header">
@@ -973,10 +1240,16 @@
 
         <!-- Action buttons -->
         <div class="sidebar-actions">
-          <button class="btn btn-primary" id="generateBtn" style="display: none;" aria-label="Generate research brief">
-            <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i>
-            Generate Brief
-          </button>
+          <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+            <button class="btn btn-primary" id="generateBtn" style="display: none;" aria-label="Generate research brief">
+              <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i>
+              Generate Brief
+            </button>
+            <div class="keyboard-hint" id="keyboardHint" style="display: none; justify-content: center; width: 100%;">
+              <span>Press</span>
+              <kbd style="padding: 2px 4px; background: var(--bg-elevated); border: 1px solid var(--bg-subtle); border-radius: 2px; font-family: monospace; font-size: 0.9em;">G</kbd>
+            </div>
+          </div>
           <button class="btn btn-ghost" id="clearCacheBtn" style="display: none;" aria-label="Clear cache and regenerate brief">
             <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
             Clear & Regenerate
@@ -3496,6 +3769,9 @@ The HTML content should come first, followed by the citations block. Do not incl
       document.getElementById('briefTitle').textContent = `${nc.name} — ${nr.title}`;
       document.getElementById('briefSubtitle').textContent = `${nr.targetLevel || nr.positioning} ${nr.positioning === 'management' ? 'Management' : 'IC'} Role`;
 
+      // Feature #4: Show keyboard shortcut hint
+      showKeyboardHint(true);
+
       // Check if any cached sections exist for this role
       const companySlug = getCompanySlug(nc.name);
       // Check multiple sections — Section 0 is conditional, so check 1 and 2 as well
@@ -3607,6 +3883,12 @@ The HTML content should come first, followed by the citations block. Do not incl
         content.innerHTML = sanitizeContent(cached.content);
         section.appendChild(content);
 
+        // Feature #2: Add status badge for cached sections
+        const status = getSectionStatus(`section_${sectionNum}`, cached.timestamp);
+        setTimeout(() => {
+          updateSectionStatusBadge(sectionNum, status);
+        }, 0);
+
         sectionsArea.appendChild(section);
       });
 
@@ -3676,6 +3958,7 @@ The HTML content should come first, followed by the citations block. Do not incl
       // Generate batches sequentially (sections within a batch run in parallel)
       let completedCount = 0;
       const totalCount = visibleSections.length;
+      const generationStartTime = Date.now();
 
       for (const batch of batches) {
         // Filter to only sections visible for this role
@@ -3687,10 +3970,17 @@ The HTML content should come first, followed by the citations block. Do not incl
         // Generate all sections in this batch in parallel
         const promises = batchSections.map(async (sectionNum) => {
           const sectionEl = document.getElementById(`section-${sectionNum}`);
+          const sectionDef = visibleSections.find(s => s.num === sectionNum);
+          const sectionName = sectionDef ? sectionDef.title : `Section ${sectionNum}`;
+
           try {
             const result = await generateSectionViaAPI(
               sectionNum, role, company, state.generatedSections
             );
+
+            // Feature #3: Update progress bar after API call completes
+            const currentProgress = document.querySelectorAll('#sectionsArea .section:not(.pending)').length + 1;
+            updateGenerationProgress(currentProgress, totalCount, sectionName);
 
             // Store the generated content for downstream sections
             state.generatedSections[sectionNum] = result.content;
@@ -3714,8 +4004,14 @@ The HTML content should come first, followed by the citations block. Do not incl
               contentEl.innerHTML = htmlContent;
               sectionEl.classList.remove('pending');
 
-              const statusEl = sectionEl.querySelector('.section-status');
-              statusEl.innerHTML = `<span class="badge">Fresh</span> <span style="font-size: 11px; color: var(--text-tertiary);">Just now</span>`;
+              // Feature #2: Update section status badge
+              const status = getSectionStatus(`section_${sectionNum}`, Date.now());
+              updateSectionStatusBadge(sectionNum, status);
+
+              // Feature #1: Enhance citation markers with popovers
+              if (result.citations && result.citations.length > 0) {
+                enhanceCitationMarkers(sectionNum, result.citations);
+              }
 
               // Show missing inputs callout if any
               if (result.inputsMissing && result.inputsMissing.length > 0) {
@@ -3739,8 +4035,10 @@ The HTML content should come first, followed by the citations block. Do not incl
                 </div>
               `;
               sectionEl.classList.remove('pending');
-              const statusEl = sectionEl.querySelector('.section-status');
-              statusEl.innerHTML = '<span class="badge" style="background: rgba(239,68,68,0.1); color: rgb(239,68,68);">Error</span>';
+
+              // Feature #2: Show error badge
+              const status = { label: 'Error', cssClass: 'section-status-badge error' };
+              updateSectionStatusBadge(sectionNum, status);
             }
             completedCount++;
             updateProgress(completedCount, totalCount);
@@ -3773,6 +4071,10 @@ The HTML content should come first, followed by the citations block. Do not incl
 
       // Switch button to "Regenerate" since a brief now exists
       updateGenerateButtonLabel(true);
+
+      // Feature #3: Show completion message with duration
+      const generationDuration = (Date.now() - generationStartTime) / 1000;
+      showGenerationComplete(generationDuration);
 
       state.isGenerating = false;
       lucide.createIcons();
@@ -4065,6 +4367,275 @@ The HTML content should come first, followed by the citations block. Do not incl
       }
     }
 
+    /* ====== FEATURE #1: CITATION MARKERS & POPOVERS ====== */
+    /**
+     * Converts [n] citation references in content to clickable markers with popovers.
+     * Finds all [1], [2], etc. in the section content and makes them interactive.
+     * On click, shows a popover with source info: name, URL, date, trust level.
+     * INPUT: sectionNum (number), citations (array of citation objects)
+     * OUTPUT: citation markers are enhanced with click handlers, popovers are created
+     */
+    function enhanceCitationMarkers(sectionNum, citations) {
+      if (!citations || citations.length === 0) return;
+
+      // Find the section content
+      const sectionEl = document.getElementById(`section-${sectionNum}`);
+      if (!sectionEl) return;
+
+      const contentEl = sectionEl.querySelector('.section-content');
+      if (!contentEl) return;
+
+      // Create a map of citation index to citation data
+      const citationMap = {};
+      citations.forEach((cit, idx) => {
+        citationMap[idx + 1] = cit;
+      });
+
+      // Parse HTML and replace [n] with clickable markers
+      const originalHtml = contentEl.innerHTML;
+      let enhancedHtml = originalHtml;
+
+      // Find all [1], [2], [3], etc. patterns
+      citations.forEach((cit, idx) => {
+        const citNum = idx + 1;
+        const pattern = new RegExp(`\\[${citNum}\\](?![\\d\\]])`, 'g');
+        const markerHtml = `<span class="citation-marker" data-citation-index="${citNum}" data-section="${sectionNum}">[${citNum}]</span>`;
+        enhancedHtml = enhancedHtml.replace(pattern, markerHtml);
+      });
+
+      contentEl.innerHTML = enhancedHtml;
+
+      // Attach click handlers to all citation markers
+      contentEl.querySelectorAll('.citation-marker').forEach(marker => {
+        marker.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const citIndex = parseInt(marker.getAttribute('data-citation-index'));
+          const cit = citationMap[citIndex];
+          if (cit) {
+            showCitationPopover(marker, cit);
+          }
+        });
+      });
+    }
+
+    /**
+     * Shows a popover with citation details (source, URL, date, trust level).
+     * Popover is positioned near the marker and closes when clicking outside.
+     * INPUT: markerEl (DOM element), citation (object with source, url, date, sourceType)
+     * OUTPUT: popover is created and displayed in the DOM
+     */
+    function showCitationPopover(markerEl, citation) {
+      // Close any existing popovers
+      document.querySelectorAll('.citation-popover').forEach(p => p.remove());
+
+      // Determine trust level based on source type
+      let trustLevel = 'Medium';
+      let trustClass = 'citation-popover-trust-medium';
+
+      if (citation.sourceType === 'enrichment_web' || citation.sourceType === 'job_board') {
+        trustLevel = 'High';
+        trustClass = 'citation-popover-trust-high';
+      } else if (citation.sourceType === 'ai_generated') {
+        trustLevel = 'Low';
+        trustClass = 'citation-popover-trust-low';
+      }
+
+      // Create popover element
+      const popover = document.createElement('div');
+      popover.className = 'citation-popover';
+
+      let html = `<div class="citation-popover-title">${citation.source || 'Unknown Source'}</div>`;
+
+      if (citation.url) {
+        html += `<a href="${citation.url}" target="_blank" rel="noopener noreferrer" class="citation-popover-url">${citation.url}</a>`;
+      }
+
+      html += `<div class="citation-popover-meta">`;
+      if (citation.date) {
+        html += `<div class="citation-popover-meta-item"><span class="citation-popover-meta-label">Fetched:</span> <span>${citation.date}</span></div>`;
+      }
+      html += `<div class="citation-popover-meta-item"><span class="citation-popover-meta-label">Trust:</span> <span class="${trustClass}">${trustLevel}</span></div>`;
+      html += `</div>`;
+
+      popover.innerHTML = html;
+
+      // Position popover relative to marker
+      document.body.appendChild(popover);
+      const markerRect = markerEl.getBoundingClientRect();
+      const popoverRect = popover.getBoundingClientRect();
+
+      let top = markerRect.bottom + 8;
+      let left = markerRect.left + markerRect.width / 2 - popoverRect.width / 2;
+
+      // Ensure popover doesn't go off-screen
+      if (left < 10) left = 10;
+      if (left + popoverRect.width > window.innerWidth - 10) {
+        left = window.innerWidth - popoverRect.width - 10;
+      }
+
+      if (top + popoverRect.height > window.innerHeight - 10) {
+        top = markerRect.top - popoverRect.height - 8;
+      }
+
+      popover.style.left = left + 'px';
+      popover.style.top = top + 'px';
+
+      // Close popover when clicking elsewhere
+      const closeHandler = (e) => {
+        if (e.target !== markerEl && !popover.contains(e.target)) {
+          popover.remove();
+          document.removeEventListener('click', closeHandler);
+        }
+      };
+
+      document.addEventListener('click', closeHandler);
+    }
+
+    /* ====== FEATURE #2: SECTION STATUS BADGES ====== */
+    /**
+     * Determines the status and freshness of a section based on cache timestamps.
+     * Returns an object with label and CSS class for the status badge.
+     * INPUT: sectionKey (string), cacheTimestamp (number or null)
+     * OUTPUT: {label: 'Fresh'|'Cached'|'Stale'|'Error'|'Generating...', cssClass: string}
+     */
+    function getSectionStatus(sectionKey, cacheTimestamp) {
+      // If still generating, show generating status
+      if (state.isGenerating && !cacheTimestamp) {
+        return { label: 'Generating...', cssClass: 'section-status-badge generating' };
+      }
+
+      // If no timestamp (never generated), return error
+      if (!cacheTimestamp) {
+        return { label: 'Error', cssClass: 'section-status-badge error' };
+      }
+
+      // Calculate age in milliseconds
+      const now = Date.now();
+      const ageMs = now - cacheTimestamp;
+      const ageHours = ageMs / (1000 * 60 * 60);
+      const ageDays = ageHours / 24;
+
+      // Fresh: generated within 24 hours
+      if (ageHours < 24) {
+        return { label: 'Fresh', cssClass: 'section-status-badge fresh' };
+      }
+
+      // Cached: generated within 7 days
+      if (ageDays < 7) {
+        return { label: 'Cached', cssClass: 'section-status-badge cached' };
+      }
+
+      // Stale: generated more than 7 days ago
+      return { label: 'Stale', cssClass: 'section-status-badge stale' };
+    }
+
+    /**
+     * Updates the status badge for a section in the DOM.
+     * Called after each section completes generation or when status changes.
+     * INPUT: sectionNum (number), status (object from getSectionStatus)
+     * OUTPUT: section header is updated with new badge
+     */
+    function updateSectionStatusBadge(sectionNum, status) {
+      const sectionEl = document.getElementById(`section-${sectionNum}`);
+      if (!sectionEl) return;
+
+      // Remove existing status badge if present
+      const existingBadge = sectionEl.querySelector('.section-status-badge');
+      if (existingBadge) {
+        existingBadge.remove();
+      }
+
+      // Create and insert new badge after title
+      const badge = document.createElement('span');
+      badge.className = status.cssClass;
+      badge.textContent = status.label;
+
+      const titleEl = sectionEl.querySelector('.section-title');
+      if (titleEl) {
+        titleEl.parentNode.insertBefore(badge, titleEl.nextSibling);
+      }
+    }
+
+    /* ====== FEATURE #3: GENERATION PROGRESS BAR ====== */
+    /**
+     * Updates the progress bar and text during brief generation.
+     * Shows current section being generated and progress percentage.
+     * INPUT: currentSection (number), totalSections (number), sectionName (string)
+     * OUTPUT: progress bar and text are updated
+     */
+    function updateGenerationProgress(currentSection, totalSections, sectionName) {
+      const container = document.getElementById('generationProgressContainer');
+      const bar = document.getElementById('generationProgressBar');
+      const text = document.getElementById('generationProgressText');
+
+      if (!container || !bar || !text) return;
+
+      // Activate progress display
+      container.classList.add('active');
+      text.classList.add('active');
+
+      // Calculate progress percentage
+      const percentage = (currentSection / totalSections) * 100;
+      bar.style.width = percentage + '%';
+
+      // Update progress text
+      document.getElementById('generationProgressCurrent').textContent = currentSection;
+      document.getElementById('generationProgressTotal').textContent = totalSections;
+      document.getElementById('generationProgressSectionName').textContent = sectionName;
+
+      // Clear completion message
+      document.getElementById('generationProgressCompletion').textContent = '';
+      document.getElementById('generationProgressCompletion').classList.remove('done');
+    }
+
+    /**
+     * Shows completion message when brief generation finishes.
+     * Displays duration in seconds, then fades out after 3 seconds.
+     * INPUT: duration (number in seconds)
+     * OUTPUT: completion message is shown and auto-hides after delay
+     */
+    function showGenerationComplete(duration) {
+      const container = document.getElementById('generationProgressContainer');
+      const bar = document.getElementById('generationProgressBar');
+      const text = document.getElementById('generationProgressText');
+      const completion = document.getElementById('generationProgressCompletion');
+
+      if (!container || !bar || !text || !completion) return;
+
+      // Update bar to 100%
+      bar.style.width = '100%';
+
+      // Show completion message
+      completion.innerHTML = `<i data-lucide="check-circle" style="width: 16px; height: 16px;"></i> Brief generated in ${duration.toFixed(1)}s`;
+      completion.classList.add('done');
+      lucide.createIcons();
+
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+        container.classList.remove('active');
+        text.classList.remove('active');
+        bar.style.width = '0%';
+      }, 3000);
+    }
+
+    /* ====== FEATURE #4: KEYBOARD SHORTCUT HINT ====== */
+    /**
+     * Shows or hides the "Press G" keyboard hint near the generate button.
+     * Hint is displayed when a role is selected and no generation is in progress.
+     * INPUT: show (boolean) - true to show hint, false to hide
+     * OUTPUT: keyboard hint visibility is updated
+     */
+    function showKeyboardHint(show) {
+      const hint = document.getElementById('keyboardHint');
+      if (!hint) return;
+
+      if (show) {
+        hint.style.display = 'flex';
+      } else {
+        hint.style.display = 'none';
+      }
+    }
+
     // ================================================================
     // EVENT LISTENERS
     // ================================================================
@@ -4132,7 +4703,14 @@ The HTML content should come first, followed by the citations block. Do not incl
         // Ignore if typing in an input
         if (e.target.matches('input, textarea, [contenteditable]')) return;
 
+        // Feature #4: 'G' to Generate — only if no modal/overlay is open
         if (e.key === 'g' || e.key === 'G') {
+          // Check if any modal or overlay is currently open
+          const hasOpenModal = document.querySelector('[role="dialog"]') ||
+                               document.querySelector('.modal.open') ||
+                               document.querySelector('[data-modal="open"]');
+          if (hasOpenModal) return;
+
           e.preventDefault();
           if (state.selectedRole) {
             generateBrief();

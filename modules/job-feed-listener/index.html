@@ -4556,12 +4556,18 @@
         `<span class="feed-stat-chip"><span class="stat-count">${count}</span> ${stage}</span>`
       ).join('');
 
+      // Get last run indicator
+      const lastRunText = getLastRunIndicator();
+      const lastRunCount = getLastRunCount();
+
       bar.innerHTML = `
         <span class="feed-stat-total">${items.length} roles</span>
         <span class="feed-stat-divider"></span>
         <span class="feed-stat-chip"><span class="stat-count">${totalCompanies}</span> companies</span>
         <span class="feed-stat-divider"></span>
         ${stageChips}
+        <span class="feed-stat-divider"></span>
+        <span class="feed-stat-chip" style="font-size:var(--text-xs);color:var(--text-secondary);" title="Last feed processing run">Last run: ${lastRunText}${lastRunCount > 0 ? ` | ${lastRunCount} scored` : ''}</span>
       `;
     }
 
@@ -6034,14 +6040,30 @@
       const activeCheckboxes = document.querySelectorAll('.source-filter-checkbox:checked');
       const activeSources = Array.from(activeCheckboxes).map(cb => cb.dataset.source);
 
-      // Filter feed items from localStorage queue
+      // Filter feed items from localStorage queue (with timing)
+      const scoringStartTime = performance.now();
       const allRoles = loadFeedQueue().map(role => {
         const scoring = scoreRole(role, state.preferences);
         return scoring ? { ...role, score: scoring.score, scoring: scoring.breakdown } : null;
       }).filter(item => item !== null);
+      const scoringDuration = Math.round(performance.now() - scoringStartTime);
 
       state.feedItems = allRoles.filter(role => activeSources.includes(role.source));
       state.feedItems.sort((a, b) => b.score - a.score);
+
+      // Log this feed run for analytics
+      const runStats = {
+        timestamp: new Date().toISOString(),
+        source: 'manual',
+        totalRoles: state.feedItems.length,
+        scored: state.feedItems.length,
+        accepted: state.acceptedRoles ? state.acceptedRoles.length : 0,
+        discarded: state.dismissedRoles ? state.dismissedRoles.length : 0,
+        averageScore: state.feedItems.length > 0 ? Math.round(state.feedItems.reduce((sum, r) => sum + r.score, 0) / state.feedItems.length) : 0,
+        topScore: state.feedItems.length > 0 ? state.feedItems[0].score : 0,
+        duration: scoringDuration
+      };
+      logFeedRun(runStats);
 
       renderFeedCards();
     }
@@ -6049,15 +6071,57 @@
     /**
      * Log a feed run to localStorage
      */
+    /**
+     * Logs a feed processing run to localStorage for analytics.
+     * Keeps only the last 100 runs to avoid excessive data storage.
+     * INPUT: run = object with { timestamp, source, totalRoles, scored, accepted, discarded, averageScore, topScore, duration }
+     */
     function logFeedRun(run) {
       try {
         let runs = loadFeedRuns();
         if (!Array.isArray(runs)) runs = [];
         runs.push(run);
+        // Trim to last 100 runs
+        if (runs.length > 100) {
+          runs = runs.slice(-100);
+        }
         localStorage.setItem('pf_feed_runs', JSON.stringify(runs));
       } catch (e) {
-        console.warn('Failed to log feed run to localStorage:', e);
+        // Silently ignore storage quota errors
       }
+    }
+
+    /**
+     * Returns a human-readable string of when the last feed run occurred.
+     * INPUT: none (reads from pf_feed_runs localStorage)
+     * OUTPUT: "Xm ago" or "Xh ago" or "X days ago", or "Never" if no runs
+     */
+    function getLastRunIndicator() {
+      const runs = loadFeedRuns();
+      if (!runs || runs.length === 0) return 'Never run';
+
+      const lastRun = new Date(runs[runs.length - 1].timestamp);
+      const now = new Date();
+      const diffMs = now - lastRun;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      return `${diffDays}d ago`;
+    }
+
+    /**
+     * Returns the count of roles processed in the last run.
+     * INPUT: none (reads from pf_feed_runs localStorage)
+     * OUTPUT: number of roles scored in last run, or 0 if no runs
+     */
+    function getLastRunCount() {
+      const runs = loadFeedRuns();
+      if (!runs || runs.length === 0) return 0;
+      return runs[runs.length - 1].scored || 0;
     }
 
     // ============================================================
@@ -6140,7 +6204,8 @@
       }));
       console.log(`[Feed] LinkedIn network loaded: ${linkedinNetwork.length} connections, ${trackedConnections.length} tracked`);
 
-      // Score all feed items against user preferences
+      // Score all feed items against user preferences (with timing)
+      const scoringStartTime = performance.now();
       const scored = networkEnrichedItems
         .map(role => {
           const scoring = scoreRole(role, state.preferences);
@@ -6154,8 +6219,23 @@
         })
         .filter(item => item !== null)
         .sort((a, b) => b.score - a.score);
+      const scoringDuration = Math.round(performance.now() - scoringStartTime);
 
       state.feedItems = scored;
+
+      // Log this feed run for analytics
+      const runStats = {
+        timestamp: new Date().toISOString(),
+        source: 'auto',
+        totalRoles: scored.length,
+        scored: scored.length,
+        accepted: state.acceptedRoles ? state.acceptedRoles.length : 0,
+        discarded: state.dismissedRoles ? state.dismissedRoles.length : 0,
+        averageScore: scored.length > 0 ? Math.round(scored.reduce((sum, r) => sum + r.score, 0) / scored.length) : 0,
+        topScore: scored.length > 0 ? scored[0].score : 0,
+        duration: scoringDuration
+      };
+      logFeedRun(runStats);
 
       // Render UI
       renderPreferences();

@@ -693,6 +693,224 @@
     }
 
     /* ================================================================
+       CONVERSION FUNNEL CARD (Feature 1)
+       Shows stage-to-stage conversion rates as horizontal bars
+       ================================================================ */
+
+    .conversion-funnel-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .conversion-funnel-table th,
+    .conversion-funnel-table td {
+      padding: var(--space-3);
+      text-align: left;
+      border-bottom: 1px solid var(--bg-subtle);
+      font-size: var(--text-sm);
+    }
+
+    .conversion-funnel-table th {
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .conversion-funnel-bar {
+      flex: 1;
+      height: 20px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .conversion-funnel-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      min-width: 30px;
+      transition: width 300ms ease-out;
+    }
+
+    .conversion-insufficient-data {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      padding: var(--space-4);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+    }
+
+    /* ================================================================
+       TIME IN STAGE CARD (Feature 2)
+       Shows median days spent per stage
+       ================================================================ */
+
+    .time-in-stage-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .time-in-stage-table th,
+    .time-in-stage-table td {
+      padding: var(--space-2) var(--space-3);
+      text-align: left;
+      border-bottom: 1px solid var(--bg-subtle);
+      font-size: var(--text-sm);
+    }
+
+    .time-in-stage-table th {
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .time-in-stage-slowest {
+      background: rgba(234, 179, 8, 0.1);
+      color: var(--warning);
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      padding: var(--space-1) var(--space-2);
+    }
+
+    /* ================================================================
+       NUDGE PREFERENCES SIDEBAR (Feature 6)
+       Toggle switches for per-rule nudge control
+       ================================================================ */
+
+    .nudge-prefs-section {
+      border-top: 1px solid var(--bg-subtle);
+      padding: var(--space-4) var(--space-3);
+      margin-top: var(--space-4);
+    }
+
+    .nudge-prefs-title {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-3);
+    }
+
+    .nudge-pref-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-2) 0;
+      border-bottom: 1px solid var(--bg-subtle);
+    }
+
+    .nudge-pref-item:last-child {
+      border-bottom: none;
+    }
+
+    .nudge-pref-label {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      font-weight: 500;
+      flex: 1;
+    }
+
+    .nudge-pref-toggle {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 24px;
+    }
+
+    .nudge-pref-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .nudge-pref-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--bg-secondary);
+      transition: background-color var(--duration-fast) var(--ease-default);
+      border-radius: 24px;
+      border: 1px solid var(--bg-subtle);
+    }
+
+    .nudge-pref-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 2px;
+      background-color: white;
+      transition: transform var(--duration-fast) var(--ease-default);
+      border-radius: 50%;
+    }
+
+    .nudge-pref-toggle input:checked + .nudge-pref-slider {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .nudge-pref-toggle input:checked + .nudge-pref-slider:before {
+      transform: translateX(16px);
+    }
+
+    /* ================================================================
+       NUDGE DEDUPLICATION (Feature 4)
+       Group nudges by role and show "+" for additional nudges
+       ================================================================ */
+
+    .nudge-group-container {
+      margin-bottom: var(--space-3);
+    }
+
+    .nudge-additional-indicator {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      margin-left: var(--space-2);
+    }
+
+    .nudge-additional-indicator:hover {
+      background: var(--accent);
+      color: white;
+      transform: scale(1.1);
+    }
+
+    .nudge-expanded-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      margin-top: var(--space-2);
+      padding-top: var(--space-2);
+      border-top: 1px solid var(--bg-subtle);
+    }
+
+    /* ================================================================
        ZONE 3: PIPELINE SUMMARY
        Compact stats and visualization of pipeline health
        ================================================================ */
@@ -1463,6 +1681,30 @@
           <div class="metric-value" id="metric-progressed">0</div>
         </div>
       </div>
+
+      <!-- FEATURE 1: CONVERSION FUNNEL CARD -->
+      <div class="chart-section" style="margin-top: var(--space-6); border-top: 1px solid var(--bg-subtle); padding-top: var(--space-6);">
+        <div class="summary-title">Conversion Funnel</div>
+        <div id="conversionFunnelBody">
+          <!-- Content populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- FEATURE 2: TIME IN STAGE CARD -->
+      <div class="chart-section" style="margin-top: var(--space-6); border-top: 1px solid var(--bg-subtle); padding-top: var(--space-6);">
+        <div class="summary-title">Time in Stage</div>
+        <div id="timeInStageBody">
+          <!-- Content populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- FEATURE 6: NUDGE PREFERENCES SECTION -->
+      <div class="nudge-prefs-section" id="nudgePrefsSection">
+        <div class="nudge-prefs-title">Nudge Preferences</div>
+        <div id="nudgePrefsContainer">
+          <!-- Content populated by JavaScript -->
+        </div>
+      </div>
     </div>
 
     <!-- ================================================================
@@ -2199,6 +2441,33 @@
         }
       }
 
+      // RULE 13: Company profile sparse (Feature 3)
+      // Check if company has <50% profile completion AND has active role
+      const nudgePrefs = loadNudgePrefs();
+      if (nudgePrefs['company_profile_sparse'] !== false) {
+        companies.forEach(company => {
+          // Check if company has active role
+          const hasActiveRole = roles.some(r => r.company === company.name && r.stage !== 'closed');
+          if (!hasActiveRole) return;
+
+          const completion = getCompanyProfileCompletion(company);
+          if (completion < 50) {
+            const nudgeId = generateNudgeId('company_profile_sparse', company.id || company.name);
+            if (!isDismissed(nudgeId, dismissedNudges)) {
+              nudges.push({
+                id: nudgeId,
+                priority: 'informational',
+                trigger: 'company_profile_sparse',
+                company: company.name || 'Unknown',
+                text: `🏢 <span class="nudge-highlight">${company.name}</span> profile is only ${completion}% complete — enrich it for better match scoring`,
+                action: { label: 'Complete Profile', href: `../pipeline/index.html?company=${encodeURIComponent(company.name)}` },
+                ruleId: 'company_profile_sparse'
+              });
+            }
+          }
+        });
+      }
+
       // Sort by priority: critical > important > suggested > informational
       const priorityOrder = { critical: 0, important: 1, suggested: 2, informational: 3 };
       nudges.sort((a, b) => {
@@ -2209,6 +2478,90 @@
 
       // Return top 5 nudges (can dismiss to see more)
       return nudges.slice(0, 5);
+    }
+
+    // ================================================================
+    // NUDGE LOGGING (Feature 5)
+    // ================================================================
+
+    /**
+     * Log a nudge event to localStorage
+     * INPUT: ruleId (string), roleId (string), action (generated|dismissed|acted), extra (object)
+     * OUTPUT: Updates pf_nudge_log array, keeps last 500 entries
+     */
+    function logNudge(ruleId, roleId, action, extra = {}) {
+      let nudgeLog = [];
+      try {
+        const stored = localStorage.getItem('pf_nudge_log');
+        if (stored) nudgeLog = JSON.parse(stored);
+      } catch (e) {
+        console.warn('Could not parse pf_nudge_log:', e);
+      }
+
+      const logEntry = {
+        timestamp: new Date().toISOString(),
+        ruleId: ruleId,
+        roleId: roleId,
+        action: action,
+        ...extra
+      };
+
+      nudgeLog.push(logEntry);
+
+      // Keep only last 500 entries
+      if (nudgeLog.length > 500) {
+        nudgeLog = nudgeLog.slice(-500);
+      }
+
+      try {
+        localStorage.setItem('pf_nudge_log', JSON.stringify(nudgeLog));
+      } catch (e) {
+        console.warn('Could not save pf_nudge_log:', e);
+      }
+    }
+
+    /**
+     * Load nudge preferences from localStorage
+     * INPUT: none
+     * OUTPUT: object with {ruleId: boolean} pairs
+     */
+    function loadNudgePrefs() {
+      try {
+        const stored = localStorage.getItem('pf_nudge_prefs');
+        return stored ? JSON.parse(stored) : {};
+      } catch (e) {
+        console.warn('Could not parse pf_nudge_prefs:', e);
+        return {};
+      }
+    }
+
+    /**
+     * Save nudge preferences to localStorage
+     * INPUT: prefsObj (object with {ruleId: boolean})
+     * OUTPUT: updates localStorage
+     */
+    function saveNudgePrefs(prefsObj) {
+      try {
+        localStorage.setItem('pf_nudge_prefs', JSON.stringify(prefsObj));
+      } catch (e) {
+        console.warn('Could not save pf_nudge_prefs:', e);
+      }
+    }
+
+    // ================================================================
+    // FEATURE 3: COMPANY PROFILE SPARSE NUDGE RULE
+    // ================================================================
+
+    /**
+     * Calculate what percentage of a company profile is complete
+     * INPUT: company (object from pf_companies)
+     * OUTPUT: percentage (0-100) of fields populated
+     */
+    function getCompanyProfileCompletion(company) {
+      if (!company) return 0;
+      const fields = ['domain', 'missionStatement', 'headcount', 'fundingStage', 'remotePolicy', 'url'];
+      const populated = fields.filter(f => company[f] && company[f].toString().trim().length > 0).length;
+      return Math.round((populated / fields.length) * 100);
     }
 
     // ================================================================
@@ -2341,13 +2694,16 @@
     }
 
     /**
-     * Render nudge cards in the action queue
-     * Enhanced with company logos, comms context, mutual connections, and smart action buttons
+     * Render nudge cards in the action queue with deduplication by roleId (Feature 4)
+     * Groups nudges by roleId and shows only the highest-priority nudge per role
+     * Additional nudges indicated by "+" button that expands to show all
+     * Implements nudge logging (Feature 5)
      */
     function renderNudges() {
       const nudges = generateNudges();
       const { companies } = loadData();
       const nudgeList = document.getElementById('nudgeList');
+      const nudgePrefs = loadNudgePrefs();
 
       nudgeList.innerHTML = '';
 
@@ -2367,67 +2723,182 @@
         return;
       }
 
-      nudges.forEach(nudge => {
-        const card = document.createElement('div');
-        card.className = `nudge-card ${nudge.priority}`;
-        card.dataset.nudgeId = nudge.id;
+      // Feature 4: Group nudges by roleId and filter by preference
+      const filteredNudges = nudges.filter(nudge => {
+        const ruleId = nudge.ruleId || nudge.trigger;
+        return nudgePrefs[ruleId] !== false;
+      });
 
-        // Build logo element — only for nudges tied to a specific company
-        const logoUrl = nudge.company ? getCompanyLogoUrl(nudge.company, companies) : null;
-        const logoHtml = logoUrl
-          ? `<img class="nudge-logo" src="${logoUrl}" alt="${nudge.company} logo" onerror="this.style.display='none'">`
-          : '';
+      // Group nudges by roleId (roles with nudges go together, non-role nudges separate)
+      const nudgesByRole = {};
+      const globalNudges = [];
 
-        // Build comms snippet (first 80 chars of last communication)
-        let commsSnippetHtml = '';
-        if (nudge.metadata && nudge.metadata.lastComms && nudge.metadata.lastComms.snippet) {
-          const snippet = nudge.metadata.lastComms.snippet.substring(0, 80);
-          const fullSnippet = nudge.metadata.lastComms.snippet.length > 80 ? snippet + '...' : snippet;
-          commsSnippetHtml = `<div class="nudge-subtext" style="color: var(--text-tertiary); font-size: var(--text-xs); margin-top: var(--space-2);">"${fullSnippet}"</div>`;
+      filteredNudges.forEach(nudge => {
+        if (nudge.roleId) {
+          if (!nudgesByRole[nudge.roleId]) nudgesByRole[nudge.roleId] = [];
+          nudgesByRole[nudge.roleId].push(nudge);
+        } else {
+          globalNudges.push(nudge);
         }
+      });
 
-        // Build secondary action buttons for outreach nudges
-        let secondaryActionsHtml = '';
-        if ((nudge.trigger === 'outreach_followup' || nudge.trigger === 'applied_no_response') && nudge.roleId) {
-          secondaryActionsHtml = `
-            <a href="../pipeline/index.html?roleId=${nudge.roleId}#connections" class="nudge-secondary-action" title="View connections at this company">
-              <svg data-lucide="users"></svg>
-            </a>
-          `;
-        }
-
-        card.innerHTML = `
-          ${logoHtml}
-          <div class="nudge-content">
-            <div class="nudge-badge ${nudge.priority}">${nudge.priority}</div>
-            <div class="nudge-text">${nudge.text}</div>
-            ${commsSnippetHtml}
-          </div>
-          <div class="nudge-actions">
-            <div class="nudge-primary-actions">
-              <a href="${nudge.action.href}" class="nudge-action-btn">
-                ${nudge.action.label}
-                <svg data-lucide="arrow-right"></svg>
-              </a>
-            </div>
-            ${secondaryActionsHtml}
-            <button class="nudge-dismiss-btn" aria-label="Dismiss nudge">
-              <svg data-lucide="x"></svg>
-            </button>
-          </div>
-        `;
-
-        // Dismiss button functionality
-        const dismissBtn = card.querySelector('.nudge-dismiss-btn');
-        dismissBtn.addEventListener('click', () => {
-          dismissNudge(nudge.id);
-          card.remove();
+      // Render role-based nudges (deduplicated)
+      Object.entries(nudgesByRole).forEach(([roleId, roleNudges]) => {
+        // Sort by priority to get the highest one first
+        roleNudges.sort((a, b) => {
+          const priorityOrder = { critical: 0, important: 1, suggested: 2, informational: 3 };
+          const aPrio = priorityOrder[a.priority] || 4;
+          const bPrio = priorityOrder[b.priority] || 4;
+          return aPrio - bPrio;
         });
 
+        const primaryNudge = roleNudges[0];
+        const additionalCount = roleNudges.length - 1;
+
+        // Render the primary nudge
+        const card = createNudgeCard(primaryNudge, companies);
         nudgeList.appendChild(card);
+
+        // Log nudge generation (Feature 5)
+        const ruleId = primaryNudge.ruleId || primaryNudge.trigger;
+        logNudge(ruleId, primaryNudge.roleId, 'generated', { company: primaryNudge.company });
+
+        // Add "+" indicator if additional nudges exist
+        if (additionalCount > 0) {
+          const indicator = document.createElement('div');
+          indicator.className = 'nudge-additional-indicator';
+          indicator.textContent = `+${additionalCount}`;
+          indicator.title = `${additionalCount} more nudge${additionalCount > 1 ? 's' : ''} for this role`;
+          indicator.style.marginLeft = 'auto';
+
+          const wrapper = document.createElement('div');
+          wrapper.style.display = 'flex';
+          wrapper.style.alignItems = 'center';
+          wrapper.appendChild(card);
+          wrapper.appendChild(indicator);
+
+          const groupContainer = document.createElement('div');
+          groupContainer.className = 'nudge-group-container';
+          groupContainer.appendChild(wrapper);
+
+          // Expandable list for additional nudges
+          const expandedList = document.createElement('div');
+          expandedList.className = 'nudge-expanded-list';
+          expandedList.style.display = 'none';
+
+          roleNudges.slice(1).forEach(additionalNudge => {
+            const additionalCard = createNudgeCard(additionalNudge, companies);
+            additionalCard.style.marginBottom = 'var(--space-2)';
+            expandedList.appendChild(additionalCard);
+
+            // Log additional nudge
+            const addlRuleId = additionalNudge.ruleId || additionalNudge.trigger;
+            logNudge(addlRuleId, additionalNudge.roleId, 'generated', { company: additionalNudge.company });
+          });
+
+          groupContainer.appendChild(expandedList);
+
+          // Toggle expand/collapse on "+" click
+          indicator.addEventListener('click', () => {
+            const isVisible = expandedList.style.display !== 'none';
+            expandedList.style.display = isVisible ? 'none' : 'flex';
+            indicator.style.background = isVisible ? 'var(--bg-secondary)' : 'var(--accent)';
+            indicator.style.color = isVisible ? 'var(--accent)' : 'white';
+          });
+
+          nudgeList.appendChild(groupContainer);
+        } else {
+          nudgeList.appendChild(card);
+        }
+      });
+
+      // Render global nudges (no roleId)
+      globalNudges.forEach(nudge => {
+        const card = createNudgeCard(nudge, companies);
+        nudgeList.appendChild(card);
+
+        // Log nudge generation
+        const ruleId = nudge.ruleId || nudge.trigger;
+        logNudge(ruleId, null, 'generated');
       });
 
       lucide.createIcons();
+    }
+
+    /**
+     * Helper: Create a single nudge card element
+     * INPUT: nudge (nudge object), companies (array)
+     * OUTPUT: DOM element for the nudge card
+     */
+    function createNudgeCard(nudge, companies) {
+      const card = document.createElement('div');
+      card.className = `nudge-card ${nudge.priority}`;
+      card.dataset.nudgeId = nudge.id;
+
+      // Build logo element — only for nudges tied to a specific company
+      const logoUrl = nudge.company ? getCompanyLogoUrl(nudge.company, companies) : null;
+      const logoHtml = logoUrl
+        ? `<img class="nudge-logo" src="${logoUrl}" alt="${nudge.company} logo" onerror="this.style.display='none'">`
+        : '';
+
+      // Build comms snippet (first 80 chars of last communication)
+      let commsSnippetHtml = '';
+      if (nudge.metadata && nudge.metadata.lastComms && nudge.metadata.lastComms.snippet) {
+        const snippet = nudge.metadata.lastComms.snippet.substring(0, 80);
+        const fullSnippet = nudge.metadata.lastComms.snippet.length > 80 ? snippet + '...' : snippet;
+        commsSnippetHtml = `<div class="nudge-subtext" style="color: var(--text-tertiary); font-size: var(--text-xs); margin-top: var(--space-2);">"${fullSnippet}"</div>`;
+      }
+
+      // Build secondary action buttons for outreach nudges
+      let secondaryActionsHtml = '';
+      if ((nudge.trigger === 'outreach_followup' || nudge.trigger === 'applied_no_response') && nudge.roleId) {
+        secondaryActionsHtml = `
+          <a href="../pipeline/index.html?roleId=${nudge.roleId}#connections" class="nudge-secondary-action" title="View connections at this company">
+            <svg data-lucide="users"></svg>
+          </a>
+        `;
+      }
+
+      card.innerHTML = `
+        ${logoHtml}
+        <div class="nudge-content">
+          <div class="nudge-badge ${nudge.priority}">${nudge.priority}</div>
+          <div class="nudge-text">${nudge.text}</div>
+          ${commsSnippetHtml}
+        </div>
+        <div class="nudge-actions">
+          <div class="nudge-primary-actions">
+            <a href="${nudge.action.href}" class="nudge-action-btn">
+              ${nudge.action.label}
+              <svg data-lucide="arrow-right"></svg>
+            </a>
+          </div>
+          ${secondaryActionsHtml}
+          <button class="nudge-dismiss-btn" aria-label="Dismiss nudge">
+            <svg data-lucide="x"></svg>
+          </button>
+        </div>
+      `;
+
+      // Dismiss button functionality with logging (Feature 5)
+      const dismissBtn = card.querySelector('.nudge-dismiss-btn');
+      dismissBtn.addEventListener('click', () => {
+        const ruleId = nudge.ruleId || nudge.trigger;
+        logNudge(ruleId, nudge.roleId, 'dismissed');
+        dismissNudge(nudge.id);
+        card.remove();
+      });
+
+      // Action button click logging (Feature 5)
+      const actionBtn = card.querySelector('.nudge-action-btn');
+      if (actionBtn) {
+        actionBtn.addEventListener('click', () => {
+          const ruleId = nudge.ruleId || nudge.trigger;
+          logNudge(ruleId, nudge.roleId, 'acted', { action: nudge.action.label });
+        });
+      }
+
+      return card;
     }
 
     /**
@@ -2476,6 +2947,318 @@
       // Activity metrics
       document.getElementById('metric-added').textContent = stats.activity.addedThisWeek;
       document.getElementById('metric-progressed').textContent = stats.activity.progressedThisWeek;
+    }
+
+    // ================================================================
+    // FEATURE 1: CONVERSION FUNNEL CARD
+    // ================================================================
+
+    /**
+     * Render conversion funnel showing stage-to-stage conversion rates
+     * Calculates: saved→applied, applied→interviewing, interviewing→offer
+     * Shows "Need 10+ closed roles" if insufficient data
+     */
+    function renderConversionFunnel() {
+      const { roles } = loadData();
+      const container = document.getElementById('conversionFunnelBody');
+
+      if (!container) return;
+
+      // Count roles per stage
+      const stageCounts = {
+        saved: 0,
+        applied: 0,
+        interviewing: 0,
+        offer: 0,
+        closed: 0
+      };
+
+      roles.forEach(role => {
+        if (role.stage === 'discovered' || role.stage === 'researching' || role.stage === 'outreach') {
+          stageCounts.saved++;
+        } else if (role.stage === 'applied' || role.stage === 'screen') {
+          stageCounts.applied++;
+        } else if (role.stage === 'interviewing') {
+          stageCounts.interviewing++;
+        } else if (role.stage === 'offer') {
+          stageCounts.offer++;
+        } else if (role.stage === 'closed') {
+          stageCounts.closed++;
+        }
+      });
+
+      // Check if we have enough data
+      const closedRoles = stageCounts.closed;
+      if (closedRoles < 10) {
+        container.innerHTML = `
+          <div class="conversion-insufficient-data">
+            Need 10+ closed roles for meaningful data (currently ${closedRoles} closed)
+          </div>
+        `;
+        return;
+      }
+
+      // Calculate conversion rates
+      const savedToApplied = stageCounts.saved > 0 ? Math.round((stageCounts.applied / stageCounts.saved) * 100) : 0;
+      const appliedToInterview = stageCounts.applied > 0 ? Math.round((stageCounts.interviewing / stageCounts.applied) * 100) : 0;
+      const interviewToOffer = stageCounts.interviewing > 0 ? Math.round((stageCounts.offer / stageCounts.interviewing) * 100) : 0;
+
+      // Create table
+      const html = `
+        <table class="conversion-funnel-table">
+          <thead>
+            <tr>
+              <th>Transition</th>
+              <th>Rate</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Saved → Applied</td>
+              <td>${savedToApplied}%</td>
+              <td style="flex-grow: 1;">
+                <div class="conversion-funnel-bar">
+                  <div class="conversion-funnel-bar-fill" style="width: ${savedToApplied}%; background: var(--accent);">
+                    ${savedToApplied > 5 ? savedToApplied + '%' : ''}
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Applied → Interview</td>
+              <td>${appliedToInterview}%</td>
+              <td style="flex-grow: 1;">
+                <div class="conversion-funnel-bar">
+                  <div class="conversion-funnel-bar-fill" style="width: ${appliedToInterview}%; background: var(--accent);">
+                    ${appliedToInterview > 5 ? appliedToInterview + '%' : ''}
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Interview → Offer</td>
+              <td>${interviewToOffer}%</td>
+              <td style="flex-grow: 1;">
+                <div class="conversion-funnel-bar">
+                  <div class="conversion-funnel-bar-fill" style="width: ${interviewToOffer}%; background: var(--accent);">
+                    ${interviewToOffer > 5 ? interviewToOffer + '%' : ''}
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // ================================================================
+    // FEATURE 2: TIME IN STAGE CARD
+    // ================================================================
+
+    /**
+     * Calculate median days spent in each stage
+     * INPUT: roles (array of role objects with stageHistory)
+     * OUTPUT: object with {stageName: medianDays}
+     */
+    function calculateMedianDaysPerStage(roles) {
+      const stageTimings = {};
+
+      roles.forEach(role => {
+        if (!role.stageHistory || role.stageHistory.length < 2) return;
+
+        // Sort stage history by timestamp
+        const sorted = [...role.stageHistory].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+        // Calculate duration for each stage transition
+        for (let i = 0; i < sorted.length - 1; i++) {
+          const current = sorted[i];
+          const next = sorted[i + 1];
+          const days = Math.floor((new Date(next.timestamp) - new Date(current.timestamp)) / (1000 * 60 * 60 * 24));
+
+          if (!stageTimings[current.to]) {
+            stageTimings[current.to] = [];
+          }
+          stageTimings[current.to].push(days);
+        }
+
+        // For the current stage, calculate days since entry
+        const currentStageEntry = sorted.find(sh => sh.to === role.stage);
+        if (currentStageEntry) {
+          const days = Math.floor((new Date() - new Date(currentStageEntry.timestamp)) / (1000 * 60 * 60 * 24));
+          if (!stageTimings[role.stage]) {
+            stageTimings[role.stage] = [];
+          }
+          stageTimings[role.stage].push(days);
+        }
+      });
+
+      // Calculate median for each stage
+      const medians = {};
+      Object.entries(stageTimings).forEach(([stage, days]) => {
+        const sorted = [...days].sort((a, b) => a - b);
+        const mid = Math.floor(sorted.length / 2);
+        medians[stage] = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+      });
+
+      return medians;
+    }
+
+    /**
+     * Render time in stage card with median days per stage
+     * Highlights slowest stage in amber
+     */
+    function renderTimeInStage() {
+      const { roles } = loadData();
+      const container = document.getElementById('timeInStageBody');
+
+      if (!container) return;
+
+      const medians = calculateMedianDaysPerStage(roles);
+
+      if (Object.keys(medians).length === 0) {
+        container.innerHTML = `
+          <div class="conversion-insufficient-data">
+            Not enough stage history to calculate (need roles with multiple stage transitions)
+          </div>
+        `;
+        return;
+      }
+
+      // Find slowest stage
+      let slowestStage = null;
+      let slowestDays = 0;
+      Object.entries(medians).forEach(([stage, days]) => {
+        if (days > slowestDays) {
+          slowestDays = days;
+          slowestStage = stage;
+        }
+      });
+
+      // Stage order for display
+      const stageOrder = ['discovered', 'researching', 'outreach', 'applied', 'screen', 'interviewing', 'offer', 'closed'];
+
+      // Create table
+      const rows = stageOrder
+        .filter(stage => medians[stage] !== undefined)
+        .map(stage => {
+          const days = Math.round(medians[stage]);
+          const isSlowed = stage === slowestStage;
+          const roleCount = roles.filter(r => r.stageHistory?.some(sh => sh.to === stage)).length;
+
+          return `
+            <tr ${isSlowed ? `style="background: rgba(234, 179, 8, 0.1);"` : ''}>
+              <td>${stage.charAt(0).toUpperCase() + stage.slice(1)}</td>
+              <td>${isSlowed ? `<span class="time-in-stage-slowest">${days} days</span>` : `${days} days`}</td>
+              <td style="text-align: right; color: var(--text-secondary); font-size: var(--text-xs);">${roleCount} role${roleCount !== 1 ? 's' : ''}</td>
+            </tr>
+          `;
+        })
+        .join('');
+
+      const html = `
+        <table class="time-in-stage-table">
+          <thead>
+            <tr>
+              <th>Stage</th>
+              <th>Median Days</th>
+              <th># Roles</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // ================================================================
+    // FEATURE 6: NUDGE PREFERENCES RENDERING
+    // ================================================================
+
+    /**
+     * Render nudge preference toggles for each rule
+     * Allows users to enable/disable specific nudge rules
+     */
+    function renderNudgePreferences() {
+      const container = document.getElementById('nudgePrefsContainer');
+
+      if (!container) return;
+
+      const prefs = loadNudgePrefs();
+
+      // Define all nudge rules with friendly labels
+      const rules = [
+        { id: 'stale_discovered', label: 'Stale Discovered Roles', category: 'Follow-up reminders' },
+        { id: 'researching_long', label: 'Researching Too Long', category: 'Follow-up reminders' },
+        { id: 'applied_no_response', label: 'Applied No Response', category: 'Follow-up reminders' },
+        { id: 'outreach_followup', label: 'Outreach Follow-up', category: 'Follow-up reminders' },
+        { id: 'screen_prep', label: 'Screen Prep Needed', category: 'Interview prep' },
+        { id: 'interview_coming', label: 'Interview Coming', category: 'Interview prep' },
+        { id: 'offer_pending', label: 'Offer Pending', category: 'Stale role alerts' },
+        { id: 'no_new_roles', label: 'No New Roles This Week', category: 'Stale role alerts' },
+        { id: 'hot_company_stale', label: 'Hot Company Stale', category: 'Stale role alerts' },
+        { id: 'closed_pattern', label: 'Rejection Pattern', category: 'Stale role alerts' },
+        { id: 'streak_broken', label: 'Streak Broken', category: 'Motivation' },
+        { id: 'empty_pipeline', label: 'Empty Pipeline', category: 'Motivation' },
+        { id: 'company_profile_sparse', label: 'Company Profile Incomplete', category: 'Data enrichment' }
+      ];
+
+      // Group by category
+      const grouped = {};
+      rules.forEach(rule => {
+        if (!grouped[rule.category]) {
+          grouped[rule.category] = [];
+        }
+        grouped[rule.category].push(rule);
+      });
+
+      // Render toggle switches grouped by category
+      const html = Object.entries(grouped)
+        .map(([category, categoryRules]) => {
+          const toggles = categoryRules
+            .map(rule => {
+              const isEnabled = prefs[rule.id] !== false;
+              return `
+                <div class="nudge-pref-item">
+                  <label class="nudge-pref-label">${rule.label}</label>
+                  <label class="nudge-pref-toggle">
+                    <input type="checkbox" data-rule-id="${rule.id}" ${isEnabled ? 'checked' : ''}>
+                    <span class="nudge-pref-slider"></span>
+                  </label>
+                </div>
+              `;
+            })
+            .join('');
+
+          return `
+            <div style="margin-bottom: var(--space-4);">
+              <div style="font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-2); text-transform: uppercase; letter-spacing: 0.05em;">${category}</div>
+              ${toggles}
+            </div>
+          `;
+        })
+        .join('');
+
+      container.innerHTML = html;
+
+      // Add event listeners to toggles
+      const toggles = container.querySelectorAll('input[type="checkbox"]');
+      toggles.forEach(toggle => {
+        toggle.addEventListener('change', () => {
+          const ruleId = toggle.dataset.ruleId;
+          const newPrefs = loadNudgePrefs();
+          newPrefs[ruleId] = toggle.checked;
+          saveNudgePrefs(newPrefs);
+
+          // Re-render nudges to apply filter
+          renderNudges();
+        });
+      });
     }
 
     // ================================================================
@@ -3178,6 +3961,9 @@
             renderActivityFeed();
             renderWeeklySummary();
             renderPipelineStats(); // From original code
+            renderConversionFunnel(); // Feature 1
+            renderTimeInStage(); // Feature 2
+            renderNudges(); // Features 3, 4, 5
           }
           if (event.key === 'pf_calendar_events') {
             renderUpcomingInterviews();
@@ -3187,6 +3973,13 @@
           if (event.key === 'pf_connections') renderActivityFeed();
           if (event.key === 'pf_sync_log') renderSyncStatus();
           if (event.key === 'pf_outreach_gmail_queue') renderOutreachQueue();
+          if (event.key === 'pf_companies') {
+            renderNudges(); // Feature 3 uses companies
+            renderConversionFunnel();
+          }
+          if (event.key === 'pf_nudge_prefs') {
+            renderNudges(); // When preferences change, re-filter nudges
+          }
         }
       });
     }
@@ -3232,6 +4025,13 @@
       renderNudges();
       renderPipelineStats();
 
+      // Render Feature 1 & 2: Conversion Funnel and Time in Stage
+      renderConversionFunnel();
+      renderTimeInStage();
+
+      // Render Feature 6: Nudge Preferences
+      renderNudgePreferences();
+
       // Render new feature sections (all 5 upgrades)
       renderSyncStatus();
       renderUpcomingCalendarEvents();
@@ -3249,10 +4049,19 @@
       initStorageListener();
 
       // Re-render nudges every minute (in case data changes from other modules)
-      setInterval(renderNudges, 60000);
+      setInterval(() => {
+        renderNudges();
+        renderNudgePreferences(); // Also refresh preferences in case changed elsewhere
+      }, 60000);
 
       // Re-render pipeline stats every minute
       setInterval(renderPipelineStats, 60000);
+
+      // Re-render conversion funnel and time in stage every 5 minutes
+      setInterval(() => {
+        renderConversionFunnel();
+        renderTimeInStage();
+      }, 5 * 60 * 1000);
 
       // Re-render sync status every 5 minutes (checks for stale data)
       setInterval(renderSyncStatus, 5 * 60 * 1000);

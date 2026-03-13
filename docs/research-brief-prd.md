@@ -2,7 +2,7 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/research-brief/`
-**Version:** v2.1.0 (browser-first architecture)
+**Version:** v2.2.0 (browser-first architecture)
 **Last Updated:** 2026-03-13
 **Status:** Browser-first implementation complete; planned features documented as "Status: Planned"
 
@@ -724,14 +724,10 @@ When a trigger fires, affected sections will be marked `stale` and the browser w
 - **Section refresh button** — Per-section "Refresh" button to regenerate a single section
 - **Missing data callouts** — Yellow banner within a section: "⚠ This section would be stronger with your resume bullets. Add them in Resume Tailor → Bullet Bank."
 
-**Status: Planned** — The following UI elements are specified but not yet implemented:
-- **Citation markers** `[n]` — Clickable popovers showing: claim text, source type badge, source link, fetch date, trust level.
-- **Section status badges (extended):**
-  - `Cached` — Generated more than 24 hours ago, no invalidation trigger fired
-  - `Stale` — Invalidation trigger fired since last generation
-  - `Degraded` — Generated with missing inputs (shows which inputs were absent)
-- **Sources footer** — Per-section collapsible list of all citations for that section
-- **Generation progress bar** — Top-of-page progress bar showing "Generating section 3/13... (Batch 1: 6/8 complete)"
+**Status: Implemented (v2.2.0)** — The following UI elements are now live:
+- **Citation markers** `[n]` — Clickable popovers showing: claim text, source type badge, source link, fetch date, trust level. (Feature 7)
+- **Section status badges (extended)** — Pills showing Fresh/Cached/Stale/Error/Generating states per section. (Feature 8)
+- **Generation progress bar** — Real-time progress indicator showing "Generating section 3/13..." with visual feedback. (Feature 9)
 
 ### Keyboard Shortcuts
 
@@ -741,10 +737,14 @@ When a trigger fires, affected sections will be marked `stale` and the browser w
 | 0-9 | Jump to sections 0-9 |
 | Shift+0 to Shift+3 | Jump to sections 10-13 |
 
-**Status: Planned** — The following keyboard shortcuts are specified but not yet implemented:
+**Implemented (v2.2.0):**
 | Key | Action |
 |-----|--------|
 | G | Generate full brief |
+
+**Status: Planned** — The following keyboard shortcuts are specified but not yet implemented:
+| Key | Action |
+|-----|--------|
 | R | Refresh current section |
 | P | Print brief |
 | E | Export as HTML artifact |
@@ -856,10 +856,11 @@ Previous versions will never be overwritten — each generation creates a new ar
 **Shipped:**
 - Section keyboard shortcuts (0-9, Shift+0-3)
 - Sidebar collapse toggle
+- Generation progress bar (batch progress) (v2.2.0)
+- Citation popovers with source links (v2.2.0)
+- G keyboard shortcut to trigger generate (v2.2.0)
 
 **Status: Planned:**
-- Generation progress bar (batch progress)
-- Citation popovers with source links
 - Export to Markdown and HTML
 - Brief version comparison (diff two briefs for the same role)
 - Keyboard shortcuts for citation navigation (C to toggle, etc.)

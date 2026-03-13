@@ -140,6 +140,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 | enrichmentStatus | string | no | "enriched" / "pending" / null |
 | dateAdded | string | no | ISO date |
 | notes | string | no | Personal only — from migration |
+| enrichmentPercent | number | no | 0-100, for Rule 13 sparse nudge detection (v3.12.0) |
 
 ### pf_roles — Role[]
 
@@ -204,11 +205,77 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 **Source:** Parsed from LinkedIn data export via `scripts/parse-linkedin-connections.py`. ~2,687 records. Auto-loaded into localStorage from `scripts/migration-output/pf_linkedin_network.json` on first Pipeline visit. Used as lookup layer only — not editable. Use `pf_connections` for tracked/curated connections.
 
+### pf_nudge_log — NudgeLogEntry[] (v3.12.0)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| id | string | yes | Unique identifier (uuid) |
+| ruleId | string | yes | Which nudge rule fired (e.g., "rule_7_sparse_company") |
+| roleId | string | yes | Target role for this nudge |
+| firedAt | string | yes | ISO timestamp when nudge was triggered |
+| dismissed | boolean | yes | True if user dismissed without acting |
+| dismissedAt | string | no | ISO timestamp of dismissal |
+| reason | string | no | User's dismissal reason (if provided) |
+| acted | boolean | yes | True if user took the suggested action |
+| actsAt | string | no | ISO timestamp of action |
+
+**Purpose:** Audit trail for nudge effectiveness analytics. Dashboard can calculate fired vs dismissed vs acted ratios per rule.
+
+### pf_nudge_prefs — NudgePreferences (v3.12.0)
+
+Object with boolean flags per nudge rule:
+
+```typescript
+{
+  rule_1_stale_discovered: true,
+  rule_2_stale_researching: true,
+  rule_3_applied_no_response: true,
+  rule_4_interview_prep: true,
+  rule_5_offer_pending: true,
+  rule_6_outreach_follow_up: true,
+  rule_7_sparse_company: true,
+  rule_8_interview_prep_not_started: true,
+  rule_9_take_home_due: true,
+  rule_10_offer_deadline: true,
+  rule_11_interview_today: true,
+  rule_12_weekly_summary: true,
+  rule_13_new_feed_matches: true
+}
+```
+
+**Purpose:** User preferences for nudge rule enablement. Toggled in Dashboard sidebar. False = rule disabled (no nudges for that rule).
+
+### pf_feed_run_log — FeedRunEntry[] (v3.12.0)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| id | string | yes | Unique identifier (uuid) |
+| runAt | string | yes | ISO timestamp of feed scan |
+| itemsFound | number | yes | Total roles discovered in this run |
+| itemsAccepted | number | yes | Roles added to Pipeline |
+| itemsDismissed | number | yes | Roles dismissed/archived |
+| averageScore | number | yes | Mean match score for discovered items (0-100) |
+| durationMs | number | yes | How long the run took (milliseconds) |
+| source | string | yes | "gmail" / "indeed" / "manual" / "career_page" |
+
+**Purpose:** Feed analytics. Header displays summary. Enables future Feed dashboard showing source ROI, volume trends, conversion rates.
+
+### pf_calendar_dismissed_nudges — CalendarDismissal[] (v3.12.0)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| nudgeId | string | yes | ID of dismissed nudge |
+| eventId | string | yes | Calendar event ID this nudge relates to |
+| dismissedAt | string | yes | ISO timestamp |
+| reEligibleAt | string | yes | ISO timestamp when nudge can resurface (dismissedAt + 24h) |
+
+**Purpose:** Track nudge dismissals so they don't immediately resurface. After reEligibleAt passes, nudge can fire again.
+
 ---
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.11.0
+**Current Version:** v3.12.0
 **Last Updated:** 2026-03-13
 
 ### Implementation Status
@@ -234,13 +301,21 @@ These are the actual field shapes for objects stored in shared localStorage keys
 - CORS proxy 1 (allorigins.win) tends to timeout; proxy 2 (corsproxy.io) works reliably as fallback
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 
-### Recently Fixed (v3.11.0)
-- **Smart outreach nudges**: Dashboard nudge engine reads comms log for context-aware follow-up suggestions. Surfaces mutual connections. "Draft Follow-up" and "View Connections" buttons on nudge cards.
-- **Pipeline score sort**: Table view defaults to score descending. New Score column with color-coded values. Kanban sorts within columns by score.
-- **Company visibility**: Clickable company names → Research Brief across Feed, Pipeline. Hover tooltip with mission statement. Brief descriptions on cards.
-- **JD sidebar panel**: Feed gets slide-from-right detail panel (480px) with full JD, source badge, confidence indicator.
-- **Comp labeling**: "Posted Base" vs "Est. Total Comp" with info tooltip. "Not listed" fallback.
-- **Company description on Research Brief card**: missionStatement displayed.
+### Recently Fixed (v3.12.0)
+- **Dashboard Conversion Funnel**: Stage-to-stage conversion rates bar chart after 10+ closed roles.
+- **Dashboard Average Time-in-Stage**: Median days per stage table calculated from stageHistory.
+- **Company Profile Sparse Nudge**: Rule 13 fires when company <50% enriched.
+- **Nudge Deduplication UI**: Groups by roleId, shows highest-priority, "+" expander for additionals.
+- **Nudge Logging**: All nudges logged to `pf_nudge_log` (generated/dismissed/acted).
+- **Per-Rule Nudge Preferences**: Sidebar toggles for all 13 rules, stored in `pf_nudge_prefs`.
+- **Research Brief Citations**: Clickable [n] popovers with source/date/trust info.
+- **Section Status Badges**: Fresh/Cached/Stale/Error/Generating pills per section.
+- **Generation Progress Bar**: Real-time "Generating section 3/13..." indicator.
+- **Keyboard Shortcut G**: Press G to generate brief.
+- **Pipeline Stage Transition Reasons**: Optional reason chips saved to stageHistory.
+- **Company Web Search**: DuckDuckGo instant answer suggestions on company name input.
+- **Feed Run Logging**: Stats logged to `pf_feed_run_log` in header.
+- **Calendar Nudge Timing**: 72h/48h/morning-of/post-interview with countdowns.
 
 ### Recently Fixed (v3.9.0)
 - **Research Brief auto-generation + PDF persistence**: Briefs auto-generate on first visit (no manual "Generate" click needed). Cached briefs persist until explicit regeneration. After generation, a PDF is auto-rendered via `html2pdf.js` and stored in IndexedDB (`brief-{roleId}` key in `pf_resumes` DB). The role's `artifacts[]` entry has an `indexedDbKey` so Pipeline shows preview/download buttons for the PDF. Brief metadata (`briefArtifactId`, `briefGeneratedAt`) attached to pipeline roles. Generate button becomes "Regenerate" when brief exists. Pipeline sidebar shows "View Research Brief" when brief exists. "Clear Cache" renamed to "Clear & Regenerate" and auto-triggers fresh generation.

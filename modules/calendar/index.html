@@ -998,6 +998,65 @@
             border-color: var(--accent);
         }
 
+        /* ====== ENHANCED NUDGE CARDS (CALENDAR-NUDGE) ====== */
+        .calendar-nudge {
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--info);
+            border-radius: var(--radius);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 150ms ease;
+            animation: fadeIn 300ms ease-out;
+        }
+
+        .calendar-nudge:hover {
+            background: var(--bg-tertiary);
+            box-shadow: var(--shadow-sm);
+            transform: translateX(2px);
+        }
+
+        .countdown-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 10px;
+            background: rgba(95, 151, 247, 0.15);
+            color: var(--info);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slide-in {
+            from {
+                opacity: 0;
+                transform: translateX(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .slide-in {
+            animation: slide-in 300ms ease-out;
+        }
+
         /* ============================================================================
            SYNC LOG
            ============================================================================ */
@@ -1830,9 +1889,12 @@
                 renderWeekView();
                 updateUpcomingEventList();
                 updateFilterBadges();
-                generateNudges();
+                generateInterviewNudges();
                 renderNudgeTimeline();
                 loadSyncLog();
+
+                // Start nudge refresh interval (every 15 minutes)
+                startNudgeRefreshInterval();
 
                 // Initialize Lucide icons
                 lucide.createIcons();
@@ -2967,7 +3029,7 @@
                 renderWeekView();
                 updateUpcomingEventList();
                 updateFilterBadges();
-                generateNudges();
+                generateInterviewNudges();
                 renderNudgeTimeline();
 
                 // Show confirmation
@@ -2989,29 +3051,109 @@
             });
         }
 
-        // ============================================================================
-        // NUDGES & REMINDERS
-        // ============================================================================
+        /* ====== NUDGES & REMINDERS ====== */
 
         /**
-         * Generate nudges based on upcoming events and their timing.
-         * Nudges are pre-interview, morning-of, and post-interview prompts.
+         * Check if an event is an interview type (matches interview keywords).
+         * Used to identify events that should receive pre-interview nudges.
+         * @param {Object} event - Calendar event to check
+         * @returns {boolean} True if event is an interview or contains interview keywords
          */
-        function generateNudges() {
+        function isInterviewEvent(event) {
+            const interviewTypes = ['phone_screen', 'technical', 'behavioral', 'panel', 'hiring_manager'];
+            const hasInterviewType = interviewTypes.includes(event.type);
+            const hasInterviewKeyword = event.title && event.title.toLowerCase().includes('interview');
+            return hasInterviewType || hasInterviewKeyword;
+        }
+
+        /**
+         * Dismiss a nudge and store dismissal info in dismissed nudges list.
+         * Nudges are stored as {eventId, nudgeType, dismissedAt} to prevent re-showing.
+         * @param {string} nudgeId - Unique nudge ID to dismiss
+         * @param {string} eventId - Associated event ID
+         * @param {string} nudgeType - Type of nudge ('72h', '48h', 'morning', 'post')
+         */
+        function dismissNudge(nudgeId, eventId, nudgeType) {
+            const nudges = getStorageData('calendar_nudges') || [];
+            const filtered = nudges.filter(n => n.id !== nudgeId);
+            saveStorageData('calendar_nudges', filtered);
+
+            const dismissedNudges = getStorageData('pf_calendar_dismissed_nudges') || [];
+            dismissedNudges.push({
+                eventId: eventId,
+                nudgeType: nudgeType,
+                dismissedAt: new Date()
+            });
+            saveStorageData('pf_calendar_dismissed_nudges', dismissedNudges);
+
+            renderNudgeTimeline();
+        }
+
+        /**
+         * Check if a nudge has been dismissed for this event and type.
+         * @param {string} eventId - Event ID to check
+         * @param {string} nudgeType - Type of nudge to check
+         * @returns {boolean} True if nudge was previously dismissed
+         */
+        function isNudgeDismissed(eventId, nudgeType) {
+            const dismissedNudges = getStorageData('pf_calendar_dismissed_nudges') || [];
+            return dismissedNudges.some(d => d.eventId === eventId && d.nudgeType === nudgeType);
+        }
+
+        /**
+         * Calculate countdown time from now to a target date.
+         * Returns human-readable format like "2h 15m" or "1d 3h".
+         * @param {Date} targetDate - Date/time to count down to
+         * @returns {string} Formatted countdown string (e.g., "2h 30m" or "1d 2h")
+         */
+        function getCountdownString(targetDate) {
+            const now = new Date();
+            const diff = targetDate - now;
+
+            if (diff <= 0) return 'Now';
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+            if (days > 0) {
+                return `${days}d ${hours}h`;
+            } else if (hours > 0) {
+                return `${hours}h ${minutes}m`;
+            } else {
+                return `${minutes}m`;
+            }
+        }
+
+        /**
+         * Generate interview nudges based on timing windows (72h, 48h, morning-of, post).
+         * Scans upcoming events and creates nudges for interviews only.
+         * Checks dismissed list to avoid showing previously dismissed nudges.
+         * Nudges are stored in pf_calendar_nudges localStorage.
+         *
+         * Timing windows:
+         * - 72 hours before: "Research & Prep" nudge (blue)
+         * - 48 hours before: "Mock Practice" nudge (amber)
+         * - Morning of (8am to event): "Final Prep" nudge (red)
+         * - After event end time: "Time to debrief!" nudge (auto-dismiss after 24h)
+         */
+        function generateInterviewNudges() {
             const nudges = [];
             const allEvents = getStorageData('calendar_events') || [];
             const roles = getStorageData('roles') || [];
             const now = new Date();
 
             allEvents.forEach(evt => {
+                // Only process interview events
+                if (!isInterviewEvent(evt)) return;
+
                 const eventDate = new Date(evt.date);
                 const msUntilEvent = eventDate - now;
                 const hoursUntil = msUntilEvent / (1000 * 60 * 60);
-                const daysUntil = msUntilEvent / (1000 * 60 * 60 * 24);
 
                 // Get role info if linked
                 let roleInfo = '';
-                let roleId = evt.roleId;
+                let roleId = evt.roleId || null;
                 if (roleId) {
                     const role = roles.find(r => r.id === roleId);
                     if (role) {
@@ -3019,50 +3161,97 @@
                     }
                 }
 
-                // Within 24 hours: prep nudge
-                if (hoursUntil > 0 && hoursUntil <= 24) {
-                    if (daysUntil < 1 && daysUntil > 0.5) { // 12-24 hours
-                        nudges.push({
-                            id: `nudge-24h-${evt.id}`,
-                            eventId: evt.id,
-                            roleId: roleId,
-                            timing: '24h',
-                            title: `Interview at ${evt.company} tomorrow${roleInfo}`,
-                            description: `Start your prep. Review the company research brief and prepare questions for the interviewer.`,
-                            action: 'Research Brief',
-                            actionUrl: roleId ? `../research-brief/?role=${roleId}` : '../research-brief/',
-                            timestamp: now
-                        });
-                    }
+                /* ====== 72 HOURS BEFORE: RESEARCH & PREP NUDGE (BLUE) ====== */
+                if (hoursUntil > 48 && hoursUntil <= 72 && !isNudgeDismissed(evt.id, '72h')) {
+                    nudges.push({
+                        id: `nudge-72h-${evt.id}`,
+                        eventId: evt.id,
+                        roleId: roleId,
+                        nudgeType: '72h',
+                        title: `Research & Prep: ${evt.company}${roleInfo}`,
+                        description: 'Review the company brief, research leadership team, and prepare thoughtful questions.',
+                        countdown: getCountdownString(eventDate),
+                        action: 'Review Research Brief',
+                        actionUrl: roleId ? `../research-brief/?role=${roleId}` : '../research-brief/',
+                        timestamp: new Date(),
+                        colorScheme: 'blue',
+                        eventTime: formatTime(eventDate),
+                        eventDate: eventDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                    });
                 }
 
-                // Morning of: review nudge
-                if (isToday(eventDate)) {
+                /* ====== 48 HOURS BEFORE: MOCK PRACTICE NUDGE (AMBER) ====== */
+                if (hoursUntil > 24 && hoursUntil <= 48 && !isNudgeDismissed(evt.id, '48h')) {
+                    nudges.push({
+                        id: `nudge-48h-${evt.id}`,
+                        eventId: evt.id,
+                        roleId: roleId,
+                        nudgeType: '48h',
+                        title: `Mock Practice: ${evt.company}${roleInfo}`,
+                        description: 'Run through a practice interview. Focus on storytelling, technical prep, and behavioral answers.',
+                        countdown: getCountdownString(eventDate),
+                        action: 'Start Mock Interview',
+                        actionUrl: roleId ? `../mock-interview/?role=${roleId}` : '../mock-interview/',
+                        timestamp: new Date(),
+                        colorScheme: 'amber',
+                        eventTime: formatTime(eventDate),
+                        eventDate: eventDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                    });
+                }
+
+                /* ====== MORNING OF (8AM TO EVENT TIME): FINAL PREP NUDGE (RED/URGENT) ====== */
+                const morningOfStart = new Date(eventDate);
+                morningOfStart.setHours(8, 0, 0, 0);
+
+                const todayStart = new Date(now);
+                todayStart.setHours(0, 0, 0, 0);
+                const eventDateStart = new Date(eventDate);
+                eventDateStart.setHours(0, 0, 0, 0);
+
+                const isEventToday = todayStart.toDateString() === eventDateStart.toDateString();
+
+                if (isEventToday && now >= morningOfStart && now < eventDate && !isNudgeDismissed(evt.id, 'morning')) {
+                    const interviewers = (evt.interviewers || []).length > 0 ? evt.interviewers.join(', ') : 'Interview team';
                     nudges.push({
                         id: `nudge-morning-${evt.id}`,
                         eventId: evt.id,
                         roleId: roleId,
-                        timing: 'morning',
-                        title: `${evt.company} interview today at ${formatTime(eventDate)}${roleInfo}`,
-                        description: `Take a few minutes to review your prep notes and practice your TMAY (Tell Me About Yourself) script.`,
-                        action: 'Review Notes',
+                        nudgeType: 'morning',
+                        title: `Final Prep: ${evt.company} in ${getCountdownString(eventDate)}${roleInfo}`,
+                        description: `Interview with ${interviewers} in ${getCountdownString(eventDate)}.`,
+                        countdown: getCountdownString(eventDate),
+                        action: 'Review Research Brief',
                         actionUrl: roleId ? `../research-brief/?role=${roleId}` : '../research-brief/',
-                        timestamp: now
+                        timestamp: new Date(),
+                        colorScheme: 'red',
+                        eventTime: formatTime(eventDate),
+                        eventDate: eventDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+                        interviewers: interviewers,
+                        meetingLink: evt.meetingLink || null
                     });
                 }
 
-                // After event: debrief nudge
-                if (eventDate < now && evt.status === 'upcoming') {
+                /* ====== POST-INTERVIEW: DEBRIEF NUDGE ====== */
+                const eventEndTime = new Date(eventDate);
+                const duration = evt.duration || 60;
+                eventEndTime.setMinutes(eventEndTime.getMinutes() + duration);
+
+                if (now > eventEndTime && !isNudgeDismissed(evt.id, 'post')) {
                     nudges.push({
-                        id: `nudge-debrief-${evt.id}`,
+                        id: `nudge-post-${evt.id}`,
                         eventId: evt.id,
                         roleId: roleId,
-                        timing: 'post',
-                        title: `Debrief: ${evt.company} interview${roleInfo}`,
-                        description: `While the interview is fresh in your mind, capture key moments and feedback.`,
+                        nudgeType: 'post',
+                        title: `Time to debrief: ${evt.company}${roleInfo}`,
+                        description: 'Capture feedback while the interview is fresh. Take 5 minutes to document your thoughts.',
+                        countdown: 'Just now',
                         action: 'Start Debrief',
                         actionUrl: roleId ? `../debrief/?role=${roleId}` : '../debrief/',
-                        timestamp: now
+                        timestamp: new Date(),
+                        colorScheme: 'amber',
+                        eventTime: formatTime(eventDate),
+                        eventDate: eventDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+                        autoExpireAt: new Date(now.getTime() + 24 * 60 * 60 * 1000)
                     });
                 }
             });
@@ -3071,38 +3260,54 @@
         }
 
         /**
-         * Render the nudge timeline showing upcoming nudges in chronological order.
+         * Render the "Upcoming Interview Prep" nudge section at the top of calendar view.
+         * Shows nudges as cards with left color borders (blue/amber/red).
+         * Each card displays: event title, company, countdown timer, and action button.
+         * Countdowns update live every 60 seconds.
+         * Includes smooth fade-in animations for new nudges.
+         * Nudges are grouped by type: 72h, 48h, morning-of, post-interview.
          */
         function renderNudgeTimeline() {
             const nudgeList = document.getElementById('nudgeList');
             nudgeList.innerHTML = '';
 
             const nudges = getStorageData('calendar_nudges') || [];
-            const now = new Date();
 
             if (nudges.length === 0) {
                 const emptyMsg = document.createElement('div');
                 emptyMsg.className = 'empty-state';
-                emptyMsg.textContent = 'No upcoming nudges';
+                emptyMsg.style.padding = '40px 24px';
+                emptyMsg.style.textAlign = 'center';
+                emptyMsg.innerHTML = '<div style="color: var(--text-secondary); font-size: 14px;">No upcoming interview nudges</div>';
                 nudgeList.appendChild(emptyMsg);
                 return;
             }
 
-            // Group nudges by timing
+            /* Group nudges by type for better organization */
             const grouped = {
-                '24h': [],
+                '72h': [],
+                '48h': [],
                 'morning': [],
                 'post': []
             };
 
             nudges.forEach(nudge => {
-                if (nudge.timing === '24h') grouped['24h'].push(nudge);
-                else if (nudge.timing === 'morning') grouped['morning'].push(nudge);
-                else if (nudge.timing === 'post') grouped['post'].push(nudge);
+                if (grouped[nudge.nudgeType]) {
+                    grouped[nudge.nudgeType].push(nudge);
+                }
             });
 
-            // Render each group
-            Object.entries(grouped).forEach(([groupKey, groupNudges]) => {
+            /* Render each nudge group with title */
+            const groupOrder = ['72h', '48h', 'morning', 'post'];
+            const groupLabels = {
+                '72h': 'Research & Prep (72h before)',
+                '48h': 'Mock Practice (48h before)',
+                'morning': 'Final Prep (Today)',
+                'post': 'Post-Interview Debrief'
+            };
+
+            groupOrder.forEach(groupKey => {
+                const groupNudges = grouped[groupKey];
                 if (groupNudges.length === 0) return;
 
                 const group = document.createElement('div');
@@ -3110,79 +3315,191 @@
 
                 const groupTitle = document.createElement('div');
                 groupTitle.className = 'nudge-group-title';
-                const labels = {
-                    '24h': 'Prep Soon',
-                    'morning': 'Today',
-                    'post': 'Post-Interview'
-                };
-                groupTitle.textContent = labels[groupKey];
+                groupTitle.textContent = groupLabels[groupKey];
                 group.appendChild(groupTitle);
 
                 groupNudges.forEach(nudge => {
                     const card = document.createElement('div');
-                    card.className = 'nudge-card slide-in';
+                    card.className = 'calendar-nudge slide-in';
+                    card.style.borderLeftColor = nudge.colorScheme === 'blue' ? 'var(--info)' :
+                                                nudge.colorScheme === 'amber' ? 'var(--warning)' :
+                                                'var(--error)';
+                    card.dataset.eventId = nudge.eventId;
+                    card.dataset.nudgeType = nudge.nudgeType;
 
+                    /* Nudge header: title and company */
                     const header = document.createElement('div');
-                    header.className = 'nudge-header';
+                    header.style.display = 'flex';
+                    header.style.alignItems = 'flex-start';
+                    header.style.gap = '12px';
+                    header.style.marginBottom = '8px';
 
-                    const timing = document.createElement('div');
-                    timing.className = 'nudge-timing';
-                    const timingLabels = {
-                        '24h': '24h',
-                        'morning': 'Now',
-                        'post': 'Done'
+                    const titleSection = document.createElement('div');
+                    titleSection.style.flex = '1';
+
+                    const eventTitle = document.createElement('div');
+                    eventTitle.style.fontSize = '14px';
+                    eventTitle.style.fontWeight = '600';
+                    eventTitle.style.color = 'var(--text-primary)';
+                    eventTitle.style.marginBottom = '2px';
+                    eventTitle.textContent = nudge.title;
+                    titleSection.appendChild(eventTitle);
+
+                    const eventMeta = document.createElement('div');
+                    eventMeta.style.fontSize = '12px';
+                    eventMeta.style.color = 'var(--text-secondary)';
+                    eventMeta.style.display = 'flex';
+                    eventMeta.style.gap = '12px';
+                    eventMeta.style.alignItems = 'center';
+                    eventMeta.innerHTML = `
+                        <span>${nudge.eventDate} at ${nudge.eventTime}</span>
+                    `;
+                    titleSection.appendChild(eventMeta);
+
+                    header.appendChild(titleSection);
+
+                    /* Countdown timer badge (updates every 60 seconds) */
+                    const countdownBadge = document.createElement('div');
+                    countdownBadge.className = 'countdown-badge';
+                    countdownBadge.style.display = 'flex';
+                    countdownBadge.style.alignItems = 'center';
+                    countdownBadge.style.justifyContent = 'center';
+                    countdownBadge.style.minWidth = '60px';
+                    countdownBadge.style.padding = '6px 10px';
+                    countdownBadge.style.background = nudge.colorScheme === 'blue' ? 'rgba(95, 151, 247, 0.15)' :
+                                                     nudge.colorScheme === 'amber' ? 'rgba(252, 201, 52, 0.15)' :
+                                                     'rgba(242, 132, 130, 0.15)';
+                    countdownBadge.style.color = nudge.colorScheme === 'blue' ? 'var(--info)' :
+                                                nudge.colorScheme === 'amber' ? 'var(--warning)' :
+                                                'var(--error)';
+                    countdownBadge.style.borderRadius = 'var(--radius-sm)';
+                    countdownBadge.style.fontSize = '12px';
+                    countdownBadge.style.fontWeight = '600';
+                    countdownBadge.textContent = nudge.countdown;
+
+                    const updateCountdown = () => {
+                        const eventDate = new Date(nudge.eventDate ? nudge.eventDate + ' ' + nudge.eventTime : nudge.timestamp);
+                        countdownBadge.textContent = getCountdownString(eventDate);
                     };
-                    timing.textContent = timingLabels[nudge.timing] || nudge.timing;
-                    header.appendChild(timing);
 
-                    const content = document.createElement('div');
-                    content.className = 'nudge-content';
+                    /* Update countdown every 60 seconds */
+                    setInterval(updateCountdown, 60000);
 
-                    const title = document.createElement('div');
-                    title.className = 'nudge-title';
-                    title.textContent = nudge.title;
-                    content.appendChild(title);
-
-                    const desc = document.createElement('div');
-                    desc.className = 'nudge-description';
-                    desc.textContent = nudge.description;
-                    content.appendChild(desc);
-
-                    const metadata = document.createElement('div');
-                    metadata.className = 'nudge-metadata';
-                    metadata.textContent = `Created ${new Date(nudge.timestamp).toLocaleDateString()}`;
-                    content.appendChild(metadata);
-
-                    header.appendChild(content);
+                    header.appendChild(countdownBadge);
                     card.appendChild(header);
+
+                    /* Description text */
+                    const description = document.createElement('div');
+                    description.style.fontSize = '13px';
+                    description.style.color = 'var(--text-secondary)';
+                    description.style.marginBottom = '12px';
+                    description.style.lineHeight = '1.4';
+                    description.textContent = nudge.description;
+                    card.appendChild(description);
+
+                    /* For morning nudges, show interviewer names and meeting link */
+                    if (nudge.nudgeType === 'morning' && (nudge.interviewers || nudge.meetingLink)) {
+                        const details = document.createElement('div');
+                        details.style.padding = '10px';
+                        details.style.background = 'var(--bg-tertiary)';
+                        details.style.borderRadius = 'var(--radius-sm)';
+                        details.style.fontSize = '12px';
+                        details.style.color = 'var(--text-secondary)';
+                        details.style.marginBottom = '12px';
+                        details.style.display = 'flex';
+                        details.style.flexDirection = 'column';
+                        details.style.gap = '6px';
+
+                        if (nudge.interviewers) {
+                            const interviewerLine = document.createElement('div');
+                            interviewerLine.innerHTML = `<strong style="color: var(--text-primary);">Interviewer:</strong> ${nudge.interviewers}`;
+                            details.appendChild(interviewerLine);
+                        }
+
+                        if (nudge.meetingLink) {
+                            const linkLine = document.createElement('div');
+                            const linkEl = document.createElement('a');
+                            linkEl.href = nudge.meetingLink;
+                            linkEl.target = '_blank';
+                            linkEl.style.color = 'var(--accent)';
+                            linkEl.style.textDecoration = 'none';
+                            linkEl.style.fontWeight = '500';
+                            linkEl.textContent = 'Join meeting';
+                            linkLine.innerHTML = '<strong style="color: var(--text-primary);">Meeting:</strong> ';
+                            linkLine.appendChild(linkEl);
+                            details.appendChild(linkLine);
+                        }
+
+                        card.appendChild(details);
+                    }
+
+                    /* Action buttons */
+                    const actions = document.createElement('div');
+                    actions.style.display = 'flex';
+                    actions.style.gap = '8px';
+                    actions.style.alignItems = 'center';
 
                     const actionBtn = document.createElement('button');
                     actionBtn.className = 'nudge-action';
+                    actionBtn.style.background = nudge.colorScheme === 'blue' ? 'var(--info)' :
+                                                nudge.colorScheme === 'amber' ? 'var(--warning)' :
+                                                'var(--error)';
+                    actionBtn.style.padding = '8px 14px';
+                    actionBtn.style.color = 'var(--bg-base)';
+                    actionBtn.style.border = 'none';
+                    actionBtn.style.borderRadius = 'var(--radius-sm)';
+                    actionBtn.style.fontSize = '13px';
+                    actionBtn.style.fontWeight = '600';
+                    actionBtn.style.cursor = 'pointer';
+                    actionBtn.style.transition = 'all 150ms ease';
                     actionBtn.textContent = nudge.action;
+                    actionBtn.onmouseover = () => actionBtn.style.opacity = '0.85';
+                    actionBtn.onmouseout = () => actionBtn.style.opacity = '1';
                     actionBtn.onclick = () => window.location.href = nudge.actionUrl;
-                    card.appendChild(actionBtn);
+                    actions.appendChild(actionBtn);
 
                     const dismissBtn = document.createElement('button');
-                    dismissBtn.className = 'nudge-action-secondary';
+                    dismissBtn.style.padding = '8px 12px';
+                    dismissBtn.style.background = 'var(--bg-tertiary)';
+                    dismissBtn.style.color = 'var(--text-secondary)';
+                    dismissBtn.style.border = '1px solid var(--border)';
+                    dismissBtn.style.borderRadius = 'var(--radius-sm)';
+                    dismissBtn.style.fontSize = '13px';
+                    dismissBtn.style.cursor = 'pointer';
+                    dismissBtn.style.transition = 'all 150ms ease';
                     dismissBtn.textContent = 'Dismiss';
-                    dismissBtn.onclick = () => dismissNudge(nudge.id);
-                    card.appendChild(dismissBtn);
+                    dismissBtn.onmouseover = () => {
+                        dismissBtn.style.background = 'var(--bg-base)';
+                        dismissBtn.style.borderColor = 'var(--accent)';
+                    };
+                    dismissBtn.onmouseout = () => {
+                        dismissBtn.style.background = 'var(--bg-tertiary)';
+                        dismissBtn.style.borderColor = 'var(--border)';
+                    };
+                    dismissBtn.onclick = () => dismissNudge(nudge.id, nudge.eventId, nudge.nudgeType);
+                    actions.appendChild(dismissBtn);
 
+                    card.appendChild(actions);
                     group.appendChild(card);
                 });
 
                 nudgeList.appendChild(group);
             });
+
+            /* Re-render Lucide icons if any exist */
+            lucide.createIcons();
         }
 
         /**
-         * Dismiss a nudge from the timeline.
+         * Setup periodic nudge regeneration.
+         * Regenerates nudges every 15 minutes to keep timing windows accurate.
+         * Also updates countdown displays in real-time.
          */
-        function dismissNudge(nudgeId) {
-            const nudges = getStorageData('calendar_nudges') || [];
-            const filtered = nudges.filter(n => n.id !== nudgeId);
-            saveStorageData('calendar_nudges', filtered);
-            renderNudgeTimeline();
+        function startNudgeRefreshInterval() {
+            setInterval(() => {
+                generateInterviewNudges();
+                renderNudgeTimeline();
+            }, 15 * 60 * 1000);
         }
 
         // ============================================================================

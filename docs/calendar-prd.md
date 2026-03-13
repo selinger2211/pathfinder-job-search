@@ -2,7 +2,7 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/calendar/`
-**Version:** v1.0.0
+**Version:** v1.1.0
 **Last Updated:** 2026-03-10
 **Status:** Draft — pending approval
 
@@ -339,7 +339,7 @@ For each CalendarLink.attendees:
 
 ### Step 4: Nudge Scheduling
 
-> **Status: Planned** — Specific nudge timing (72h, 48h, morning-of, 1h after) not yet fully implemented. Spec retained for future development.
+> **Status: Implemented (v1.1.0)** — Specific nudge timing cards with countdowns for 72h, 48h, morning-of, and post-interview windows.
 
 ```
 For each linked event:

@@ -774,14 +774,14 @@ Legacy JD enrichment (now superseded by v3.10):
 - [ ] Career page URL management in Source tab
 - [ ] Generic scraping with Claude-powered parsing fallback
 
-### Phase 5: Intelligence Layer & Analytics (Planned)
+### Phase 5: Intelligence Layer & Analytics (Partial)
 - [ ] Tier promotion/demotion suggestions
 - [ ] Feed analytics dashboard (volume, quality, speed, conversion, source ROI)
 - [ ] Preference version tracking with A/B comparison
 - [ ] Company frequency signals
 - [ ] Repost detection and re-engagement prompts
 - [ ] MCP tool integration (`pf_score_role`, `check_feed`, `get_feed_status`, etc.)
-- [ ] Feed run logging to MCP for historical analytics
+- [x] Feed run logging to `pf_feed_run_log` localStorage for historical analytics (v3.12.0)
 - [ ] Automated tier promotion engine based on frequency signals
 
 ---

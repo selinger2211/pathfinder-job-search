@@ -4,6 +4,62 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.12.0 — 2026-03-13
+
+### What Changed — Tier 1 Quick Wins: 14 Features (Dashboard, Research Brief, Pipeline, Feed, Calendar)
+
+**Summary:** Major feature release delivering 14 "Tier 1 Quick Win" features across 5 modules.
+
+**Changes:**
+
+**Dashboard Module (6 features):**
+
+1. **Conversion Funnel Card** — Stage-to-stage conversion rates displayed as bar chart. Shows percentage moving from each stage to the next (e.g., Applied 68% → Screen, Screen 53% → Interviewing). Only displays after 10+ closed roles to ensure statistical validity. Sourced from `pf_roles` stage history analysis.
+
+2. **Average Time-in-Stage Card** — Median/average days spent in each stage as sortable table. Calculated from `stageHistory` timestamps for all roles. Helps identify bottlenecks (e.g., "Screen is taking 8 days avg, Interviewing 10 days").
+
+3. **Company Profile Sparse Nudge (Rule 13)** — Fires when a tracked company has <50% enrichment completeness (missing funding, headcount, tech stack, mission, etc.). Suggests opening company profile to complete missing data. Supports goal-driven research.
+
+4. **Nudge Deduplication UI** — Nudges grouped by roleId with highest-priority displayed first. Secondary nudges hidden behind "+" expander badge. Reduces visual clutter while maintaining discoverability. Persists state per role.
+
+5. **Nudge Logging** — All nudges logged to `pf_nudge_log` localStorage with: ruleId, roleId, timestamp (firedAt), dismissed status + timestamp, acted status + timestamp. Enables Dashboard analytics to track nudge effectiveness (fired vs dismissed vs acted). Historical audit trail for each rule.
+
+6. **Per-Rule Nudge Preferences** — Dashboard sidebar "Nudge Preferences" section includes toggles for all 13 nudge rules. User preferences stored in `pf_nudge_prefs` localStorage, persisted across sessions. Users can disable specific rules they find noisy or irrelevant.
+
+**Research Brief Module (4 features):**
+
+7. **Citation Markers & Popovers** — Inline clickable [n] markers throughout brief sections. Click to reveal popover showing: claim text, source type badge (JD/enrichment_web/manual/ai_generated), source link, fetch date, trust level indicator. Supports "Trust but Verify" principle.
+
+8. **Section Status Badges** — Each section displays a pill badge showing: Fresh (generated <24h ago), Cached (24h+ no changes), Stale (data invalidation fired), Error (generation failed), Generating (real-time progress). Users know at a glance which sections are current vs outdated.
+
+9. **Generation Progress Bar** — Real-time progress indicator at top of page during generation showing "Generating section 3/13... (Batch 1: 6/8 complete)". Updates as Claude streams responses. Provides transparency during async generation.
+
+10. **Keyboard Shortcut G** — Press G to trigger full brief generation or regeneration. Complements existing section shortcuts (0-9, Shift+0-3). Speeds up power-user workflows.
+
+**Pipeline Module (2 features):**
+
+11. **Stage Transition Reason Field** — When changing a role's stage via drag-drop or button, optional reason chips appear (e.g., "Passed screen", "Company freezing hiring", "Better opportunity"). Reason saved to `stageHistory[].reason`. Builds audit trail explaining each transition decision.
+
+12. **Company Web Search Suggestions** — When manually adding a company or typing a company name in Pipeline, system provides DuckDuckGo instant answer API results. Shows company domain, mission statement, key facts. Users select from suggestions or confirm manual entry. Auto-populates name, url, domain.
+
+**Job Feed Module (1 feature):**
+
+13. **Feed Run Logging** — Every feed scan/refresh logged to `pf_feed_run_log` localStorage with: timestamp (runAt), number of items found, number accepted to pipeline, number dismissed, average score, duration (ms). Header displays summary stats. Enables Feed analytics dashboard (future).
+
+**Calendar Module (1 feature):**
+
+14. **Specific Nudge Timing** — Pre-interview nudges scheduled at precise intervals: 72h before ("Research brief not started"), 48h before ("Review prep materials"), morning of 8am ("Review TMAY + questions"), 1h after event end ("Capture debrief"). Each nudge displays countdown timer and action button. Post-interview nudge surfaces Debrief Agent with context pre-loaded.
+
+**Files modified:** `modules/dashboard/index.html`, `modules/research-brief/index.html`, `modules/pipeline/index.html`, `modules/job-feed-listener/index.html`, `modules/calendar/index.html`
+
+**Data layer updates:**
+- Added `pf_nudge_log` localStorage key (nudge audit trail)
+- Added `pf_nudge_prefs` localStorage key (per-rule user preferences)
+- Added `pf_feed_run_log` localStorage key (feed run stats)
+- Added `pf_calendar_dismissed_nudges` localStorage key (nudge dismissal tracking with timestamps)
+
+---
+
 ## v3.11.0 — 2026-03-13
 
 ### What Changed — Bug Fixes + UX Improvements (6 Backlog Items)

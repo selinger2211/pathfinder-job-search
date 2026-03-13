@@ -972,6 +972,23 @@
       background: var(--bg-elevated);
     }
 
+    /* Company suggestion item from web search */
+    .company-suggestion {
+      padding: var(--space-2) var(--space-3);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: background var(--duration-fast) var(--ease-default);
+      border-bottom: 1px solid var(--bg-subtle);
+    }
+
+    .company-suggestion:last-child {
+      border-bottom: none;
+    }
+
+    .company-suggestion:hover {
+      background: var(--accent-subtle);
+    }
+
     /* Company logo in the lookup dropdown */
     .company-lookup-logo {
       width: 24px;
@@ -1814,6 +1831,32 @@
     }
 
     .stage-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+
+    /* ====== STAGE REASON CHIPS ====== */
+    .stage-reason-chip {
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--text-xs);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);;
+      white-space: nowrap;
+    }
+
+    .stage-reason-chip:hover {
+      border-color: var(--accent);
+      background: var(--accent-subtle);
+      color: var(--accent);
+    }
+
+    .stage-reason-chip.selected {
       background: var(--accent);
       border-color: var(--accent);
       color: white;
@@ -3412,13 +3455,16 @@
       const roles = getRoles();
       const role = roles.find(r => r.id === roleId);
       if (role) {
-        // If the stage is changing, record it in history
+        // If the stage is changing, record it in history with optional reason
         if (updates.stage && updates.stage !== role.stage) {
           role.stageHistory = role.stageHistory || [];
           role.stageHistory.push({
             stage: role.stage,
-            date: role.lastActivity
+            date: role.lastActivity,
+            reason: updates._stageReason || null
           });
+          // Remove the internal _stageReason field from updates
+          delete updates._stageReason;
         }
         // Apply all the updates to the job object
         const hasExplicitLastActivity = 'lastActivity' in updates;
@@ -3430,6 +3476,86 @@
         saveRoles(roles);
       }
       return role;
+    }
+
+    /* ====== STAGE TRANSITION REASON ====== */
+    /**
+     * Prompts the user for an optional reason when changing stage.
+     * Common reasons appear as quick-pick chips for faster input.
+     * INPUT: roleId = ID of role being updated, newStage = stage being changed to
+     * OUTPUT: Promise<string|null> — the reason text, or null if user cancels
+     */
+    function promptStageReason(roleId, newStage) {
+      return new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000;';
+
+        const commonReasons = [
+          'Recruiter reached out',
+          'Applied online',
+          'Referral',
+          'Rejected',
+          'Ghosted',
+          'Moved forward',
+          'Withdrew'
+        ];
+
+        const reasonChips = commonReasons.map(reason =>
+          `<button class="stage-reason-chip" data-reason="${escapeHtml(reason)}">${reason}</button>`
+        ).join('');
+
+        modal.innerHTML = `
+          <div style="background:var(--bg-surface);border-radius:var(--radius-lg);padding:var(--space-4);max-width:400px;box-shadow:0 10px 40px rgba(0,0,0,0.2);border:1px solid var(--bg-subtle);">
+            <h3 style="margin:0 0 var(--space-2);font-size:var(--text-lg);color:var(--text-primary);">Why the change?</h3>
+            <p style="margin:0 0 var(--space-3);font-size:var(--text-sm);color:var(--text-secondary);">Add an optional reason to track your progress</p>
+
+            <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-bottom:var(--space-3);">
+              ${reasonChips}
+            </div>
+
+            <textarea class="form-textarea" placeholder="Or type a custom reason..." style="width:100%;min-height:60px;margin-bottom:var(--space-3);"></textarea>
+
+            <div style="display:flex;gap:var(--space-2);justify-content:flex-end;">
+              <button class="btn btn-ghost" type="button">Skip</button>
+              <button class="btn btn-primary" type="button">Save</button>
+            </div>
+          </div>
+        `;
+
+        const textarea = modal.querySelector('textarea');
+        const saveBtn = modal.querySelector('button:last-child');
+        const skipBtn = modal.querySelector('button:last-child').previousElementSibling;
+
+        // Wire up chip selection
+        modal.querySelectorAll('.stage-reason-chip').forEach(chip => {
+          chip.addEventListener('click', (e) => {
+            e.preventDefault();
+            textarea.value = chip.dataset.reason;
+            modal.querySelectorAll('.stage-reason-chip').forEach(c => c.classList.remove('selected'));
+            chip.classList.add('selected');
+          });
+        });
+
+        // Auto-select first chip
+        const firstChip = modal.querySelector('.stage-reason-chip');
+        if (firstChip) {
+          firstChip.click();
+        }
+
+        skipBtn.addEventListener('click', () => {
+          modal.remove();
+          resolve(null);
+        });
+
+        saveBtn.addEventListener('click', () => {
+          const reason = textarea.value.trim() || null;
+          modal.remove();
+          resolve(reason);
+        });
+
+        document.body.appendChild(modal);
+        textarea.focus();
+      });
     }
 
     /**
@@ -3975,6 +4101,7 @@
 
       const lookup = document.getElementById('company-lookup');
       if (matching.length > 0) {
+        // Show local company matches first
         lookup.style.display = 'block';
         lookup.innerHTML = matching.map(c => `
           <div class="company-lookup-item" data-company="${c.name}">
@@ -3990,8 +4117,25 @@
             lookup.style.display = 'none';
           });
         });
+      } else if (searchTerm.length >= 3) {
+        // No local matches: fetch web search suggestions via DuckDuckGo
+        searchCompanySuggestions(searchTerm);
       } else {
         lookup.style.display = 'none';
+      }
+    });
+
+    // Hide company suggestions when user clicks outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#form-company') && !e.target.closest('#company-lookup')) {
+        document.getElementById('company-lookup').style.display = 'none';
+      }
+    });
+
+    // Allow Escape key to hide suggestions
+    formCompany.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.getElementById('company-lookup').style.display = 'none';
       }
     });
 
@@ -5040,10 +5184,61 @@
 
       // Wire up stage buttons
       document.querySelectorAll('#detail-stage-buttons .stage-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          // Update visual state
-          document.querySelectorAll('#detail-stage-buttons .stage-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
+        btn.addEventListener('click', async () => {
+          const newStage = btn.dataset.stage;
+          const currentRole = getRoles().find(r => r.id === activeDetailRoleId);
+
+          if (currentRole && newStage !== currentRole.stage) {
+            // Prompt for optional reason
+            const reason = await promptStageReason(activeDetailRoleId, newStage);
+
+            // Update visual state
+            document.querySelectorAll('#detail-stage-buttons .stage-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Update role with new stage and reason
+            const updates = { stage: newStage };
+            if (reason) {
+              updates._stageReason = reason;
+            }
+            updateRole(activeDetailRoleId, updates);
+
+            // Refresh timeline to show new stage entry with reason
+            const timeline = document.getElementById('detail-stage-timeline');
+            if (timeline) {
+              const updatedRole = getRoles().find(r => r.id === activeDetailRoleId);
+              timeline.innerHTML = buildStageTimeline(updatedRole);
+
+              // Re-attach timeline date edit handlers
+              document.querySelectorAll('.stage-history-date').forEach(input => {
+                input.addEventListener('change', (e) => {
+                  const idx = parseInt(e.target.dataset.historyIndex);
+                  const roles = getRoles();
+                  const r = roles.find(r => r.id === activeDetailRoleId);
+                  if (!r) return;
+                  const newTimestamp = new Date(e.target.value).getTime();
+                  if (isNaN(newTimestamp)) return;
+                  if (idx === -1) {
+                    r.lastActivity = newTimestamp;
+                    saveRoles(roles);
+                    showToast('Current stage date updated', 'success');
+                  } else if (r.stageHistory && r.stageHistory[idx]) {
+                    r.stageHistory[idx].date = newTimestamp;
+                    saveRoles(roles);
+                    showToast('Stage date updated', 'success');
+                  }
+                });
+              });
+            }
+
+            // Re-render kanban to show updated role
+            renderKanban();
+            showToast(`Moved to ${newStage}`, 'success');
+          } else {
+            // Just update visual state if clicking the same stage
+            document.querySelectorAll('#detail-stage-buttons .stage-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+          }
         });
       });
 
@@ -5110,6 +5305,13 @@
      * INPUT: role object with stageHistory array
      * RETURNS: HTML string for the timeline
      */
+    /**
+     * Builds a visual timeline showing all historical stages for a role.
+     * Allows editing the date/time for each stage entry.
+     * Shows optional reason in gray italic text below the date.
+     * INPUT: role object with stageHistory array
+     * RETURNS: HTML string for the timeline
+     */
     function buildStageTimeline(role) {
       const history = role.stageHistory || [];
       if (history.length === 0 && role.stage) {
@@ -5129,14 +5331,18 @@
 
       let html = '';
 
-      // Show each historical stage with editable datetime
+      // Show each historical stage with editable datetime and optional reason
       history.forEach((entry, idx) => {
+        const reasonHtml = entry.reason
+          ? `<div style="font-size:var(--text-xs);color:var(--text-tertiary);font-style:italic;margin-top:2px;">${escapeHtml(entry.reason)}</div>`
+          : '';
         html += `
           <div class="stage-timeline-item">
             <span class="stage-timeline-stage">${entry.stage}</span>
             <span class="stage-timeline-date">
               <input type="datetime-local" class="stage-history-date" data-history-index="${idx}"
                      value="${formatDatetimeLocal(entry.date)}" title="Click to edit date/time">
+              ${reasonHtml}
             </span>
           </div>
         `;
@@ -5756,6 +5962,74 @@
       const div = document.createElement('div');
       div.textContent = str;
       return div.innerHTML;
+    }
+
+    /* ====== COMPANY WEB SEARCH SUGGESTIONS ====== */
+    /**
+     * Searches for company suggestions using DuckDuckGo instant answer API.
+     * Debounced to avoid excessive API calls while user types.
+     * INPUT: query = company name being typed (3+ characters)
+     * OUTPUT: displays dropdown with up to 5 suggestions
+     */
+    let companySearchTimeout;
+    async function searchCompanySuggestions(query) {
+      clearTimeout(companySearchTimeout);
+
+      if (query.length < 3) {
+        document.getElementById('company-lookup').style.display = 'none';
+        return;
+      }
+
+      companySearchTimeout = setTimeout(async () => {
+        try {
+          const corsProxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://api.duckduckgo.com/?q=' + encodeURIComponent(query) + '&format=json')}`;
+          const response = await fetch(corsProxyUrl);
+          const data = await response.json();
+
+          if (data.RelatedTopics && Array.isArray(data.RelatedTopics)) {
+            const suggestions = data.RelatedTopics
+              .filter(topic => topic.Text && !topic.FirstURL?.includes('duckduckgo.com'))
+              .slice(0, 5)
+              .map(topic => ({
+                name: topic.Text.split(' - ')[0] || topic.Text,
+                description: topic.Text.includes(' - ') ? topic.Text.split(' - ')[1] : ''
+              }));
+
+            if (suggestions.length > 0) {
+              const html = suggestions.map((s, i) =>
+                `<div class="company-suggestion" onclick="selectCompanySuggestion('${escapeHtml(s.name)}', '${escapeHtml(s.description)}')">
+                  <div style="font-weight:600;font-size:var(--text-sm);">${escapeHtml(s.name)}</div>
+                  <div style="font-size:var(--text-xs);color:var(--text-tertiary);">${escapeHtml(s.description)}</div>
+                </div>`
+              ).join('');
+
+              const lookup = document.getElementById('company-lookup');
+              lookup.innerHTML = html;
+              lookup.style.display = 'block';
+            } else {
+              document.getElementById('company-lookup').style.display = 'none';
+            }
+          }
+        } catch (err) {
+          // Graceful degradation: if API fails, just hide suggestions
+          document.getElementById('company-lookup').style.display = 'none';
+        }
+      }, 300);
+    }
+
+    /**
+     * Fills in company name and description from selected suggestion.
+     * INPUT: name = company name, description = brief company description
+     */
+    function selectCompanySuggestion(name, description) {
+      document.getElementById('form-company').value = name;
+      document.getElementById('company-lookup').style.display = 'none';
+
+      // Try to find and fill missionStatement if it exists
+      const missionInput = document.querySelector('[id*="mission"]') || document.querySelector('[placeholder*="mission"]');
+      if (missionInput && !missionInput.value.trim()) {
+        missionInput.value = description;
+      }
     }
 
     // ================================================================

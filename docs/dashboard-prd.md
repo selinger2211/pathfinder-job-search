@@ -2,7 +2,7 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/dashboard/`
-**Version:** v3.11
+**Version:** v3.12
 **Last Updated:** 2026-03-13
 **Status:** Active — v3.11 features live
 
@@ -206,7 +206,7 @@ Click any bar → opens Pipeline filtered to that stage.
 
 **Card 2: Conversion Funnel**
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.12.0)** — Shows stage-by-stage conversion rates as a bar chart. Sourced from pipeline stage history. Displays after 10+ closed roles.
 
 Shows conversion rates from stage to stage (useful after you've closed 10+ roles):
 
@@ -248,7 +248,7 @@ Click to expand → shows daily breakdown with timestamps.
 
 **Card 4: Average Time-in-Stage**
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.12.0)** — Shows median/average days spent in each stage as a sortable table. Calculated from stage transition timestamps in pipeline.
 
 Shows how long roles typically spend at each stage:
 
@@ -619,7 +619,7 @@ for each event in gcal_events:
 
 **Rule 7: Company Profile Sparse**
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.12.0)** — Nudge fires when tracked company has <50% of enrichment fields (funding, tech stack, mission, etc.) completed.
 
 | Trigger | Timing | Priority | Text | Action |
 |---------|--------|----------|------|--------|
@@ -784,7 +784,7 @@ for each role in outreach stage with active communication:
 
 ### 5.4 Nudge Deduplication
 
-> **Status: Planned** — Advanced deduplication UI not yet implemented. Basic rule prioritization is in place.
+> **Status: Implemented (v3.12.0)** — Nudges grouped by roleId with highest-priority displayed first. Secondary nudges shown behind "+" expander badge for quick access without clutter.
 
 If multiple rules would trigger for the same role/company (e.g., both "stalled role" and "company profile sparse"), only the highest-priority nudge surfaces. Secondary nudges will be visible if the user expands "All suggestions" or dismisses the primary one.
 
@@ -942,15 +942,15 @@ What has been implemented:
 
 ### Phase 2: Nudge Refinement & Analytics (Planned)
 
-- [ ] Nudge deduplication UI with "All suggestions" expansion
+- [x] Nudge deduplication UI with "+" expander (v3.12.0)
 - [ ] Nudge dismissal UI improvements (undo option, snooze N hours)
 - [ ] Nudge rule tuning based on user feedback
 - [ ] Suppression chains (cross-rule dismissal logic)
-- [ ] Nudge logging to `pf_nudge_log` for analytics
+- [x] Nudge logging to `pf_nudge_log` for analytics (v3.12.0)
 - [ ] Conversion funnel metrics (after 10+ closed roles)
 - [ ] Average time-in-stage calculation & visualization
 - [ ] Cooldown differentiation by priority (Critical 6h vs others 24h)
-- [ ] Per-rule disable sidebar
+- [x] Per-rule disable sidebar (v3.12.0)
 
 ### Phase 3: Intelligence & Personalization (Planned)
 
@@ -1066,11 +1066,9 @@ The Dashboard embodies five principles from the main Pathfinder spec:
 
 > **Status: Planned** — Nudge logging not yet implemented.
 
-- **Nudge logging:** Planned. Every nudge trigger will log to `pf_nudge_log`: `{ ruleId, roleId, firedAt, dismissed, dismissedAt, reason }`. Dashboard analytics will show nudge effectiveness (fired vs acted on).
+- **Nudge logging:** Implemented (v3.12.0). Every nudge trigger logs to `pf_nudge_log`: `{ ruleId, roleId, firedAt, dismissed, dismissedAt, reason }`. Dashboard analytics track nudge effectiveness (fired vs acted on).
 
-> **Status: Planned** — Per-rule disable sidebar not yet implemented.
-
-- **Per-rule disable:** Planned. Sidebar "Nudge Preferences" will allow user to disable specific rule IDs entirely. Disabled rules stored in `pf_nudge_disabled: string[]`.
+- **Per-rule disable:** Implemented (v3.12.0). Sidebar "Nudge Preferences" allows users to disable specific rule IDs. User preferences stored in `pf_nudge_prefs` localStorage.
 
 ---
 
