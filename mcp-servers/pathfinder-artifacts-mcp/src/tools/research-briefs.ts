@@ -1,45 +1,58 @@
 // research-briefs.ts - Tools for saving, retrieving, and comparing research briefs
-// Provides persistent storage of research briefs with versioning support
+// Provides persistent file-based storage of research briefs with versioning support
 
 import { z } from "zod";
-import Database from "better-sqlite3";
-import path from "path";
-import os from "os";
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
 import { getCurrentISO } from "../constants.js";
 
 // ================================================================
-// DATABASE SETUP
+// FILE STORAGE SETUP
 // ================================================================
 
-const DB_PATH = path.join(os.homedir(), ".pathfinder", "research-briefs.db");
+const STORAGE_DIR = path.join(os.homedir(), ".pathfinder", "research_briefs");
+const INDEX_FILE = path.join(STORAGE_DIR, "index.json");
 
 /**
- * Initialize the research briefs database
- * Creates tables if they don't exist
+ * Ensure storage directory exists
  */
-function initializeDatabase(): Database.Database {
-  const db = new Database(DB_PATH);
-  db.pragma("journal_mode = WAL");
+function ensureStorageDir(): void {
+  if (!fs.existsSync(STORAGE_DIR)) {
+    fs.mkdirSync(STORAGE_DIR, { recursive: true });
+  }
+}
 
-  // Create research_briefs table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS research_briefs (
-      id TEXT PRIMARY KEY,
-      roleId TEXT NOT NULL,
-      companyName TEXT NOT NULL,
-      version INTEGER NOT NULL,
-      sections TEXT NOT NULL,
-      createdAt TEXT NOT NULL,
-      updatedAt TEXT NOT NULL,
-      UNIQUE(roleId, companyName, version)
-    );
+/**
+ * Load the index of all briefs
+ */
+function loadIndex(): Record<string, Array<{ id: string; roleId: string; companyName: string; version: number; updatedAt: string }>> {
+  ensureStorageDir();
+  if (fs.existsSync(INDEX_FILE)) {
+    try {
+      return JSON.parse(fs.readFileSync(INDEX_FILE, "utf-8"));
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
 
-    CREATE INDEX IF NOT EXISTS idx_research_briefs_roleId ON research_briefs(roleId);
-    CREATE INDEX IF NOT EXISTS idx_research_briefs_company ON research_briefs(companyName);
-    CREATE INDEX IF NOT EXISTS idx_research_briefs_version ON research_briefs(roleId, version DESC);
-  `);
+/**
+ * Save the index of all briefs
+ */
+function saveIndex(index: Record<string, Array<{ id: string; roleId: string; companyName: string; version: number; updatedAt: string }>>): void {
+  fs.writeFileSync(INDEX_FILE, JSON.stringify(index, null, 2));
+}
 
-  return db;
+/**
+ * Get the next version for a roleId
+ */
+function getNextVersion(roleId: string): number {
+  const index = loadIndex();
+  const entries = index[roleId] || [];
+  if (entries.length === 0) return 1;
+  return Math.max(...entries.map(e => e.version)) + 1;
 }
 
 // ================================================================
@@ -83,7 +96,7 @@ export const CompareBriefsInputSchema = z.object({
 // ================================================================
 
 /**
- * Save a research brief to the database
+ * Save a research brief to file storage
  * Auto-increments version per roleId
  */
 export async function handleSaveBrief(params: z.infer<typeof SaveBriefInputSchema>): Promise<{
@@ -94,25 +107,43 @@ export async function handleSaveBrief(params: z.infer<typeof SaveBriefInputSchem
   sectionCount: number;
   createdAt: string;
 }> {
-  const db = initializeDatabase();
   try {
+    ensureStorageDir();
     const now = getCurrentISO();
 
     // Get next version for this roleId
-    const lastVersion = db.prepare(
-      "SELECT MAX(version) as maxVersion FROM research_briefs WHERE roleId = ?"
-    ).get(params.roleId) as { maxVersion: number | null };
-
-    const newVersion = (lastVersion?.maxVersion || 0) + 1;
+    const newVersion = getNextVersion(params.roleId);
     const briefId = `${params.roleId}_${params.companyName}_v${newVersion}_${Date.now()}`;
+    const filename = `${params.roleId}_${params.companyName}_v${newVersion}.json`;
+    const filepath = path.join(STORAGE_DIR, filename);
 
-    // Store sections as JSON
-    const sectionsJson = JSON.stringify(params.sections);
+    // Prepare brief data
+    const briefData = {
+      id: briefId,
+      roleId: params.roleId,
+      companyName: params.companyName,
+      version: newVersion,
+      sections: params.sections,
+      createdAt: now,
+      updatedAt: now,
+    };
 
-    db.prepare(`
-      INSERT INTO research_briefs (id, roleId, companyName, version, sections, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(briefId, params.roleId, params.companyName, newVersion, sectionsJson, now, now);
+    // Save to file
+    fs.writeFileSync(filepath, JSON.stringify(briefData, null, 2));
+
+    // Update index
+    const index = loadIndex();
+    if (!index[params.roleId]) {
+      index[params.roleId] = [];
+    }
+    index[params.roleId].push({
+      id: briefId,
+      roleId: params.roleId,
+      companyName: params.companyName,
+      version: newVersion,
+      updatedAt: now,
+    });
+    saveIndex(index);
 
     return {
       id: briefId,
@@ -122,8 +153,10 @@ export async function handleSaveBrief(params: z.infer<typeof SaveBriefInputSchem
       sectionCount: params.sections.length,
       createdAt: now,
     };
-  } finally {
-    db.close();
+  } catch (error) {
+    throw new Error(
+      `Failed to save brief: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }
 
@@ -145,43 +178,51 @@ export async function handleGetBrief(params: z.infer<typeof GetBriefInputSchema>
   createdAt: string;
   updatedAt: string;
 }> {
-  const db = initializeDatabase();
   try {
-    let query = "SELECT * FROM research_briefs WHERE roleId = ?";
-    const args: unknown[] = [params.roleId];
+    ensureStorageDir();
+    const index = loadIndex();
+    const entries = index[params.roleId] || [];
 
-    if (params.version !== undefined) {
-      query += " AND version = ?";
-      args.push(params.version);
-    } else {
-      query += " ORDER BY version DESC LIMIT 1";
-    }
-
-    const brief = db.prepare(query).get(...args) as {
-      id: string;
-      roleId: string;
-      companyName: string;
-      version: number;
-      sections: string;
-      createdAt: string;
-      updatedAt: string;
-    } | undefined;
-
-    if (!brief) {
+    if (entries.length === 0) {
       throw new Error(`No brief found for roleId: ${params.roleId}`);
     }
 
+    let briefEntry;
+    if (params.version !== undefined) {
+      briefEntry = entries.find(e => e.version === params.version);
+      if (!briefEntry) {
+        throw new Error(`Brief version ${params.version} not found for roleId: ${params.roleId}`);
+      }
+    } else {
+      // Get latest version
+      briefEntry = entries.reduce((latest, current) =>
+        current.version > latest.version ? current : latest
+      );
+    }
+
+    // Construct filename and read file
+    const filename = `${params.roleId}_${briefEntry.companyName}_v${briefEntry.version}.json`;
+    const filepath = path.join(STORAGE_DIR, filename);
+
+    if (!fs.existsSync(filepath)) {
+      throw new Error(`Brief file not found: ${filename}`);
+    }
+
+    const briefData = JSON.parse(fs.readFileSync(filepath, "utf-8"));
+
     return {
-      id: brief.id,
-      roleId: brief.roleId,
-      companyName: brief.companyName,
-      version: brief.version,
-      sections: JSON.parse(brief.sections),
-      createdAt: brief.createdAt,
-      updatedAt: brief.updatedAt,
+      id: briefData.id,
+      roleId: briefData.roleId,
+      companyName: briefData.companyName,
+      version: briefData.version,
+      sections: briefData.sections,
+      createdAt: briefData.createdAt,
+      updatedAt: briefData.updatedAt,
     };
-  } finally {
-    db.close();
+  } catch (error) {
+    throw new Error(
+      `Failed to get brief: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }
 
@@ -195,41 +236,62 @@ export async function handleListBriefs(params: z.infer<typeof ListBriefsInputSch
   sectionCount: number;
   updatedAt: string;
 }>> {
-  const db = initializeDatabase();
   try {
-    let query = "SELECT id, roleId, companyName, version, sections, updatedAt FROM research_briefs WHERE 1=1";
-    const args: unknown[] = [];
+    ensureStorageDir();
+    const index = loadIndex();
+    let entries: Array<{ id: string; roleId: string; companyName: string; version: number; updatedAt: string }> = [];
 
+    // Flatten all entries from index
+    Object.values(index).forEach(roleEntries => {
+      entries.push(...roleEntries);
+    });
+
+    // Apply filters
     if (params.roleId) {
-      query += " AND roleId = ?";
-      args.push(params.roleId);
+      entries = entries.filter(e => e.roleId === params.roleId);
     }
 
     if (params.companyName) {
-      query += " AND companyName = ?";
-      args.push(params.companyName);
+      entries = entries.filter(e => e.companyName === params.companyName);
     }
 
-    query += " ORDER BY updatedAt DESC";
+    // Sort by updatedAt descending
+    entries.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
-    const briefs = db.prepare(query).all(...args) as Array<{
-      id: string;
+    // Load full brief data to get section count
+    const result: Array<{
       roleId: string;
       companyName: string;
       version: number;
-      sections: string;
+      sectionCount: number;
       updatedAt: string;
-    }>;
+    }> = [];
 
-    return briefs.map((b) => ({
-      roleId: b.roleId,
-      companyName: b.companyName,
-      version: b.version,
-      sectionCount: JSON.parse(b.sections).length,
-      updatedAt: b.updatedAt,
-    }));
-  } finally {
-    db.close();
+    for (const entry of entries) {
+      const filename = `${entry.roleId}_${entry.companyName}_v${entry.version}.json`;
+      const filepath = path.join(STORAGE_DIR, filename);
+
+      if (fs.existsSync(filepath)) {
+        try {
+          const briefData = JSON.parse(fs.readFileSync(filepath, "utf-8"));
+          result.push({
+            roleId: entry.roleId,
+            companyName: entry.companyName,
+            version: entry.version,
+            sectionCount: briefData.sections?.length || 0,
+            updatedAt: entry.updatedAt,
+          });
+        } catch {
+          // Skip malformed files
+        }
+      }
+    }
+
+    return result;
+  } catch (error) {
+    throw new Error(
+      `Failed to list briefs: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }
 
@@ -243,29 +305,40 @@ export async function handleCompareBriefs(params: z.infer<typeof CompareBriefsIn
   oldContent?: string;
   newContent?: string;
 }>> {
-  const db = initializeDatabase();
   try {
-    const briefA = db.prepare(
-      "SELECT sections FROM research_briefs WHERE roleId = ? AND version = ?"
-    ).get(params.roleId, params.versionA) as { sections: string } | undefined;
+    ensureStorageDir();
+    const index = loadIndex();
+    const entries = index[params.roleId] || [];
 
-    const briefB = db.prepare(
-      "SELECT sections FROM research_briefs WHERE roleId = ? AND version = ?"
-    ).get(params.roleId, params.versionB) as { sections: string } | undefined;
+    const entryA = entries.find(e => e.version === params.versionA);
+    const entryB = entries.find(e => e.version === params.versionB);
 
-    if (!briefA || !briefB) {
+    if (!entryA || !entryB) {
       throw new Error(`One or both versions not found for roleId: ${params.roleId}`);
     }
 
-    const sectionsA = JSON.parse(briefA.sections) as Array<{ sectionId: string; content: string }>;
-    const sectionsB = JSON.parse(briefB.sections) as Array<{ sectionId: string; content: string }>;
+    // Load both brief files
+    const filepathA = path.join(STORAGE_DIR, `${params.roleId}_${entryA.companyName}_v${params.versionA}.json`);
+    const filepathB = path.join(STORAGE_DIR, `${params.roleId}_${entryB.companyName}_v${params.versionB}.json`);
+
+    if (!fs.existsSync(filepathA) || !fs.existsSync(filepathB)) {
+      throw new Error(`One or both brief files not found`);
+    }
+
+    const briefA = JSON.parse(fs.readFileSync(filepathA, "utf-8"));
+    const briefB = JSON.parse(fs.readFileSync(filepathB, "utf-8"));
+
+    const sectionsA = briefA.sections as Array<{ sectionId: string; content: string }>;
+    const sectionsB = briefB.sections as Array<{ sectionId: string; content: string }>;
 
     // Create maps for quick lookup
     const mapA = new Map(sectionsA.map((s) => [s.sectionId, s.content]));
     const mapB = new Map(sectionsB.map((s) => [s.sectionId, s.content]));
 
     // Collect all section IDs
-    const allSectionIds = new Set([...mapA.keys(), ...mapB.keys()]);
+    const allSectionIds = new Set<string>();
+    mapA.forEach((_, key) => allSectionIds.add(key));
+    mapB.forEach((_, key) => allSectionIds.add(key));
 
     // Compare each section
     const diffs: Array<{
@@ -275,7 +348,7 @@ export async function handleCompareBriefs(params: z.infer<typeof CompareBriefsIn
       newContent?: string;
     }> = [];
 
-    for (const sectionId of allSectionIds) {
+    allSectionIds.forEach((sectionId) => {
       const contentA = mapA.get(sectionId);
       const contentB = mapB.get(sectionId);
 
@@ -292,10 +365,12 @@ export async function handleCompareBriefs(params: z.infer<typeof CompareBriefsIn
           changed: false,
         });
       }
-    }
+    });
 
     return diffs;
-  } finally {
-    db.close();
+  } catch (error) {
+    throw new Error(
+      `Failed to compare briefs: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }

@@ -4,6 +4,31 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.18.1 — 2026-03-13
+
+### Bug Fixes & UX Polish
+
+**Research Brief: Remove sticky section nav sidebar**
+- Removed the 200px fixed sidebar (#52) that was overlapping brief content and blocking readability
+- The right-side TOC sidebar already provides section navigation — the left sidebar was redundant
+- Removed all related CSS, HTML, and JS (buildSectionNavSidebar, updateSectionNavHighlight, toggleSectionCollapse)
+
+**Job Feed: Fix alarming "MCP offline" indicator**
+- MCP status indicator now hidden by default; only shows when MCP server is actually online (green dot)
+- Previously showed a gray "MCP offline" dot that confused users when MCP server wasn't running locally
+- Graceful degradation: no visual clutter when MCP is unavailable
+
+**MCP Server: Fix broken tool files**
+- Rewrote `research-briefs.ts` to use file-based JSON storage (was importing non-existent `better-sqlite3`)
+- Rewrote `job-feed.ts` to use file-based JSON storage (same `better-sqlite3` issue)
+- Both now read from `~/.pathfinder/data/` and `~/.pathfinder/research_briefs/` directories
+
+**Comp Intelligence: Fix total comp estimate not showing**
+- Fixed `renderRolesList()` to auto-select and render the first role's comp data on page load
+- Total compensation estimate now visible immediately without manual selection
+
+---
+
 ## v3.18.0 — 2026-03-13
 
 ### FINAL PLANNED FEATURE — All 53 Scheduled Features Complete

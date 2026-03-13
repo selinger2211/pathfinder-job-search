@@ -2020,10 +2020,10 @@
             <h1 class="feed-title">Job Feed</h1>
           </div>
           <div class="feed-controls">
-            <!-- Feature 35: MCP Sync Status Indicator -->
-            <div style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2); background: var(--bg-elevated); border-radius: var(--radius-sm); border: 1px solid var(--bg-subtle);">
-              <div id="mcpStatusIndicator" style="width: 8px; height: 8px; border-radius: 50%; background: #999; transition: background 0.3s;" title="MCP server status"></div>
-              <span id="mcpStatusText" style="font-size: var(--text-xs); color: var(--text-secondary);">MCP offline</span>
+            <!-- Feature 35: MCP Sync Status Indicator — hidden by default, only shown when MCP is online -->
+            <div id="mcpStatusContainer" style="display: none; align-items: center; gap: var(--space-2); padding: var(--space-2); background: var(--bg-elevated); border-radius: var(--radius-sm); border: 1px solid var(--bg-subtle);">
+              <div id="mcpStatusIndicator" style="width: 8px; height: 8px; border-radius: 50%; background: #22c55e; transition: background 0.3s;" title="MCP server connected"></div>
+              <span id="mcpStatusText" style="font-size: var(--text-xs); color: #22c55e;">MCP online</span>
             </div>
 
             <button class="btn btn-ghost btn-sm" id="toggleSidebarBtn" aria-label="Toggle sidebar" style="display: none;">
@@ -2468,26 +2468,20 @@
      * Check if MCP server is available and update status indicator
      */
     async function checkMCPStatus() {
+      const container = document.getElementById('mcpStatusContainer');
       try {
         const response = await fetch('http://localhost:3456/api/health', {
           method: 'GET',
           timeout: 2000,
         });
         if (response.ok) {
-          const indicator = document.getElementById('mcpStatusIndicator');
-          const text = document.getElementById('mcpStatusText');
-          if (indicator) {
-            indicator.style.background = '#22c55e';
-            indicator.title = 'MCP server connected';
-          }
-          if (text) {
-            text.textContent = 'MCP online';
-            text.style.color = '#22c55e';
-          }
+          // MCP server is online — show the green indicator
+          if (container) container.style.display = 'flex';
           return true;
         }
       } catch (error) {
-        // MCP server not available - keep default gray/offline state
+        // MCP server not available — hide the indicator entirely (no alarming "offline" state)
+        if (container) container.style.display = 'none';
       }
       return false;
     }

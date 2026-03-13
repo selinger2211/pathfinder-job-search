@@ -1820,12 +1820,21 @@
         </div>
       `).join('');
 
-      // Restore active state if a role was previously selected
+      // Restore active state if a role was previously selected, otherwise select the first one
       const lastSelectedId = sessionStorage.getItem('pf_selectedRoleId');
       if (lastSelectedId) {
         const elem = document.querySelector(`[data-role-id="${lastSelectedId}"]`);
         if (elem) {
           elem.classList.add('active');
+          renderCompContent(lastSelectedId);
+        }
+      } else if (rolesWithData.length > 0) {
+        // Auto-select first role if no previous selection
+        const firstRoleId = rolesWithData[0].id;
+        const elem = document.querySelector(`[data-role-id="${firstRoleId}"]`);
+        if (elem) {
+          elem.classList.add('active');
+          renderCompContent(firstRoleId);
         }
       }
     }

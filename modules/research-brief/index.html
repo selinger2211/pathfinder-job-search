@@ -452,52 +452,8 @@
       color: var(--text-secondary);
     }
 
-    /* FEATURE #52: Sticky section nav sidebar (left, 200px) */
-    .section-nav-sidebar {
-      position: fixed;
-      left: 320px;
-      top: var(--nav-height);
-      width: 200px;
-      height: calc(100vh - var(--nav-height));
-      background: var(--bg-surface);
-      border-right: 1px solid var(--bg-subtle);
-      overflow-y: auto;
-      padding: var(--space-4);
-      z-index: 40;
-      display: none;
-      flex-direction: column;
-      gap: var(--space-2);
-    }
-
-    .section-nav-sidebar.active {
-      display: flex;
-    }
-
-    .section-nav-item {
-      position: relative;
-      padding: var(--space-2) var(--space-3);
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: all var(--duration-fast) var(--ease-default);
-      font-size: 0.85em;
-      color: var(--text-secondary);
-      border-left: 2px solid transparent;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .section-nav-item:hover {
-      background: var(--bg-elevated);
-      color: var(--text-primary);
-    }
-
-    .section-nav-item.current {
-      background: rgba(99, 102, 241, 0.1);
-      color: var(--accent);
-      border-left-color: var(--accent);
-      font-weight: 500;
-    }
+    /* FEATURE #52: REMOVED — Sticky section nav sidebar was overlapping content
+       and not adding user value. Section navigation handled by TOC sidebar instead. */
 
     /* Section card */
     .section {
@@ -1391,13 +1347,7 @@
           </div>
         </div>
 
-        <!-- FEATURE #52: Sticky section nav sidebar (left, 200px) -->
-        <div class="section-nav-sidebar" id="sectionNavSidebar">
-          <div style="font-size: 0.75em; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-3);">
-            Sections
-          </div>
-          <div id="sectionNavList" style="display: flex; flex-direction: column; gap: var(--space-2);"></div>
-        </div>
+        <!-- FEATURE #52: REMOVED — Sticky section nav sidebar was overlapping content -->
 
         <!-- Right TOC sidebar -->
         <div class="toc-sidebar" id="tocSidebar" style="display: none;">
@@ -4590,8 +4540,6 @@ The HTML content should come first, followed by the citations block. Do not incl
 
       // Update progress bar and table of contents
       updateProgress();
-      // FEATURE #52: Build the sticky section nav sidebar
-      buildSectionNavSidebar();
       lucide.createIcons();
     }
 
@@ -5044,8 +4992,6 @@ The HTML content should come first, followed by the citations block. Do not incl
       showGenerationComplete(generationDuration);
 
       state.isGenerating = false;
-      // FEATURE #52: Build the sticky section nav sidebar
-      buildSectionNavSidebar();
       lucide.createIcons();
     }
 
@@ -5889,113 +5835,10 @@ The HTML content should come first, followed by the citations block. Do not incl
         if (activeItem) activeItem.classList.add('active');
       }
 
-      // FEATURE #52: Also update section nav sidebar highlight
-      updateSectionNavHighlight(state.currentSection);
     }
 
-    /* ====== FEATURE #52: STICKY SECTION NAV SIDEBAR ====== */
-    /**
-     * FEATURE #52: Builds and populates the sticky section nav sidebar (200px left).
-     * Shows all 13 section titles, with current section highlighted.
-     * Allows collapsing/expanding sections with state saved to localStorage.
-     * INPUT: none (uses SECTION_DEFINITIONS)
-     * OUTPUT: section nav sidebar is populated with clickable section items
-     */
-    function buildSectionNavSidebar() {
-      const navList = document.getElementById('sectionNavList');
-      const navSidebar = document.getElementById('sectionNavSidebar');
-      if (!navList) return;
-
-      navList.innerHTML = '';
-
-      // Create nav items for each section
-      SECTION_DEFINITIONS.forEach(section => {
-        const item = document.createElement('div');
-        item.className = 'section-nav-item';
-        item.id = `section-nav-${section.num}`;
-        item.textContent = `${section.num}. ${section.title}`;
-        item.title = section.title; // Tooltip for long titles
-
-        // Check if section is collapsed
-        const isCollapsed = state.sectionCollapseState[section.num] === true;
-        if (isCollapsed) {
-          item.classList.add('collapsed');
-        }
-
-        // Click to scroll to section
-        item.addEventListener('click', () => {
-          scrollToSection(section.num);
-        });
-
-        // Long press or double-click to toggle collapse
-        let pressTimer;
-        item.addEventListener('mousedown', () => {
-          pressTimer = setTimeout(() => {
-            toggleSectionCollapse(section.num);
-          }, 500);
-        });
-        item.addEventListener('mouseup', () => {
-          clearTimeout(pressTimer);
-        });
-        item.addEventListener('mouseleave', () => {
-          clearTimeout(pressTimer);
-        });
-
-        navList.appendChild(item);
-      });
-
-      // Show section nav sidebar if there are sections
-      if (SECTION_DEFINITIONS.length > 0) {
-        navSidebar.classList.add('active');
-      }
-    }
-
-    /**
-     * FEATURE #52: Updates which section nav item is highlighted as current.
-     * Called during scroll or when user navigates sections.
-     * INPUT: sectionNum (number)
-     * OUTPUT: CSS class 'current' updated on appropriate nav item
-     */
-    function updateSectionNavHighlight(sectionNum) {
-      const items = document.querySelectorAll('.section-nav-item');
-      items.forEach(item => item.classList.remove('current'));
-
-      if (sectionNum !== null && sectionNum !== undefined) {
-        const activeItem = document.getElementById(`section-nav-${sectionNum}`);
-        if (activeItem) activeItem.classList.add('current');
-      }
-    }
-
-    /**
-     * FEATURE #52: Toggles collapse state of a section.
-     * Saves collapse state to localStorage (pf_brief_section_collapse).
-     * INPUT: sectionNum (number)
-     * OUTPUT: section marked as collapsed/expanded, state persisted
-     */
-    function toggleSectionCollapse(sectionNum) {
-      const item = document.getElementById(`section-nav-${sectionNum}`);
-      const sectionEl = document.getElementById(`section-${sectionNum}`);
-      if (!item || !sectionEl) return;
-
-      const isCurrentlyCollapsed = state.sectionCollapseState[sectionNum] === true;
-      state.sectionCollapseState[sectionNum] = !isCurrentlyCollapsed;
-
-      // Update UI
-      if (isCurrentlyCollapsed) {
-        item.classList.remove('collapsed');
-        sectionEl.style.display = '';
-      } else {
-        item.classList.add('collapsed');
-        sectionEl.style.display = 'none';
-      }
-
-      // Persist to localStorage
-      try {
-        localStorage.setItem('pf_brief_section_collapse', JSON.stringify(state.sectionCollapseState));
-      } catch (e) {
-        console.warn('Failed to save section collapse state:', e);
-      }
-    }
+    /* ====== FEATURE #52: REMOVED — Sticky section nav sidebar was overlapping content
+       and providing no user value. Section navigation handled by TOC sidebar. ====== */
 
     /* ====== FEATURE #1: CITATION MARKERS & POPOVERS ====== */
     /**

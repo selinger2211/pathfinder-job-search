@@ -1,64 +1,123 @@
 // job-feed.ts - Tools for accessing and searching job feed items
-// Provides search and retrieval of job feed data from the queue
+// Provides search and retrieval of job feed data from file-based storage
 
 import { z } from "zod";
-import Database from "better-sqlite3";
-import path from "path";
-import os from "os";
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
 
 // ================================================================
-// DATABASE SETUP
+// FILE STORAGE SETUP
 // ================================================================
 
-const DB_PATH = path.join(os.homedir(), ".pathfinder", "job-feed.db");
+const DATA_DIR = path.join(os.homedir(), ".pathfinder", "data");
 
 /**
- * Initialize the job feed database
- * Uses existing pf_feed_queue table if available
+ * Ensure data directory exists
  */
-function initializeDatabase(): Database.Database {
-  const db = new Database(DB_PATH);
-  db.pragma("journal_mode = WAL");
+function ensureDataDir(): void {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+}
 
-  // Create pf_feed_queue table if needed
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS pf_feed_queue (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      company TEXT NOT NULL,
-      roleId TEXT,
-      score REAL,
-      source TEXT,
-      sourceUrl TEXT,
-      createdAt TEXT NOT NULL,
-      processedAt TEXT,
-      raw TEXT
-    );
+/**
+ * Load data from a stored JSON file
+ * Format: { key, value, updatedAt } where value is the raw JSON string
+ */
+function loadDataFile(filename: string): Record<string, unknown>[] {
+  ensureDataDir();
+  const filepath = path.join(DATA_DIR, `${filename}.json`);
 
-    CREATE INDEX IF NOT EXISTS idx_feed_title ON pf_feed_queue(title);
-    CREATE INDEX IF NOT EXISTS idx_feed_company ON pf_feed_queue(company);
-    CREATE INDEX IF NOT EXISTS idx_feed_score ON pf_feed_queue(score DESC);
-  `);
+  if (!fs.existsSync(filepath)) {
+    return [];
+  }
 
-  // Create pf_roles table if needed (for role details)
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS pf_roles (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      company TEXT NOT NULL,
-      level TEXT,
-      location TEXT,
-      salary TEXT,
-      jobDescription TEXT,
-      url TEXT,
-      createdAt TEXT NOT NULL
-    );
+  try {
+    const content = fs.readFileSync(filepath, "utf-8");
+    const wrapper = JSON.parse(content);
+    // The value field contains a JSON string, parse it
+    if (wrapper.value) {
+      return Array.isArray(wrapper.value) ? wrapper.value : [wrapper.value];
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
 
-    CREATE INDEX IF NOT EXISTS idx_roles_company ON pf_roles(company);
-    CREATE INDEX IF NOT EXISTS idx_roles_title ON pf_roles(title);
-  `);
+/**
+ * Load pf_feed_queue data
+ */
+function loadFeedQueue(): Array<{
+  id: string;
+  title: string;
+  company: string;
+  roleId?: string;
+  score?: number;
+  source?: string;
+  sourceUrl?: string;
+  createdAt: string;
+}> {
+  const data = loadDataFile("pf_feed_queue");
+  return data as Array<{
+    id: string;
+    title: string;
+    company: string;
+    roleId?: string;
+    score?: number;
+    source?: string;
+    sourceUrl?: string;
+    createdAt: string;
+  }>;
+}
 
-  return db;
+/**
+ * Load pf_roles data
+ */
+function loadRoles(): Record<string, {
+  id: string;
+  title: string;
+  company: string;
+  level?: string;
+  location?: string;
+  salary?: string;
+  jobDescription?: string;
+  url?: string;
+  createdAt: string;
+}> {
+  const data = loadDataFile("pf_roles");
+  const rolesMap: Record<string, {
+    id: string;
+    title: string;
+    company: string;
+    level?: string;
+    location?: string;
+    salary?: string;
+    jobDescription?: string;
+    url?: string;
+    createdAt: string;
+  }> = {};
+
+  if (Array.isArray(data)) {
+    data.forEach((role) => {
+      if (role && typeof role === "object" && "id" in role) {
+        rolesMap[(role as { id: string }).id] = role as {
+          id: string;
+          title: string;
+          company: string;
+          level?: string;
+          location?: string;
+          salary?: string;
+          jobDescription?: string;
+          url?: string;
+          createdAt: string;
+        };
+      }
+    });
+  }
+
+  return rolesMap;
 }
 
 // ================================================================
@@ -94,39 +153,36 @@ export async function handleSearchFeed(params: z.infer<typeof SearchFeedInputSch
   sourceUrl?: string;
   createdAt: string;
 }>> {
-  const db = initializeDatabase();
   try {
-    // Build query for title or company match
-    let query = `
-      SELECT id, title, company, roleId, score, source, sourceUrl, createdAt
-      FROM pf_feed_queue
-      WHERE (title LIKE ? OR company LIKE ?)
-    `;
-    const args = [`%${params.query}%`, `%${params.query}%`];
+    const feedQueue = loadFeedQueue();
+    const query = params.query.toLowerCase();
 
-    // Add score filter if provided
+    // Filter by query (title or company match)
+    let results = feedQueue.filter(item =>
+      (item.title?.toLowerCase().includes(query) || item.company?.toLowerCase().includes(query))
+    );
+
+    // Filter by score if provided
     if (params.minScore !== undefined) {
-      query += " AND score >= ?";
-      args.push(params.minScore);
+      results = results.filter(item => (item.score ?? 0) >= params.minScore);
     }
 
-    query += " ORDER BY score DESC, createdAt DESC LIMIT ?";
-    args.push(params.limit || 20);
+    // Sort by score desc, then createdAt desc
+    results.sort((a, b) => {
+      const scoreA = a.score ?? 0;
+      const scoreB = b.score ?? 0;
+      if (scoreA !== scoreB) {
+        return scoreB - scoreA;
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 
-    const results = db.prepare(query).all(...args) as Array<{
-      id: string;
-      title: string;
-      company: string;
-      roleId?: string;
-      score?: number;
-      source?: string;
-      sourceUrl?: string;
-      createdAt: string;
-    }>;
-
-    return results;
-  } finally {
-    db.close();
+    // Limit results
+    return results.slice(0, params.limit || 20);
+  } catch (error) {
+    throw new Error(
+      `Failed to search feed: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }
 
@@ -144,28 +200,18 @@ export async function handleGetRole(params: z.infer<typeof GetRoleInputSchema>):
   url?: string;
   createdAt: string;
 }> {
-  const db = initializeDatabase();
   try {
-    const role = db.prepare(
-      "SELECT id, title, company, level, location, salary, jobDescription, url, createdAt FROM pf_roles WHERE id = ?"
-    ).get(params.roleId) as {
-      id: string;
-      title: string;
-      company: string;
-      level?: string;
-      location?: string;
-      salary?: string;
-      jobDescription?: string;
-      url?: string;
-      createdAt: string;
-    } | undefined;
+    const rolesMap = loadRoles();
+    const role = rolesMap[params.roleId];
 
     if (!role) {
       throw new Error(`Role not found: ${params.roleId}`);
     }
 
     return role;
-  } finally {
-    db.close();
+  } catch (error) {
+    throw new Error(
+      `Failed to get role: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }
