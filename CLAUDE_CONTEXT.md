@@ -185,7 +185,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.3.1
+**Current Version:** v3.4.0
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -208,6 +208,9 @@ These are the actual field shapes for objects stored in shared localStorage keys
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.4.0)
+- **Apify JD enrichment engine**: Feed roles with stub JDs can now be enriched with full JD text via Apify's `bebity/linkedin-jobs-scraper` actor. Per-card "⚡ Enrich" button, batch "Enrich JDs" header button with live progress counter, JD quality badges (yellow "Stub JD" / green "Full JD"), Apify API token settings in sidebar (`pf_apify_key`). Fuzzy matching scores company name + title (40+ confidence required). Enriched roles get `jdEnriched`, `jdEnrichedAt`, `jdEnrichSource`, `jdEnrichConfidence` metadata. Free tier = $5/mo compute.
 
 ### Recently Fixed (v3.3.1)
 - **Salary extraction from JDs**: Pipeline cards show extracted salary with color coding (green=in-range, red=below $250K floor, gray=unknown). 3-pattern regex engine (dollar ranges, K ranges, context amounts). `pf_salary_prefs` stores thresholds (min $250K, target $300K-$450K).

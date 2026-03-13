@@ -931,6 +931,159 @@
       transform: translateY(-2px);
     }
 
+    /* ================================================================
+       JD ENRICHMENT STYLES
+       Visual indicators for JD quality + Apify enrichment controls.
+       ================================================================ */
+
+    /* JD quality badge — shows whether the role has a real JD or just a stub */
+    .jd-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      letter-spacing: 0.3px;
+    }
+
+    .jd-badge.jd-stub {
+      background: color-mix(in srgb, var(--warning) 15%, transparent);
+      color: var(--warning);
+      border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
+    }
+
+    .jd-badge.jd-full {
+      background: color-mix(in srgb, var(--success) 15%, transparent);
+      color: var(--success);
+      border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
+    }
+
+    .jd-badge.jd-enriching {
+      background: color-mix(in srgb, var(--accent) 15%, transparent);
+      color: var(--accent);
+      border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+      animation: pulse-badge 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-badge {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Enrich JD button on individual cards */
+    .enrich-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      font-size: 10px;
+      font-weight: 600;
+      border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+      background: color-mix(in srgb, var(--accent) 8%, transparent);
+      color: var(--accent);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .enrich-btn:hover {
+      background: color-mix(in srgb, var(--accent) 18%, transparent);
+      transform: translateY(-1px);
+    }
+
+    .enrich-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Batch enrich button in feed header */
+    .enrich-all-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      color: var(--accent);
+      border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .enrich-all-btn:hover {
+      background: color-mix(in srgb, var(--accent) 22%, transparent);
+    }
+
+    .enrich-all-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Enrichment progress counter */
+    .enrich-progress {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-left: var(--space-2);
+    }
+
+    /* JD preview snippet on enriched cards */
+    .jd-preview {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      margin-top: var(--space-2);
+      padding: var(--space-2);
+      background: var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      max-height: 60px;
+      overflow: hidden;
+      line-height: 1.4;
+      position: relative;
+    }
+
+    .jd-preview::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 20px;
+      background: linear-gradient(transparent, var(--bg-subtle));
+    }
+
+    /* Apify settings section in sidebar */
+    .apify-settings {
+      margin-top: var(--space-4);
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--bg-subtle);
+    }
+
+    .apify-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--text-xs);
+      margin-top: var(--space-2);
+    }
+
+    .apify-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .apify-status-dot.connected {
+      background: var(--success);
+    }
+
+    .apify-status-dot.disconnected {
+      background: var(--text-tertiary);
+    }
+
     /* Tab navigation */
     .tab-nav {
       display: flex;
@@ -1568,6 +1721,28 @@
           </svg>
           Save Preferences
         </button>
+
+        <!-- ====== APIFY JD ENRICHMENT SETTINGS ====== -->
+        <!-- Apify powers automatic JD fetching. Free tier = $5/mo compute. -->
+        <div class="apify-settings">
+          <div class="sidebar-section-title">JD Enrichment (Apify)</div>
+          <div class="pref-group">
+            <label class="pref-label" for="apifyApiKey">API Token</label>
+            <input type="password" class="pref-input" id="apifyApiKey"
+              placeholder="apify_api_..."
+              aria-label="Apify API token for JD enrichment"
+              style="font-family: monospace; font-size: 11px;">
+            <div class="apify-status" id="apifyStatus">
+              <span class="apify-status-dot disconnected" id="apifyStatusDot"></span>
+              <span id="apifyStatusText">Not connected</span>
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="saveApifyKeyBtn"
+            style="width: 100%; margin-top: var(--space-2);"
+            aria-label="Save Apify API token">
+            Save Token
+          </button>
+        </div>
       </div>
 
       <!-- RIGHT PANEL: Feed Content -->
@@ -1582,6 +1757,16 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line>
               </svg>
+            </button>
+            <button class="enrich-all-btn" id="enrichAllBtn" title="Fetch full JDs for all roles via Apify" aria-label="Enrich all job descriptions">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+              </svg>
+              Enrich JDs
+              <span class="enrich-progress" id="enrichProgress"></span>
             </button>
             <button class="btn btn-ghost btn-sm" id="importFromUrlBtn" title="Import from career page URL" aria-label="Import jobs from career page URL">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1917,6 +2102,410 @@
 
     // v3.1.1: Demo data constants removed — Feed now shows only real data
     // from Gmail sync, Indeed sync, or manual entry. No more sample/placeholder items.
+
+
+    // ============================================================
+    // APIFY JD ENRICHMENT ENGINE
+    // ============================================================
+    //
+    // Fetches full job descriptions for Feed roles via Apify's API.
+    // Two-track hybrid approach:
+    //   Track 1: If a role has a LinkedIn job URL → scrape that URL directly (cheap)
+    //   Track 2: If no URL → search LinkedIn for "{title} {company}" and match (more compute)
+    //
+    // Uses the `bebity/linkedin-jobs-scraper` actor on Apify.
+    // Free tier = $5/month compute ≈ 50-200 roles/month depending on batch size.
+    //
+    // API pattern: POST /v2/acts/{actorId}/run-sync-get-dataset-items
+    //   → Starts the actor, waits for completion, returns results in one call.
+    //
+    // Storage: Apify API token in localStorage key `pf_apify_key`.
+    // ============================================================
+
+    /**
+     * The Apify actor used for LinkedIn job scraping.
+     * This actor scrapes public LinkedIn job search pages — no login needed.
+     * Input: a LinkedIn job search URL with keywords and location.
+     * Output: array of jobs with title, company, location, description, salary, etc.
+     */
+    const APIFY_ACTOR_ID = 'bebity/linkedin-jobs-scraper';
+
+    /**
+     * Minimum JD length (in characters) to consider it a "full" JD.
+     * Anything shorter is treated as a stub extracted from an email subject line
+     * or alert — not useful for scoring, resume tailoring, or keyword analysis.
+     */
+    const MIN_FULL_JD_LENGTH = 300;
+
+    /**
+     * Check if a role has a real JD or just a stub.
+     * INPUT: role object from Feed
+     * OUTPUT: true if JD is a stub (too short or generic), false if it's a real full JD
+     */
+    function isStubJD(role) {
+      const jd = role.jd || '';
+      if (jd.length < MIN_FULL_JD_LENGTH) return true;
+
+      // Check for common stub patterns from email parsing
+      const stubPatterns = [
+        /posted via .+ job alert/i,
+        /application submitted/i,
+        /interview scheduled/i,
+        /you've been referred/i,
+        /new .+ job matches/i
+      ];
+      return stubPatterns.some(p => p.test(jd));
+    }
+
+    /**
+     * Get the stored Apify API token from localStorage.
+     * INPUT: none
+     * OUTPUT: string (API token) or null if not set
+     */
+    function getApifyToken() {
+      return localStorage.getItem('pf_apify_key') || null;
+    }
+
+    /**
+     * Save the Apify API token to localStorage.
+     * INPUT: token string
+     * OUTPUT: none (side effect: writes to localStorage)
+     */
+    function saveApifyToken(token) {
+      localStorage.setItem('pf_apify_key', token);
+      updateApifyStatus();
+    }
+
+    /**
+     * Update the Apify connection status indicator in the sidebar.
+     * Shows green dot + "Connected" if token is set, gray + "Not connected" otherwise.
+     */
+    function updateApifyStatus() {
+      const dot = document.getElementById('apifyStatusDot');
+      const text = document.getElementById('apifyStatusText');
+      const token = getApifyToken();
+
+      if (dot && text) {
+        if (token && token.length > 10) {
+          dot.className = 'apify-status-dot connected';
+          text.textContent = 'Token saved';
+        } else {
+          dot.className = 'apify-status-dot disconnected';
+          text.textContent = 'Not connected';
+        }
+      }
+
+      // Update the "Enrich All" button state
+      const enrichAllBtn = document.getElementById('enrichAllBtn');
+      if (enrichAllBtn) {
+        const stubCount = (state.feedItems || []).filter(isStubJD).length;
+        const progress = document.getElementById('enrichProgress');
+        if (progress) {
+          progress.textContent = stubCount > 0 ? `(${stubCount} need JDs)` : '(all enriched)';
+        }
+        enrichAllBtn.disabled = !token || stubCount === 0;
+      }
+    }
+
+    /**
+     * Build a LinkedIn Jobs search URL from a role's title and company.
+     * This URL is what the Apify actor uses as its starting point.
+     * INPUT: title (string), company (string), location (string)
+     * OUTPUT: LinkedIn job search URL
+     */
+    function buildLinkedInSearchUrl(title, company, location) {
+      // Combine company and title for a specific search
+      const keywords = encodeURIComponent(`${title} ${company}`);
+      const loc = encodeURIComponent(location || 'United States');
+      return `https://www.linkedin.com/jobs/search/?keywords=${keywords}&location=${loc}`;
+    }
+
+    /**
+     * Call Apify's synchronous run API to scrape LinkedIn job listings.
+     * This makes ONE API call that starts the actor, waits for completion,
+     * and returns the dataset items (job listings) directly.
+     *
+     * INPUT: searchUrl (LinkedIn job search URL), token (Apify API token), maxItems (int)
+     * OUTPUT: Promise<Array<Object>> — array of job objects with description, title, etc.
+     * THROWS: Error if API call fails, token invalid, or timeout
+     */
+    async function callApifyLinkedInScraper(searchUrl, token, maxItems = 5) {
+      const actorId = APIFY_ACTOR_ID.replace('/', '~');
+      const endpoint = `https://api.apify.com/v2/acts/${actorId}/run-sync-get-dataset-items`;
+
+      const response = await fetch(`${endpoint}?token=${encodeURIComponent(token)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          searchUrl: searchUrl,
+          scrapeCompany: false,
+          startPage: 0,
+          count: maxItems,
+          proxy: { useApifyProxy: true }
+        })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        if (response.status === 401) throw new Error('Invalid Apify token — check Settings.');
+        if (response.status === 402) throw new Error('Apify free tier limit reached this month.');
+        throw new Error(`Apify API error (${response.status}): ${errText.slice(0, 200)}`);
+      }
+
+      return await response.json();
+    }
+
+    /**
+     * Score how well an Apify result matches a Feed role.
+     * Uses fuzzy matching on company name and title to find the best match.
+     * INPUT: apifyJob (object from Apify), feedRole (object from Feed)
+     * OUTPUT: number 0-100 (match confidence)
+     */
+    function matchConfidence(apifyJob, feedRole) {
+      let score = 0;
+      const aCompany = (apifyJob.companyName || apifyJob.company || '').toLowerCase().trim();
+      const fCompany = (feedRole.company || '').toLowerCase().trim();
+      const aTitle = (apifyJob.title || apifyJob.position || '').toLowerCase().trim();
+      const fTitle = (feedRole.title || '').toLowerCase().trim();
+
+      // Company name matching (50 points max)
+      if (aCompany === fCompany) {
+        score += 50;
+      } else if (aCompany.includes(fCompany) || fCompany.includes(aCompany)) {
+        score += 35;
+      } else {
+        // Check individual words
+        const aWords = aCompany.split(/\s+/);
+        const fWords = fCompany.split(/\s+/);
+        const overlap = aWords.filter(w => fWords.includes(w) && w.length > 2).length;
+        score += Math.min(25, overlap * 10);
+      }
+
+      // Title matching (50 points max)
+      if (aTitle === fTitle) {
+        score += 50;
+      } else if (aTitle.includes(fTitle) || fTitle.includes(aTitle)) {
+        score += 35;
+      } else {
+        // Key title words overlap
+        const aWords = aTitle.split(/[\s,\-–]+/);
+        const fWords = fTitle.split(/[\s,\-–]+/);
+        const overlap = aWords.filter(w => fWords.includes(w) && w.length > 2).length;
+        score += Math.min(30, overlap * 8);
+      }
+
+      return score;
+    }
+
+    /**
+     * Enrich a single Feed role with a full JD via Apify.
+     * If the role already has a LinkedIn URL, we search for that specific role.
+     * Otherwise, we build a search query from company + title.
+     *
+     * INPUT: role (Feed item object)
+     * OUTPUT: Promise<string|null> — the full JD text, or null if enrichment failed
+     * SIDE EFFECTS: Updates the role's jd field in state and localStorage
+     */
+    async function enrichRoleJD(role) {
+      const token = getApifyToken();
+      if (!token) throw new Error('No Apify token. Add your token in the sidebar settings.');
+
+      // Build the search URL — use LinkedIn URL if we have one, else construct from title+company
+      const linkedinUrl = role.feedMetadata && role.feedMetadata.linkedinJobUrl;
+      const searchUrl = linkedinUrl
+        ? `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(role.title + ' ' + role.company)}&location=${encodeURIComponent(role.location || 'United States')}`
+        : buildLinkedInSearchUrl(role.title, role.company, role.location);
+
+      console.log(`[Enrich] Searching Apify for "${role.title}" at ${role.company}...`);
+
+      // Call the Apify actor
+      const results = await callApifyLinkedInScraper(searchUrl, token, 10);
+
+      if (!results || results.length === 0) {
+        console.warn(`[Enrich] No results from Apify for "${role.title}" at ${role.company}`);
+        return null;
+      }
+
+      // Find the best-matching result using fuzzy matching
+      let bestMatch = null;
+      let bestScore = 0;
+
+      for (const job of results) {
+        const confidence = matchConfidence(job, role);
+        if (confidence > bestScore) {
+          bestScore = confidence;
+          bestMatch = job;
+        }
+      }
+
+      // Require at least 40% confidence to accept the match
+      if (!bestMatch || bestScore < 40) {
+        console.warn(`[Enrich] No confident match for "${role.title}" at ${role.company} (best: ${bestScore}%)`);
+        return null;
+      }
+
+      // Extract the full JD text
+      const fullJD = bestMatch.description || bestMatch.descriptionText || bestMatch.jobDescription || '';
+      if (fullJD.length < MIN_FULL_JD_LENGTH) {
+        console.warn(`[Enrich] Match found but JD too short (${fullJD.length} chars)`);
+        return null;
+      }
+
+      console.log(`[Enrich] ✅ Found JD for "${role.title}" at ${role.company} (${fullJD.length} chars, ${bestScore}% confidence)`);
+
+      // Update the role in state
+      role.jd = fullJD;
+      role.jdEnriched = true;
+      role.jdEnrichedAt = new Date().toISOString();
+      role.jdEnrichSource = 'apify-linkedin';
+      role.jdEnrichConfidence = bestScore;
+
+      // Also grab salary if Apify found one and we don't have it
+      if (!role.salary && bestMatch.salary) {
+        role.salary = bestMatch.salary;
+      }
+
+      // Persist to localStorage
+      saveFeedQueue(state.feedItems);
+
+      return fullJD;
+    }
+
+    /**
+     * Enrich a single role's JD and update the card UI.
+     * Called when user clicks the "Enrich JD" button on a card.
+     * INPUT: roleId (string)
+     * OUTPUT: none (side effects: API call, UI update, localStorage write)
+     */
+    async function enrichSingleRole(roleId) {
+      const role = state.feedItems.find(r => r.id === roleId);
+      if (!role) return;
+
+      // Update the card to show loading state
+      const badge = document.querySelector(`[data-role-id="${roleId}"] .jd-badge`);
+      const btn = document.querySelector(`[data-role-id="${roleId}"] .enrich-btn`);
+      if (badge) {
+        badge.className = 'jd-badge jd-enriching';
+        badge.textContent = '⟳ Fetching JD...';
+      }
+      if (btn) btn.disabled = true;
+
+      try {
+        const jd = await enrichRoleJD(role);
+        if (jd) {
+          showToast(`✅ JD enriched: ${role.title} at ${role.company}`, 'success');
+          renderFeedCards(); // Re-render to show updated JD
+          updateApifyStatus();
+        } else {
+          showToast(`No JD found for ${role.title} at ${role.company}`, 'warning');
+          if (badge) {
+            badge.className = 'jd-badge jd-stub';
+            badge.textContent = '📄 Stub JD';
+          }
+          if (btn) btn.disabled = false;
+        }
+      } catch (err) {
+        console.error('[Enrich] Error:', err);
+        showToast(`Enrichment failed: ${err.message}`, 'error');
+        if (badge) {
+          badge.className = 'jd-badge jd-stub';
+          badge.textContent = '📄 Stub JD';
+        }
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    /**
+     * Batch-enrich all roles that have stub JDs.
+     * Runs sequentially (not parallel) to stay within Apify rate limits.
+     * INPUT: none
+     * OUTPUT: none (side effects: API calls, UI updates, localStorage writes)
+     */
+    async function enrichAllRoles() {
+      const token = getApifyToken();
+      if (!token) {
+        showToast('Add your Apify token in the sidebar first', 'warning');
+        return;
+      }
+
+      const stubRoles = state.feedItems.filter(isStubJD);
+      if (stubRoles.length === 0) {
+        showToast('All roles already have full JDs', 'success');
+        return;
+      }
+
+      const enrichAllBtn = document.getElementById('enrichAllBtn');
+      const progress = document.getElementById('enrichProgress');
+      if (enrichAllBtn) enrichAllBtn.disabled = true;
+
+      let enriched = 0;
+      let failed = 0;
+
+      for (let i = 0; i < stubRoles.length; i++) {
+        const role = stubRoles[i];
+        if (progress) progress.textContent = `(${i + 1}/${stubRoles.length})`;
+
+        // Update the card to show it's being processed
+        const badge = document.querySelector(`[data-role-id="${role.id}"] .jd-badge`);
+        if (badge) {
+          badge.className = 'jd-badge jd-enriching';
+          badge.textContent = '⟳ Fetching...';
+        }
+
+        try {
+          const jd = await enrichRoleJD(role);
+          if (jd) {
+            enriched++;
+            if (badge) {
+              badge.className = 'jd-badge jd-full';
+              badge.textContent = '✓ Full JD';
+            }
+          } else {
+            failed++;
+            if (badge) {
+              badge.className = 'jd-badge jd-stub';
+              badge.textContent = '📄 Stub JD';
+            }
+          }
+        } catch (err) {
+          console.error(`[Enrich] Failed for ${role.company}:`, err);
+          failed++;
+          // If it's a quota error, stop the batch
+          if (err.message.includes('free tier limit') || err.message.includes('402')) {
+            showToast('Apify free tier limit reached — try again next month', 'error');
+            break;
+          }
+          if (badge) {
+            badge.className = 'jd-badge jd-stub';
+            badge.textContent = '📄 Stub JD';
+          }
+        }
+
+        // Small delay between API calls to be nice to the rate limiter
+        if (i < stubRoles.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+
+      showToast(`JD enrichment complete: ${enriched} enriched, ${failed} failed`, enriched > 0 ? 'success' : 'warning');
+      renderFeedCards();
+      updateApifyStatus();
+      if (enrichAllBtn) enrichAllBtn.disabled = false;
+    }
+
+    /**
+     * Save the feed queue (all current feed items) to localStorage.
+     * INPUT: items (array of Feed role objects)
+     * OUTPUT: none (side effect: writes to localStorage)
+     */
+    function saveFeedQueue(items) {
+      try {
+        localStorage.setItem('pf_feed_queue', JSON.stringify(items));
+      } catch (e) {
+        console.warn('Failed to save feed queue:', e);
+      }
+    }
+
 
     // ============================================================
     // APPLICATION STATE
@@ -2870,6 +3459,31 @@
                 })()}
               </div>
             </div>
+
+            <!-- JD quality indicator + one-click enrich button -->
+            <div style="display: flex; align-items: center; gap: 6px; margin: var(--space-2) 0 0;">
+              ${(() => {
+                const stub = isStubJD(item);
+                if (stub) {
+                  return `<span class="jd-badge jd-stub">📄 Stub JD</span>`
+                    + (getApifyToken()
+                      ? `<button class="enrich-btn" onclick="event.stopPropagation(); enrichSingleRole('${item.id}')" title="Fetch full JD via Apify">⚡ Enrich</button>`
+                      : `<span style="font-size: 10px; color: var(--text-tertiary);">Add Apify token to enrich</span>`);
+                } else {
+                  return `<span class="jd-badge jd-full">✓ Full JD</span>`
+                    + (item.jdEnrichConfidence ? `<span style="font-size: 10px; color: var(--text-tertiary);">${item.jdEnrichConfidence}% match</span>` : '');
+                }
+              })()}
+            </div>
+
+            ${(() => {
+              // Show a snippet of the JD if it's been enriched
+              if (!isStubJD(item) && item.jdEnriched) {
+                const snippet = (item.jd || '').slice(0, 180).trim();
+                return `<div class="jd-preview">${snippet}...</div>`;
+              }
+              return '';
+            })()}
 
             <div class="card-details">
               <strong>${item.domain}</strong> • ${item.location}${item.remote ? ' (Remote)' : ''}<br>
@@ -4232,6 +4846,33 @@
       document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
         const sidebar = document.querySelector('.feed-sidebar');
         sidebar.classList.toggle('collapsed');
+      });
+
+      // ====== APIFY SETTINGS HANDLERS ======
+
+      // Load saved Apify token into the input field on page load
+      const savedApifyKey = getApifyToken();
+      const apifyInput = document.getElementById('apifyApiKey');
+      if (savedApifyKey && apifyInput) {
+        apifyInput.value = savedApifyKey;
+      }
+      updateApifyStatus();
+
+      // Save Apify token button
+      document.getElementById('saveApifyKeyBtn').addEventListener('click', () => {
+        const token = document.getElementById('apifyApiKey').value.trim();
+        if (!token) {
+          showToast('Please enter your Apify API token', 'warning');
+          return;
+        }
+        saveApifyToken(token);
+        showToast('Apify token saved', 'success');
+        renderFeedCards(); // Re-render to show enrich buttons
+      });
+
+      // Enrich All JDs button
+      document.getElementById('enrichAllBtn').addEventListener('click', () => {
+        enrichAllRoles();
       });
 
       // Close modals on overlay click

@@ -4,6 +4,38 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.4.0 — 2026-03-12
+
+### What Changed — Apify-Powered JD Enrichment Engine
+
+**User requested:** "another thing we need to solve for feed is the ability to get the job description programatically" + "let's go apify free tier" + "the JD is the fulcrum, it should be gotten"
+
+**Changes:**
+
+1. **Feed: Apify JD enrichment engine** — New `enrichRoleJD(role)` function calls Apify's `bebity/linkedin-jobs-scraper` actor via synchronous REST API. Searches LinkedIn for `{title} {company}`, fuzzy-matches the best result (company name + title similarity scoring), and extracts the full JD text. Minimum 300-char threshold to distinguish real JDs from email stubs. Enriched roles get `jdEnriched: true`, `jdEnrichedAt`, `jdEnrichSource`, `jdEnrichConfidence` metadata fields.
+
+2. **Feed: JD quality indicators** — Every feed card now shows a JD quality badge: yellow "📄 Stub JD" for roles with only email-extracted stubs (<300 chars), or green "✓ Full JD" for roles with real JDs. Enriched cards show a JD snippet preview with confidence percentage.
+
+3. **Feed: Per-card "⚡ Enrich" button** — Appears on stub-JD cards when Apify token is set. One-click enrichment with loading animation (pulsing blue badge). Graceful failure handling with toast notifications.
+
+4. **Feed: Batch "Enrich JDs" button** — Header button shows count of roles needing JDs (e.g., "16 need JDs"). Processes all stub-JD roles sequentially with 2-second delays between API calls. Stops gracefully on Apify quota errors. Progress counter updates live.
+
+5. **Feed: Apify settings section** — New sidebar section below preferences: API Token input (password field), connection status indicator (green dot = connected, gray = not connected), "Save Token" button. Token stored in `pf_apify_key` localStorage key.
+
+6. **Feed: Stub JD detection** — `isStubJD(role)` checks JD length (<300 chars) and common email-parsing patterns ("posted via job alert", "application submitted", "interview scheduled", etc.) to reliably identify roles needing enrichment.
+
+**Architecture notes:**
+- Apify free tier = $5/month compute credits (~50-200 role enrichments/month)
+- Actor: `bebity/linkedin-jobs-scraper` — scrapes public LinkedIn job search pages (no login required)
+- API pattern: POST `run-sync-get-dataset-items` — one call starts actor, waits, returns results
+- Fuzzy matching: 0-100 confidence score (50pts company name, 50pts title). 40+ required to accept match.
+- Enriched JDs persist to `pf_feed_queue` in localStorage, survives page reload.
+
+**Files changed:**
+- `modules/job-feed-listener/index.html` (enrichment engine, CSS, sidebar settings, card UI, event handlers)
+
+---
+
 ## v3.3.1 — 2026-03-12
 
 ### What Changed — Salary Intelligence, Light Theme Default, Score Transparency, Built In Email Source

@@ -514,6 +514,19 @@ What exists today:
 - [ ] Auto-create pipeline entries for strong matches
 - [ ] Dashboard notifications for new discoveries
 
+### Phase 2.5: Apify JD Enrichment (v3.4.0 — SHIPPED)
+- [x] Apify API token storage (`pf_apify_key`) + sidebar settings UI
+- [x] JD quality detection (`isStubJD()` — length + pattern-based)
+- [x] LinkedIn Jobs Scraper integration (`bebity/linkedin-jobs-scraper`)
+- [x] Fuzzy match engine (company name + title similarity, 40+ confidence threshold)
+- [x] Per-card "⚡ Enrich" button with loading state
+- [x] Batch "Enrich JDs" button with live progress counter
+- [x] JD quality badges (stub vs full) on feed cards
+- [x] Enriched JD snippet preview on cards
+- [x] Graceful error handling (quota limits, no matches, API errors)
+- [ ] Career page scraping fallback (Lever, Greenhouse, Ashby, Workday)
+- [ ] Auto-enrich on feed item creation (background enrichment)
+
 ### Phase 3: Job Board APIs
 - [ ] Indeed API integration via MCP connector
 - [ ] Dice API integration via MCP connector
