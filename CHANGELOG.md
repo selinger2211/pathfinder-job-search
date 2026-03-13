@@ -4,6 +4,20 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.8.3 — 2026-03-12
+
+### What Changed — Logo Fix + Feed Stats Bar
+
+**User reported:** "logos are all messed up on the job feed" — and requested total company count + count by company type.
+
+**Changes:**
+
+1. **Feed: Fixed card logos** — New `renderCardLogo()` helper uses Google Favicon API with domain from `guessDomain()`. Falls back to first-letter initial on error. Previously `item.logo` was undefined for Gmail/LinkedIn-sourced roles, rendering "undefined" as text.
+
+2. **Feed: Stats bar with counts** — New bar between tabs and cards shows: total roles, unique company count, and breakdown by company stage (e.g., "12 Public | 4 Late-stage / Pre-IPO | 2 Unknown"). Auto-updates on every card re-render.
+
+---
+
 ## v3.8.2 — 2026-03-12
 
 ### What Changed — On-Demand Enrichment Only

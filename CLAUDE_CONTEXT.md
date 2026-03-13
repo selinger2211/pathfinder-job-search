@@ -185,7 +185,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.8.2
+**Current Version:** v3.8.3
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -208,6 +208,10 @@ These are the actual field shapes for objects stored in shared localStorage keys
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.8.3)
+- **Feed card logos**: New `renderCardLogo()` uses Google Favicon API with `guessDomain()` fallback. Gmail/LinkedIn roles no longer show "undefined".
+- **Feed stats bar**: Shows total roles, unique companies, and stage breakdown between tabs and cards.
 
 ### Recently Fixed (v3.8.2)
 - **Auto-enrich disabled**: Switched JD enrichment from automatic-on-load to on-demand only. Per-card "⚡ Enrich" and batch "Enrich JDs" buttons still work. Conserves Apify credits. Auto-enrich code commented out (re-enable by uncommenting block in init).

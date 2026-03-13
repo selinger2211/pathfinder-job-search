@@ -432,6 +432,45 @@
       font-family: var(--font-mono);
     }
 
+    /* ====== FEED STATS BAR (v3.8.3) ====== */
+    .feed-stats-bar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-2) var(--space-4);
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border);
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      flex-wrap: wrap;
+      min-height: 32px;
+    }
+    .feed-stats-bar:empty { display: none; }
+    .feed-stat-total {
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-right: var(--space-2);
+    }
+    .feed-stat-divider {
+      width: 1px;
+      height: 14px;
+      background: var(--border);
+    }
+    .feed-stat-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: var(--bg-base);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .feed-stat-chip .stat-count {
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
     .quick-check {
       background: var(--bg-base);
       border-radius: var(--radius-sm);
@@ -1855,6 +1894,11 @@
           <button class="tab-btn" data-tab="sources">Sources</button>
           <button class="tab-btn" data-tab="analytics">Analytics</button>
           <button class="tab-btn" data-tab="log">Log</button>
+        </div>
+
+        <!-- Feed Stats Bar (v3.8.3) — total count + stage breakdown -->
+        <div class="feed-stats-bar" id="feedStatsBar" role="status" aria-label="Feed statistics">
+          <!-- Populated by renderFeedStats() -->
         </div>
 
         <!-- TAB 1: Feed Review -->
@@ -4019,6 +4063,51 @@
     }
 
     /**
+     * Render feed stats bar — total roles, unique companies, and breakdown
+     * by company stage. Called whenever feed data changes.
+     * INPUT: reads from state.feedItems
+     * OUTPUT: updates #feedStatsBar HTML
+     */
+    function renderFeedStats() {
+      const bar = document.getElementById('feedStatsBar');
+      if (!bar) return;
+
+      const items = state.feedItems;
+      if (!items || items.length === 0) {
+        bar.innerHTML = '';
+        return;
+      }
+
+      // Count unique companies
+      const companySet = new Set(items.map(r => (r.company || '').toLowerCase().trim()));
+      const totalCompanies = companySet.size;
+
+      // Count by stage — use normalizeStage() for consistency
+      const stageCounts = {};
+      items.forEach(r => {
+        const stage = normalizeStage(r.stage) || 'Unknown';
+        stageCounts[stage] = (stageCounts[stage] || 0) + 1;
+      });
+
+      // Sort stages by count descending
+      const sortedStages = Object.entries(stageCounts)
+        .sort((a, b) => b[1] - a[1]);
+
+      // Build HTML
+      const stageChips = sortedStages.map(([stage, count]) =>
+        `<span class="feed-stat-chip"><span class="stat-count">${count}</span> ${stage}</span>`
+      ).join('');
+
+      bar.innerHTML = `
+        <span class="feed-stat-total">${items.length} roles</span>
+        <span class="feed-stat-divider"></span>
+        <span class="feed-stat-chip"><span class="stat-count">${totalCompanies}</span> companies</span>
+        <span class="feed-stat-divider"></span>
+        ${stageChips}
+      `;
+    }
+
+    /**
      * Render the feed card grid. Each card shows a role with score and actions.
      */
     function renderFeedCards() {
@@ -4044,7 +4133,7 @@
         return `
           <div class="feed-card" data-role-id="${item.id}">
             <div class="card-header">
-              <div class="card-logo">${item.logo}</div>
+              <div class="card-logo">${renderCardLogo(item)}</div>
               <div class="card-info">
                 <div class="card-company">${item.company}</div>
                 <div class="card-title">${item.title}</div>
@@ -4170,6 +4259,9 @@
           bar.style.width = target + '%';
         });
       }, 50);
+
+      // Update stats bar whenever cards re-render (v3.8.3)
+      renderFeedStats();
     }
 
     /**
@@ -4493,6 +4585,22 @@
     }
 
     /**
+     * Render a company logo for a feed card. Tries Google Favicon first
+     * (using domain or guessed domain), falls back to first-letter initial.
+     * INPUT: feed item object (needs .company, optionally .domain)
+     * OUTPUT: HTML string — either an <img> tag or a letter initial
+     */
+    function renderCardLogo(item) {
+      const domain = item.domain || guessDomain(item.company || '');
+      if (domain) {
+        const initial = (item.company || '?').charAt(0).toUpperCase();
+        // Use Google Favicon API with onerror fallback to letter initial
+        return `<img src="https://www.google.com/s2/favicons?domain=${domain}&sz=128" alt="${item.company || ''}" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">`;
+      }
+      return (item.company || '?').charAt(0).toUpperCase();
+    }
+
+    /**
      * Dismiss a role: archive it, remove from feed.
      * @param {string} roleId - Role ID to dismiss
      */
@@ -4638,7 +4746,7 @@
         return `
           <div class="feed-card" data-role-id="${item.id}">
             <div class="card-header">
-              <div class="card-logo">${item.logo}</div>
+              <div class="card-logo">${renderCardLogo(item)}</div>
               <div class="card-info">
                 <div class="card-company">${item.company}</div>
                 <div class="card-title">${item.title}</div>
