@@ -5560,18 +5560,13 @@
 
             <!-- FEATURE 24: Dedup badge (In Pipeline or Possible Duplicate) -->
             ${(() => {
-              const { roles } = loadData();
-              const dedupResult = checkPipelineDedup(item, roles);
+              const pipelineRoles = loadRoles();
+              const status = checkPipelineStatus(item, pipelineRoles);
 
-              if (dedupResult.matchType === 'exact') {
+              if (status.inPipeline) {
                 return `<div class="dedup-warning" style="margin: var(--space-2) 0 0;">
                   <div class="dedup-warning-title">✓ In Pipeline</div>
-                  <div class="dedup-warning-text">This role already exists in your pipeline at stage: <strong>${dedupResult.matchedRole.stage}</strong></div>
-                </div>`;
-              } else if (dedupResult.matchType === 'fuzzy') {
-                return `<div class="dedup-warning" style="margin: var(--space-2) 0 0; border-left-color: var(--warning);">
-                  <div class="dedup-warning-title">⚠️ Possible Duplicate</div>
-                  <div class="dedup-warning-text">Might match: <strong>${dedupResult.matchedRole.title}</strong> (stage: ${dedupResult.matchedRole.stage})</div>
+                  <div class="dedup-warning-text">This role is in your pipeline at stage: <strong>${status.stage}</strong></div>
                 </div>`;
               }
               return '';
