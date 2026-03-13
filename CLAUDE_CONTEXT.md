@@ -185,7 +185,7 @@ These are the actual field shapes for objects stored in shared localStorage keys
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.6.1
+**Current Version:** v3.7.0
 **Last Updated:** 2026-03-12
 
 ### Implementation Status
@@ -208,6 +208,11 @@ These are the actual field shapes for objects stored in shared localStorage keys
 ### Known Issues
 - MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+
+### Recently Fixed (v3.7.0)
+- **Expanded company stages**: 7 granular options (Seed/Angel, Series A, Series B, Series C+, Late-stage/Pre-IPO, Public, Bootstrapped/Private) replacing old 4-stage set. `normalizeStage()` provides backward compat for old values.
+- **Comp estimation engine**: `estimateTotalComp()` estimates total comp from listed base using company-archetype ratios (Public 55%, Seed 80%, etc.). Cards show "→ ~XK total (est.)" with hover breakdown. Scoring uses estimated total.
+- **Leader/IC awareness**: JD text scanned for management/IC signals. Small company (Seed/A/B) + leader = +5 pts bonus, larger + leader = +2. Badge in score breakdown.
 
 ### Recently Fixed (v3.6.1)
 - **Auto-enrich on page load**: Feed now auto-enriches stub JDs in background on load (when Apify token is configured). Progress counter shown. Auth errors abort early. No manual click needed.

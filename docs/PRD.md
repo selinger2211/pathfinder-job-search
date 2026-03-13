@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v3.6.1
+**Status:** v3.7.0
 
 ---
 
@@ -2511,6 +2511,8 @@ Every change to the application triggers a PRD version bump and an entry here. T
 
 | Version | Date | Summary |
 |---------|------|---------|
+| v3.7.0 | 2026-03-12 | **Expanded company stages, comp estimation engine, leader/IC awareness** — 7 granular stage options (Seed→Public→Bootstrapped) with backward-compat `normalizeStage()`. New `estimateTotalComp()` estimates total comp from listed base using archetype ratios (Public 55%, Seed 80%). Cards show estimated total + hover breakdown. Scoring uses estimated total. Leader/IC JD signal detection with size-aware bonus (+5 small co leader, +2 larger). |
+| v3.6.1 | 2026-03-12 | **Auto-enrich on load, comp slider cleanup, happitap fix** — Feed auto-enriches stub JDs on page load (background, with progress). Removed Max Total slider (no cap on upside). Unified slider scale (both 50-1000K). Fixed happitap actor: keywords as array, `datePosted: '30d'`, `proxyCountry: 'US'`. |
 | v3.6.0 | 2026-03-12 | **Settings live-update + comp sliders** — Replaced comp number inputs with range sliders (instant label update + debounced re-score). Company stage checkboxes now live-update feed cards. Fixed null `role.location` crash in `scoreRole()`. Mock Interview practiced questions now re-render immediately. Research Brief API key no longer exposed in plaintext after save. Default Apify actor changed to `logical_scrapers` (free). Settings Live-Update Pattern documented as mandatory skill rule. |
 | v3.5.2 | 2026-03-12 | **Stage date/time manual override** — Stage history timeline now uses `datetime-local` inputs showing full date+time for each stage transition. Fixed bug where editing current stage's date (index -1) had no effect. New `formatDatetimeLocal()` helper handles timestamps and ISO strings. |
 | v3.5.1 | 2026-03-12 | **Bug fixes: Accept→Pipeline, dark mode cache, dismiss persist** — Feed `acceptRole()` now creates a full Pipeline role (stage: "discovered") + company entry with Google Favicon logo. `dismissRole()` persists feed queue removal to localStorage. Dark mode cache fix: `data-layer.js` now initializes `data-theme` attribute on `<html>` from `pf_theme` on every page load (all 11 modules). Cache-bust `?v=3.5.1` on shared CSS/JS links. Fixed `companyName` sent as array to valig Apify actor. |

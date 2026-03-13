@@ -4,6 +4,24 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.7.0 — 2026-03-12
+
+### What Changed — Expanded Company Stages, Comp Estimation Engine, Leader/IC Awareness
+
+**User requested:** "let's add a new option for Series A, VC Funded, etc so we can keep / filter as we want" + "for Comp, many times it Base plus bonus, equity etc, can we have this and estimate based on the type of company" + "let's also put in some awareness that for smaller companies I'm going to want to favor people leader vs. IC on bigger ones"
+
+**Changes:**
+
+1. **Feed: Expanded company stage options** — Replaced 4-stage checkboxes (Series B+, Late-stage, Pre-IPO, Public) with 7 granular stages: Seed/Angel, Series A, Series B, Series C+, Late-stage/Pre-IPO, Public, Bootstrapped/Private. New `normalizeStage()` function maps old values ("Series B+", "Late-stage", "Pre-IPO", "Private") to canonical new values for backward compatibility. Manual entry dropdown and URL import defaults updated.
+
+2. **Feed: Comp estimation engine** — New `estimateTotalComp(baseSalary, stage)` estimates total compensation (base + bonus + equity) from listed base salary using company-archetype ratios. Ratios: Public=55% base, Late-stage=60%, Series C+=65%, Series B=68%, Series A=72%, Seed=80%, Bootstrapped=85%. Formula: `estimatedTotal = baseSalary / baseRatio`. New `parseSalaryAndEstimate()` parses salary strings and returns min/max breakdowns. New `renderCompDisplay()` shows listed salary + "→ ~XK total (est.)" with hover tooltip showing base/bonus/equity breakdown + stage + ratio.
+
+3. **Feed: Comp scoring uses estimated total** — `scoreRole()` comp dimension now scores against estimated total compensation (not raw listed salary). Roles where estimated total ≥ target = 100, ≥ min base = 70, below = 0. No salary data = 50 (neutral).
+
+4. **Feed: Leader/IC scoring awareness** — JD text scanned for management signals ("manage a team", "direct reports", "build and lead", etc.) and IC signals ("individual contributor", "no direct reports", etc.). Additive bonus applied: small company (Seed/A/B) + leader = +5 pts, larger company + leader = +2 pts, IC = neutral (0). Badge shown in score breakdown ("Leader@Small", "Leader", "IC@Small", "IC").
+
+---
+
 ## v3.6.1 — 2026-03-12
 
 ### What Changed — Auto-Enrich on Load, Comp Slider Cleanup, Happitap Fix

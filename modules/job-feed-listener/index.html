@@ -1664,20 +1664,32 @@
         <div class="sidebar-section-title">Company Stage</div>
         <div class="pref-group">
           <label class="pref-checkbox">
-            <input type="checkbox" id="stageSeriesB" value="Series B+">
-            <span>Series B+</span>
+            <input type="checkbox" id="stageSeed" value="Seed">
+            <span>Seed / Angel</span>
           </label>
           <label class="pref-checkbox">
-            <input type="checkbox" id="stageLateStage" value="Late-stage">
-            <span>Late-stage</span>
+            <input type="checkbox" id="stageSeriesA" value="Series A">
+            <span>Series A</span>
           </label>
           <label class="pref-checkbox">
-            <input type="checkbox" id="stagePreIPO" value="Pre-IPO">
-            <span>Pre-IPO</span>
+            <input type="checkbox" id="stageSeriesB" value="Series B">
+            <span>Series B</span>
+          </label>
+          <label class="pref-checkbox">
+            <input type="checkbox" id="stageSeriesC" value="Series C+">
+            <span>Series C+</span>
+          </label>
+          <label class="pref-checkbox">
+            <input type="checkbox" id="stageLateStage" value="Late-stage / Pre-IPO">
+            <span>Late-stage / Pre-IPO</span>
           </label>
           <label class="pref-checkbox">
             <input type="checkbox" id="stagePublic" value="Public">
             <span>Public</span>
+          </label>
+          <label class="pref-checkbox">
+            <input type="checkbox" id="stageBootstrapped" value="Bootstrapped">
+            <span>Bootstrapped / Private</span>
           </label>
         </div>
 
@@ -1969,11 +1981,13 @@
           <label class="form-label">Company Stage</label>
           <select class="form-select" id="manualStage">
             <option value="">Select stage...</option>
+            <option value="Seed">Seed / Angel</option>
             <option value="Series A">Series A</option>
-            <option value="Series B+">Series B+</option>
-            <option value="Late-stage">Late-stage</option>
-            <option value="Pre-IPO">Pre-IPO</option>
+            <option value="Series B">Series B</option>
+            <option value="Series C+">Series C+</option>
+            <option value="Late-stage / Pre-IPO">Late-stage / Pre-IPO</option>
             <option value="Public">Public</option>
+            <option value="Bootstrapped">Bootstrapped / Private</option>
           </select>
         </div>
 
@@ -2127,7 +2141,7 @@
       primaryDomains: ['AdTech', 'AI/ML', 'Data Platforms'],
       secondaryDomains: ['Enterprise SaaS', 'Fintech'],
       excludedDomains: ['Crypto', 'Gaming', 'Consumer Social'],
-      companyStage: ['Series B+', 'Late-stage', 'Pre-IPO', 'Public'],
+      companyStage: ['Series B', 'Series C+', 'Late-stage / Pre-IPO', 'Public'],
       minHeadcount: 100,
       locations: ['Remote', 'Hybrid (SF Bay)', 'San Francisco'],
       excludedLocations: [],
@@ -3081,7 +3095,7 @@
 
       // Check 4: Company stage OK?
       const preferredStages = prefs.companyStage || [];
-      const stageOK = preferredStages.length === 0 || preferredStages.includes(role.stage);
+      const stageOK = preferredStages.length === 0 || preferredStages.includes(normalizeStage(role.stage));
       checks.push({
         name: 'Company stage OK?',
         passed: stageOK,
@@ -3141,12 +3155,131 @@
      * - Location Match (15%): Matches preference = 100, remote if preferred = 100
      * - Network Signal (15%): Tracked connection = 100, 3+ LinkedIn = 80, 1-2 = 50
      * - Company Stage (10%): Matches preferred stages = 100, else = 30
-     * - Comp Signal (5%): Overlaps range = 100, no data = 50, below min = 0
+     * - Comp Signal (5%): Estimated total comp vs user targets. Uses base-to-total
+     *   ratio by company archetype (public FAANG ~55% base, startup ~70%, etc.)
      *
      * @param {Object} role - Role to score (must have .networkInfo if available)
      * @param {Object} prefs - User preferences
      * @returns {Object} { score: 0-100, breakdown: {...scores}, hasFullJD: bool }
      */
+
+    /* ====== STAGE NORMALIZATION (v3.7.0) ======
+       Existing feed items may have old stage values from before v3.7.0.
+       Map them to the new canonical values so scoring/filtering still works. */
+    function normalizeStage(stage) {
+      if (!stage) return '';
+      const map = {
+        'Series B+': 'Series B',          // Old "B+" → "B"
+        'Late-stage': 'Late-stage / Pre-IPO',
+        'Pre-IPO': 'Late-stage / Pre-IPO',
+        'Private': 'Bootstrapped'
+      };
+      return map[stage] || stage;
+    }
+
+    /* ====== COMP ESTIMATION ENGINE (v3.7.0) ======
+       Estimates total compensation from a listed base salary range,
+       using typical comp structures for different company archetypes.
+
+       At senior PM level, total comp = base + bonus + equity.
+       The ratios vary dramatically by company type:
+       - Public FAANG-tier: base is ~55% of total (big RSU packages)
+       - Public mid-cap: base is ~65% (moderate RSUs)
+       - Late-stage / Pre-IPO: base is ~60% (options/RSUs, illiquid)
+       - Series C+: base is ~65% (options, moderate risk)
+       - Series A/B: base is ~70% (options, high risk/reward)
+       - Seed: base is ~75% (mostly equity lottery tickets)
+       - Bootstrapped: base is ~85% (minimal equity, maybe profit share)
+
+       FORMULA: estimatedTotal = baseSalary / baseRatio
+       Example: Adobe (Public) posts $200K base → $200K / 0.55 = ~$364K total
+       Example: Series A startup posts $200K → $200K / 0.70 = ~$286K total */
+    function estimateTotalComp(baseSalary, stage) {
+      const normalizedStage = normalizeStage(stage);
+
+      // Base salary as a percentage of total comp, by company archetype
+      const BASE_RATIOS = {
+        'Seed':                 0.80,  // Mostly equity lottery tickets
+        'Series A':             0.72,  // Heavy options, lower cash
+        'Series B':             0.68,  // Options + some structure
+        'Series C+':            0.65,  // Options/RSUs, moderate risk
+        'Late-stage / Pre-IPO': 0.60,  // RSUs/options, approaching liquidity
+        'Public':               0.55,  // Big RSU packages (FAANG-tier)
+        'Bootstrapped':         0.85   // Minimal equity, maybe profit share
+      };
+
+      const ratio = BASE_RATIOS[normalizedStage] || 0.65; // Default: mid-market
+      const estimatedTotal = Math.round(baseSalary / ratio);
+
+      // Estimate the breakdown components
+      const bonusRate = normalizedStage === 'Public' ? 0.12 :
+                        normalizedStage === 'Bootstrapped' ? 0.08 : 0.07;
+      const estimatedBonus = Math.round(baseSalary * bonusRate);
+      const estimatedEquity = estimatedTotal - baseSalary - estimatedBonus;
+
+      return {
+        base: baseSalary,
+        bonus: Math.max(0, estimatedBonus),
+        equity: Math.max(0, estimatedEquity),
+        total: estimatedTotal,
+        ratio: ratio,
+        stage: normalizedStage || 'Unknown',
+        isEstimate: true  // Flag so UI can show "est." label
+      };
+    }
+
+    /**
+     * Parse a salary string and estimate total comp.
+     * Returns null if salary can't be parsed.
+     *
+     * @param {string} salaryText - e.g., "$148K-$282K" or "$125,000-$223,850"
+     * @param {string} stage - Company stage for ratio lookup
+     * @returns {Object|null} { min: {...compBreakdown}, max: {...compBreakdown}, rawMin, rawMax }
+     */
+    function parseSalaryAndEstimate(salaryText, stage) {
+      if (!salaryText || salaryText === 'Salary not listed') return null;
+
+      const salaryMatch = salaryText.match(/\$(\d[\d,]*)\s*(?:K)?\s*[-–—]\s*\$?(\d[\d,]*)\s*(?:K)?/i);
+      if (!salaryMatch) return null;
+
+      let salaryMin = parseInt(salaryMatch[1].replace(/,/g, ''));
+      let salaryMax = parseInt(salaryMatch[2].replace(/,/g, ''));
+
+      // Normalize to actual dollars (e.g., 148 → 148000, but 148000 stays)
+      if (salaryMin < 1000) salaryMin *= 1000;
+      if (salaryMax < 1000) salaryMax *= 1000;
+
+      return {
+        min: estimateTotalComp(salaryMin, stage),
+        max: estimateTotalComp(salaryMax, stage),
+        rawMin: salaryMin,
+        rawMax: salaryMax
+      };
+    }
+
+    /**
+     * Render comp display HTML for a feed card.
+     * Shows listed salary + estimated total comp with hover breakdown.
+     * @param {Object} item - Feed item with .salary and .stage
+     * @returns {string} HTML string for the comp line on a card
+     */
+    function renderCompDisplay(item) {
+      const est = parseSalaryAndEstimate(item.salary, normalizeStage(item.stage));
+      if (est) {
+        const maxTotal = Math.round(est.max.total / 1000);
+        const maxBase = Math.round(est.rawMax / 1000);
+        const maxBonus = Math.round(est.max.bonus / 1000);
+        const maxEquity = Math.round(est.max.equity / 1000);
+        const stageLabel = est.max.stage || 'Unknown';
+        const pct = Math.round(est.max.ratio * 100);
+        return `<span style="font-size: var(--text-xs); color: var(--text-tertiary);">${item.salary}</span>
+          <br><span style="font-size: var(--text-xs); color: var(--primary); font-weight: 500;"
+            title="Base $${maxBase}K + Bonus ~$${maxBonus}K + Equity ~$${maxEquity}K (${stageLabel}, ${pct}% base ratio)"
+          >→ ~$${maxTotal}K total (est.)</span>`;
+      }
+      return `<span style="font-size: var(--text-xs); color: var(--text-tertiary);">${item.salary || 'Salary not listed'}</span>`;
+    }
+
     function scoreRole(role, prefs) {
       // ===== JD-FIRST TEXT SELECTION =====
       // When we have a full JD, scan it for all keyword/title matching.
@@ -3293,8 +3426,9 @@
       // ===== DIMENSION 5: Company Stage (10% weight) =====
       let stageScore = 0;
       const preferredStages = prefs.companyStage || [];
+      const normalizedRoleStage = normalizeStage(role.stage);
 
-      if (preferredStages.includes(role.stage)) {
+      if (preferredStages.includes(normalizedRoleStage)) {
         stageScore = 100;
       } else if (preferredStages.length === 0) {
         stageScore = 100; // No preference = all stages OK
@@ -3304,26 +3438,24 @@
       const stageDim = stageScore * 0.10;
 
       // ===== DIMENSION 6: Compensation Signal (5% weight) =====
+      // Uses estimated TOTAL comp (base + bonus + equity) instead of just
+      // listed base salary. Estimation uses company-archetype-based ratios.
       let compScore = 0;
       const minBase = prefs.compRange?.minBase || 0;
-      const targetBase = prefs.compRange?.targetBase || 0;
+      const targetTotal = prefs.compRange?.targetBase || 0;
+      const compEstimate = parseSalaryAndEstimate(role.salary, normalizedRoleStage);
 
-      if (!role.salary || role.salary === 'Salary not listed') {
-        compScore = 50; // No data = neutral
+      if (!compEstimate) {
+        compScore = 50; // No salary data or can't parse = neutral
       } else {
-        const salaryMatch = role.salary.match(/\$(\d+)K?\s*-\s*\$(\d+)K?/i);
-        if (salaryMatch) {
-          const salaryMin = parseInt(salaryMatch[1]) * 1000;
-          const salaryMax = parseInt(salaryMatch[2]) * 1000;
+        // Use the estimated total comp (high end) for scoring
+        const estimatedMaxTotal = compEstimate.max.total;
 
-          // Score based on whether salary meets minimum and how it compares to target
-          // No max cap — there's no reason to penalize high comp
-          if (salaryMax >= targetBase) compScore = 100;       // Meets or exceeds target — perfect
-          else if (salaryMax >= minBase) compScore = 70;       // Above min but below target — decent
-          else compScore = 0;                                  // Below minimum — deal-breaker
-        } else {
-          compScore = 50; // Can't parse, be neutral
-        }
+        // Score against user's targets using estimated total comp
+        // No max cap — there's no reason to penalize high comp
+        if (estimatedMaxTotal >= targetTotal) compScore = 100;    // Estimated total meets/exceeds target
+        else if (estimatedMaxTotal >= minBase) compScore = 70;    // Above min but below target
+        else compScore = 0;                                        // Below minimum even with equity
       }
       const compDim = compScore * 0.05;
 
@@ -3342,8 +3474,44 @@
       }
       const networkDim = networkScore * 0.15;
 
+      // ===== BONUS: Leader vs IC fit (additive, not its own dimension) =====
+      // At smaller companies, favor people-leader roles (build a team, own a function).
+      // At larger companies, both leader and IC roles are fine — scope is big either way.
+      // Detection is JD-driven: scan for management vs IC signals in the text.
+      let leaderICBonus = 0;
+      let leaderICNote = '';
+      const leaderSignals = [
+        'manage a team', 'direct reports', 'lead a team', 'people management',
+        'hire and develop', 'org building', 'team of', 'build the team',
+        'player-coach', 'people leader', 'manage engineers', 'manage designers',
+        'manage product managers', 'growing the team', 'staff management',
+        'mentor and coach', 'reporting to you', 'build and lead'
+      ];
+      const icSignals = [
+        'individual contributor', ' ic role', ' ic position', 'no direct reports',
+        'hands-on ic', 'deep technical', 'principal ic', 'staff-level ic'
+      ];
+
+      const isSmallCompany = ['Seed', 'Series A', 'Series B'].includes(normalizedRoleStage);
+      const hasLeaderSignals = leaderSignals.some(s => searchText.includes(s) || titleLower.includes(s));
+      const hasICSignals = icSignals.some(s => searchText.includes(s) || titleLower.includes(s));
+
+      if (isSmallCompany && hasLeaderSignals) {
+        leaderICBonus = 5;  // Ideal: leadership at a small company = build something
+        leaderICNote = 'Leader@Small';
+      } else if (isSmallCompany && hasICSignals) {
+        leaderICBonus = 0;  // IC at small company — fine, but no boost
+        leaderICNote = 'IC@Small';
+      } else if (hasLeaderSignals) {
+        leaderICBonus = 2;  // Leader at larger company — still good
+        leaderICNote = 'Leader';
+      } else if (hasICSignals) {
+        leaderICBonus = 0;  // IC at larger company — totally fine
+        leaderICNote = 'IC';
+      }
+
       // ===== FINAL SCORE =====
-      let finalScore = titleDim + domainDim + keywordDim + locationDim + networkDim + stageDim + compDim;
+      let finalScore = titleDim + domainDim + keywordDim + locationDim + networkDim + stageDim + compDim + leaderICBonus;
       finalScore = Math.round(finalScore);
 
       // Hard caps: excluded domain or exclude keyword → max 39
@@ -3363,7 +3531,8 @@
           location: Math.round(locationScore),
           network: Math.round(networkScore),
           stage: Math.round(stageScore),
-          comp: Math.round(compScore)
+          comp: Math.round(compScore),
+          leaderIC: leaderICNote
         },
         hasFullJD: hasFullJD,
         keywordNote: keywordNote,
@@ -3481,13 +3650,16 @@
       };
 
       // Company stages (checkboxes)
-      const stages = ['Series B+', 'Late-stage', 'Pre-IPO', 'Public'];
+      const stages = ['Seed', 'Series A', 'Series B', 'Series C+', 'Late-stage / Pre-IPO', 'Public', 'Bootstrapped'];
       stages.forEach(stage => {
         const stageMap = {
-          'Series B+': 'stageSeriesB',
-          'Late-stage': 'stageLateStage',
-          'Pre-IPO': 'stagePreIPO',
-          'Public': 'stagePublic'
+          'Seed': 'stageSeed',
+          'Series A': 'stageSeriesA',
+          'Series B': 'stageSeriesB',
+          'Series C+': 'stageSeriesC',
+          'Late-stage / Pre-IPO': 'stageLateStage',
+          'Public': 'stagePublic',
+          'Bootstrapped': 'stageBootstrapped'
         };
         const el = document.getElementById(stageMap[stage]);
         if (el) {
@@ -3622,10 +3794,15 @@
                     { label: 'Stage', val: item.scoring.stage, weight: 10 },
                     { label: 'Comp', val: item.scoring.comp || 0, weight: 5 },
                   ];
-                  return dims.map(d => {
+                  let html = dims.map(d => {
                     const tier = d.val >= 70 ? 'high' : d.val >= 40 ? 'medium' : 'low';
                     return `<span class="score-dim"><span class="score-dim-label">${d.label}</span> <span class="score-dim-val ${tier}">${d.val}</span></span>`;
                   }).join('');
+                  // Show leader/IC badge if detected
+                  if (item.scoring.leaderIC) {
+                    html += `<span class="score-dim"><span class="score-dim-label" style="color: var(--primary); font-weight: 600;">${item.scoring.leaderIC}</span></span>`;
+                  }
+                  return html;
                 })()}
               </div>
             </div>
@@ -3657,7 +3834,7 @@
 
             <div class="card-details">
               <strong>${item.domain}</strong> • ${item.location}${item.remote ? ' (Remote)' : ''}<br>
-              <span style="font-size: var(--text-xs); color: var(--text-tertiary);">${item.salary || 'Salary not listed'}</span>
+              ${renderCompDisplay(item)}
               ${item.feedMetadata && item.feedMetadata.referredBy
                 ? `<br><span class="referral-badge">🤝 Referred by ${item.feedMetadata.referredBy}</span>`
                 : ''
@@ -4199,12 +4376,13 @@
                   const tier = d.val >= 70 ? 'high' : d.val >= 40 ? 'medium' : 'low';
                   return `<span class="score-dim"><span class="score-dim-label">${d.label}</span> <span class="score-dim-val ${tier}">${d.val}</span></span>`;
                 }).join('')}
+                ${item.scoring.leaderIC ? `<span class="score-dim"><span class="score-dim-label" style="color: var(--primary); font-weight: 600;">${item.scoring.leaderIC}</span></span>` : ''}
               </div>` : ''}
             </div>
 
             <div class="card-details">
               <strong>${item.domain}</strong> • ${item.location}${item.remote ? ' (Remote)' : ''}<br>
-              <span style="font-size: var(--text-xs); color: var(--text-tertiary);">${item.salary || 'Salary not listed'}</span>
+              ${renderCompDisplay(item)}
               ${item.feedMetadata && item.feedMetadata.referredBy
                 ? `<br><span class="referral-badge">🤝 Referred by ${item.feedMetadata.referredBy}</span>`
                 : ''
@@ -4302,7 +4480,7 @@
       const location = document.getElementById('manualLocation').value.trim() || 'Not specified';
       const salaryMin = document.getElementById('manualSalaryMin').value;
       const salaryMax = document.getElementById('manualSalaryMax').value;
-      const stage = document.getElementById('manualStage').value || 'Series B+';
+      const stage = document.getElementById('manualStage').value || 'Public';
       const domain = document.getElementById('manualDomain').value.trim() || 'General';
 
       if (!company || !title || !jd) {
@@ -4457,6 +4635,10 @@
         <div style="margin-top: var(--space-4); padding: var(--space-3); background: var(--bg-base); border-radius: var(--radius-sm); border-left: 3px solid var(--accent);">
           <strong>${role.company}</strong> — ${role.title}<br>
           <span style="font-size: var(--text-xs); color: var(--text-secondary);">${role.location} • ${role.salary}</span>
+          ${(() => {
+            const est = parseSalaryAndEstimate(role.salary, normalizeStage(role.stage));
+            return est ? `<br><span style="font-size: var(--text-xs); color: var(--primary);">→ ~$${Math.round(est.max.total / 1000)}K total (est.)</span>` : '';
+          })()}
         </div>
       `;
 
@@ -4735,7 +4917,7 @@
         location,
         remote: location.toLowerCase().includes('remote'),
         salary,
-        stage: 'Series B+',
+        stage: 'Public',
         domain,
         posted: 'just now',
         source: source,
