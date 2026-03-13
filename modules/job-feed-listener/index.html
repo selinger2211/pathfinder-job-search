@@ -4429,6 +4429,30 @@
           localStorage.setItem(MIGRATION_KEY, 'true');
         }
 
+        // v3.20.1: One-time migration — merge new default domains into existing prefs.
+        // Adds Cloud/Infrastructure, Analytics as primary; LegalTech, Marketplace as secondary.
+        const DOMAIN_MIGRATION_KEY = 'pf_prefs_migrated_v3201_domains';
+        if (!localStorage.getItem(DOMAIN_MIGRATION_KEY)) {
+          let domainChanged = false;
+          ['primaryDomains', 'secondaryDomains', 'excludedDomains'].forEach(key => {
+            const defaults = DEFAULT_PREFERENCES[key] || [];
+            const existing = prefs[key] || [];
+            const existingLower = existing.map(d => d.toLowerCase());
+            defaults.forEach(d => {
+              if (!existingLower.includes(d.toLowerCase())) {
+                existing.push(d);
+                domainChanged = true;
+              }
+            });
+            prefs[key] = existing;
+          });
+          if (domainChanged) {
+            console.log('[Feed] v3.20.1 migration: merged new default domains into existing preferences');
+            localStorage.setItem('pf_preferences', JSON.stringify(prefs));
+          }
+          localStorage.setItem(DOMAIN_MIGRATION_KEY, 'true');
+        }
+
         return prefs;
       } catch (e) {
         console.warn('Failed to load preferences from localStorage:', e);
