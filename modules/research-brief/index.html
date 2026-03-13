@@ -1480,7 +1480,8 @@
       { num: 10, title: 'Culture & Values Decode',        icon: '🧭' },
       { num: 11, title: 'Questions to Ask',               icon: '❓' },
       { num: 12, title: 'TMAY Script',                    icon: '🎤' },
-      { num: 13, title: 'Likely Interview Questions',     icon: '🧩' }
+      { num: 13, title: 'Likely Interview Questions',     icon: '🧩' },
+      { num: 14, title: 'Interviewer Profiles',           icon: '🎯' }
     ];
 
     // ================================================================
@@ -1490,11 +1491,13 @@
     // Batch 1: Sections 1,2,3,4,5,6,8,10 — independent, can run in parallel
     // Batch 2: Sections 7,9,12,13 — depend on Batch 1 outputs
     // Batch 3: Section 11 — depends on all other sections
+    // Batch 4: Section 14 — depends on interviewer names (from sidebar)
     const GENERATION_BATCHES = {
       preBatch: [0],                    // Only if no JD
       batch1: [1, 2, 3, 4, 5, 6, 8, 10],  // Independent sections
       batch2: [7, 9, 12, 13],              // Depend on batch 1
       batch3: [11],                         // Depends on everything
+      batch4: [14],                         // Depends on interviewer names
     };
 
     // ================================================================
@@ -1727,6 +1730,28 @@ Output structure (use h3 for subsections):
 - **Your Answer Framework** — For behavioral: STAR structure with specific stories selected. For technical: go-to frameworks.
 
 Questions must be SPECIFIC to this role. Every question needs a "why they'd ask this" rationale tied to the JD or company context.`,
+      },
+      14: {
+        title: "Interviewer Profiles",
+        prompt: `Generate Section 14: Interviewer Profiles.
+
+Build detailed profiles of each interviewer to personalize your approach and prepare targeted talking points.
+
+Output structure (use h3 for subsections):
+- **Interviewer List** — For each interviewer name provided:
+  - Name and title at the company
+  - Company role and team ownership
+  - LinkedIn profile link (if available)
+  - Mutual connections with the candidate (if available)
+  - Recent activity or public speaking/writing
+- **Interviewer-Based Question Prediction** — For each interviewer based on their role:
+  - Likely focus areas (e.g., VP Engineering = system design, architecture, leadership)
+  - Suggested talking points tailored to their background
+  - 2-3 specific questions to ask them that show preparation
+- **Conversation Hooks** — For each interviewer, 1-2 specific things to mention that show you've done your homework
+- **No Interviewer Names?** — If names not provided: "Add interviewer names in the sidebar to unlock detailed profiles and personalized prep."
+
+Use only publicly available professional information. Be specific: "Sarah led the Platform team's shift to microservices" is better than "Sarah is a technical leader."`,
       }
     };
 
@@ -1754,6 +1779,9 @@ Questions must be SPECIFIC to this role. Every question needs a "why they'd ask 
       sectionCollapseState: JSON.parse(localStorage.getItem('pf_brief_section_collapse') || '{}'),
       generationStartTime: null, // Track for ETA calculation
       sectionGenerationTimes: {}, // { sectionNum: milliseconds } for ETA estimation
+      // FEATURE #43: Deep Integrations (Phase 3)
+      briefCompletenessScore: 0, // 0-100: completeness percentage
+      invalidationSources: {},   // { source: signals } for cross-module tracking
     };
 
     // ================================================================
@@ -3351,6 +3379,90 @@ The HTML content should come first, followed by the citations block. Do not incl
     }
 
     /**
+     * FEATURE #43: Renders the Brief Completeness Score banner.
+     * Displays completion percentage with color-coded progress bar.
+     * INPUT: score (0-100), healthColor (string)
+     * OUTPUT: HTML string for completeness banner
+     */
+    function renderCompletenessScoreBanner(score, healthColor) {
+      const colorClass = healthColor.replace('text-', '');
+      let bgColor = 'rgba(34, 197, 94, 0.1)'; // Green
+      let borderColor = 'rgba(34, 197, 94, 0.3)';
+      let textColor = 'rgb(34, 197, 94)';
+
+      if (colorClass === 'amber') {
+        bgColor = 'rgba(251, 191, 36, 0.1)';
+        borderColor = 'rgba(251, 191, 36, 0.3)';
+        textColor = 'rgb(251, 191, 36)';
+      } else if (colorClass === 'red') {
+        bgColor = 'rgba(239, 68, 68, 0.1)';
+        borderColor = 'rgba(239, 68, 68, 0.3)';
+        textColor = 'rgb(239, 68, 68)';
+      }
+
+      return `
+        <div style="background: ${bgColor}; border: 1px solid ${borderColor}; padding: var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-6);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+            <div style="font-weight: 600; color: var(--text-primary);">Brief Completeness</div>
+            <div style="font-size: var(--text-lg); font-weight: 700; color: ${textColor};">${score}%</div>
+          </div>
+          <div style="width: 100%; height: 8px; background: var(--bg-subtle); border-radius: 4px; overflow: hidden;">
+            <div style="height: 100%; width: ${score}%; background: ${textColor}; transition: width 0.3s ease;"></div>
+          </div>
+          <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-2);">
+            ${score >= 80 ? 'Excellent' : score >= 50 ? 'Good' : 'Needs more sections'} — Review stale sections to refresh
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * FEATURE #43: Renders the Invalidation Dashboard.
+     * Shows which sections may need refresh based on cross-module signals.
+     * INPUT: invalidationReport (from checkAllInvalidationSources)
+     * OUTPUT: HTML string for dashboard, or empty string if no invalidations
+     */
+    function renderInvalidationDashboard(invalidationReport) {
+      if (invalidationReport.staleCount === 0) {
+        return '';
+      }
+
+      let sourcesList = '<ul style="margin: 0; padding-left: var(--space-4); font-size: var(--text-sm);">';
+      if (invalidationReport.sources.calendar) {
+        sourcesList += `<li>📅 <strong>Calendar:</strong> ${invalidationReport.sources.calendar.count} new interview(s) scheduled</li>`;
+      }
+      if (invalidationReport.sources.outreach) {
+        sourcesList += `<li>📧 <strong>Outreach:</strong> ${invalidationReport.sources.outreach.count} new communication(s)</li>`;
+      }
+      sourcesList += '</ul>';
+
+      const sectionsList = invalidationReport.sectionsToInvalidate
+        .map(num => {
+          const section = SECTION_DEFINITIONS.find(s => s.num === num);
+          return section ? `Section ${num}: ${section.title}` : `Section ${num}`;
+        })
+        .join(', ');
+
+      return `
+        <div style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); padding: var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-6);">
+          <div style="font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-2);">⚠️ Sections May Need Refresh</div>
+          <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-3);">
+            ${invalidationReport.summary}
+          </div>
+          <details style="cursor: pointer;">
+            <summary style="font-size: var(--text-sm); font-weight: 500; color: var(--accent); margin-bottom: var(--space-2);">Show invalidation sources</summary>
+            <div style="background: var(--bg-elevated); padding: var(--space-3); border-radius: var(--radius-sm); margin-top: var(--space-2);">
+              ${sourcesList}
+            </div>
+          </details>
+          <div style="margin-top: var(--space-3); font-size: var(--text-sm); color: var(--text-secondary);">
+            <strong>Affected sections:</strong> ${sectionsList}
+          </div>
+        </div>
+      `;
+    }
+
+    /**
      * Determine which sections to generate based on the role data.
      * Section 0 only appears when there's no JD.
      * Returns an array of batch arrays: [[preBatch], [batch1], [batch2], [batch3]]
@@ -3372,6 +3484,11 @@ The HTML content should come first, followed by the citations block. Do not incl
 
       // Batch 3: Section 11 depends on everything
       batches.push(GENERATION_BATCHES.batch3);
+
+      // Batch 4: Section 14 (Interviewer Profiles) if interviewer names provided
+      if (state.interviewerNames && state.interviewerNames.length > 0) {
+        batches.push(GENERATION_BATCHES.batch4);
+      }
 
       return batches;
     }
@@ -4478,6 +4595,164 @@ The HTML content should come first, followed by the citations block. Do not incl
       lucide.createIcons();
     }
 
+    /* ====== FEATURE #43: Deep Integrations (Phase 3) ====== */
+
+    /**
+     * Builds interviewer profiles from names and connections data.
+     * Called to generate context for Section 14.
+     * INPUT: roleId (string) — role ID to fetch interviewer/connection data for
+     * OUTPUT: Array of { name, title, linkedinUrl, mutualConnections[], notes }
+     */
+    function buildInterviewerProfiles(roleId) {
+      if (!state.interviewerNames || state.interviewerNames.length === 0) {
+        return [];
+      }
+
+      // Retrieve connections from localStorage
+      let connections = [];
+      try {
+        connections = JSON.parse(localStorage.getItem('pf_connections') || '[]');
+      } catch (e) {
+        connections = [];
+      }
+
+      const profiles = [];
+      state.interviewerNames.forEach(name => {
+        // Try to find matching connection
+        const matchedConnection = connections.find(c =>
+          c.name && c.name.toLowerCase().includes(name.toLowerCase())
+        );
+
+        // Build profile object
+        const profile = {
+          name: name,
+          title: matchedConnection?.title || 'Title unknown',
+          linkedinUrl: matchedConnection?.linkedinUrl || null,
+          mutualConnections: matchedConnection?.mutualConnections || [],
+          notes: matchedConnection?.notes || ''
+        };
+
+        profiles.push(profile);
+      });
+
+      return profiles;
+    }
+
+    /**
+     * Checks all invalidation sources (pipeline, calendar, comp, debrief, outreach).
+     * Centralizes staleness detection into one comprehensive report.
+     * INPUT: roleId (string)
+     * OUTPUT: { sources: {}, sectionsToInvalidate: [], report: string }
+     */
+    function checkAllInvalidationSources(roleId) {
+      const report = {
+        sources: {},
+        sectionsToInvalidate: [],
+        staleCount: 0,
+        summary: ''
+      };
+
+      // Check calendar signal: new interviews scheduled
+      try {
+        const calendarData = JSON.parse(localStorage.getItem('pf_calendar_manual_links') || '{}');
+        if (calendarData[roleId]) {
+          const recentInterviews = calendarData[roleId].filter(event =>
+            new Date(event.date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
+          );
+          if (recentInterviews.length > 0) {
+            report.sources.calendar = { signal: 'new_interviews', count: recentInterviews.length };
+            report.sectionsToInvalidate.push(8, 13); // Interview Prep, Questions to Ask
+            report.staleCount++;
+          }
+        }
+      } catch (e) {
+        // Silently fail if calendar data unavailable
+      }
+
+      // Check outreach signal: new communications sent/received
+      try {
+        const outreachData = JSON.parse(localStorage.getItem('pf_outreach') || '{}');
+        if (outreachData[roleId]) {
+          const recentOutreach = outreachData[roleId].filter(item =>
+            new Date(item.date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
+          );
+          if (recentOutreach.length > 0) {
+            report.sources.outreach = { signal: 'new_communications', count: recentOutreach.length };
+            report.sectionsToInvalidate.push(7); // Communication History (if exists)
+            report.staleCount++;
+          }
+        }
+      } catch (e) {
+        // Silently fail if outreach data unavailable
+      }
+
+      // Remove duplicates
+      report.sectionsToInvalidate = [...new Set(report.sectionsToInvalidate)];
+
+      // Build summary
+      if (report.staleCount === 0) {
+        report.summary = 'No invalidation signals detected.';
+      } else if (report.staleCount === 1) {
+        report.summary = `1 invalidation source detected. ${report.sectionsToInvalidate.length} section(s) may need refresh.`;
+      } else {
+        report.summary = `${report.staleCount} invalidation sources detected. ${report.sectionsToInvalidate.length} section(s) may need refresh.`;
+      }
+
+      return report;
+    }
+
+    /**
+     * Calculates brief completeness score (0-100%).
+     * Each section contributes: generated = full points, stale = half, missing = 0
+     * INPUT: none (uses state.generatedSections and SECTION_DEFINITIONS)
+     * OUTPUT: { score: number (0-100), breakdown: {section: status}, healthColor: string }
+     */
+    function calculateBriefCompletenessScore() {
+      const totalSections = SECTION_DEFINITIONS.length;
+      let points = 0;
+      const breakdown = {};
+
+      SECTION_DEFINITIONS.forEach(section => {
+        const sectionNum = section.num;
+        const sectionEl = document.getElementById(`section-${sectionNum}`);
+
+        if (!sectionEl) {
+          // Section doesn't exist
+          breakdown[sectionNum] = 'missing';
+          return;
+        }
+
+        if (sectionEl.classList.contains('pending')) {
+          // Still generating
+          breakdown[sectionNum] = 'generating';
+          points += 0;
+        } else if (sectionEl.classList.contains('stale')) {
+          // Generated but stale
+          breakdown[sectionNum] = 'stale';
+          points += (100 / totalSections) * 0.5; // Half credit for stale
+        } else if (state.generatedSections[sectionNum]) {
+          // Fully generated and fresh
+          breakdown[sectionNum] = 'complete';
+          points += (100 / totalSections);
+        } else {
+          // Not generated
+          breakdown[sectionNum] = 'missing';
+          points += 0;
+        }
+      });
+
+      const score = Math.round(points);
+      let healthColor = 'text-red';  // < 50%
+      if (score >= 80) healthColor = 'text-green';
+      else if (score >= 50) healthColor = 'text-amber';
+
+      return {
+        score: score,
+        breakdown: breakdown,
+        healthColor: healthColor
+      };
+    }
+
     /**
      * v2 GENERATE BRIEF — Claude API-powered generation via MCP bridge.
      * Generates all sections in 3 dependency-ordered batches.
@@ -4709,6 +4984,38 @@ The HTML content should come first, followed by the citations block. Do not incl
         await Promise.allSettled(promises);
       }
 
+      // FEATURE #43: Calculate and display brief completeness score
+      const completenessData = calculateBriefCompletenessScore();
+      state.briefCompletenessScore = completenessData.score;
+      const scoreHtml = renderCompletenessScoreBanner(completenessData.score, completenessData.healthColor);
+      const scoreEl = document.createElement('div');
+      scoreEl.innerHTML = scoreHtml;
+      scoreEl.id = 'briefCompleteness';
+      // Insert at the beginning of sectionsArea (after any banner/degraded mode msg)
+      const firstSection = sectionsArea.querySelector('.section, .sources-section');
+      if (firstSection) {
+        firstSection.parentNode.insertBefore(scoreEl, firstSection);
+      } else {
+        sectionsArea.appendChild(scoreEl);
+      }
+
+      // FEATURE #43: Check all invalidation sources and display dashboard
+      const invalidationReport = checkAllInvalidationSources(role.id);
+      state.invalidationSources = invalidationReport.sources;
+      const invalidationHtml = renderInvalidationDashboard(invalidationReport);
+      if (invalidationHtml) {
+        const invalidationEl = document.createElement('div');
+        invalidationEl.innerHTML = invalidationHtml;
+        invalidationEl.id = 'invalidationDashboard';
+        // Insert right after completeness score
+        const scoreElem = document.getElementById('briefCompleteness');
+        if (scoreElem && scoreElem.nextSibling) {
+          scoreElem.parentNode.insertBefore(invalidationEl, scoreElem.nextSibling);
+        } else if (scoreElem) {
+          scoreElem.parentNode.appendChild(invalidationEl);
+        }
+      }
+
       // After all sections are generated, add sources aggregation section
       const sourcesHtml = renderSourcesAggregation();
       if (sourcesHtml) {
@@ -4845,6 +5152,14 @@ The HTML content should come first, followed by the citations block. Do not incl
         contentEl.innerHTML = sanitizeContent(result.content);
         sectionEl.classList.remove('pending');
         statusEl.innerHTML = '<span class="badge">Fresh</span> <span style="font-size: 11px; color: var(--text-tertiary);">Just now</span>';
+
+        // FEATURE #43: Update completeness score after refreshing a section
+        const completenessData = calculateBriefCompletenessScore();
+        state.briefCompletenessScore = completenessData.score;
+        const scoreEl = document.getElementById('briefCompleteness');
+        if (scoreEl) {
+          scoreEl.innerHTML = renderCompletenessScoreBanner(completenessData.score, completenessData.healthColor);
+        }
       } catch (error) {
         contentEl.innerHTML = `
           <div style="padding: var(--space-3); background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-sm);">

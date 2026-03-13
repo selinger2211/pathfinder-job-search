@@ -2,7 +2,7 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/pipeline/`
-**Version:** v3.14
+**Version:** v3.17
 **Last Updated:** 2026-03-13
 **Status:** Active — core features and advanced views implemented
 
@@ -141,16 +141,16 @@ Career page monitoring happens at these frequencies (see Job Feed PRD for detail
 
 ### Auto-Enrichment on Company Entry
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.17.0)** — DuckDuckGo Instant Answer API + Clearbit Logo + Google Favicon + website meta tags. Enrichment panel, re-enrich button, batch "Enrich All" with progress.
 
-When a company is added (manually or by Job Feed), the system should run auto-enrichment:
+When a company is added (manually or by Job Feed), the system runs auto-enrichment:
 
-1. **Logo fetch** (Clearbit API) — attempt to get company logo
-2. **Basic profile** — scrape LinkedIn for funding, headcount, mission
-3. **News scan** — Google News API for recent articles
-4. **Glassdoor lookup** — fetch Glassdoor profile URL and rating
+1. **Logo fetch** (Clearbit API + Google Favicon fallback) — attempt to get company logo
+2. **Website meta tags** — scrape website for mission, description, keywords
+3. **DuckDuckGo Instant Answer** — get quick facts about company
+4. **News scan** — fetch recent articles from DuckDuckGo
 
-Enrichment would happen async; the UI would show a spinner while loading. Failed enrichments wouldn't block entry.
+Enrichment happens async; the UI shows a spinner while loading. Failed enrichments don't block entry. An enrichment panel displays all fetched data with a re-enrich button. Batch "Enrich All" button with progress bar to refresh all companies.
 
 ### Company Lookup & Web Search
 
@@ -802,9 +802,9 @@ What exists today:
 - [x] Company View (alternative grouping by company) (v3.11)
 - [x] Fit Assessment badge on cards and detail panel (v3.11)
 
-### Phase 2: Enrichment & Automation (v1.1)
-- [ ] Auto-enrichment on company entry (Clearbit logo, LinkedIn profile, Glassdoor lookup) — **Planned**
-- [ ] Company lookup web search on manual add — **Planned**
+### Phase 2: Enrichment & Automation (v3.17)
+- [x] Auto-enrichment on company entry (DuckDuckGo Instant Answer API, Clearbit logo, Google Favicon, website meta tags) (v3.17)
+- [x] Company lookup web search on manual add (v3.12)
 - [x] URL import for adding roles (CORS proxy) (v3.11)
 - [ ] Tier management suggestions from Job Feed
 - [ ] Stage-based notifications ("interview in 2 days")

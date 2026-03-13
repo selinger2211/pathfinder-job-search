@@ -4,6 +4,86 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.17.0 — 2026-03-13
+
+### What Changed — Tier 3 Major Build: 5 Features Across 4 Modules
+
+**Summary:** Major release completing auto-enrichment, email/career page monitoring, post-interview automation, and research brief intelligence. Four modules receive major feature implementations: Pipeline (auto-enrichment), Job Feed (Gmail + career pages), Calendar (post-interview triggers), and Research Brief (deep integrations phase 3).
+
+**Changes:**
+
+**Pipeline Module (#39):**
+
+**Auto-Enrichment on Company Entry:**
+- DuckDuckGo Instant Answer API integration for quick facts
+- Clearbit Logo fetch with Google Favicon fallback
+- Website meta tags scraping for mission/description
+- Async enrichment with UI spinner while loading
+- Enrichment panel showing all fetched data
+- Re-enrich button to refresh company data
+- Batch "Enrich All" button with progress bar
+- Failed enrichments don't block entry
+
+**Job Feed Module (#40, #41):**
+
+**Gmail Integration (#40):**
+- Token-based OAuth UI for Gmail authentication
+- Email scanner using Gmail API (search for job-related keywords)
+- Email classification: recruiter_outreach, job_alert, networking_followup
+- Parsed emails displayed as feed items with "Gmail" source badge
+- Auto-scan with configurable cooldown (prevents API rate limits)
+- Email extraction: company name, role title, recruiter info
+- Dedup against pipeline to avoid duplicate entries
+
+**Career Page Monitoring (#41):**
+- Tracked company career page URLs in source configuration
+- Auto-detect ATS platform: Greenhouse, Lever, Ashby, generic
+- Career page crawler with new job detection vs cached listings
+- Tiered check frequency by company tier (3x/week for Hot, weekly for Active)
+- "Check All" button for manual trigger with visual progress
+- Daily auto-check background task
+- Structured data extraction from career page listings
+
+**Calendar Module (#42):**
+
+**Post-Interview Triggers:**
+- Rejection signal detection via multiple channels:
+  - Silence pattern: no email communication for 30+ days
+  - Email patterns: keyword detection (appreciation, moving forward, etc.)
+  - Calendar signal: event deleted or marked declined
+- Next round detection:
+  - Auto-detect new calendar event within 1-2 weeks of interview
+  - Pattern matching on event titles (round 2, final, etc.)
+  - Auto-advance role stage with "Next round scheduled" reason
+- Offer detection:
+  - Calendar event with offer/compensation keywords
+  - Email with offer subject line
+  - Auto-advance to offer stage with transition reason
+- Stage auto-advance with structured transition reasons
+- Smart nudge suggestions based on detected patterns
+
+**Research Brief Module (#43):**
+
+**Deep Integrations Phase 3:**
+- Interviewer profiles section (section 14) now generated from connections data
+- Cross-module invalidation hub monitoring 7 signal sources:
+  - Pipeline: role stage changes, company tier changes
+  - Connections: new interviewer added/linked
+  - Calendar: new interview scheduled
+  - Debrief: new debrief captured
+  - Comp Intelligence: comp data updated
+  - Resume Builder: bullet bank updated
+  - External: news/funding updates
+- Brief completeness score (0-100) with progress bar
+  - Tracks which sections are generated, cached, or stale
+  - Visual indicator of brief readiness for interview
+- Invalidation dashboard showing:
+  - Last update time for each section
+  - Signal source that triggered invalidation
+  - Cache status per section (Fresh/Cached/Stale)
+
+---
+
 ## v3.16.0 — 2026-03-13
 
 ### What Changed — Tier 5 Major Build: 6 Features Across 4 Modules + MCP Server

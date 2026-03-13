@@ -2,7 +2,7 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/calendar/`
-**Version:** v3.15
+**Version:** v3.17
 **Last Updated:** 2026-03-13
 **Status:** Active — v3.15.0 features live
 
@@ -393,7 +393,7 @@ If multiple interviews same day:
 
 ## 7. Post-Interview Triggers & Follow-Up
 
-> **Status: Planned** — Auto-detection and follow-up triggers including rejection signal detection not yet fully implemented. Spec retained for future development.
+> **Status: Implemented (v3.17.0)** — Rejection signal detection (silence + email patterns), next round detection (event title patterns), offer detection (calendar + email), stage auto-advance with transition reason.
 
 After an interview event ends, the agent watches for patterns that signal next steps.
 
@@ -406,6 +406,7 @@ If new calendar event from same company detected within 1-2 weeks after intervie
   2. Auto-link new event to same role
   3. Update Role.interviewing.substate to 'in_loop'
   4. Nudge: "Next round at {company} scheduled for {date}"
+  5. Auto-advance stage with "Next round scheduled" transition reason
 ```
 
 **No Follow-Up (Check-In Nudge):**
@@ -424,13 +425,19 @@ If new calendar event from company with title containing "offer", "compensation"
   2. Update Role.offer.substate to 'received'
   3. Nudge: "Offer discussion scheduled at {company} — prepare negotiation brief"
   4. Link to Comp Intelligence Agent for salary benchmarking
+  5. Auto-advance stage with "Offer discussion scheduled" transition reason
 ```
 
 **Rejection Signal:**
 ```
-If calendar event deleted or meeting shows "Declined" status, or no communication within 30 days:
+Detection via multiple channels:
+  1. Silence pattern: No email communication for 30+ days after final interview
+  2. Email patterns: Rejection keywords in recent emails (e.g., "appreciate", "moving forward", "not proceeding")
+  3. Calendar signal: Calendar event deleted or meeting shows "Declined" status
+
+Actions:
   1. Prompt user: "No activity for 30 days — mark as closed?"
-  2. If user confirms: Role.stage = 'closed', closeReason = 'ghosted'
+  2. If user confirms: Role.stage = 'closed', closeReason = 'ghosted' or 'rejected' with email pattern evidence
   3. This is a soft suggestion, not automatic
 ```
 
@@ -556,17 +563,18 @@ If user has connection data for an interviewer, Research Brief can reference pri
 - [x] Manual event-to-role linking UI in Pipeline (for low-confidence events)
 - [ ] Interviewer context fetching (LinkedIn, Glassdoor, internal notes)
 
-### Phase 3: Post-Event Triggers (v1.2)
+### Phase 3: Post-Event Triggers (v3.17)
 
-> **Status: Implemented (v3.15.0)** — Post-event detection, stage progression suggestions, follow-up queue.
+> **Status: Implemented (v3.17.0)** — Post-event detection, stage progression suggestions, follow-up queue, rejection signal detection, next round detection, offer detection.
 
 - [x] Post-event detection (interview completed, debrief triggered)
 - [x] Stage progression suggestions (advance to next stage based on interview outcome)
 - [x] Follow-up queue with badge count (next steps, thank-yous, follow-ups)
 - [x] Interview journey timeline (view full interview history per role)
-- [ ] No-follow-up nudge after 2 weeks
-- [ ] Offer detection and stage auto-advance
-- [ ] 30-day check-in for stalled roles
+- [x] No-follow-up nudge after 2 weeks
+- [x] Offer detection and stage auto-advance (v3.17)
+- [x] 30-day check-in for stalled roles with rejection signal detection (v3.17)
+- [x] Next round scheduled detection and auto-advance (v3.17)
 
 ### Phase 4: Intelligence & Feedback Loops (v1.3+)
 

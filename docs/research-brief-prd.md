@@ -2,7 +2,7 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/research-brief/`
-**Version:** v3.16
+**Version:** v3.17
 **Last Updated:** 2026-03-13
 **Status:** Active — v3.16.0 features live
 
@@ -849,7 +849,7 @@ UI includes "Save to Server" button (saves immediately) and "Brief History" drop
 - Section-level staleness tracking with source hashing (#51)
 - Smart regeneration of only stale sections (#51)
 
-### Phase 3: Deep Integrations (Partial)
+### Phase 3: Deep Integrations (v3.17.0)
 
 **Shipped:**
 - Bullet bank read for Sections 7, 12, 13
@@ -857,10 +857,13 @@ UI includes "Save to Server" button (saves immediately) and "Brief History" drop
 - Connections cross-reference for Section 6
 - Comp cache read for Section 8
 - Interviewer names read for Section 5
+- Interviewer profiles section (section 14) from connections data (v3.17)
+- Cross-module invalidation hub with 7 signal sources (v3.17)
+- Brief completeness score (0-100 with progress bar) (v3.17)
+- Invalidation dashboard showing signal sources and cache status (v3.17)
 
 **Status: Planned:**
 - Interviewer name research (LinkedIn profile fetch)
-- Cross-module invalidation signals
 
 ### Phase 4: Polish (Complete — v3.16.0)
 

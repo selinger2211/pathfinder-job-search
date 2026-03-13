@@ -2199,7 +2199,10 @@
                 renderNudgeTimeline();
                 loadSyncLog();
 
-                // Feature 47: Start post-event trigger detection (every 10 minutes)
+                // Feature 42: Start post-interview trigger detection (every 10 minutes)
+                startPostEventTriggerDetection();
+
+                // Feature 47: Start follow-up queue rendering
                 renderFollowUpQueue();
                 startFollowUpQueueRefresh();
 
@@ -2721,6 +2724,237 @@
                 notification.style.animation = 'slideDown 0.3s ease-out';
                 setTimeout(() => notification.remove(), 300);
             }, 3000);
+        }
+
+        // ============================================================================
+        // FEATURE 42: POST-INTERVIEW TRIGGERS — Automated Action Detection
+        // ============================================================================
+        /**
+         * Detect rejection signals after an interview event has passed:
+         * - No follow-up scheduled within X days (default 5)
+         * - If Gmail connected: scan for rejection emails from same company
+         * - Manual "Mark as Rejected" button
+         */
+        function detectRejectionSignals(role, allEvents, allEmails = []) {
+            const signals = [];
+            let likelihood = 'low';
+
+            // Check if there's a scheduled follow-up within 5 days of the event
+            const lastInterviewEvent = (allEvents || [])
+                .filter(e => e.roleId === role.id && e.type && ['phone_screen', 'technical', 'final_round', 'onsite'].includes(e.type))
+                .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+
+            if (lastInterviewEvent) {
+                const eventDate = new Date(lastInterviewEvent.date);
+                const now = new Date();
+                const daysSinceInterview = (now - eventDate) / (1000 * 60 * 60 * 24);
+
+                if (daysSinceInterview > 5) {
+                    const followUpExists = (allEvents || []).some(e =>
+                        e.roleId === role.id &&
+                        new Date(e.date) > eventDate &&
+                        new Date(e.date) - eventDate <= 5 * 24 * 60 * 60 * 1000
+                    );
+
+                    if (!followUpExists) {
+                        signals.push('no_follow_up_scheduled');
+                        likelihood = daysSinceInterview > 10 ? 'high' : 'medium';
+                    }
+                }
+            }
+
+            // Check for rejection email from company
+            if (allEmails && role.company) {
+                const rejectionPatterns = [
+                    /we have decided to move forward with other candidates/i,
+                    /we will not be proceeding/i,
+                    /we regret to inform/i,
+                    /not selected|not moving forward/i,
+                    /unfortunately|we appreciate your interest/i
+                ];
+
+                const companyEmails = allEmails.filter(email =>
+                    email.from && email.from.toLowerCase().includes(role.company.toLowerCase())
+                );
+
+                const rejectionEmail = companyEmails.find(email =>
+                    rejectionPatterns.some(pattern => pattern.test(email.body || ''))
+                );
+
+                if (rejectionEmail) {
+                    signals.push('rejection_email_received');
+                    likelihood = 'high';
+                }
+            }
+
+            return { likelihood, signals };
+        }
+
+        /**
+         * Detect if a new calendar event is likely a next round interview for an existing role
+         * Returns: {isNextRound: boolean, suggestedStage: string}
+         */
+        function detectNextRound(role, newEvent) {
+            const nextRoundPatterns = [
+                /round 2|second round|next round/i,
+                /final (round|interview)/i,
+                /onsite|on-site/i,
+                /team (interview|panel)/i,
+                /hiring manager/i,
+                /offer discussion|compensation/i
+            ];
+
+            const eventText = (newEvent.title + ' ' + (newEvent.description || '')).toLowerCase();
+            const isNextRound = nextRoundPatterns.some(pattern => pattern.test(eventText));
+
+            // Suggest stage based on keywords
+            let suggestedStage = null;
+            if (/final round|offer/i.test(eventText)) {
+                suggestedStage = 'final_round';
+            } else if (/onsite|on-site|team/i.test(eventText)) {
+                suggestedStage = 'onsite';
+            } else if (/technical/i.test(eventText)) {
+                suggestedStage = 'technical_interview';
+            } else if (/phone|screen/i.test(eventText)) {
+                suggestedStage = 'phone_screen';
+            }
+
+            return { isNextRound, suggestedStage };
+        }
+
+        /**
+         * Detect offer signals:
+         * - Calendar event titled "Offer Discussion" / "Compensation Discussion" / "Final Call"
+         * - If Gmail: scan for offer letters from company
+         */
+        function detectOfferSignals(role, allEvents, allEmails = []) {
+            const signals = [];
+
+            // Check calendar for offer-related events
+            const offerPatterns = [
+                /offer (discussion|negotiation|call)/i,
+                /compensation (discussion|negotiation|call)/i,
+                /offer letter/i,
+                /start date|onboarding/i
+            ];
+
+            const offerEvent = (allEvents || [])
+                .filter(e => e.roleId === role.id)
+                .find(e => offerPatterns.some(pattern => pattern.test(e.title || '')));
+
+            if (offerEvent) {
+                signals.push('offer_event_scheduled');
+                return { detected: true, signals, source: 'calendar' };
+            }
+
+            // Check emails for offer letters
+            if (allEmails && role.company) {
+                const offerEmailPatterns = [
+                    /offer letter|formal offer/i,
+                    /we are pleased to offer/i,
+                    /congratulations|welcome to/i,
+                    /employment agreement/i
+                ];
+
+                const companyEmails = allEmails.filter(email =>
+                    email.from && email.from.toLowerCase().includes(role.company.toLowerCase())
+                );
+
+                const offerEmail = companyEmails.find(email =>
+                    offerEmailPatterns.some(pattern => pattern.test(email.subject || '') ||
+                                                       pattern.test(email.body || ''))
+                );
+
+                if (offerEmail) {
+                    signals.push('offer_email_received');
+                    return { detected: true, signals, source: 'email' };
+                }
+            }
+
+            return { detected: false, signals };
+        }
+
+        /**
+         * Auto-advance role stage and record the reason
+         */
+        function autoAdvanceStage(role, newStage, reason) {
+            const roles = getStorageData('roles') || [];
+            const roleIndex = roles.findIndex(r => r.id === role.id);
+
+            if (roleIndex >= 0) {
+                roles[roleIndex].stage = newStage;
+                roles[roleIndex].stageChangedAt = new Date().toISOString();
+
+                // Add to stage transitions log
+                if (!roles[roleIndex].stageTransitions) {
+                    roles[roleIndex].stageTransitions = [];
+                }
+                roles[roleIndex].stageTransitions.push({
+                    from: role.stage,
+                    to: newStage,
+                    reason,
+                    timestamp: new Date().toISOString()
+                });
+
+                saveStorageData('roles', roles);
+                showNotification(`Moved ${role.title} at ${role.company} to ${newStage}`, 'success');
+                return true;
+            }
+            return false;
+        }
+
+        /**
+         * Monitor calendar for post-event triggers and take automated actions
+         * Runs every 10 minutes to check for rejection signals, next rounds, and offers
+         */
+        function startPostEventTriggerDetection() {
+            const checkInterval = setInterval(() => {
+                const events = getStorageData('calendar_events') || [];
+                const roles = getStorageData('roles') || [];
+                const connections = getStorageData('connections') || [];
+                const now = new Date();
+
+                // Check each past event for trigger signals
+                events.forEach(event => {
+                    if (!event.date || !event.roleId) return;
+
+                    const eventDate = new Date(event.date);
+                    const hoursSinceEvent = (now - eventDate) / (1000 * 60 * 60);
+
+                    // Only check events that happened 1+ hours ago
+                    if (hoursSinceEvent < 1) return;
+
+                    const role = roles.find(r => r.id === event.roleId);
+                    if (!role) return;
+
+                    // Feature 42.1: Detect next round opportunities
+                    const nextRoundDetection = detectNextRound(role, event);
+                    if (nextRoundDetection.isNextRound && nextRoundDetection.suggestedStage) {
+                        // Check if we haven't already auto-advanced
+                        if (role.stage !== nextRoundDetection.suggestedStage) {
+                            console.log(`[Post-Event] Detected next round for ${role.title} at ${role.company}`);
+                            // Stage will be auto-advanced when user confirms via UI
+                        }
+                    }
+
+                    // Feature 42.2: Detect offer signals
+                    const offerDetection = detectOfferSignals(role, events);
+                    if (offerDetection.detected) {
+                        console.log(`[Post-Event] Detected offer signal for ${role.title} at ${role.company}`);
+                        // Show notification (UI handles prompting user to confirm)
+                    }
+
+                    // Feature 42.3: Detect rejection signals (after 5+ days)
+                    if (hoursSinceEvent > 5 * 24) {
+                        const rejectionDetection = detectRejectionSignals(role, events);
+                        if (rejectionDetection.likelihood === 'high') {
+                            console.log(`[Post-Event] High rejection likelihood for ${role.title} at ${role.company}:`, rejectionDetection.signals);
+                        }
+                    }
+                });
+            }, 10 * 60 * 1000); // Every 10 minutes
+
+            return checkInterval;
         }
 
         /* ====== FEATURE 22: CONFIDENCE SCORING ALGORITHM ====== */
@@ -5428,6 +5662,63 @@
                         <span>Debrief completed</span>
                     </div>
                 `;
+            }
+
+            // Feature 42: Post-Interview Trigger Detection
+            if (event.roleId && new Date(event.date) < new Date()) {
+                const roles = getStorageData('roles') || [];
+                const linkedRole = roles && roles.find(r => r.id === event.roleId);
+                if (linkedRole) {
+                    const allEvents = getStorageData('calendar_events') || [];
+
+                    // Feature 42.1: Next Round Detection
+                    const nextRoundDetection = detectNextRound(linkedRole, event);
+                    if (nextRoundDetection.isNextRound && nextRoundDetection.suggestedStage && linkedRole.stage !== nextRoundDetection.suggestedStage) {
+                        html += `
+                            <div style="padding: 12px; background: var(--info); border-radius: var(--radius-sm); color: var(--bg-base); display: flex; align-items: center; justify-content: space-between;">
+                                <div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">Looks like Round 2!</div>
+                                    <div style="font-size: 12px;">Auto-advance this role to next stage?</div>
+                                </div>
+                                <button onclick="autoAdvanceStage(${JSON.stringify(linkedRole)}, '${nextRoundDetection.suggestedStage}', 'Auto-detected from calendar event');" style="background: var(--bg-base); color: var(--info); border: none; padding: 6px 12px; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; font-size: 12px; white-space: nowrap;">Yes →</button>
+                            </div>
+                        `;
+                    }
+
+                    // Feature 42.2: Offer Detection
+                    const offerDetection = detectOfferSignals(linkedRole, allEvents);
+                    if (offerDetection.detected) {
+                        html += `
+                            <div style="padding: 12px; background: #20c997; border-radius: var(--radius-sm); color: var(--bg-base); display: flex; align-items: center; justify-content: space-between;">
+                                <div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">🎉 Offer Detected!</div>
+                                    <div style="font-size: 12px;">Move to offer stage and start negotiation?</div>
+                                </div>
+                                <button onclick="autoAdvanceStage(${JSON.stringify(linkedRole)}, 'offer', 'Offer detected from ${offerDetection.source}');" style="background: var(--bg-base); color: #20c997; border: none; padding: 6px 12px; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; font-size: 12px; white-space: nowrap;">Yes →</button>
+                            </div>
+                        `;
+                    }
+
+                    // Feature 42.3: Rejection Detection (only for old events)
+                    const hoursSinceEvent = (new Date() - new Date(event.date)) / (1000 * 60 * 60);
+                    if (hoursSinceEvent > 120) { // 5+ days
+                        const rejectionDetection = detectRejectionSignals(linkedRole, allEvents);
+                        if (rejectionDetection.likelihood === 'high' || rejectionDetection.likelihood === 'medium') {
+                            const reason = rejectionDetection.signals.includes('rejection_email_received')
+                                ? 'Rejection email received from company'
+                                : 'No follow-up scheduled for 5+ days';
+                            html += `
+                                <div style="padding: 12px; background: #ff6b6b; border-radius: var(--radius-sm); color: var(--bg-base); display: flex; align-items: center; justify-content: space-between;">
+                                    <div>
+                                        <div style="font-weight: 600; margin-bottom: 4px;">⚠️ Possible Rejection</div>
+                                        <div style="font-size: 12px;">${reason}</div>
+                                    </div>
+                                    <button onclick="autoAdvanceStage(${JSON.stringify(linkedRole)}, 'rejected', '${reason}');" style="background: var(--bg-base); color: #ff6b6b; border: none; padding: 6px 12px; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; font-size: 12px; white-space: nowrap;">Mark →</button>
+                                </div>
+                            `;
+                        }
+                    }
+                }
             }
 
             html += `

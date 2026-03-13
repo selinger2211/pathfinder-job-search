@@ -8,8 +8,8 @@
 
 Pathfinder is an agentic job search system with 11 standalone HTML modules sharing data via localStorage + IndexedDB. Each module is a single `index.html` file in `modules/`. There is no backend server required for core functionality — Claude API calls happen directly from the browser via `modules/shared/claude-api.js`.
 
-**Current Version:** v3.16.0 (as of 2026-03-13)
-**Last Major Features:** Research Brief smart caching phase 2 + phase 4 polish, MCP artifact persistence, Job Feed MCP tools, Resume Builder MCP generation
+**Current Version:** v3.17.0 (as of 2026-03-13)
+**Last Major Features:** Pipeline auto-enrichment, Job Feed Gmail + career pages, Calendar post-interview triggers, Research Brief deep integrations phase 3
 
 **Owner:** Ili Selinger (ilan.selinger@gmail.com)
 **Repo:** github.com/selinger2211/pathfinder-job-search
@@ -391,11 +391,58 @@ MCP-backed artifact persistence (SQLite table). Queried via MCP tools: `pf_save_
 
 **Purpose:** Server-side persistence of research briefs via MCP (v3.16.0 #28). Enables "Save to Server" button and "Brief History" dropdown. Each generation is a new version; never overwritten. Compare tool supports side-by-side diff.
 
+### pf_gmail_token — GmailAuth (v3.17.0)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| accessToken | string | yes | OAuth access token for Gmail API |
+| tokenType | string | yes | "Bearer" |
+| expiresAt | string | yes | ISO timestamp when token expires |
+| refreshToken | string | no | Refresh token for re-authorization |
+| scope | string | yes | "https://www.googleapis.com/auth/gmail.readonly" |
+
+**Purpose:** Store OAuth credentials for Gmail API access (v3.17.0 #40). Job Feed uses this to authenticate Gmail API calls for email scanning. Token managed via UI; auto-refresh when expired.
+
+### pf_career_pages — CareerPageConfig[] (v3.17.0)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| id | string | yes | Unique identifier (uuid) |
+| company | string | yes | Reference to Company.id |
+| url | string | yes | Career page URL (e.g., https://stripe.com/jobs) |
+| atsType | string | yes | "greenhouse" \| "lever" \| "ashby" \| "generic" |
+| lastCheckAt | string | no | ISO timestamp of last crawl |
+| checkFrequency | string | yes | "3x_week" \| "weekly" \| "monthly" \| "manual" |
+| enabled | boolean | yes | Whether to include in auto-checks |
+| notes | string | no | User notes about this page |
+
+**Purpose:** Configuration for career page monitoring (v3.17.0 #41). Stores URLs and check cadence per company. Used by Job Feed scheduler to determine check frequency based on company tier.
+
+### pf_career_page_cache — CareerPageCache (v3.17.0)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| companyId | string | yes | Reference to Company.id |
+| url | string | yes | Career page URL |
+| lastCrawledAt | string | yes | ISO timestamp |
+| jobListings | JobListing[] | yes | Array of detected jobs at time of crawl |
+
+**JobListing:**
+| Field | Type | Notes |
+|-------|------|-------|
+| id | string | Listing ID from ATS or generated hash |
+| title | string | Job title |
+| url | string | Job posting URL |
+| postedAt | string | ISO timestamp |
+| department | string | Department or team |
+
+**Purpose:** Cache of job listings from last career page crawl (v3.17.0 #41). Used for new job detection — comparing current crawl against cached listings identifies new roles. Cache busted on each crawl.
+
 ---
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.16.0
+**Current Version:** v3.17.0
 **Last Updated:** 2026-03-13
 
 ---

@@ -2111,6 +2111,54 @@
               <div id="feedSources" style="margin-top: var(--space-4);">
                 <!-- Feed source status cards populated by JavaScript -->
               </div>
+
+              <!-- Feature 40: Gmail Integration Section -->
+              <div style="margin-top: var(--space-6); padding-top: var(--space-4); border-top: 1px solid var(--bg-subtle);">
+                <h4 style="font-size: var(--text-md); font-weight: 700; margin-bottom: var(--space-2);">Gmail Integration</h4>
+                <div id="gmailStatus" style="margin-bottom: var(--space-3); font-size: var(--text-sm);">
+                  <!-- Gmail connection status populated by JavaScript -->
+                </div>
+                <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-3);">
+                  <button class="btn btn-secondary btn-sm" id="connectGmailBtn" onclick="openGmailTokenModal()" aria-label="Connect Gmail account">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                    </svg>
+                    Connect Gmail
+                  </button>
+                  <button class="btn btn-ghost btn-sm" id="scanGmailBtn" onclick="triggerGmailScan()" style="display: none;" aria-label="Scan Gmail for new jobs">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36M20.49 15a9 9 0 0 1-14.85 3.36"></path>
+                    </svg>
+                    Scan Now
+                  </button>
+                </div>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.4;">
+                  Connect your Gmail account to automatically detect job opportunity emails from recruiters and job boards.
+                </div>
+              </div>
+
+              <!-- Feature 41: Career Pages Section -->
+              <div style="margin-top: var(--space-6); padding-top: var(--space-4); border-top: 1px solid var(--bg-subtle);">
+                <h4 style="font-size: var(--text-md); font-weight: 700; margin-bottom: var(--space-2);">Career Pages</h4>
+                <div id="careerPagesList" style="margin-bottom: var(--space-3);">
+                  <!-- Career pages list populated by JavaScript -->
+                </div>
+                <button class="btn btn-secondary btn-sm" id="addCareerPageBtn" onclick="openAddCareerPageModal()" style="width: 100%; margin-bottom: var(--space-2);" aria-label="Add a company career page">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add Career Page
+                </button>
+                <button class="btn btn-ghost btn-sm" id="checkAllCareerPagesBtn" onclick="triggerCheckAllCareerPages()" style="width: 100%;" aria-label="Check all career pages for new jobs">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36M20.49 15a9 9 0 0 1-14.85 3.36"></path>
+                  </svg>
+                  Check All
+                </button>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.4; margin-top: var(--space-2);">
+                  Track career pages from companies you're interested in (Greenhouse, Lever, Ashby, etc.)
+                </div>
+              </div>
             </div>
 
             <div style="margin-top: var(--space-6);">
@@ -2249,6 +2297,86 @@
     </div>
   </div>
 
+  <!-- MODAL: Connect Gmail Account (Feature 40) -->
+  <div class="modal-overlay" id="gmailTokenModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Connect Gmail Account</h2>
+        <button class="modal-close" onclick="closeGmailTokenModal()">✕</button>
+      </div>
+
+      <div style="padding: var(--space-3); background: var(--bg-elevated); border-radius: var(--radius-sm); margin-bottom: var(--space-4);">
+        <div style="font-size: var(--text-sm); color: var(--text-primary); margin-bottom: var(--space-2);">
+          To scan Gmail for job opportunities, you'll need to provide a Gmail API access token.
+        </div>
+        <div style="font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.5;">
+          <div style="margin-bottom: var(--space-2);">
+            <strong>Steps:</strong>
+            <ol style="margin: var(--space-2) 0 0 var(--space-4); padding-left: var(--space-2);">
+              <li>Go to <a href="https://myaccount.google.com/permissions" target="_blank" style="color: var(--accent); text-decoration: underline;">Google Account Permissions</a></li>
+              <li>Create a project and enable Gmail API</li>
+              <li>Generate an OAuth 2.0 token</li>
+              <li>Paste the token below</li>
+            </ol>
+          </div>
+          Your token is stored locally in your browser — we never transmit it to external servers.
+        </div>
+      </div>
+
+      <form id="gmailTokenForm" onsubmit="handleGmailTokenSubmit(event)">
+        <div class="form-group">
+          <label class="form-label">Gmail API Token *</label>
+          <textarea class="form-textarea" id="gmailTokenInput" placeholder="Paste your Gmail OAuth token here" required style="font-family: var(--font-mono); font-size: var(--text-xs);"></textarea>
+        </div>
+      </form>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeGmailTokenModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitGmailToken()">Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Add Career Page (Feature 41) -->
+  <div class="modal-overlay" id="addCareerPageModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Add Career Page</h2>
+        <button class="modal-close" onclick="closeAddCareerPageModal()">✕</button>
+      </div>
+
+      <div style="padding: var(--space-3); background: var(--bg-elevated); border-radius: var(--radius-sm); margin-bottom: var(--space-4); font-size: var(--text-xs); color: var(--text-secondary);">
+        Add a company's career page URL. We'll auto-detect the ATS platform (Greenhouse, Lever, Ashby, etc.) and monitor it for new job postings.
+      </div>
+
+      <form id="addCareerPageForm" onsubmit="handleAddCareerPageSubmit(event)">
+        <div class="form-group">
+          <label class="form-label">Company Name *</label>
+          <input type="text" class="form-input" id="careerPageCompany" placeholder="e.g., Stripe, Anthropic" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Career Page URL *</label>
+          <input type="url" class="form-input" id="careerPageUrl" placeholder="https://boards.greenhouse.io/company/jobs" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">ATS Platform (auto-detected)</label>
+          <input type="text" class="form-input" id="careerPageAts" placeholder="Greenhouse, Lever, Ashby, etc." readonly style="background: var(--bg-elevated);">
+        </div>
+
+        <div id="careerPageDetectionInfo" style="padding: var(--space-2); background: var(--bg-base); border-radius: var(--radius-sm); font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-3); display: none;">
+          <!-- Detection results populated by JS -->
+        </div>
+      </form>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeAddCareerPageModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitAddCareerPage()">Add Career Page</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: Import from Career Page URL -->
   <div class="modal-overlay" id="importUrlModal">
     <div class="modal">
@@ -2370,6 +2498,517 @@
       // Check every 30 seconds to keep status current
       setInterval(checkMCPStatus, 30000);
     });
+
+    // ================================================================
+    // FEATURE 40: GMAIL INTEGRATION — Job Feed
+    // ================================================================
+    /**
+     * Gmail OAuth token management and email scanning
+     */
+
+    /**
+     * Save Gmail OAuth token to localStorage
+     */
+    function saveGmailToken(token) {
+      try {
+        localStorage.setItem('pf_gmail_token', token);
+        updateGmailStatus();
+        showToast('Gmail connected successfully', 'success');
+        return true;
+      } catch (e) {
+        console.error('Failed to save Gmail token:', e);
+        showToast('Failed to save Gmail token', 'error');
+        return false;
+      }
+    }
+
+    /**
+     * Retrieve Gmail OAuth token from localStorage
+     */
+    function getGmailToken() {
+      try {
+        return localStorage.getItem('pf_gmail_token') || null;
+      } catch (e) {
+        console.warn('Failed to retrieve Gmail token:', e);
+        return null;
+      }
+    }
+
+    /**
+     * Check if Gmail is currently connected
+     */
+    function isGmailConnected() {
+      return getGmailToken() !== null;
+    }
+
+    /**
+     * Update Gmail connection status indicator
+     */
+    function updateGmailStatus() {
+      const gmailStatus = document.getElementById('gmailStatus');
+      if (!gmailStatus) return;
+
+      if (isGmailConnected()) {
+        gmailStatus.innerHTML = '<span style="color: var(--success); font-weight: 600;">✓ Gmail Connected</span>';
+      } else {
+        gmailStatus.innerHTML = '<span style="color: var(--text-tertiary); font-weight: 600;">○ Gmail Not Connected</span>';
+      }
+    }
+
+    /**
+     * Scan Gmail for job-related emails using Gmail API
+     * Returns array of parsed job emails: {company, title, salary?, source: 'gmail', emailId}
+     */
+    async function scanGmailForJobs(token) {
+      if (!token) {
+        showToast('Gmail token not available', 'error');
+        return [];
+      }
+
+      try {
+        showToast('Scanning Gmail for job emails...', 'info');
+
+        // Gmail API v1 endpoint for searching messages
+        const queries = [
+          'subject:(job opportunity OR interview OR application)',
+          'from:(linkedin.com OR indeed.com OR recruiter)',
+          'subject:(position OR role) AND (interested OR opportunity)'
+        ];
+
+        let allEmails = [];
+
+        for (const query of queries) {
+          try {
+            const response = await fetch(
+              `https://www.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=10`,
+              {
+                headers: { Authorization: `Bearer ${token}` }
+              }
+            );
+
+            if (!response.ok) {
+              console.warn(`Gmail API query failed: ${response.status}`, query);
+              continue;
+            }
+
+            const data = await response.json();
+            if (data.messages) {
+              allEmails = allEmails.concat(data.messages);
+            }
+          } catch (error) {
+            console.warn('Gmail API fetch error:', error);
+          }
+        }
+
+        // Remove duplicates by messageId
+        allEmails = Array.from(new Map(allEmails.map(m => [m.id, m])).values());
+
+        // Parse each email to extract job details
+        const parsedJobs = [];
+        for (const message of allEmails.slice(0, 20)) {
+          const job = await parseJobEmail(message, token);
+          if (job) {
+            parsedJobs.push(job);
+          }
+        }
+
+        if (parsedJobs.length > 0) {
+          showToast(`Found ${parsedJobs.length} job-related emails`, 'success');
+        } else {
+          showToast('No job emails found in Gmail', 'info');
+        }
+
+        return parsedJobs;
+      } catch (error) {
+        console.error('Gmail scan error:', error);
+        showToast('Failed to scan Gmail', 'error');
+        return [];
+      }
+    }
+
+    /**
+     * Parse a single email to extract job details
+     * Returns: {company, title, salary?, source: 'gmail', emailId}
+     */
+    async function parseJobEmail(message, token) {
+      try {
+        const msgResponse = await fetch(
+          `https://www.googleapis.com/gmail/v1/users/me/messages/${message.id}?format=full`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (!msgResponse.ok) return null;
+
+        const msgData = await msgResponse.json();
+        const headers = msgData.payload.headers || [];
+        const subject = headers.find(h => h.name === 'Subject')?.value || '';
+        const from = headers.find(h => h.name === 'From')?.value || '';
+
+        // Extract body snippet
+        let bodyText = msgData.snippet || '';
+        if (msgData.payload.parts) {
+          const textPart = msgData.payload.parts.find(p => p.mimeType === 'text/plain');
+          if (textPart && textPart.body.data) {
+            bodyText = atob(textPart.body.data);
+          }
+        }
+
+        // Parse company name (from sender domain or subject)
+        let company = '';
+        const domainMatch = from.match(/@([^.]+)\./);
+        if (domainMatch) {
+          company = domainMatch[1].replace(/-/g, ' ').toUpperCase();
+        }
+
+        // Parse role title from subject
+        let title = subject
+          .replace(/^(Job opportunity|Interview|Application):\s*/i, '')
+          .replace(/\s+\|.*/, '')
+          .substring(0, 80);
+
+        // Look for salary mentions in body
+        const salaryMatch = bodyText.match(/\$[\d,]+k?|\$\d+\s*-\s*\$[\d,]+/i);
+        const salary = salaryMatch ? salaryMatch[0] : null;
+
+        // Only return if we extracted at least company + title
+        if (company && title) {
+          return {
+            company,
+            title,
+            salary,
+            source: 'gmail',
+            emailId: message.id,
+            from,
+            received: new Date().toISOString()
+          };
+        }
+        return null;
+      } catch (error) {
+        console.warn('Error parsing email:', error);
+        return null;
+      }
+    }
+
+    // ================================================================
+    // FEATURE 41: CAREER PAGE MONITORING — Job Feed
+    // ================================================================
+    /**
+     * Career page crawling and ATS monitoring
+     */
+
+    /**
+     * Add a career page to tracking list
+     */
+    function addCareerPage(company, url, atsType) {
+      try {
+        const careerPages = getCareerPages();
+
+        // Auto-detect ATS type if not provided
+        if (!atsType) {
+          atsType = detectAtsType(url);
+        }
+
+        const newPage = {
+          id: Date.now().toString(),
+          company,
+          url,
+          atsType,
+          lastChecked: null,
+          addedAt: new Date().toISOString()
+        };
+
+        careerPages.push(newPage);
+        saveCareerPages(careerPages);
+        showToast(`Career page added: ${company}`, 'success');
+        return newPage;
+      } catch (e) {
+        console.error('Failed to add career page:', e);
+        showToast('Failed to add career page', 'error');
+        return null;
+      }
+    }
+
+    /**
+     * Get all tracked career pages from localStorage
+     */
+    function getCareerPages() {
+      try {
+        const stored = localStorage.getItem('pf_career_pages');
+        return stored ? JSON.parse(stored) : [];
+      } catch (e) {
+        console.warn('Failed to load career pages:', e);
+        return [];
+      }
+    }
+
+    /**
+     * Save career pages to localStorage
+     */
+    function saveCareerPages(pages) {
+      try {
+        localStorage.setItem('pf_career_pages', JSON.stringify(pages));
+      } catch (e) {
+        console.error('Failed to save career pages:', e);
+      }
+    }
+
+    /**
+     * Detect ATS type from URL pattern
+     */
+    function detectAtsType(url) {
+      if (url.includes('greenhouse.io') || url.includes('job-boards.greenhouse.io')) return 'greenhouse';
+      if (url.includes('lever.co')) return 'lever';
+      if (url.includes('ashby')) return 'ashby';
+      return 'generic';
+    }
+
+    /**
+     * Crawl a career page and return job listings
+     * Returns: [{title, url, location, department, posted}]
+     */
+    async function crawlCareerPage(pageConfig) {
+      try {
+        const { company, url, atsType, id } = pageConfig;
+
+        let listings = [];
+
+        switch (atsType) {
+          case 'greenhouse':
+            listings = await crawlGreenhouse(url);
+            break;
+          case 'lever':
+            listings = await crawlLever(url);
+            break;
+          case 'ashby':
+            listings = await crawlAshby(url);
+            break;
+          default:
+            listings = await crawlGenericPage(url);
+        }
+
+        // Update lastChecked timestamp
+        const careerPages = getCareerPages();
+        const pageIndex = careerPages.findIndex(p => p.id === id);
+        if (pageIndex >= 0) {
+          careerPages[pageIndex].lastChecked = new Date().toISOString();
+          saveCareerPages(careerPages);
+        }
+
+        return listings;
+      } catch (error) {
+        console.error('Career page crawl error:', error);
+        showToast('Failed to crawl career page', 'error');
+        return [];
+      }
+    }
+
+    /**
+     * Crawl Greenhouse job board (greenhouse.io)
+     */
+    async function crawlGreenhouse(url) {
+      try {
+        // Extract board token from URL: boards.greenhouse.io/{board}
+        const boardMatch = url.match(/boards\.greenhouse\.io\/([^/?]+)/);
+        if (!boardMatch) return [];
+
+        const board = boardMatch[1];
+        const apiUrl = `https://boards.greenhouse.io/api/v1/boards/${board}/jobs?content=true`;
+
+        const response = await fetch(apiUrl);
+        if (!response.ok) return [];
+
+        const data = await response.json();
+        return (data.jobs || []).map(job => ({
+          title: job.title,
+          url: job.absolute_url,
+          location: job.location?.name || 'Remote',
+          department: job.departments?.[0]?.name || 'General',
+          posted: job.created_at,
+          source: 'career-pages'
+        }));
+      } catch (error) {
+        console.warn('Greenhouse crawl error:', error);
+        return [];
+      }
+    }
+
+    /**
+     * Crawl Lever job board (lever.co)
+     */
+    async function crawlLever(url) {
+      try {
+        // Extract company slug from URL: jobs.lever.co/{company}
+        const companyMatch = url.match(/jobs\.lever\.co\/([^/?]+)/);
+        if (!companyMatch) return [];
+
+        const company = companyMatch[1];
+        const apiUrl = `https://api.lever.co/v0/postings/${company}?group=team`;
+
+        const response = await fetch(apiUrl);
+        if (!response.ok) return [];
+
+        const data = await response.json();
+        return (data || []).map(job => ({
+          title: job.text,
+          url: job.hostedUrl,
+          location: job.categories?.location || 'Remote',
+          department: job.categories?.team || 'General',
+          posted: job.createdAt,
+          source: 'career-pages'
+        }));
+      } catch (error) {
+        console.warn('Lever crawl error:', error);
+        return [];
+      }
+    }
+
+    /**
+     * Crawl Ashby job board (ashbyhq.com)
+     */
+    async function crawlAshby(url) {
+      try {
+        // Extract company ID from URL: jobs.ashbyhq.com/{company}
+        const companyMatch = url.match(/jobs\.ashbyhq\.com\/([^/?]+)/);
+        if (!companyMatch) return [];
+
+        const company = companyMatch[1];
+        const apiUrl = `https://api.ashbyhq.com/posting-api/job-board/${company}`;
+
+        const response = await fetch(apiUrl);
+        if (!response.ok) return [];
+
+        const data = await response.json();
+        return (data.jobPostings || []).map(job => ({
+          title: job.title,
+          url: job.jobUrl,
+          location: job.location?.name || 'Remote',
+          department: job.department?.name || 'General',
+          posted: job.createdAt,
+          source: 'career-pages'
+        }));
+      } catch (error) {
+        console.warn('Ashby crawl error:', error);
+        return [];
+      }
+    }
+
+    /**
+     * Crawl generic career page via CORS proxy and parse HTML
+     */
+    async function crawlGenericPage(url) {
+      try {
+        // Use CORS proxy to fetch the page
+        const proxyUrl = `https://allorigins.win/api/raw?url=${encodeURIComponent(url)}`;
+        const response = await fetch(proxyUrl);
+        if (!response.ok) return [];
+
+        const html = await response.text();
+
+        // Parse common job card patterns
+        const listings = [];
+        const jobCardRegex = /<(div|li|article)[^>]*class="[^"]*job[^"]*"[^>]*>(.*?)<\/(div|li|article)>/gi;
+        let match;
+
+        while ((match = jobCardRegex.exec(html)) !== null) {
+          const cardHtml = match[2];
+
+          const titleMatch = cardHtml.match(/<(h[1-4]|a)[^>]*>([^<]+)<\/(h[1-4]|a)>/i);
+          const title = titleMatch ? titleMatch[2].trim().substring(0, 100) : null;
+
+          const linkMatch = cardHtml.match(/href="([^"]+)"/);
+          const jobUrl = linkMatch ? linkMatch[1] : null;
+
+          if (title && jobUrl) {
+            listings.push({
+              title,
+              url: jobUrl,
+              location: 'Check posting',
+              department: 'General',
+              source: 'career-pages'
+            });
+          }
+        }
+
+        return listings.slice(0, 50); // Limit to 50 listings
+      } catch (error) {
+        console.warn('Generic page crawl error:', error);
+        return [];
+      }
+    }
+
+    /**
+     * Check all career pages for new jobs
+     * Compares against cache and returns newly discovered listings
+     */
+    async function checkAllCareerPages() {
+      try {
+        showToast('Checking all career pages...', 'info');
+        const careerPages = getCareerPages();
+        const cache = getCareerPageCache();
+
+        let newListings = [];
+
+        for (const page of careerPages) {
+          const listings = await crawlCareerPage(page);
+          const cacheKey = page.id;
+          const cached = cache[cacheKey] || [];
+
+          // Find new listings not in cache
+          const newItems = listings.filter(listing =>
+            !cached.some(c => c.title === listing.title && c.url === listing.url)
+          );
+
+          if (newItems.length > 0) {
+            newListings.push({
+              company: page.company,
+              items: newItems
+            });
+
+            // Update cache
+            cache[cacheKey] = listings;
+          }
+        }
+
+        saveCareerPageCache(cache);
+
+        if (newListings.length > 0) {
+          const totalNew = newListings.reduce((sum, g) => sum + g.items.length, 0);
+          showToast(`Found ${totalNew} new roles across ${newListings.length} companies!`, 'success');
+          return newListings;
+        } else {
+          showToast('No new roles found on career pages', 'info');
+          return [];
+        }
+      } catch (error) {
+        console.error('Career page check error:', error);
+        showToast('Failed to check career pages', 'error');
+        return [];
+      }
+    }
+
+    /**
+     * Get career page cache from localStorage
+     */
+    function getCareerPageCache() {
+      try {
+        const stored = localStorage.getItem('pf_career_page_cache');
+        return stored ? JSON.parse(stored) : {};
+      } catch (e) {
+        console.warn('Failed to load career page cache:', e);
+        return {};
+      }
+    }
+
+    /**
+     * Save career page cache to localStorage
+     */
+    function saveCareerPageCache(cache) {
+      try {
+        localStorage.setItem('pf_career_page_cache', JSON.stringify(cache));
+      } catch (e) {
+        console.error('Failed to save career page cache:', e);
+      }
+    }
 
     /**
      * ============================================================
@@ -5911,6 +6550,221 @@
     }
 
     /**
+     * Open Gmail token modal (Feature 40)
+     */
+    function openGmailTokenModal() {
+      const modal = document.getElementById('gmailTokenModal');
+      if (modal) {
+        modal.classList.add('active');
+        document.getElementById('gmailTokenForm').reset();
+      }
+    }
+
+    /**
+     * Close Gmail token modal (Feature 40)
+     */
+    function closeGmailTokenModal() {
+      const modal = document.getElementById('gmailTokenModal');
+      if (modal) {
+        modal.classList.remove('active');
+      }
+    }
+
+    /**
+     * Submit Gmail token (Feature 40)
+     */
+    function submitGmailToken() {
+      const token = document.getElementById('gmailTokenInput').value.trim();
+      if (!token) {
+        showToast('Please paste a valid Gmail API token', 'error');
+        return;
+      }
+      if (saveGmailToken(token)) {
+        closeGmailTokenModal();
+        updateGmailStatus();
+        renderCareerPagesList(); // Update UI
+      }
+    }
+
+    /**
+     * Handle Gmail token form submission
+     */
+    function handleGmailTokenSubmit(event) {
+      event.preventDefault();
+      submitGmailToken();
+    }
+
+    /**
+     * Trigger Gmail scan manually (Feature 40)
+     */
+    async function triggerGmailScan() {
+      const token = getGmailToken();
+      if (!token) {
+        showToast('Please connect Gmail first', 'error');
+        return;
+      }
+      const jobs = await scanGmailForJobs(token);
+      if (jobs.length > 0) {
+        // Add to feed
+        const queue = loadFeedQueue();
+        jobs.forEach(job => {
+          if (!queue.some(q => q.company === job.company && q.title === job.title)) {
+            queue.push({
+              ...job,
+              id: `gmail-${Date.now()}-${Math.random()}`,
+              source: 'gmail'
+            });
+          }
+        });
+        saveFeedQueue(queue);
+        showToast(`Added ${jobs.length} emails to feed`, 'success');
+        // Reload feed
+        document.getElementById('checkNowBtn').click();
+      }
+    }
+
+    /**
+     * Open add career page modal (Feature 41)
+     */
+    function openAddCareerPageModal() {
+      const modal = document.getElementById('addCareerPageModal');
+      if (modal) {
+        modal.classList.add('active');
+        document.getElementById('addCareerPageForm').reset();
+        document.getElementById('careerPageDetectionInfo').style.display = 'none';
+      }
+    }
+
+    /**
+     * Close add career page modal (Feature 41)
+     */
+    function closeAddCareerPageModal() {
+      const modal = document.getElementById('addCareerPageModal');
+      if (modal) {
+        modal.classList.remove('active');
+      }
+    }
+
+    /**
+     * Handle career page URL change for auto-detection (Feature 41)
+     */
+    function handleCareerPageUrlChange() {
+      const url = document.getElementById('careerPageUrl').value.trim();
+      if (!url) {
+        document.getElementById('careerPageAts').value = '';
+        return;
+      }
+      const atsType = detectAtsType(url);
+      document.getElementById('careerPageAts').value = atsType.charAt(0).toUpperCase() + atsType.slice(1);
+    }
+
+    /**
+     * Submit add career page form (Feature 41)
+     */
+    function submitAddCareerPage() {
+      const company = document.getElementById('careerPageCompany').value.trim();
+      const url = document.getElementById('careerPageUrl').value.trim();
+
+      if (!company || !url) {
+        showToast('Company name and URL are required', 'error');
+        return;
+      }
+
+      const atsType = detectAtsType(url);
+      const result = addCareerPage(company, url, atsType);
+
+      if (result) {
+        closeAddCareerPageModal();
+        renderCareerPagesList();
+      }
+    }
+
+    /**
+     * Handle add career page form submission (Feature 41)
+     */
+    function handleAddCareerPageSubmit(event) {
+      event.preventDefault();
+      submitAddCareerPage();
+    }
+
+    /**
+     * Trigger check all career pages (Feature 41)
+     */
+    async function triggerCheckAllCareerPages() {
+      const newListings = await checkAllCareerPages();
+      if (newListings.length > 0) {
+        // Add new jobs to feed
+        const queue = loadFeedQueue();
+        newListings.forEach(group => {
+          group.items.forEach(job => {
+            queue.push({
+              id: `career-page-${Date.now()}-${Math.random()}`,
+              company: group.company,
+              title: job.title,
+              url: job.url,
+              location: job.location,
+              department: job.department,
+              jd: `Career page job: ${job.title}`,
+              source: 'career-pages',
+              posted: job.posted
+            });
+          });
+        });
+        saveFeedQueue(queue);
+        // Reload feed
+        document.getElementById('checkNowBtn').click();
+      }
+    }
+
+    /**
+     * Render career pages list in the sidebar (Feature 41)
+     */
+    function renderCareerPagesList() {
+      const container = document.getElementById('careerPagesList');
+      if (!container) return;
+
+      const careerPages = getCareerPages();
+      if (careerPages.length === 0) {
+        container.innerHTML = '<div style="font-size: var(--text-xs); color: var(--text-tertiary); padding: var(--space-2) 0;">No career pages tracked yet</div>';
+        return;
+      }
+
+      let html = '<div style="display: flex; flex-direction: column; gap: var(--space-2);">';
+      careerPages.forEach(page => {
+        const lastChecked = page.lastChecked
+          ? new Date(page.lastChecked).toLocaleDateString()
+          : 'Never';
+
+        html += `
+          <div style="padding: var(--space-2); background: var(--bg-base); border-radius: var(--radius-sm); border: 1px solid var(--bg-subtle); display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1; font-size: var(--text-xs);">
+              <div style="font-weight: 600; color: var(--text-primary);">${page.company}</div>
+              <div style="color: var(--text-tertiary); margin-top: 2px;">Last checked: ${lastChecked}</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="removeCareerPage('${page.id}')" title="Remove" style="padding: var(--space-1);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    /**
+     * Remove a career page from tracking (Feature 41)
+     */
+    function removeCareerPage(pageId) {
+      const careerPages = getCareerPages();
+      const filtered = careerPages.filter(p => p.id !== pageId);
+      saveCareerPages(filtered);
+      renderCareerPagesList();
+      showToast('Career page removed', 'success');
+    }
+
+    /**
      * Handle form submission for manual role entry
      */
     function handleAddRoleSubmit(event) {
@@ -6716,6 +7570,44 @@
       renderFeedLog();
       updateSnoozedBadge();
 
+      // Feature 40: Initialize Gmail status indicator
+      updateGmailStatus();
+      const scanGmailBtn = document.getElementById('scanGmailBtn');
+      if (scanGmailBtn) {
+        scanGmailBtn.style.display = isGmailConnected() ? 'inline-flex' : 'none';
+      }
+
+      // Feature 41: Initialize career pages list
+      renderCareerPagesList();
+
+      // Feature 41: Auto-check career pages on page load if >24h since last check
+      (async () => {
+        const careerPages = getCareerPages();
+        for (const page of careerPages) {
+          const lastChecked = page.lastChecked ? new Date(page.lastChecked) : null;
+          const now = new Date();
+          const hoursSinceCheck = lastChecked ? (now - lastChecked) / (1000 * 60 * 60) : Infinity;
+
+          if (hoursSinceCheck > 24) {
+            console.log(`[Career Pages] Auto-checking ${page.company} (last checked ${hoursSinceCheck.toFixed(1)} hours ago)`);
+            // Fire in background without waiting
+            crawlCareerPage(page).then(listings => {
+              const cache = getCareerPageCache();
+              const cacheKey = page.id;
+              const cached = cache[cacheKey] || [];
+              const newItems = listings.filter(listing =>
+                !cached.some(c => c.title === listing.title && c.url === listing.url)
+              );
+              if (newItems.length > 0) {
+                cache[cacheKey] = listings;
+                saveCareerPageCache(cache);
+                console.log(`[Career Pages] Found ${newItems.length} new roles at ${page.company}`);
+              }
+            });
+          }
+        }
+      })();
+
       // ====== AUTO-ENRICH ON PAGE LOAD (v3.10.0) ======
       // Now that enrichment is free (CORS proxy + ATS APIs, no API keys),
       // auto-enrich all stub JDs in the background on every page load.
@@ -6915,6 +7807,26 @@
           closeImportUrlModal();
         }
       });
+
+      // Feature 40: Gmail modal overlay click handler
+      document.getElementById('gmailTokenModal').addEventListener('click', (e) => {
+        if (e.target.id === 'gmailTokenModal') {
+          closeGmailTokenModal();
+        }
+      });
+
+      // Feature 41: Career page modal overlay click handler
+      document.getElementById('addCareerPageModal').addEventListener('click', (e) => {
+        if (e.target.id === 'addCareerPageModal') {
+          closeAddCareerPageModal();
+        }
+      });
+
+      // Feature 41: Career page URL auto-detection
+      const careerPageUrlInput = document.getElementById('careerPageUrl');
+      if (careerPageUrlInput) {
+        careerPageUrlInput.addEventListener('change', handleCareerPageUrlChange);
+      }
     }
 
     /**

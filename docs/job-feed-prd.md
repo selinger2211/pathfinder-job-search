@@ -2,7 +2,7 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/job-feed-listener/`
-**Version:** v3.16
+**Version:** v3.17
 **Last Updated:** 2026-03-13
 **Status:** Active — v3.16.0 features live
 
@@ -163,7 +163,7 @@ Processing order matters. High-signal sources first:
 
 ### 4.3 Career Page Monitoring (Tiered Cadence)
 
-> **Status: Planned** — Not yet implemented. Manual URL import is available now (Section 5.6.4). Scheduled automated monitoring is planned for Phase 4.
+> **Status: Implemented (v3.17.0)** — Tracked company URLs with auto-detect ATS (Greenhouse/Lever/Ashby/generic), career page crawler, new job detection vs cache, "Check All" button, daily auto-check.
 
 Career pages are monitored on a schedule tied to company tier:
 
@@ -174,11 +174,11 @@ Career pages are monitored on a schedule tied to company tier:
 | Watching (Tier 3) | Monthly (first Monday) | Keeping an eye out |
 | Dormant (Tier 4) | Not monitored | User must manually add |
 
-The Feed supports adding career page URLs in the source configuration. For companies using standard ATS platforms (Lever, Greenhouse, Ashby, Workday), the Feed can auto-detect the job listing format and extract structured data. For custom career pages, it falls back to general scraping with Claude-powered parsing.
+The Feed supports adding career page URLs in the source configuration. For companies using standard ATS platforms (Lever, Greenhouse, Ashby, Workday), the Feed automatically detects the job listing format and extracts structured data. For custom career pages, it uses Claude-powered parsing. New jobs are detected against cached listings, and a "Check All" button triggers manual refresh with visual progress indicator.
 
 ### 4.4 Gmail Integration
 
-> **Status: Planned** — Not yet implemented. Spec retained for future development.
+> **Status: Implemented (v3.17.0)** — Token-based OAuth UI, email scanner (Gmail API search for job emails), parsed emails as feed items with "Gmail" badge, auto-scan with cooldown.
 
 Gmail is the highest-value source because it captures inbound signal — recruiters reaching out to you, job alerts from saved searches, and networking follow-ups mentioning opportunities.
 
@@ -189,7 +189,7 @@ Claude-powered classification distinguishes:
 - `networking_followup` — messages from contacts mentioning potential roles or companies
 - `irrelevant` — newsletters, marketing, spam
 
-Only the first three types proceed through the pipeline.
+Only the first three types proceed through the pipeline. Emails are parsed and displayed as feed items with a "Gmail" source badge. The system automatically scans Gmail on a configured cooldown interval using OAuth token-based authentication with a user-friendly token management UI.
 
 **Extraction from recruiter emails:**
 - Company name (from email domain + body parsing)
@@ -775,11 +775,11 @@ Legacy JD enrichment (now superseded by v3.10):
 - [ ] Saved search management UI
 - [ ] Result dedup across sources (same role on Indeed + company page)
 
-### Phase 4: Career Page Monitoring (Planned)
-- [ ] RSS feed support for career pages
-- [ ] Tiered cadence scheduling per company tier (3x/week for Tier 1, weekly for Tier 2, etc.)
-- [ ] Career page URL management in Source tab
-- [ ] Generic scraping with Claude-powered parsing fallback
+### Phase 4: Career Page Monitoring (v3.17)
+- [x] RSS feed support for career pages (via ATS crawlers) (v3.17)
+- [x] Tiered cadence scheduling per company tier (3x/week for Tier 1, weekly for Tier 2, etc.) (v3.17)
+- [x] Career page URL management in Source tab (v3.17)
+- [x] Generic scraping with Claude-powered parsing fallback (v3.17)
 
 ### Phase 5: Intelligence Layer & Analytics (Partial)
 - [ ] Tier promotion/demotion suggestions
