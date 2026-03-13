@@ -1473,6 +1473,288 @@
         }
 
         /* ============================================================================
+           INTELLIGENCE TAB STYLES
+           ============================================================================ */
+        .intelligence-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-card:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
+            transition: all 0.2s ease;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-change {
+            font-size: 12px;
+            color: var(--success);
+            font-weight: 500;
+        }
+
+        .stat-change.negative {
+            color: var(--error);
+        }
+
+        .intelligence-patterns {
+            display: grid;
+            gap: 16px;
+        }
+
+        .pattern-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+        }
+
+        .pattern-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .pattern-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .pattern-label {
+            min-width: 120px;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .pattern-bar-container {
+            flex: 1;
+            height: 24px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .pattern-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .pattern-percent {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            min-width: 40px;
+            text-align: right;
+        }
+
+        .intelligence-reputation {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .reputation-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+        }
+
+        .reputation-card:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
+            transition: all 0.2s ease;
+        }
+
+        .reputation-header {
+            margin-bottom: 12px;
+        }
+
+        .reputation-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .reputation-title {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        .reputation-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .reputation-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .reputation-stat-label {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .reputation-stat-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .reputation-known-for {
+            margin-top: 12px;
+            padding: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .reputation-outcome {
+            margin-top: 12px;
+            padding: 8px;
+            background: rgba(129, 201, 149, 0.1);
+            border-left: 3px solid var(--success);
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .intelligence-insights {
+            display: grid;
+            gap: 12px;
+        }
+
+        .insight-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .insight-card:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
+            transition: all 0.2s ease;
+        }
+
+        .insight-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .insight-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .insight-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .insight-description {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .empty-state {
+            padding: 40px 24px;
+            text-align: center;
+            color: var(--text-tertiary);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .empty-state-message {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        /* ============================================================================
            MODALS & OVERLAYS
            ============================================================================ */
         .modal-overlay {
@@ -1935,6 +2217,7 @@
                 <button class="tab-btn" onclick="switchTab('day')">Day View</button>
                 <button class="tab-btn" onclick="switchTab('detection')">Event Manager</button>
                 <button class="tab-btn" onclick="switchTab('nudges')">Nudges</button>
+                <button class="tab-btn" onclick="switchTab('intelligence')">Intelligence</button>
                 <button class="tab-btn" onclick="switchTab('log')">Sync Log</button>
             </div>
 
@@ -1994,7 +2277,33 @@
                     </div>
                 </div>
 
-                <!-- Tab 4: Sync Log -->
+                <!-- Tab 5: Intelligence -->
+                <div class="tab-content" id="tabIntelligence">
+                    <div style="padding: 24px;">
+                        <!-- Intelligence Stats Cards -->
+                        <div class="intelligence-stats" id="intelligenceStats"></div>
+
+                        <!-- Outcome Patterns Section -->
+                        <div style="margin-top: 32px;">
+                            <h3 style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px;">Your Interview Patterns</h3>
+                            <div class="intelligence-patterns" id="intelligencePatterns"></div>
+                        </div>
+
+                        <!-- Interviewer Reputation Section -->
+                        <div style="margin-top: 32px;">
+                            <h3 style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px;">Interviewer Intel</h3>
+                            <div class="intelligence-reputation" id="intelligenceReputation"></div>
+                        </div>
+
+                        <!-- Predictive Insights Section -->
+                        <div style="margin-top: 32px;">
+                            <h3 style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px;">Predictive Insights</h3>
+                            <div class="intelligence-insights" id="intelligenceInsights"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 6: Sync Log -->
                 <div class="tab-content" id="tabLog">
                     <div class="sync-log-container">
                         <div class="sync-log-header">
@@ -5213,6 +5522,554 @@
         }
 
         // ============================================================================
+        // FEATURE 53: INTELLIGENCE & FEEDBACK LOOPS
+        // ============================================================================
+
+        /**
+         * Build interviewer reputation profiles from events, debriefs, and roles.
+         * Tracks encounters, average ratings, question types, and outcome correlation.
+         *
+         * @param {Array} events - Calendar events (with interviewers field)
+         * @param {Array} debriefs - Interview debriefs (with ratings, questions)
+         * @param {Array} roles - Role objects with stage history
+         * @returns {Object} Map of interviewer name → profile object
+         */
+        function buildInterviewerReputation(events, debriefs, roles) {
+            const reputation = {};
+
+            // Iterate through all events with interviewers
+            events.forEach(event => {
+                if (!event.interviewers || event.interviewers.length === 0) return;
+
+                event.interviewers.forEach(interviewer => {
+                    // Parse interviewer name (may include title like "John Smith (Recruiter)")
+                    const match = interviewer.match(/^([^(]+)(?:\s*\(([^)]+)\))?/);
+                    if (!match) return;
+
+                    const name = match[1].trim();
+                    const title = match[2] ? match[2].trim() : 'Interviewer';
+                    const company = event.company || 'Unknown';
+
+                    if (!reputation[name]) {
+                        reputation[name] = {
+                            name,
+                            title,
+                            company,
+                            encounters: 0,
+                            ratings: [],
+                            questionTypes: {},
+                            outcomes: { advanced: 0, rejected: 0, pending: 0 }
+                        };
+                    }
+
+                    reputation[name].encounters += 1;
+
+                    // Find linked debrief for this event
+                    const linkedDebrief = debriefs.find(d => d.eventId === event.id);
+                    if (linkedDebrief) {
+                        if (linkedDebrief.rating) {
+                            reputation[name].ratings.push(linkedDebrief.rating);
+                        }
+                        // Track question types
+                        if (linkedDebrief.questionTypes) {
+                            linkedDebrief.questionTypes.forEach(qType => {
+                                reputation[name].questionTypes[qType] = (reputation[name].questionTypes[qType] || 0) + 1;
+                            });
+                        }
+                    }
+
+                    // Track outcome correlation: if event is linked to role, check role stage
+                    if (event.roleId) {
+                        const linkedRole = roles.find(r => r.id === event.roleId);
+                        if (linkedRole) {
+                            // Assume if role stage advanced past the interview type, this interviewer contributed
+                            const stageOrder = ['applied', 'phone_screen', 'technical', 'hiring_manager', 'offer', 'accepted', 'rejected'];
+                            const eventTypeMap = { phone_screen: 'phone_screen', technical: 'technical', hiring_manager: 'hiring_manager' };
+                            const eventStage = eventTypeMap[event.type] || event.type;
+
+                            if (linkedRole.stage === 'rejected') {
+                                reputation[name].outcomes.rejected += 1;
+                            } else if (linkedRole.stage === 'accepted' || linkedRole.stage === 'offer') {
+                                reputation[name].outcomes.advanced += 1;
+                            } else {
+                                reputation[name].outcomes.pending += 1;
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Save to localStorage
+            saveStorageData('interviewer_reputation', reputation);
+            return reputation;
+        }
+
+        /**
+         * Analyze outcome patterns: day of week, time of day, interview type, company stage, prep level.
+         * Correlates interview outcomes with various factors.
+         *
+         * @param {Array} events - Calendar events
+         * @param {Array} roles - Role objects
+         * @param {Array} debriefs - Interview debriefs
+         * @returns {Object} Patterns object with correlation data
+         */
+        function analyzeOutcomePatterns(events, roles, debriefs) {
+            const patterns = {
+                dayOfWeek: {},
+                timeOfDay: { morning: 0, afternoon: 0, evening: 0 },
+                interviewType: {},
+                companyStage: {},
+                prepLevel: {}
+            };
+
+            // Track success rates (advanced to next round)
+            const daySuccessRates = {};
+            const timeSuccessRates = { morning: { total: 0, advanced: 0 }, afternoon: { total: 0, advanced: 0 }, evening: { total: 0, advanced: 0 } };
+            const typeSuccessRates = {};
+            const stageSuccessRates = {};
+            const prepSuccessRates = { complete: { total: 0, advanced: 0 }, incomplete: { total: 0, advanced: 0 } };
+
+            events.forEach(event => {
+                const eventDate = new Date(event.date || event.startTime);
+                const dayOfWeek = eventDate.toLocaleDateString('en-US', { weekday: 'long' });
+                const hour = eventDate.getHours();
+
+                // Determine time of day
+                let timeOfDay;
+                if (hour < 12) timeOfDay = 'morning';
+                else if (hour < 17) timeOfDay = 'afternoon';
+                else timeOfDay = 'evening';
+
+                // Get linked role for outcome
+                let advanced = false;
+                if (event.roleId) {
+                    const linkedRole = roles.find(r => r.id === event.roleId);
+                    if (linkedRole) {
+                        const stageOrder = ['applied', 'phone_screen', 'technical', 'hiring_manager', 'offer', 'accepted', 'rejected'];
+                        advanced = stageOrder.indexOf(linkedRole.stage) > stageOrder.indexOf(event.type);
+                    }
+                }
+
+                // Check prep level
+                const prepChecklists = getStorageData('calendar_prep_checklists') || {};
+                const eventPrepData = prepChecklists[event.id] || { completed: 0, total: 0 };
+                const prepComplete = eventPrepData.total > 0 && eventPrepData.completed === eventPrepData.total;
+
+                // Track day of week
+                if (!daySuccessRates[dayOfWeek]) {
+                    daySuccessRates[dayOfWeek] = { total: 0, advanced: 0 };
+                }
+                daySuccessRates[dayOfWeek].total += 1;
+                if (advanced) daySuccessRates[dayOfWeek].advanced += 1;
+
+                // Track time of day
+                timeSuccessRates[timeOfDay].total += 1;
+                if (advanced) timeSuccessRates[timeOfDay].advanced += 1;
+
+                // Track interview type
+                if (!typeSuccessRates[event.type]) {
+                    typeSuccessRates[event.type] = { total: 0, advanced: 0 };
+                }
+                typeSuccessRates[event.type].total += 1;
+                if (advanced) typeSuccessRates[event.type].advanced += 1;
+
+                // Track company stage (infer from role if linked)
+                if (event.roleId) {
+                    const linkedRole = roles.find(r => r.id === event.roleId);
+                    if (linkedRole) {
+                        const companyStage = linkedRole.companyTier || 'unknown';
+                        if (!stageSuccessRates[companyStage]) {
+                            stageSuccessRates[companyStage] = { total: 0, advanced: 0 };
+                        }
+                        stageSuccessRates[companyStage].total += 1;
+                        if (advanced) stageSuccessRates[companyStage].advanced += 1;
+                    }
+                }
+
+                // Track prep level
+                const prepKey = prepComplete ? 'complete' : 'incomplete';
+                prepSuccessRates[prepKey].total += 1;
+                if (advanced) prepSuccessRates[prepKey].advanced += 1;
+            });
+
+            // Convert to percentages
+            patterns.dayOfWeek = Object.entries(daySuccessRates).map(([day, stats]) => ({
+                day,
+                total: stats.total,
+                advanceRate: stats.total > 0 ? Math.round((stats.advanced / stats.total) * 100) : 0
+            }));
+
+            patterns.timeOfDay = Object.entries(timeSuccessRates).map(([time, stats]) => ({
+                time,
+                total: stats.total,
+                advanceRate: stats.total > 0 ? Math.round((stats.advanced / stats.total) * 100) : 0
+            }));
+
+            patterns.interviewType = Object.entries(typeSuccessRates).map(([type, stats]) => ({
+                type,
+                total: stats.total,
+                advanceRate: stats.total > 0 ? Math.round((stats.advanced / stats.total) * 100) : 0
+            }));
+
+            patterns.companyStage = Object.entries(stageSuccessRates).map(([stage, stats]) => ({
+                stage,
+                total: stats.total,
+                advanceRate: stats.total > 0 ? Math.round((stats.advanced / stats.total) * 100) : 0
+            }));
+
+            patterns.prepLevel = Object.entries(prepSuccessRates).map(([level, stats]) => ({
+                level,
+                total: stats.total,
+                advanceRate: stats.total > 0 ? Math.round((stats.advanced / stats.total) * 100) : 0
+            }));
+
+            // Save to localStorage
+            saveStorageData('outcome_patterns', patterns);
+            return patterns;
+        }
+
+        /**
+         * Calculate success rates: overall, by stage, by company tier, and trend over time.
+         *
+         * @param {Array} events - Calendar events
+         * @param {Array} roles - Role objects
+         * @returns {Object} Rates object with success metrics
+         */
+        function calculateSuccessRates(events, roles) {
+            let totalInterviews = events.length;
+            let advancedCount = 0;
+
+            // Track by stage transitions
+            const stageTransitions = {};
+
+            events.forEach(event => {
+                if (event.roleId) {
+                    const linkedRole = roles.find(r => r.id === event.roleId);
+                    if (linkedRole) {
+                        const stageOrder = ['applied', 'phone_screen', 'technical', 'hiring_manager', 'offer', 'accepted', 'rejected'];
+                        const eventStageIndex = stageOrder.indexOf(event.type);
+                        const roleStageIndex = stageOrder.indexOf(linkedRole.stage);
+
+                        if (roleStageIndex > eventStageIndex) {
+                            advancedCount += 1;
+                        }
+
+                        // Track transition
+                        const transition = `${event.type} → ${linkedRole.stage}`;
+                        if (!stageTransitions[transition]) {
+                            stageTransitions[transition] = { total: 0, advanced: 0 };
+                        }
+                        stageTransitions[transition].total += 1;
+                        if (roleStageIndex > eventStageIndex) {
+                            stageTransitions[transition].advanced += 1;
+                        }
+                    }
+                }
+            });
+
+            // Calculate trend: compare recent vs older
+            const now = new Date();
+            const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            const recentEvents = events.filter(e => new Date(e.date) > oneMonthAgo);
+            const olderEvents = events.filter(e => new Date(e.date) <= oneMonthAgo);
+
+            let recentAdvanced = 0, olderAdvanced = 0;
+            recentEvents.forEach(event => {
+                if (event.roleId) {
+                    const linkedRole = roles.find(r => r.id === event.roleId);
+                    if (linkedRole) {
+                        const stageOrder = ['applied', 'phone_screen', 'technical', 'hiring_manager', 'offer', 'accepted', 'rejected'];
+                        if (stageOrder.indexOf(linkedRole.stage) > stageOrder.indexOf(event.type)) {
+                            recentAdvanced += 1;
+                        }
+                    }
+                }
+            });
+            olderEvents.forEach(event => {
+                if (event.roleId) {
+                    const linkedRole = roles.find(r => r.id === event.roleId);
+                    if (linkedRole) {
+                        const stageOrder = ['applied', 'phone_screen', 'technical', 'hiring_manager', 'offer', 'accepted', 'rejected'];
+                        if (stageOrder.indexOf(linkedRole.stage) > stageOrder.indexOf(event.type)) {
+                            olderAdvanced += 1;
+                        }
+                    }
+                }
+            });
+
+            const recentRate = recentEvents.length > 0 ? Math.round((recentAdvanced / recentEvents.length) * 100) : 0;
+            const olderRate = olderEvents.length > 0 ? Math.round((olderAdvanced / olderEvents.length) * 100) : 0;
+            const trend = recentRate - olderRate;
+
+            const rates = {
+                overallAdvanceRate: totalInterviews > 0 ? Math.round((advancedCount / totalInterviews) * 100) : 0,
+                totalInterviews,
+                stageTransitions: Object.entries(stageTransitions).map(([transition, stats]) => ({
+                    transition,
+                    total: stats.total,
+                    advanceRate: stats.total > 0 ? Math.round((stats.advanced / stats.total) * 100) : 0
+                })),
+                recentRate,
+                olderRate,
+                trend
+            };
+
+            // Save to localStorage
+            saveStorageData('success_rates', rates);
+            return rates;
+        }
+
+        /**
+         * Generate 3-5 actionable predictive insights based on patterns, rates, and reputation.
+         *
+         * @param {Object} patterns - Outcome patterns
+         * @param {Object} rates - Success rates
+         * @param {Object} reputation - Interviewer reputation
+         * @returns {Array} Array of insight objects
+         */
+        function generateCalendarInsights(patterns, rates, reputation) {
+            const insights = [];
+
+            // Insight 1: Best day of week
+            if (patterns.dayOfWeek && patterns.dayOfWeek.length > 0) {
+                const bestDay = patterns.dayOfWeek.reduce((max, current) =>
+                    current.advanceRate > max.advanceRate ? current : max
+                );
+                if (bestDay.advanceRate > 50) {
+                    insights.push({
+                        icon: '📅',
+                        title: 'Schedule on Your Best Day',
+                        description: `${bestDay.day}s work best for you — ${bestDay.advanceRate}% advance rate. Try to schedule future interviews on ${bestDay.day}s.`
+                    });
+                }
+            }
+
+            // Insight 2: Morning vs afternoon
+            if (patterns.timeOfDay && patterns.timeOfDay.length > 0) {
+                const morningRate = patterns.timeOfDay.find(t => t.time === 'morning')?.advanceRate || 0;
+                const afternoonRate = patterns.timeOfDay.find(t => t.time === 'afternoon')?.advanceRate || 0;
+                if (morningRate > afternoonRate + 20) {
+                    insights.push({
+                        icon: '☀️',
+                        title: 'Peak Performance: Morning Interviews',
+                        description: `You advance ${morningRate}% from morning interviews vs ${afternoonRate}% in the afternoon. Schedule important interviews early.`
+                    });
+                }
+            }
+
+            // Insight 3: Prep checklist impact
+            if (patterns.prepLevel && patterns.prepLevel.length > 0) {
+                const completePrep = patterns.prepLevel.find(p => p.level === 'complete');
+                const incompletePrep = patterns.prepLevel.find(p => p.level === 'incomplete');
+                if (completePrep && incompletePrep && completePrep.advanceRate > incompletePrep.advanceRate + 20) {
+                    const improvement = completePrep.advanceRate - incompletePrep.advanceRate;
+                    insights.push({
+                        icon: '✅',
+                        title: 'Prep Checklist Boosts Success',
+                        description: `Completing your prep checklist improves your advance rate by ${improvement}%. You're ${Math.round(completePrep.advanceRate / incompletePrep.advanceRate)}x more likely to advance when prepared.`
+                    });
+                }
+            }
+
+            // Insight 4: Successful interview types
+            if (patterns.interviewType && patterns.interviewType.length > 0) {
+                const bestType = patterns.interviewType.reduce((max, current) =>
+                    current.advanceRate > max.advanceRate ? current : max
+                );
+                if (bestType.advanceRate > 60) {
+                    insights.push({
+                        icon: '🎯',
+                        title: 'Your Strength: ' + bestType.type.replace(/_/g, ' ').toUpperCase(),
+                        description: `You excel at ${bestType.type.replace(/_/g, ' ')} interviews with a ${bestType.advanceRate}% advance rate. Leverage this strength in your interviews.`
+                    });
+                }
+            }
+
+            // Insight 5: Trend improvement
+            if (rates.trend > 0) {
+                insights.push({
+                    icon: '📈',
+                    title: 'You\'re Improving!',
+                    description: `Your advance rate improved by ${rates.trend}% in the last month. Keep up the great work!`
+                });
+            } else if (rates.trend < 0) {
+                insights.push({
+                    icon: '💡',
+                    title: 'Opportunity for Growth',
+                    description: `Your advance rate dipped ${Math.abs(rates.trend)}% recently. Review your prep and interview strategy to get back on track.`
+                });
+            }
+
+            // Save to localStorage
+            saveStorageData('calendar_insights', insights);
+            return insights;
+        }
+
+        /**
+         * Render the Intelligence tab with stats, patterns, reputation, and insights.
+         */
+        function renderIntelligenceTab() {
+            const events = getStorageData('calendar_events') || [];
+            const roles = getStorageData('roles') || [];
+            const debriefs = getStorageData('interview_debriefs') || [];
+
+            // Need minimum 5 completed events
+            if (events.length < 5) {
+                const container = document.getElementById('intelligenceStats').parentElement;
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <div class="empty-state-title">Build Your Interview Profile</div>
+                        <div class="empty-state-message">
+                            Complete at least 5 interviews to unlock Intelligence insights about your patterns and interviewer feedback.
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <div class="progress-bar" style="max-width: 300px; margin: 0 auto;">
+                                <div class="progress-bar-fill" style="width: ${Math.round((events.length / 5) * 100)}%"></div>
+                            </div>
+                            <div style="margin-top: 8px; font-size: 12px; color: var(--text-tertiary);">
+                                ${events.length} of 5 interviews completed
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Build profiles and analyze patterns
+            const reputation = buildInterviewerReputation(events, debriefs, roles);
+            const patterns = analyzeOutcomePatterns(events, roles, debriefs);
+            const rates = calculateSuccessRates(events, roles);
+            const insights = generateCalendarInsights(patterns, rates, reputation);
+
+            // Render stats cards
+            const statsContainer = document.getElementById('intelligenceStats');
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Total Interviews</div>
+                    <div class="stat-value">${events.length}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Advance Rate</div>
+                    <div class="stat-value">${rates.overallAdvanceRate}%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Best Day</div>
+                    <div class="stat-value">${patterns.dayOfWeek && patterns.dayOfWeek.length > 0 ? patterns.dayOfWeek.reduce((max, curr) => curr.advanceRate > max.advanceRate ? curr : max).day.substring(0, 3) : 'N/A'}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Trend (30d)</div>
+                    <div class="stat-value ${rates.trend >= 0 ? '' : 'style="color: var(--error)"'}">${rates.trend > 0 ? '+' : ''}${rates.trend}%</div>
+                </div>
+            `;
+
+            // Render outcome patterns
+            const patternsContainer = document.getElementById('intelligencePatterns');
+            let patternsHtml = '';
+
+            if (patterns.dayOfWeek && patterns.dayOfWeek.length > 0) {
+                patternsHtml += `
+                    <div class="pattern-card">
+                        <div class="pattern-title">By Day of Week</div>
+                `;
+                patterns.dayOfWeek.forEach(day => {
+                    patternsHtml += `
+                        <div class="pattern-bar">
+                            <div class="pattern-label">${day.day}</div>
+                            <div class="pattern-bar-container">
+                                <div class="pattern-bar-fill" style="width: ${day.advanceRate}%">${day.advanceRate}%</div>
+                            </div>
+                            <div class="pattern-percent">${day.total} total</div>
+                        </div>
+                    `;
+                });
+                patternsHtml += `</div>`;
+            }
+
+            if (patterns.timeOfDay && patterns.timeOfDay.length > 0) {
+                patternsHtml += `
+                    <div class="pattern-card">
+                        <div class="pattern-title">By Time of Day</div>
+                `;
+                patterns.timeOfDay.forEach(time => {
+                    patternsHtml += `
+                        <div class="pattern-bar">
+                            <div class="pattern-label">${time.time.charAt(0).toUpperCase() + time.time.slice(1)}</div>
+                            <div class="pattern-bar-container">
+                                <div class="pattern-bar-fill" style="width: ${time.advanceRate}%">${time.advanceRate}%</div>
+                            </div>
+                            <div class="pattern-percent">${time.total} total</div>
+                        </div>
+                    `;
+                });
+                patternsHtml += `</div>`;
+            }
+
+            patternsContainer.innerHTML = patternsHtml || '<div style="color: var(--text-tertiary); padding: 16px;">No pattern data yet.</div>';
+
+            // Render interviewer reputation cards
+            const reputationContainer = document.getElementById('intelligenceReputation');
+            if (Object.keys(reputation).length === 0) {
+                reputationContainer.innerHTML = '<div style="color: var(--text-tertiary); padding: 16px;">No interviewer data yet.</div>';
+            } else {
+                let reputationHtml = '';
+                Object.values(reputation).forEach(interviewer => {
+                    const avgRating = interviewer.ratings.length > 0
+                        ? (interviewer.ratings.reduce((a, b) => a + b, 0) / interviewer.ratings.length).toFixed(1)
+                        : 'N/A';
+                    const knownFor = Object.entries(interviewer.questionTypes)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 2)
+                        .map(([type]) => type.replace(/_/g, ' ').toLowerCase())
+                        .join(', ') || 'general questions';
+                    const advanceRate = interviewer.outcomes.advanced + interviewer.outcomes.rejected > 0
+                        ? Math.round((interviewer.outcomes.advanced / (interviewer.outcomes.advanced + interviewer.outcomes.rejected)) * 100)
+                        : 0;
+
+                    reputationHtml += `
+                        <div class="reputation-card">
+                            <div class="reputation-header">
+                                <div class="reputation-name">${interviewer.name}</div>
+                                <div class="reputation-title">${interviewer.title} at ${interviewer.company}</div>
+                            </div>
+                            <div class="reputation-stats">
+                                <div class="reputation-stat">
+                                    <div class="reputation-stat-label">Encounters</div>
+                                    <div class="reputation-stat-value">${interviewer.encounters}</div>
+                                </div>
+                                <div class="reputation-stat">
+                                    <div class="reputation-stat-label">Avg Rating</div>
+                                    <div class="reputation-stat-value">${avgRating}⭐</div>
+                                </div>
+                            </div>
+                            <div class="reputation-known-for">Known for: ${knownFor}</div>
+                            <div class="reputation-outcome">${interviewer.outcomes.advanced}/${interviewer.outcomes.advanced + interviewer.outcomes.rejected} interviews advanced</div>
+                        </div>
+                    `;
+                });
+                reputationContainer.innerHTML = reputationHtml;
+            }
+
+            // Render predictive insights
+            const insightsContainer = document.getElementById('intelligenceInsights');
+            let insightsHtml = '';
+            insights.forEach(insight => {
+                insightsHtml += `
+                    <div class="insight-card">
+                        <div class="insight-icon">${insight.icon}</div>
+                        <div class="insight-content">
+                            <div class="insight-title">${insight.title}</div>
+                            <div class="insight-description">${insight.description}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            insightsContainer.innerHTML = insightsHtml || '<div style="color: var(--text-tertiary); padding: 16px;">No insights available yet.</div>';
+
+            lucide.createIcons();
+        }
+
+        // ============================================================================
         // TAB NAVIGATION
         // ============================================================================
 
@@ -5245,6 +6102,8 @@
                     renderDetectionCards();
                 } else if (tabName === 'nudges') {
                     renderNudgeTimeline();
+                } else if (tabName === 'intelligence') {
+                    renderIntelligenceTab();
                 } else if (tabName === 'log') {
                     loadSyncLog();
                 }
@@ -5378,6 +6237,7 @@
                 { label: 'Go to Week View', action: () => { switchTab('week'); closeModal('commandModal'); } },
                 { label: 'Go to Event Manager', action: () => { switchTab('detection'); closeModal('commandModal'); } },
                 { label: 'Go to Nudges', action: () => { switchTab('nudges'); closeModal('commandModal'); } },
+                { label: 'Go to Intelligence', action: () => { switchTab('intelligence'); closeModal('commandModal'); } },
                 { label: 'Go to Sync Log', action: () => { switchTab('log'); closeModal('commandModal'); } },
                 { label: 'Next Week', action: () => { nextWeek(); } },
                 { label: 'Previous Week', action: () => { previousWeek(); } },

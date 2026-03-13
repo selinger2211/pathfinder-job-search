@@ -8,8 +8,9 @@
 
 Pathfinder is an agentic job search system with 11 standalone HTML modules sharing data via localStorage + IndexedDB. Each module is a single `index.html` file in `modules/`. There is no backend server required for core functionality — Claude API calls happen directly from the browser via `modules/shared/claude-api.js`.
 
-**Current Version:** v3.17.0 (as of 2026-03-13)
-**Last Major Features:** Pipeline auto-enrichment, Job Feed Gmail + career pages, Calendar post-interview triggers, Research Brief deep integrations phase 3
+**Current Version:** v3.18.0 (as of 2026-03-13)
+**Last Major Features:** Calendar Phase 4 Intelligence & Feedback Loops (FINAL PLANNED FEATURE). All 53 planned features now implemented.
+**Status:** Roadmap Complete — System is feature-complete as designed
 
 **Owner:** Ili Selinger (ilan.selinger@gmail.com)
 **Repo:** github.com/selinger2211/pathfinder-job-search
@@ -438,12 +439,49 @@ MCP-backed artifact persistence (SQLite table). Queried via MCP tools: `pf_save_
 
 **Purpose:** Cache of job listings from last career page crawl (v3.17.0 #41). Used for new job detection — comparing current crawl against cached listings identifies new roles. Cache busted on each crawl.
 
+### pf_interviewer_reputation — InterviewerReputation[] (v3.18.0)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| id | string | yes | Unique identifier (uuid) |
+| email | string | yes | Interviewer email address (primary identifier) |
+| name | string | no | Interviewer name (cached from calendar) |
+| company | string | yes | Company where interview took place |
+| encounterCount | number | yes | Total times interviewed by this person |
+| averageRating | number | no | 1-5 rating from debriefs (null if no ratings) |
+| nextRoundRate | number | yes | Percentage of interviews with this person leading to next round (0-100) |
+| questionTypes | string[] | yes | Array of interview question types they typically ask (e.g., "behavioral", "product_strategy") |
+| lastInterviewAt | string | yes | ISO timestamp of most recent interview with this person |
+| interviewIds | string[] | yes | Array of interview round IDs from calendar |
+| notes | string | no | User notes about this interviewer |
+
+**Purpose:** Builds interviewer reputation profile for Phase 4 intelligence (v3.18.0 #53). Used to power reputation scoring in Intelligence tab, predict interview outcomes, and surface patterns like "Jane Smith leads to next round 75% of the time" or "This interviewer focuses on system design questions."
+
+### pf_interview_intelligence — InterviewIntelligence (v3.18.0)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| id | string | yes | Unique identifier (uuid) |
+| roleId | string | yes | Reference to Role.id |
+| interviewType | string | yes | Type of interview (e.g., "phone_screen", "technical") |
+| outcome | string | yes | "advanced" / "rejected" / "no_response" |
+| completedAt | string | yes | ISO timestamp when interview happened |
+| debrief | string | no | Reference to debrief ID if exists |
+| dayOfWeek | number | yes | 0-6 (Monday=0, Sunday=6) |
+| hourOfDay | number | yes | 0-23 |
+| interviewerEmail | string | yes | Email of interviewer(s) |
+| prepLevel | string | yes | "minimal" / "standard" / "thorough" (inferred from debrief) |
+| companyTier | string | yes | Company tier at time of interview |
+
+**Purpose:** Normalized interview event data for Pattern Analysis (v3.18.0 #53). Used to identify patterns like "Better outcomes with Manager interviews on Tuesdays" or "Technical rounds have 60% pass rate at Tier 1 companies."
+
 ---
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.17.0
+**Current Version:** v3.18.0
 **Last Updated:** 2026-03-13
+**Status:** ROADMAP COMPLETE — All 53 planned features have been implemented. The system is feature-complete as designed.
 
 ---
 
