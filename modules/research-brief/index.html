@@ -1405,6 +1405,19 @@
      */
 
     // ================================================================
+    // SAFE JSON PARSING HELPER
+    // ================================================================
+    function safeJsonParse(key, fallback = null) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (e) {
+        console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
+        return fallback;
+      }
+    }
+
+    // ================================================================
     // SECTION DEFINITIONS
     // ================================================================
     // This array defines what each of the 14 sections (0-13) does and where
@@ -1726,7 +1739,7 @@ Use only publicly available professional information. Be specific: "Sarah led th
       sectionMetadata: {},     // { sectionNum: { generatedAt, sourceDataHash, status } }
       staleInvalidation: null, // Cache invalidation data from cross-module signals
       // FEATURE #52: Phase 4 Polish
-      sectionCollapseState: JSON.parse(localStorage.getItem('pf_brief_section_collapse') || '{}'),
+      sectionCollapseState: safeJsonParse('pf_brief_section_collapse', {}),
       generationStartTime: null, // Track for ETA calculation
       sectionGenerationTimes: {}, // { sectionNum: milliseconds } for ETA estimation
       // FEATURE #43: Deep Integrations (Phase 3)
@@ -2422,7 +2435,7 @@ Use only publicly available professional information. Be specific: "Sarah led th
 
       // Load existing briefs from localStorage
       try {
-        let briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
+        let briefs = safeJsonParse('pf_research_briefs', []);
 
         // Limit to last 20 briefs per company to prevent storage bloat
         briefs = briefs.filter(b => b.company !== company.name);
@@ -2458,7 +2471,7 @@ Use only publicly available professional information. Be specific: "Sarah led th
      */
     function loadSavedBrief(briefId) {
       try {
-        const briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
+        const briefs = safeJsonParse('pf_research_briefs', []);
         const brief = briefs.find(b => b.id === briefId);
         if (!brief) {
           console.warn('Brief not found in saved artifacts:', briefId);
@@ -2551,7 +2564,7 @@ Use only publicly available professional information. Be specific: "Sarah led th
       if (!confirm('Delete this saved brief? This cannot be undone.')) return;
 
       try {
-        let briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
+        let briefs = safeJsonParse('pf_research_briefs', []);
         briefs = briefs.filter(b => b.id !== briefId);
         localStorage.setItem('pf_research_briefs', JSON.stringify(briefs));
         updateSavedBriefsList();
@@ -2572,7 +2585,7 @@ Use only publicly available professional information. Be specific: "Sarah led th
       if (!role || !company) return;
 
       try {
-        const briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
+        const briefs = safeJsonParse('pf_research_briefs', []);
         const relevantBriefs = briefs.filter(b =>
           b.company === company.name && b.roleId === role.id
         );
@@ -2784,19 +2797,19 @@ Use only publicly available professional information. Be specific: "Sarah led th
      */
     function gatherBriefContext(role, company) {
       // Get connections for this company
-      const allConnections = JSON.parse(localStorage.getItem('pf_connections') || '[]');
+      const allConnections = safeJsonParse('pf_connections', []);
       const companyConnections = allConnections.filter(c =>
         c.company && c.company.toLowerCase() === company.name.toLowerCase()
       );
 
       // Get bullet bank
-      const bulletBank = JSON.parse(localStorage.getItem('pf_bullet_bank') || '[]');
+      const bulletBank = safeJsonParse('pf_bullet_bank', []);
 
       // Get story bank
-      const storyBank = JSON.parse(localStorage.getItem('pf_story_bank') || '[]');
+      const storyBank = safeJsonParse('pf_story_bank', []);
 
       // Get comp data for this company
-      const compCache = JSON.parse(localStorage.getItem('pf_comp_cache') || '{}');
+      const compCache = safeJsonParse('pf_comp_cache', {});
       const companySlug = getCompanySlug(company.name);
       const compData = compCache[companySlug] || compCache[company.name] || {};
 
@@ -4174,7 +4187,7 @@ The HTML content should come first, followed by the citations block. Do not incl
      */
     function attachBriefToRole(role, company, briefId) {
       try {
-        const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+        const roles = safeJsonParse('pf_roles', []);
         const pipelineRole = roles.find(r => r.id === role.id);
         if (!pipelineRole) return;
 
@@ -4326,7 +4339,7 @@ The HTML content should come first, followed by the citations block. Do not incl
         // Update the role's artifacts entry with the indexedDbKey so Pipeline
         // can show preview/download buttons for this PDF
         try {
-          const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+          const roles = safeJsonParse('pf_roles', []);
           const pipelineRole = roles.find(r => r.id === role.id);
           if (pipelineRole && pipelineRole.artifacts) {
             const briefArtifact = pipelineRole.artifacts.find(a => a.type === 'research_brief');
@@ -4445,7 +4458,7 @@ The HTML content should come first, followed by the citations block. Do not incl
 
       // Update saved briefs panel and list for this role
       const savedBriefsSection = document.getElementById('savedBriefsSection');
-      const briefs = JSON.parse(localStorage.getItem('pf_research_briefs') || '[]');
+      const briefs = safeJsonParse('pf_research_briefs', []);
       const hasRelevantBriefs = briefs.some(b => b.company === nc.name && b.roleId === nr.id);
       if (hasRelevantBriefs) {
         savedBriefsSection.style.display = 'block';
@@ -4559,7 +4572,7 @@ The HTML content should come first, followed by the citations block. Do not incl
       // Retrieve connections from localStorage
       let connections = [];
       try {
-        connections = JSON.parse(localStorage.getItem('pf_connections') || '[]');
+        connections = safeJsonParse('pf_connections', []);
       } catch (e) {
         connections = [];
       }
@@ -4602,7 +4615,7 @@ The HTML content should come first, followed by the citations block. Do not incl
 
       // Check calendar signal: new interviews scheduled
       try {
-        const calendarData = JSON.parse(localStorage.getItem('pf_calendar_manual_links') || '{}');
+        const calendarData = safeJsonParse('pf_calendar_manual_links', {});
         if (calendarData[roleId]) {
           const recentInterviews = calendarData[roleId].filter(event =>
             new Date(event.date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
@@ -4619,7 +4632,7 @@ The HTML content should come first, followed by the citations block. Do not incl
 
       // Check outreach signal: new communications sent/received
       try {
-        const outreachData = JSON.parse(localStorage.getItem('pf_outreach') || '{}');
+        const outreachData = safeJsonParse('pf_outreach', {});
         if (outreachData[roleId]) {
           const recentOutreach = outreachData[roleId].filter(item =>
             new Date(item.date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days

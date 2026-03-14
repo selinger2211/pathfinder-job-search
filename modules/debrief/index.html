@@ -1126,6 +1126,19 @@
 
   <script>
     /**
+     * Safely parse JSON from localStorage with fallback
+     */
+    function safeJsonParse(key, fallback = null) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (e) {
+        console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
+        return fallback;
+      }
+    }
+
+    /**
      * PATHFINDER DEBRIEF MODULE
      * Structured interview feedback capture and Claude-powered synthesis
      */
@@ -1159,33 +1172,10 @@
        * Gracefully handles corrupted data with fallback to empty arrays
        */
       loadData() {
-        try {
-          this.state.debriefs = JSON.parse(localStorage.getItem('pf_debriefs')) || [];
-        } catch (e) {
-          console.warn('Failed to load debriefs. Starting fresh.');
-          this.state.debriefs = [];
-        }
-
-        try {
-          this.state.roles = JSON.parse(localStorage.getItem('pf_roles')) || [];
-        } catch (e) {
-          console.warn('Failed to load roles. Starting fresh.');
-          this.state.roles = [];
-        }
-
-        try {
-          this.state.companies = JSON.parse(localStorage.getItem('pf_companies')) || [];
-        } catch (e) {
-          console.warn('Failed to load companies. Starting fresh.');
-          this.state.companies = [];
-        }
-
-        try {
-          this.state.storyBank = JSON.parse(localStorage.getItem('pf_story_bank')) || [];
-        } catch (e) {
-          console.warn('Failed to load story bank. Starting fresh.');
-          this.state.storyBank = [];
-        }
+        this.state.debriefs = safeJsonParse('pf_debriefs', []);
+        this.state.roles = safeJsonParse('pf_roles', []);
+        this.state.companies = safeJsonParse('pf_companies', []);
+        this.state.storyBank = safeJsonParse('pf_story_bank', []);
       },
 
       /* ====== CALENDAR INTEGRATION: PENDING DEBRIEF ====== */
@@ -1196,15 +1186,8 @@
        * OUTPUT: auto-populates form if found, clears pending data
        */
       checkPendingDebrief() {
-        try {
-          const pendingDebrief = JSON.parse(localStorage.getItem('pf_pending_debrief'));
-          if (!pendingDebrief) return;
-        } catch (e) {
-          console.warn('Could not parse pending debrief data');
-          return;
-        }
-
-        const pendingDebrief = JSON.parse(localStorage.getItem('pf_pending_debrief'));
+        const pendingDebrief = safeJsonParse('pf_pending_debrief', null);
+        if (!pendingDebrief) return;
 
         // Store for later use when saving
         this.state.pendingDebriefEvent = pendingDebrief;
@@ -1258,7 +1241,7 @@
        */
       getPendingCalendarEvents() {
         try {
-          const calendarEvents = JSON.parse(localStorage.getItem('pf_calendar_events')) || [];
+          const calendarEvents = safeJsonParse('pf_calendar_events', []);
           const debriefs = this.state.debriefs;
           const now = new Date();
 
@@ -1323,7 +1306,7 @@
        */
       startDebriefForEvent(eventId) {
         try {
-          const calendarEvents = JSON.parse(localStorage.getItem('pf_calendar_events')) || [];
+          const calendarEvents = safeJsonParse('pf_calendar_events', []);
           const evt = calendarEvents.find(e => e.id === eventId);
           if (!evt) {
             console.warn('Calendar event not found:', eventId);
@@ -1915,7 +1898,7 @@ Additional Notes: ${formData.notes}`;
 
           // Update the calendar event with this debrief ID
           try {
-            const calendarEvents = JSON.parse(localStorage.getItem('pf_calendar_events')) || [];
+            const calendarEvents = safeJsonParse('pf_calendar_events', []);
             const eventIndex = calendarEvents.findIndex(e => e.id === this.state.pendingDebriefEvent.eventId);
             if (eventIndex !== -1) {
               calendarEvents[eventIndex].debriefId = debrief.id;

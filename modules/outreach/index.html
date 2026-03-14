@@ -1001,6 +1001,19 @@
     // ════════════════════════════════════════════════════════
 
     /**
+     * Safely parse JSON from localStorage with fallback
+     */
+    function safeJsonParse(key, fallback = null) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (e) {
+        console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
+        return fallback;
+      }
+    }
+
+    /**
      * Checks if a message type is email-based
      * INPUT: messageType string (e.g., 'cold-email')
      * OUTPUT: boolean, true if the message type should have Gmail buttons
@@ -1634,7 +1647,7 @@ ${debriefContext}`;
      */
     function restoreEditState() {
       try {
-        const saved = JSON.parse(localStorage.getItem('pf_outreach_edit_state') || '{}');
+        const saved = safeJsonParse('pf_outreach_edit_state', {});
         AppState.selectedTone = saved.selectedTone || 'professional';
         AppState.selectedLength = saved.selectedLength || 'standard';
         AppState.editSidebarOpen = saved.editSidebarOpen || false;
@@ -2232,7 +2245,7 @@ Create a compelling, specific message that references at least one concrete deta
 
         if (messageType === 'inmail-linkedin') {
           try {
-            const network = JSON.parse(localStorage.getItem('pf_linkedin_network') || '[]');
+            const network = safeJsonParse('pf_linkedin_network', []);
             linkedinNetwork = network.filter(n => n.companiesInCommon && n.companiesInCommon.includes(company.name));
           } catch (e) {
             console.warn('Could not load LinkedIn network data');
@@ -2606,7 +2619,7 @@ Create a compelling, specific message that references at least one concrete deta
      * RETURNS: HTML string for templates section
      */
     function renderTemplatesUI() {
-      const templates = JSON.parse(localStorage.getItem('pf_outreach_templates') || '[]');
+      const templates = safeJsonParse('pf_outreach_templates', []);
 
       if (templates.length === 0) return '';
 
@@ -2690,7 +2703,7 @@ Create a compelling, specific message that references at least one concrete deta
      * RETURNS: sequence object with follow-up dates
      */
     function createOutreachSequence(connectionId, roleId, currentMessageType) {
-      let sequences = JSON.parse(localStorage.getItem('pf_outreach_sequences') || '[]');
+      let sequences = safeJsonParse('pf_outreach_sequences', []);
 
       let sequence = sequences.find(s => s.connectionId === connectionId && s.roleId === roleId);
       if (!sequence) {
@@ -2781,7 +2794,7 @@ Create a compelling, specific message that references at least one concrete deta
       sequence.nextFollowUpDate = followUpDate.toISOString();
       sequence.followUpScheduled = true;
 
-      const sequences = JSON.parse(localStorage.getItem('pf_outreach_sequences') || '[]');
+      const sequences = safeJsonParse('pf_outreach_sequences', []);
       const idx = sequences.findIndex(s => s.id === sequence.id);
       if (idx >= 0) sequences[idx] = sequence;
       localStorage.setItem('pf_outreach_sequences', JSON.stringify(sequences));
@@ -2894,7 +2907,7 @@ Create a compelling, specific message that references at least one concrete deta
         return;
       }
 
-      let templates = JSON.parse(localStorage.getItem('pf_outreach_templates') || '[]');
+      let templates = safeJsonParse('pf_outreach_templates', []);
 
       const template = {
         id: `template-${Date.now()}`,
@@ -2917,7 +2930,7 @@ Create a compelling, specific message that references at least one concrete deta
      * OUTPUT: message textarea populated with template content
      */
     function loadTemplate(templateId) {
-      const templates = JSON.parse(localStorage.getItem('pf_outreach_templates') || '[]');
+      const templates = safeJsonParse('pf_outreach_templates', []);
       const template = templates.find(t => t.id === templateId);
 
       if (!template) {
@@ -2940,7 +2953,7 @@ Create a compelling, specific message that references at least one concrete deta
     function deleteTemplate(templateId) {
       if (!confirm('Delete this template?')) return;
 
-      let templates = JSON.parse(localStorage.getItem('pf_outreach_templates') || '[]');
+      let templates = safeJsonParse('pf_outreach_templates', []);
       templates = templates.filter(t => t.id !== templateId);
       localStorage.setItem('pf_outreach_templates', JSON.stringify(templates));
 
@@ -2954,7 +2967,7 @@ Create a compelling, specific message that references at least one concrete deta
      * OUTPUT: displays saved templates
      */
     function renderTemplatesList() {
-      const templates = JSON.parse(localStorage.getItem('pf_outreach_templates') || '[]');
+      const templates = safeJsonParse('pf_outreach_templates', []);
 
       if (templates.length === 0) return;
 
@@ -3152,7 +3165,7 @@ Create a compelling, specific message that references at least one concrete deta
       /* ====== FEATURE 19: Handle Navigation from Debrief Module ====== */
       // Check if we're being launched from Debrief to draft a thank-you
       try {
-        const navState = JSON.parse(localStorage.getItem('pf_outreach_nav_state'));
+        const navState = safeJsonParse('pf_outreach_nav_state', null);
         if (navState && navState.selectedRoleId) {
           // Pre-select the role and message type
           AppState.selectedMessageType = navState.selectedMessageType || 'thank-you-interview';

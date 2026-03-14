@@ -1387,6 +1387,19 @@
       }
     };
 
+    /**
+     * Safely parse JSON from localStorage with fallback
+     */
+    function safeJsonParse(key, fallback = null) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (e) {
+        console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
+        return fallback;
+      }
+    }
+
     class MockInterviewApp {
       constructor() {
         this.state = {
@@ -1709,7 +1722,7 @@
         // ====== COMPANY-CALIBRATED CONTEXT: Get real questions from the question bank ======
         // Filter for questions matching the selected company and interview type
         let companyQuestionContext = '';
-        const customQuestions = JSON.parse(localStorage.getItem('pf_custom_questions')) || [];
+        const customQuestions = safeJsonParse('pf_custom_questions', []) || [];
         const allQuestions = [...QUESTION_BANK, ...customQuestions];
         const relevantQuestions = allQuestions.filter(q =>
           q.company === this.state.selectedRole.company &&
@@ -1958,14 +1971,14 @@ ${needMoreQuestions ?
       async generateCalibratedQuestions(roleId, interviewType) {
         try {
           // Get role JD text from localStorage
-          const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+          const roles = safeJsonParse('pf_roles', []);
           const role = roles.find(r => r.id === roleId);
           if (!role || !role.jdText) {
             return null; // No JD available, use default questions
           }
 
           // Get company interview style
-          const companies = JSON.parse(localStorage.getItem('pf_companies') || '[]');
+          const companies = safeJsonParse('pf_companies', []);
           const company = companies.find(c => c.id === role.companyId);
           const interviewStyle = company?.interviewStyle || 'balanced approach';
 
@@ -2084,7 +2097,7 @@ Provide 2-3 key strengths and 2-3 areas for improvement. Include an overall scor
           sessionData.durationMinutes = duration;
 
           // Save to localStorage
-          const sessions = JSON.parse(localStorage.getItem('pf_mock_sessions') || '[]');
+          const sessions = safeJsonParse('pf_mock_sessions', []);
           const existing = sessions.find(s => s.id === sessionData.id);
           if (existing) {
             Object.assign(existing, sessionData);
@@ -2226,7 +2239,7 @@ Provide 2-3 key strengths and 2-3 areas for improvement. Include an overall scor
         if (!container) return;
 
         // Get session data
-        const sessions = JSON.parse(localStorage.getItem('pf_mock_sessions') || '[]');
+        const sessions = safeJsonParse('pf_mock_sessions', []);
         if (sessions.length === 0) {
           container.innerHTML = '<p style="color: var(--text-secondary);">Complete 3+ sessions to see analytics.</p>';
           return;
@@ -2425,7 +2438,7 @@ Provide 2-3 key strengths and 2-3 areas for improvement. Include an overall scor
         try {
           // Extract questions from conversation
           const questions = this.extractQuestionsFromConversation(sessionData.conversation);
-          const questionBank = JSON.parse(localStorage.getItem('pf_question_bank')) || [];
+          const questionBank = safeJsonParse('pf_question_bank', []) || [];
 
           questions.forEach(q => {
             // Check if question already exists (avoid duplicates)
@@ -2510,7 +2523,7 @@ ${sessionData.conversation
 
           if (!Array.isArray(extractedStories)) return;
 
-          const storyBank = JSON.parse(localStorage.getItem('pf_story_bank')) || [];
+          const storyBank = safeJsonParse('pf_story_bank', []) || [];
 
           extractedStories.forEach(story => {
             // Dedup: check if similar story already exists
@@ -2669,7 +2682,7 @@ ${sessionData.conversation
        */
       renderQuestionBankUI() {
         // Combine built-in questions with custom questions from localStorage
-        const customQuestions = JSON.parse(localStorage.getItem('pf_custom_questions')) || [];
+        const customQuestions = safeJsonParse('pf_custom_questions', []) || [];
         const allQuestions = [...QUESTION_BANK, ...customQuestions];
 
         // Get filter values
@@ -2700,7 +2713,7 @@ ${sessionData.conversation
         }
 
         // Get practiced questions from localStorage
-        const practicedQuestionIds = JSON.parse(localStorage.getItem('pf_practiced_questions')) || [];
+        const practicedQuestionIds = safeJsonParse('pf_practiced_questions', []) || [];
 
         // Render each question as a card
         container.innerHTML = filtered.map(q => {
@@ -2761,7 +2774,7 @@ ${sessionData.conversation
         const container = document.getElementById('coverageStats');
         if (!container) return;
 
-        const practicedIds = JSON.parse(localStorage.getItem('pf_practiced_questions')) || [];
+        const practicedIds = safeJsonParse('pf_practiced_questions', []) || [];
 
         // Group by company
         const companies = {};
@@ -2792,7 +2805,7 @@ ${sessionData.conversation
        */
       practiceBankQuestion(questionId, type, difficulty) {
         // Find the question
-        const customQuestions = JSON.parse(localStorage.getItem('pf_custom_questions')) || [];
+        const customQuestions = safeJsonParse('pf_custom_questions', []) || [];
         const allQuestions = [...QUESTION_BANK, ...customQuestions];
         const question = allQuestions.find(q => q.id === questionId);
         if (!question) return;
@@ -2804,7 +2817,7 @@ ${sessionData.conversation
         if (difficultySelect) difficultySelect.value = difficulty;
 
         // Mark as practiced and update UI immediately (v3.6.0 live-update)
-        const practicedIds = JSON.parse(localStorage.getItem('pf_practiced_questions')) || [];
+        const practicedIds = safeJsonParse('pf_practiced_questions', []) || [];
         if (!practicedIds.includes(questionId)) {
           practicedIds.push(questionId);
           localStorage.setItem('pf_practiced_questions', JSON.stringify(practicedIds));
@@ -2829,7 +2842,7 @@ ${sessionData.conversation
       deleteCustomQuestion(questionId) {
         if (!confirm('Delete this custom question?')) return;
 
-        const customQuestions = JSON.parse(localStorage.getItem('pf_custom_questions')) || [];
+        const customQuestions = safeJsonParse('pf_custom_questions', []) || [];
         const filtered = customQuestions.filter(q => q.id !== questionId);
         localStorage.setItem('pf_custom_questions', JSON.stringify(filtered));
 
@@ -2999,7 +3012,7 @@ ${sessionData.conversation
           }
 
           // Save to localStorage
-          const customQuestions = JSON.parse(localStorage.getItem('pf_custom_questions')) || [];
+          const customQuestions = safeJsonParse('pf_custom_questions', []) || [];
           customQuestions.push({
             id: `custom-${Date.now()}`,
             text,
@@ -3230,7 +3243,7 @@ ${sessionData.conversation
           }
         ];
 
-        return JSON.parse(localStorage.getItem('pf_companies')) || defaults;
+        return safeJsonParse('pf_companies', defaults);
       }
 
       getRoles() {
@@ -3269,11 +3282,11 @@ ${sessionData.conversation
           }
         ];
 
-        return JSON.parse(localStorage.getItem('pf_story_bank')) || defaults;
+        return safeJsonParse('pf_story_bank', []) || defaults;
       }
 
       getSessions() {
-        return JSON.parse(localStorage.getItem('pf_mock_sessions')) || [];
+        return safeJsonParse('pf_mock_sessions', []);
       }
 
       saveSession(sessionData) {

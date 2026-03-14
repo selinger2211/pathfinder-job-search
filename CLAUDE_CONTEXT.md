@@ -8,8 +8,8 @@
 
 Pathfinder is an agentic job search system with 11 standalone HTML modules sharing data via localStorage + IndexedDB. Each module is a single `index.html` file in `modules/`. There is no backend server required for core functionality — Claude API calls happen directly from the browser via `modules/shared/claude-api.js`.
 
-**Current Version:** v3.20.3 (as of 2026-03-13)
-**Last Major Features:** Resume builder formatting rebuild (v3.20.3), stat pill filters (v3.20.1), domain expansion (v3.20.1), compact feed cards with detail sidebar (v3.20.0). All 53 planned features now implemented.
+**Current Version:** v3.20.4 (as of 2026-03-13)
+**Last Major Features:** Resume builder spacing polish (v3.20.4), stat pill filters (v3.20.1), domain expansion (v3.20.1), compact feed cards with detail sidebar (v3.20.0). All 53 planned features now implemented.
 **Status:** Resume builder matches example formatting (blue left-accent headings, left-aligned name/contact, italic skills, LinkedIn hyperlink, no browser print artifacts). Feed stat pills are clickable filters.
 
 **Owner:** Ili Selinger (ilan.selinger@gmail.com)

@@ -2102,6 +2102,19 @@
       return `${year}-${month}-${day}`;
     }
 
+    /**
+     * Safely parse JSON from localStorage with fallback
+     */
+    function safeJsonParse(key, fallback = null) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (e) {
+        console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
+        return fallback;
+      }
+    }
+
     // ================================================================
     // DATA LAYER
     // ================================================================
@@ -2111,12 +2124,12 @@
      * Returns object with companies, roles, connections, streak, and dismissed nudges
      */
     function loadData() {
-      const companies = JSON.parse(localStorage.getItem('pf_companies') || '[]');
-      const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
-      const connections = JSON.parse(localStorage.getItem('pf_connections') || '[]');
-      const streak = JSON.parse(localStorage.getItem('pf_streak') || null);
-      const dismissedNudges = JSON.parse(localStorage.getItem('pf_dismissed_nudges') || '[]');
-      const linkedinNetwork = JSON.parse(localStorage.getItem('pf_linkedin_network') || '[]');
+      const companies = safeJsonParse('pf_companies', []);
+      const roles = safeJsonParse('pf_roles', []);
+      const connections = safeJsonParse('pf_connections', []);
+      const streak = safeJsonParse('pf_streak', null);
+      const dismissedNudges = safeJsonParse('pf_dismissed_nudges', []);
+      const linkedinNetwork = safeJsonParse('pf_linkedin_network', []);
 
       return { companies, roles, connections, streak, dismissedNudges, linkedinNetwork };
     }
@@ -3092,7 +3105,7 @@
       if (!container) return;
 
       try {
-        const debriefs = JSON.parse(localStorage.getItem('pf_debriefs') || '[]');
+        const debriefs = safeJsonParse('pf_debriefs', []);
         const { roles } = loadData();
 
         const intelligence = computeInterviewIntelligence(debriefs, roles);
@@ -3231,7 +3244,7 @@
 
       try {
         // Load feed queue and existing roles
-        const feedQueue = JSON.parse(localStorage.getItem('pf_feed_queue') || '[]');
+        const feedQueue = safeJsonParse('pf_feed_queue', []);
         const { roles, companies } = loadData();
 
         // Filter out roles already in pipeline (exact match: same company + title)
@@ -3314,12 +3327,12 @@
      */
     function dashboardAcceptMatch(matchId) {
       try {
-        const feedQueue = JSON.parse(localStorage.getItem('pf_feed_queue') || '[]');
+        const feedQueue = safeJsonParse('pf_feed_queue', []);
         const match = feedQueue.find(m => m.id === matchId);
         if (!match) return;
 
         // Create role in pipeline
-        const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+        const roles = safeJsonParse('pf_roles', []);
         const newRole = {
           id: 'role-' + Date.now(),
           company: match.company || 'Unknown',
@@ -3337,7 +3350,7 @@
         localStorage.setItem('pf_roles', JSON.stringify(roles));
 
         // Ensure company exists
-        const companies = JSON.parse(localStorage.getItem('pf_companies') || '[]');
+        const companies = safeJsonParse('pf_companies', []);
         const companyExists = companies.some(c =>
           c.name.toLowerCase() === match.company.toLowerCase()
         );
@@ -3369,7 +3382,7 @@
      */
     function dashboardSnoozeMatch(matchId) {
       try {
-        const feedQueue = JSON.parse(localStorage.getItem('pf_feed_queue') || '[]');
+        const feedQueue = safeJsonParse('pf_feed_queue', []);
         const match = feedQueue.find(m => m.id === matchId);
         if (!match) return;
 
@@ -3378,7 +3391,7 @@
         localStorage.setItem('pf_feed_queue', JSON.stringify(updatedQueue));
 
         // Store snoozed role with expiration
-        let snoozed = JSON.parse(localStorage.getItem('pf_feed_snoozed') || '[]');
+        let snoozed = safeJsonParse('pf_feed_snoozed', []);
         snoozed.push({
           ...match,
           snoozedUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -3399,7 +3412,7 @@
      */
     function dashboardDismissMatch(matchId) {
       try {
-        const feedQueue = JSON.parse(localStorage.getItem('pf_feed_queue') || '[]');
+        const feedQueue = safeJsonParse('pf_feed_queue', []);
         const match = feedQueue.find(m => m.id === matchId);
         if (!match) return;
 
@@ -3408,7 +3421,7 @@
         localStorage.setItem('pf_feed_queue', JSON.stringify(updatedQueue));
 
         // Store dismissed role
-        let dismissed = JSON.parse(localStorage.getItem('pf_feed_dismissed') || '[]');
+        let dismissed = safeJsonParse('pf_feed_dismissed', []);
         dismissed.push({ ...match, dismissedAt: new Date().toISOString() });
         localStorage.setItem('pf_feed_dismissed', JSON.stringify(dismissed));
 
@@ -4520,7 +4533,7 @@
         }
 
         // Get roles for company matching
-        const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+        const roles = safeJsonParse('pf_roles', []);
 
         // Render each event
         container.innerHTML = events.events.map(event => {
@@ -4569,7 +4582,7 @@
      */
     function renderPipelineFunnel() {
       const container = document.getElementById('pipelineFunnelBody');
-      const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+      const roles = safeJsonParse('pf_roles', []);
 
       // Count roles by stage
       const stages = ['discovered', 'researching', 'outreach', 'applied', 'screen', 'interviewing', 'offer', 'closed'];
@@ -4622,8 +4635,8 @@
       const activities = [];
 
       // Collect activities from various sources
-      const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
-      const connections = JSON.parse(localStorage.getItem('pf_connections') || '[]');
+      const roles = safeJsonParse('pf_roles', []);
+      const connections = safeJsonParse('pf_connections', []);
 
       // Add role activities
       roles.forEach(role => {
@@ -4689,7 +4702,7 @@
      * Render weekly summary statistics
      */
     function renderWeeklySummary() {
-      const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+      const roles = safeJsonParse('pf_roles', []);
       const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
       // Count applications this week

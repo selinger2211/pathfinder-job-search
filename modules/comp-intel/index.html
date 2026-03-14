@@ -1381,6 +1381,19 @@
   </div>
 
   <script>
+    /**
+     * Safely parse JSON from localStorage with fallback
+     */
+    function safeJsonParse(key, fallback = null) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (e) {
+        console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
+        return fallback;
+      }
+    }
+
     /* ====== INDEED SALARY DATA EXTRACTION ====== */
     /**
      * Extract salary data from Indeed job listings in the feed queue
@@ -1389,7 +1402,7 @@
      */
     function extractIndeedSalaryData(filters = {}) {
       try {
-        const feedQueue = JSON.parse(localStorage.getItem('pf_feed_queue') || '[]');
+        const feedQueue = safeJsonParse('pf_feed_queue', []);
         const compExtracted = [];
 
         feedQueue.forEach(job => {

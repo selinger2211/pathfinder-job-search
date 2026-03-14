@@ -2127,7 +2127,7 @@
       <a href="../mock-interview/index.html">Mock</a>
       <a href="../debrief/index.html">Debrief</a>
       <a href="../calendar/index.html">Calendar</a>
-      <a href="../sync/">Sync Hub</a>
+      <a href="../sync/index.html">Sync Hub</a>
     </div>
     <div class="nav-right">
       <button id="theme-toggle" class="btn btn-icon btn-ghost" title="Toggle theme" aria-label="Toggle between dark and light theme">
@@ -2559,6 +2559,17 @@
       watching: '#71717a',
       dormant: '#3f3f46'
     };
+
+    /** Safely parse JSON from localStorage with fallback */
+    function safeJsonParse(key, fallback = null) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (e) {
+        console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
+        return fallback;
+      }
+    }
 
     /* Application state variables that track what the user is doing */
     let currentViewMode = localStorage.getItem('pf_view_mode') || 'kanban';
@@ -3386,7 +3397,7 @@
      */
     function getCompanyDescription(companyName) {
       try {
-        const companies = JSON.parse(localStorage.getItem('pf_companies') || '[]');
+        const companies = safeJsonParse('pf_companies', []);
         const co = companies.find(c => c.name === companyName);
         return co?.missionStatement || '';
       } catch {
@@ -7406,7 +7417,7 @@
             <p style="color: var(--text-tertiary); font-size: var(--text-sm); margin-bottom: var(--space-3);">
               No enrichment data available yet. Use Sync Hub to fetch Clay company data.
             </p>
-            <a href="../sync-hub/index.html" class="enrich-link">
+            <a href="../sync/index.html" class="enrich-link">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
@@ -7694,7 +7705,7 @@
      * This patches any existing company data that still references logo.clearbit.com.
      */
     try {
-      const existingCompanies = JSON.parse(localStorage.getItem('pf_companies') || '[]');
+      const existingCompanies = safeJsonParse('pf_companies', []);
       let migrated = false;
       existingCompanies.forEach(c => {
         if (c.logoUrl && c.logoUrl.includes('logo.clearbit.com')) {

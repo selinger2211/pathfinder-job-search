@@ -2904,6 +2904,19 @@
     }
 
     /**
+     * Safely parse JSON from localStorage with fallback
+     */
+    function safeJsonParse(key, fallback = null) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (e) {
+        console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
+        return fallback;
+      }
+    }
+
+    /**
      * Scan Gmail for job-related emails using Gmail API
      * Returns array of parsed job emails: {company, title, salary?, source: 'gmail', emailId}
      */
@@ -6835,7 +6848,7 @@
 
       // ====== FEATURE 24: DEDUP CHECK ======
       // Check if this role looks like a duplicate of an existing pipeline role
-      const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+      const roles = safeJsonParse('pf_roles', []);
       const dedupResult = checkPipelineDedup(role, roles);
 
       if (dedupResult.matchType === 'exact') {
@@ -6909,7 +6922,7 @@
     function addRoleToPipeline(feedRole) {
       try {
         // --- Create the Pipeline role ---
-        const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
+        const roles = safeJsonParse('pf_roles', []);
         const newRole = {
           id: 'role-' + Date.now(),
           company: feedRole.company || 'Unknown',
@@ -6932,7 +6945,7 @@
         localStorage.setItem('pf_roles', JSON.stringify(roles));
 
         // --- Ensure the company exists in pf_companies ---
-        const companies = JSON.parse(localStorage.getItem('pf_companies') || '[]');
+        const companies = safeJsonParse('pf_companies', []);
         const companyExists = companies.some(c =>
           c.name.toLowerCase() === feedRole.company.toLowerCase()
         );
@@ -7092,13 +7105,10 @@
      * @returns {string} The mission statement, or empty string if not found
      */
     function getCompanyDescription(companyName) {
-      try {
-        const companies = JSON.parse(localStorage.getItem('pf_companies') || '[]');
-        const co = companies.find(c => c.name === companyName);
-        return co?.missionStatement || '';
-      } catch {
-        return '';
-      }
+      const companies = safeJsonParse('pf_companies', []);
+      const co = companies.find(c => c.name === companyName);
+      return co?.missionStatement || '';
+    }
     }
 
     function renderCardLogo(item) {

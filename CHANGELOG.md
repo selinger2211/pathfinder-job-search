@@ -4,6 +4,27 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.20.4 — 2026-03-13
+
+### Resume Builder: Spacing Polish + QA Fixes
+
+**DOCX role spacing (v3.20.4)**
+- Added explicit spacing between experience roles (100 units between, 40 before first)
+- Skills bar indent (left: 60) to align with body content
+- Skills bar bottom spacing increased (80→120) for breathing room
+
+**Preview CSS alignment (v3.20.4)**
+- Contact line left padding (6px) to align with body text
+- Role header top margin increased (8px→12px) for visual separation between roles
+
+**QA fixes (v3.20.4)**
+- Added missing navigation bar to Resume Builder module
+- Fixed Pipeline broken Sync Hub nav link (sync-hub → sync)
+- Added cache-bust query params to Resume Builder shared CSS/JS imports
+- Added safeJsonParse() helper across all 11 modules — protects against corrupt localStorage
+
+---
+
 ## v3.20.3 — 2026-03-13
 
 ### Resume Builder: Formatting Rebuild + PDF Fix
