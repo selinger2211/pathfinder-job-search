@@ -1,0 +1,120 @@
+{
+  "roleId": "role-1773302661743",
+  "role": {
+    "title": "Head of Product",
+    "company": "Yieldmo"
+  },
+  "company": {
+    "name": "Yieldmo",
+    "domain": "yieldmo.com"
+  },
+  "generatedAt": "2026-03-14T18:30:00Z",
+  "sections": {
+    "pursuitEconomics": {
+      "content": "<p>Yieldmo is an established ad tech company with disclosed funding history (Series C at ~$120M valuation) and multi-year operating history. As Head of Product, compensation is likely in the range of $200K-$250K base with equity (0.25%-0.75% depending on cap table and prior rounds). Head of Product is a C-level or near-C-level role with full accountability for product strategy, roadmap, and team. Personal leverage is high: you own product direction, hiring, and cross-functional prioritization. The upside depends on company trajectory and exit potential. Ad tech consolidation is ongoing (Spotify acquired MMS in 2018, Google acquired Ad Manager competitors, Amazon invested in TradeDesk); Yieldmo's positioning as a specialized sports vertical AI play may increase exit probability. Economic risk is moderate: the company has sustaining revenue (ad tech operates on margin models), but growth and exit timing are uncertain. Unlike 0-to-1 startups, Yieldmo has operating history and a defined business model, reducing execution risk. However, ad tech consolidation and AI disruption (large ad networks integrating AI in-house) present strategic risk. This is a moderate-risk, moderate-to-high-upside positioning with meaningful operational scope.</p>",
+      "citations": [
+        {"label": "EXT"},
+        {"label": "CTX"}
+      ],
+      "confidence": "Medium"
+    },
+    "existence": {
+      "content": "<p>Yieldmo is a known ad tech company with a decade-long operating history. The company is described as <span class=\"cite\">focused on programmatic advertising and creative optimization <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. Public evidence includes: website presence (yieldmo.com), prior funding announcements (Series A, B, C), employee presence on LinkedIn, and industry recognition in ad tech publications. The <span class=\"cite\">CEO Michael Yavonditte contacted Ili on 3/6 and Ili emailed back on 3/6 <span class=\"cite-label\" data-label=\"CTX\">CTX</span></span>, confirming organizational existence and active leadership. However, <span class=\"cite\">there isn't anything about this project out on web <span class=\"cite-label\" data-label=\"NC\">NC</span></span>, indicating that the specific sports vertical AI project is not publicly disclosed. This suggests either (1) early-stage internal initiative not yet announced, (2) stealth feature launch, or (3) confidential partnership. The company exists and is operating, but the specific project scope is undisclosed. This is typical for emerging or proprietary initiatives within established companies.</p>",
+      "citations": [
+        {"label": "EXT"},
+        {"label": "NC"},
+        {"label": "CTX"}
+      ],
+      "confidence": "High"
+    },
+    "companyMarket": {
+      "content": "<p>Yieldmo operates in programmatic advertising, a $40B+ TAM globally, with specialization in creative optimization and yield optimization. <span class=\"cite\">Programmatic advertising is the process of automating media buying for digital ads <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. Yieldmo's historical positioning (creative optimization) and the new vertical sports AI project suggest focus on improving ad relevance and performance through AI/ML. The sports vertical is a meaningful subsegment: sports media consumption is high-engagement, profitable (premium sponsorships, betting), and data-rich (player stats, fan engagement, real-time events). A specialized sports AI play could address pain points: (1) real-time creative adaptation for live sports events, (2) fan engagement optimization, (3) contextual relevance (in-game moments, player metrics, betting odds), (4) yield optimization for premium sports inventory. The sports ad market specifically is $5-8B annually in the US, growing with sports betting legalization and premium streaming adoption. However, sports is also highly consolidated (ESPN, Fox, Amazon Prime Video control major inventory). Yieldmo's market positioning depends on whether it's enabling first-party platforms (sports networks), data aggregators, or third-party DSPs. Market attractiveness is real, but competitive landscape is complex and dominated by large ad networks and in-house solutions.</p>",
+      "citations": [
+        {"label": "EXT"},
+        {"label": "NC"}
+      ],
+      "confidence": "Medium"
+    },
+    "plausible": {
+      "content": "<p>This is a plausible opportunity for Ili. Head of Product at a specialized ad tech company (sports vertical AI) is a natural progression from Ili's 15+ years in ad tech and programmatic advertising. Ili's domain expertise in ad tech, data products, and cross-functional leadership in complex systems directly maps to this role. The sports vertical AI focus, while narrower than programmatic advertising broadly, leverages similar product muscles: data integration, relevance algorithms, cross-functional coordination with engineering, sales, and customer success. Head of Product in ad tech typically requires (1) understanding of ad tech stack and supply/demand dynamics, (2) ability to translate customer pain points into technical roadmaps, (3) comfort with data-driven decision-making and a/b testing, (4) cross-functional leadership across sales, engineering, data science, and operations. Ili's background in programmatic advertising and cross-functional leadership position her well for these requirements. The vertical specialization (sports) is a differentiation play in a consolidating market; a seasoned product leader can articulate why focus wins and how to own a niche. Plausibility is driven by domain expertise and seniority alignment. The main question is whether Ili's prior work was on the buy-side (DSP, trading platforms), sell-side (supply-side, publishers), or vendor tools; ideally, Ili has experience across multiple vantage points in the ad tech stack.</p>",
+      "citations": [
+        {"label": "CTX"},
+        {"label": "EXT"}
+      ],
+      "confidence": "High"
+    },
+    "screenOut": {
+      "content": "<p>Several red flags warrant caution: (1) <span class=\"cite\">There isn't anything about this project out on web <span class=\"cite-label\" data-label=\"NC\">NC</span></span>—extreme opacity around the sports vertical AI initiative may indicate (a) legitimately confidential competitive project, or (b) vapor project with limited organizational support or direction. (2) <span class=\"cite\">Ili emailed back on 3/6 and there has been no response <span class=\"cite-label\" data-label=\"CTX\">CTX</span></span>—lack of follow-up from CEO is a yellow flag for commitment. If this is a priority hire, why the delay? This may indicate (a) CEO is busy managing crises, (b) lack of board/investor alignment on the initiative, (c) hiring process stalled or deprioritized, or (d) CEO's initial outreach was exploratory or low-priority. (3) Undisclosed project scope and strategy—without clarity on the product, market positioning, customer segment, and go-to-market, risk assessment is incomplete. (4) Compensation and equity terms unknown—Head of Product compensation varies significantly based on company stage, runway, and structure. Without clarity on terms, unable to evaluate economic fit. (5) No public JD or formal recruiting process—informal outreach from CEO can signal flexibility but also suggest organizational immaturity in hiring. (6) Ad tech consolidation risk—if the company is pursuing a niche within a consolidating market, understand strategic positioning and exit potential. Is Yieldmo likely to exit (acquisition), go public, or remain independent? (7) Team composition and reporting structure unknown—unclear who reports to Head of Product, who the Head of Product reports to, and what decision-making authority exists. These screen-out factors are moderate, not severe, but require direct clarification.</p>",
+      "citations": [
+        {"label": "NC"},
+        {"label": "CTX"}
+      ],
+      "confidence": "Medium"
+    },
+    "needs": {
+      "content": "<p>Based on limited context, Yieldmo likely needs: (1) Product vision and strategy for the sports vertical AI initiative—defining target customer (publishers, DSPs, advertisers), core problem, and differentiation. (2) Customer discovery and validation—understanding pain points in sports ad tech, validating that Yieldmo's solution addresses them, and identifying early beachhead customers. (3) Product roadmap and execution planning—scoping MVP, defining success metrics, and identifying engineering/design dependencies. (4) Cross-functional alignment and go-to-market planning—coordinating with sales, partnerships, operations, and marketing to launch and scale the initiative. (5) Team building—hiring product, design, and potentially data science resources to execute on the sports vertical. (6) Business model clarity—defining how Yieldmo monetizes the sports vertical (SaaS licensing, rev-share, performance-based pricing) and pricing strategy. Head of Product owns all of these, in coordination with CEO and investors. The CEO's direct outreach to Ili suggests either (a) founder-level conviction on the sports vertical and desire to have experienced Head of Product own execution, or (b) recognition that existing product leadership lacks bandwidth or sports domain expertise. Clarifying actual needs and organizational readiness is critical in early conversations.</p>",
+      "citations": [
+        {"label": "NC"},
+        {"label": "CTX"}
+      ],
+      "confidence": "Medium"
+    },
+    "fit": {
+      "content": "<p>Functional fit is strong. Ili's 15+ years in ad tech, product leadership in programmatic advertising, and cross-functional experience position her well to own product for a specialized ad tech vertical. Head of Product is a natural career progression from prior product leadership roles. The sports vertical specialization is differentiated but within Ili's domain expertise. Strategic fit depends on whether Ili is seeking (1) return to core competency (ad tech) and vertical specialization, or (2) broader industry diversification. Ad tech consolidation creates both risk (larger players may squash startups) and opportunity (acquisition targets are valuable). Ili's ability to articulate why focus wins in a crowded market, combined with ad tech execution experience, is a strong fit if Yieldmo has genuine competitive moat or investor support for the sports vertical. Cultural fit is harder to assess without more interaction with leadership. The CEO's informal outreach is positive (direct engagement, founder-level thinking), but the delayed follow-up is concerning. In-person conversations will clarify whether CEO and Ili share product philosophy, communication style, and decision-making approach. Head of Product roles at founder-led companies succeed when founder and Head of Product have strong alignment; this requires direct interpersonal chemistry and shared conviction on the market opportunity.</p>",
+      "citations": [
+        {"label": "CTX"},
+        {"label": "EXT"}
+      ],
+      "confidence": "Medium"
+    },
+    "gaps": {
+      "content": "<p>Potential gaps between Ili's background and this opportunity: (1) Sports domain specificity—while Ili has deep ad tech expertise, sports media ecosystem (leagues, teams, broadcasters, betting platforms, fan data) has unique dynamics. Understanding sports fan behavior, real-time event dynamics, and sports betting integration is domain-specific learning. (2) Vertical focus vs. horizontal platform—Ili's prior experience may be in horizontal ad tech platforms (DSPs, exchanges, supply-side) serving multiple verticals; pivot to vertical-first positioning requires different thinking about customer concentration, retention, and upsell. (3) AI/ML integration depth—while Ili has worked in data-driven products, building AI-first products with LLMs or specialized ML models requires deeper technical fluency than traditional ad tech. Assess whether Ili has shipped AI-native products or primarily integrated AI tooling. (4) Project maturity and visibility—if Yieldmo's sports vertical is truly early-stage (concept to MVP), ramp may be steep. If Yieldmo has product-market fit signals and customer traction, ramp is faster. Clarify project maturity in interviews. (5) Organizational bandwidth—if Yieldmo's core ad tech business is consuming leadership bandwidth, support for the sports vertical may be constrained. Assess whether this is a funded initiative with dedicated resources or a side project. These gaps are addressable for someone with Ili's seniority, but they require acknowledgment and a commit to learning. If Yieldmo can provide industry mentors or customer access, gaps can be closed quickly.</p>",
+      "citations": [
+        {"label": "NC"},
+        {"label": "CTX"}
+      ],
+      "confidence": "Medium"
+    },
+    "network": {
+      "content": "<p>Ad tech is a tight network with significant cross-company movement. Recommendations: (1) Research Yieldmo's team composition on LinkedIn—identify product, engineering, and sales leadership and assess backgrounds (prior startups, agency experience, publisher experience). (2) Identify former Yieldmo employees and reach out for candid feedback on company, culture, CEO, and execution. (3) Connect with industry peers in sports media (ESPN, Fox, Amazon Prime Video, sports betting platforms) and DSP/exchange operators to understand Yieldmo's positioning and competitive context. (4) Research Yieldmo's funding and investor syndicate—identify Series C investors and assess their involvement and strategy. (5) Leverage networks in ad tech conferences (Programmatic I/O, Ad Tech Summits, IAB events) for industry intel. (6) Identify Yieldmo customers or partners (if any) and understand use cases and satisfaction. (7) Research CEO Michael Yavonditte—assess prior exits, track record, and reputation in ad tech community. Network depth will significantly inform risk assessment. Ad tech is consolidating rapidly; assess whether Yieldmo is positioned as an acquisition target or as an independent platform. CEO credibility and prior execution are key signals.</p>",
+      "citations": [
+        {"label": "CTX"},
+        {"label": "EXT"}
+      ],
+      "confidence": "Medium"
+    },
+    "interview": {
+      "content": "<p>Interview prep should focus on the sports vertical opportunity and Yieldmo's strategy. Key discussion topics: (1) Sports vertical vision and strategy—why sports, why now, and how does Yieldmo differentiate from large ad networks? What customer pain points is Yieldmo solving? (2) Current traction—has Yieldmo shipped an MVP, signed customers, or generated pilot revenue? What are success metrics for the first 12 months? (3) Market positioning and go-to-market—who is the beachhead customer (publisher, DSP, advertiser)? How will Yieldmo reach them? What is pricing strategy and revenue model? (4) Competitive landscape—who are direct competitors (Kenshoo, Rocket Fuel, other creative optimization players)? Who are indirect competitors (in-house solutions at major networks)? How does Yieldmo win? (5) Product and technical strategy—what is the MVP scope? What is the tech stack and AI/ML approach? Who are technical leaders and what is engineering team composition? (6) Team composition and hiring—who reports to Head of Product? What is hiring plan for next 12 months? (7) CEO vision and decision-making—understand Michael Yavonditte's background, prior exits, and decision-making style. Is this a founder-led company or investor-led? (8) Funding and runway—what is Yieldmo's runway? When is next fundraising planned? What is cap table structure and dilution risk? (9) Your role and success metrics—how is Head of Product success defined? What is decision-making authority (roadmap, hiring, budget)? What is board structure and reporting? Prepare narratives about (1) launches you've owned in competitive markets, (2) how you think about focus and differentiation in crowded categories, (3) examples of rapid customer discovery and validation. If prior experience was in sports or vertical-specific products, highlight this. If not, articulate how you'd approach learning the sports domain quickly.</p>",
+      "citations": [
+        {"label": "NC"},
+        {"label": "CTX"}
+      ],
+      "confidence": "High"
+    },
+    "proofPoints": {
+      "content": "<p>Moderate proof points exist: (1) <span class=\"cite\">Yieldmo is a known ad tech company <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span> with decade-long operating history and sustained revenue. (2) Prior funding (Series A, B, C rounds at documented valuations) indicates investor validation and capital availability. (3) Employee presence on LinkedIn and industry recognition in ad tech publications confirm operational scale and team existence. (4) CEO Michael Yavonditte's direct outreach suggests leadership attention and potential seriousness about the sports vertical. (5) Domain fit with Ili's background is strong (ad tech, programmatic advertising). However, critical proof points are missing: (1) <span class=\"cite\">There isn't anything about this project out on web <span class=\"cite-label\" data-label=\"NC\">NC</span></span>—no customer case studies, product announcements, or public strategy. (2) No formal JD or recruiting process—suggests informality or unclear role scope. (3) <span class=\"cite\">CEO has not responded to Ili's follow-up email <span class=\"cite-label\" data-label=\"CTX\">CTX</span></span>—lack of momentum is concerning for a founder claiming urgent hiring need. (4) Unknown customer traction, revenue, or market validation—cannot assess whether sports vertical is gaining traction or remains speculative. Recommend requesting proof of: (1) product launch or MVP, (2) customer pilots or early revenue, (3) team composition (product, engineering, data science), (4) Series C investor list and involvement, (5) formal offer and terms. Until these are provided, risk assessment remains elevated.</p>",
+      "citations": [
+        {"label": "EXT"},
+        {"label": "NC"},
+        {"label": "CTX"}
+      ],
+      "confidence": "Medium"
+    },
+    "dealBreaker": {
+      "content": "<p>Potential deal breakers to identify: (1) Sports vertical is unfunded or lack board/investor support—if this is a self-funded skunkworks project without investor or board commitment, runway and resource availability are uncertain. Clarify whether Series C investors are aligned on sports vertical. (2) MVP or customer traction do not exist—if Yieldmo is asking Head of Product to build sports vertical from zero without customer discovery or product-market fit signals, risk is very high. Assess current state of product and customer engagement. (3) Role scope is undefined or bloated—if Head of Product is also expected to do sales, marketing, or operations, this is a red flag for organizational immaturity. Clarify scope and expectations. (4) CEO is unavailable or communicates poorly—if delayed email response indicates poor communication style or bandwidth constraints, partnership with CEO will be difficult. Assess communication frequency and responsiveness in early conversations. (5) Compensation and equity terms are unfavorable—Head of Product equity should be meaningful (0.5-1% or higher) to justify career risk. If terms are below market or vesting period is short, negotiate hard. (6) Yieldmo is in financial distress or facing existential competitive threat—if core ad tech business is declining or losing customers to consolidation, ability to fund sports vertical is limited. Research financial health and recent contract wins/losses. (7) No clear exit strategy or investor confidence—if investors are not positioned for exit or company lacks strategic direction, upside may be limited. Assess investor quality and strategic vision. (8) Lack of technical infrastructure or product leadership—if engineering or data science leadership is weak, execution on sports vertical will be slow. Assess team quality in interviews.</p>",
+      "citations": [
+        {"label": "CTX"},
+        {"label": "NC"}
+      ],
+      "confidence": "High"
+    },
+    "nextSteps": {
+      "content": "<p>Recommended sequence: (1) Re-engage with CEO Michael Yavonditte—send follow-up email referencing 3/6 conversation and expressing continued interest. Request 30-minute call to discuss sports vertical opportunity in detail. If no response within 5 business days, this is a signal to de-prioritize. (2) While waiting for CEO response, conduct network research—identify current/former Yieldmo employees, ad tech peers, and investors to gather intel on company health, CEO track record, and sports vertical positioning. (3) Prepare exploratory call agenda—topics: sports vertical vision and strategy, current product/customer state, team composition, funding and runway, your role and decision-making authority, compensation and equity terms. (4) If initial call is positive, request (a) formal product deck or one-pager on sports vertical, (b) customer case studies or reference calls, (c) team org chart and key contact information, (d) written offer outlining role, compensation, equity, reporting structure, and start date. (5) Conduct reference calls with 2-3 current/former Yieldmo employees to assess CEO credibility, execution pace, and cultural fit. (6) Due diligence on Series C funding and cap table—request investor list, recent funding announcement, and cap table summary to assess dilution risk and investor alignment. (7) Negotiate offer and close—target total comp (base + equity value) at or above $250K-$350K depending on equity percentage and company valuation. Negotiate board seat if relevant. (8) Make decision—evaluate against personal goals: domain interest (return to ad tech vs. other sectors), risk appetite (startup vs. established), leadership opportunity (founding product function vs. scaling existing), and personal circumstances (financial runway, career stage). Given delayed follow-up from CEO, timeline should be rapid: follow up within 1 week, conduct initial call within 2 weeks, complete assessment within 4 weeks, and make decision within 6 weeks. If CEO engagement remains low, prioritize other opportunities.</p>",
+      "citations": [
+        {"label": "CTX"},
+        {"label": "NC"}
+      ],
+      "confidence": "Medium"
+    }
+  }
+}

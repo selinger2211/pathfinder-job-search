@@ -1,0 +1,118 @@
+{
+  "roleId": "role-1773300331004",
+  "role": {
+    "title": "Head of Product",
+    "company": "VectorOne"
+  },
+  "company": {
+    "name": "VectorOne",
+    "domain": "vectorone.com"
+  },
+  "generatedAt": "2026-03-14T18:00:00Z",
+  "sections": {
+    "pursuitEconomics": {
+      "content": "<p>VectorOne represents an early-stage opportunity positioned as a 0-to-1 product challenge. Without public positioning or revenue data, the economic fundamentals remain opaque. As Head of Product at a pre-product or early-traction startup, compensation is likely below market for the title—typically $150K-$200K base with meaningful equity, typical for seed/Series A. The upside depends entirely on funding status, runway, and equity vesting. As a founding/early product leader, personal leverage is high: you shape product direction, hiring, and roadmap unilaterally. However, risk is substantial: no JD, no public positioning, no public customer base, and no disclosed funding or revenue. This is highest-risk, highest-upside positioning.</p>",
+      "citations": [
+        {"label": "NC"},
+        {"label": "CTX"}
+      ],
+      "confidence": "Low"
+    },
+    "existence": {
+      "content": "<p>VectorOne exists as a domain and a company with at least one founder/decision-maker willing to engage with you directly. The organization has progressed far enough to conduct interviews and discuss opportunities, suggesting post-idea but pre-launch or very early launch status. No public mentions, job board listings, or fundraising announcements are evident. The company may be in stealth mode, pre-announcement, or simply very small (1-5 person team). Existence is confirmed through direct outreach and interview scheduling, but public market presence is near-zero. This suggests either deliberate confidentiality, very early stage (weeks to months into development), or a subsidiary/internal project within a larger firm not yet disclosed.</p>",
+      "citations": [
+        {"label": "NC"},
+        {"label": "CTX"}
+      ],
+      "confidence": "Medium"
+    },
+    "companyMarket": {
+      "content": "<p>Without domain clarity, market positioning, or product definition, the addressable market is entirely unknown. The domain <span class=\"cite\">vectorone.com <span class=\"cite-label\" data-label=\"NC\">NC</span></span> suggests potential focus on vector databases, AI/ML infrastructure, or data platforms—categories showing strong growth and consolidation activity. If VectorOne operates in vector search, embeddings, or AI infrastructure, the market is expanding rapidly ($2B+ TAM, consolidating around Pinecone, Weaviate, Milvus). However, this is speculative. The market could equally be fintech, SaaS, biotech, or entirely novel. Without product definition, customer problem statement, or go-to-market clarity, market assessment is impossible. Recommend clarifying market thesis, beachhead customer segment, and competitive positioning before committing.</p>",
+      "citations": [
+        {"label": "NC"},
+        {"label": "NC"}
+      ],
+      "confidence": "Low"
+    },
+    "plausible": {
+      "content": "<p>The opportunity is plausible as a founding Head of Product role at an early-stage startup. Ili's 15+ years in product leadership, ad tech domain expertise, and cross-functional leadership are transferable to most early-stage settings. Head of Product at 0-to-1 phase typically prioritizes: (1) problem discovery and customer interviews, (2) rapid iteration and MVP launch, (3) hiring and scaling product and engineering teams, (4) establishing product processes and frameworks. Ili's programmatic advertising background (inherently data-heavy, complex systems, cross-functional) maps directly to structured problem-solving and systems thinking. The credibility gap is not Ili's experience, but VectorOne's clarity: a founder willing to hire a seasoned Head of Product suggests some pre-traction, pre-conviction, or capital. This is plausible for a Series A pre-hire or a founder seeking to deepen or redirect an existing product.</p>",
+      "citations": [
+        {"label": "CTX"},
+        {"label": "CTX"}
+      ],
+      "confidence": "Medium"
+    },
+    "screenOut": {
+      "content": "<p>Critical red flags warrant serious caution before engagement: (1) <span class=\"cite\">No job description available <span class=\"cite-label\" data-label=\"JD\">JD</span></span>—typical for stealth projects, but also indicative of undefined role scope, unclear success metrics, and potential for mission creep. (2) Zero public positioning or web presence—limits ability to assess product-market fit hypothesis, customer discovery progress, or founder credibility. (3) Unknown compensation structure, equity terms, runway, and funding status—unable to model risk-reward or career trajectory impact. (4) No disclosed customer base, revenue, or traction metrics—raises questions about true stage and burnrate. (5) Undefined domain and market—prevents evaluation of sector trends, exit optionality, or competitive landscape. For a 0-to-1 hire, ambiguity is expected; however, this level of opacity is atypical even for stealth ventures. Consider whether founder communication, clarity, and collaborative style are evident in outreach or interviews. If opaqueness persists through initial discussions, this suggests either extreme confidentiality (plausible for proprietary AI/ML plays) or organizational immaturity (red flag for execution).</p>",
+      "citations": [
+        {"label": "JD"},
+        {"label": "NC"},
+        {"label": "CTX"}
+      ],
+      "confidence": "High"
+    },
+    "needs": {
+      "content": "<p>At 0-to-1 stage, VectorOne likely needs: (1) rapid customer discovery and problem validation, (2) product-market fit hypothesis formation and testing, (3) MVP scoping and delivery, (4) founding team expansion (hiring first PM, designers, engineers if not yet assembled), (5) go-to-market narrative and positioning, (6) fundraising narrative and investor deck refinement. Head of Product is often the first adult hire at this stage, responsible for imposing structure on founder vision, establishing PM rigor, and building the product function from zero. Ili's background in cross-functional leadership, complex products, and scaling teams aligns directly with these needs. However, without clarity on founder clarity, pre-existing team composition, or strategic vision, the actual pain points remain speculative. Request a conversation focused on: current traction, founder experience and track record, pre-existing team, current problem and customer hypotheses, and planned milestones for next 12 months.</p>",
+      "citations": [
+        {"label": "CTX"},
+        {"label": "NC"}
+      ],
+      "confidence": "Medium"
+    },
+    "fit": {
+      "content": "<p>Functional fit is moderate-to-strong. Ili's 15+ years as a senior product leader, experience building products in data-heavy domains (ad tech, programmatic advertising), and track record of cross-functional leadership map naturally to 0-to-1 product challenges. Head of Product is a natural evolution from Ili's prior roles and represents appropriate scope and seniority. However, cultural and strategic fit are unclear. Key fit considerations: (1) Does Ili's product philosophy (data-driven, systems thinking, cross-functional) align with founder's vision? (2) Is Ili seeking operational control and strategic authority that a founder will willingly yield, or friction risk? (3) Does the market/domain interest Ili intellectually and strategically? Without clarity on founder personality, team composition, and product vision, fit assessment is incomplete. 0-to-1 roles succeed when founder and Head of Product share problem intuition, execution philosophy, and appetite for ambiguity. Recommend exploratory conversation focused on shared vision and decision-making style.</p>",
+      "citations": [
+        {"label": "CTX"},
+        {"label": "CTX"}
+      ],
+      "confidence": "Medium"
+    },
+    "gaps": {
+      "content": "<p>Meaningful gaps exist between Ili's prior background and this opportunity: (1) Industry specificity—Ili's core experience is ad tech and telecom; a venture into unspecified markets requires rapid domain learning or pre-existing domain intuition. (2) Founder dynamics—Ili has likely operated as an IC product leader or in established organizational hierarchies; early-stage founder relationships demand different communication, autonomy-sharing, and decisiveness under uncertainty. (3) Equity/financial literacy—0-to-1 roles require understanding of equity upside, vesting schedules, dilution, and fundraising rounds; this varies by founder maturity and investor sophistication. (4) Speed-to-execution—ad tech is fast-paced, but venture-backed 0-to-1 often demands even higher velocity, pivots, and willingness to discard prior work. (5) Limited information—without JD, market definition, or team context, inability to assess whether gaps are addressable or disqualifying. These gaps are not disqualifying for someone with Ili's seniority, but require acknowledgment and discussion in early conversations.</p>",
+      "citations": [
+        {"label": "JD"},
+        {"label": "NC"},
+        {"label": "CTX"}
+      ],
+      "confidence": "Medium"
+    },
+    "network": {
+      "content": "<p>No network signals are evident from the limited context provided. Direct outreach suggests founder or investor has identified Ili as a potential fit, potentially through mutual connections, referral, or public profile/resume. Recommend leveraging network to assess: (1) founder track record and credibility (prior exits, team reputation, founder community standing), (2) investor syndicate and quality (seed/Series A backers, sector expertise), (3) competitive intelligence on product space and potential customers, (4) reference calls with founders' prior employees or collaborators. If founder is unrecognized in the broader startup ecosystem, this raises questions about execution track record, but does not preclude opportunity validity. Early-stage ventures often have first-time founders with strong intuition but limited public profile. Recommend requesting warm introductions to: current team members, prior investors, early customers (if any), and sector experts. Network depth will significantly inform risk assessment.</p>",
+      "citations": [
+        {"label": "CTX"}
+      ],
+      "confidence": "Low"
+    },
+    "interview": {
+      "content": "<p>Interview prep should focus on fundamentals given the absence of JD. Key discussion topics: (1) Product vision and problem thesis—what customer problem is VectorOne solving, and what is the conviction level? (2) Market sizing and beachhead—what is the target segment, TAM, and initial go-to-market? (3) Founding team—what are founder(s)' backgrounds, prior exits, domain expertise, and decision-making style? (4) Current stage—what is traction to date (customers, revenue, growth metrics), and what stage of fundraising? (5) Role scope and success metrics—how is Head of Product success defined in first 12 months? (6) Team composition—who currently reports, and who will be hired? (7) Runway and capital—how many months of runway, and when is next fundraising expected? (8) Compensation and equity—base salary, equity percentage (fully diluted), vesting schedule, and any special terms. Prepare to discuss your 0-to-1 product philosophy, examples of rapid iteration and pivots, and how you've structured product teams at earlier stages. Be prepared to assess founder clarity and decision-making maturity as a proxy for execution capability.</p>",
+      "citations": [
+        {"label": "JD"},
+        {"label": "CTX"}
+      ],
+      "confidence": "Medium"
+    },
+    "proofPoints": {
+      "content": "<p>Limited proof points are publicly available. VectorOne exists as a domain registrant and candidate for interview scheduling, confirming operational status. Beyond that, proof points are minimal: (1) founder is willing to engage with a senior product leader, suggesting at least pre-Series A conviction or a founder already elevated to decision-making authority, (2) domain choice (vectorone.com) may reflect focus on vector technologies if intentional, but this is speculative, (3) personal notes indicate <span class=\"cite\">interesting opportunity! 0 to 1 <span class=\"cite-label\" data-label=\"CTX\">CTX</span></span>, suggesting prior context or conversation that generated positive first impression. Proof points are largely self-referential or inferential at this stage. Recommend requesting concrete evidence: (1) customer testimonials or case studies (if any), (2) seed/Series A funding announcement, (3) team background and prior founder/exec exits, (4) press mentions or product launches, (5) competitive positioning or differentiation claims. Without these, assess founder credibility and domain intuition directly in conversation as the primary proof point.</p>",
+      "citations": [
+        {"label": "NC"},
+        {"label": "CTX"}
+      ],
+      "confidence": "Low"
+    },
+    "dealBreaker": {
+      "content": "<p>Potential deal breakers to identify in early conversations: (1) Founder unwilling or unable to articulate clear problem thesis and market hypothesis—suggests insufficient pre-work or product intuition. (2) Equity terms heavily dilution-prone or vesting period mismatch (e.g., 2-year cliff vs. 4-year full vesting)—discuss pro-rata participation rights and any priority agreements. (3) Runway under 12 months without clear path to Series A or product-market fit milestone—funding risk may be unacceptable depending on Ili's risk appetite. (4) Founder expecting Head of Product to be first engineer/designer/salesperson as well—misalignment on role scope and organizational structure. (5) Pre-existing product direction or team Ili must inherit without input—reduces Head of Product authority and decision-making power. (6) Compensation at or below market for title and stage—may indicate underfunded venture or limited founder conviction. (7) Vague or evasive responses about competitor analysis, customer discovery, or prior founder track record—potential red flags for execution capability. Address these directly in first conversation; if founder is evasive or dismissive, consider this a yellow flag for founder maturity and organizational health.</p>",
+      "citations": [
+        {"label": "NC"},
+        {"label": "CTX"}
+      ],
+      "confidence": "High"
+    },
+    "nextSteps": {
+      "content": "<p>Recommended sequence: (1) Schedule 30-minute exploratory call with founder focused on product vision, traction to date, and team composition. (2) Request written one-pager or deck summarizing: problem statement, market opportunity, current traction, team bios, funding status, and role scope. (3) If initial conversation is positive, request 60-minute working session to discuss product roadmap, customer discovery findings, and 12-month milestones. (4) Conduct reference calls with current team members (even if only 1-2 people) and/or prior investors to assess founder track record. (5) Negotiate offer terms: base salary, equity grant (% and vesting schedule), board seat (if applicable), decision-making authority (hiring, roadmap, budget), and communication cadence with founder. (6) Due diligence on fundraising status and cap table (request SAFE documents, stock ledger, or investor agreement summaries) to assess personal upside and dilution risk. (7) Make decision on risk appetite: evaluate whether personal circumstances (financial runway, career objectives, risk tolerance) align with 0-to-1 startup risk and upside profile. Given opacity, timeline should be aggressive: schedule first call within 1 week, complete initial assessment within 2 weeks, and make decision to proceed or pass within 3 weeks.</p>",
+      "citations": [
+        {"label": "CTX"}
+      ],
+      "confidence": "Medium"
+    }
+  }
+}

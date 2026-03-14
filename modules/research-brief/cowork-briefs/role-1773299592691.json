@@ -1,0 +1,272 @@
+{
+  "roleId": "role-1773299592691",
+  "role": {
+    "title": "Sr. Director of Product",
+    "company": "RingCentral"
+  },
+  "company": {
+    "name": "RingCentral",
+    "domain": "ringcentral.com"
+  },
+  "generatedAt": "2026-03-14T16:30:00Z",
+  "sections": {
+    "pursuitEconomics": {
+      "content": "<p>RingCentral represents a significant economic opportunity for a Sr. Director of Product focused on AI-driven telecommunications. The company operates a <span class=\"citation\" data-label=\"CTX\">$2B annual revenue business with a $93B addressable market opportunity</span>, indicating substantial headroom for growth. The AI Receptionist (AIR) product specifically generates <span class=\"citation\" data-label=\"CTX\">$10MM ARR growing to $30MM</span>, representing a 3x expansion trajectory over the near term. This translates to direct impact on company valuation and revenue mix as the telephony core business matures.</p><p>For Ili's candidacy, this role offers equity upside tied to AI commercialization in a market inflection point. The <span class=\"citation\" data-label=\"CTX\">recently profitable company with post-layoff focus</span> suggests stabilized unit economics and potential for meaningful option value creation. However, the published compensation range of <span class=\"citation\" data-label=\"JD\">$111K-$159K for a Sr. Director</span> requires scrutiny—this appears misaligned with market rates for director-level roles in enterprise SaaS and may indicate outdated posting data or geographic compression. Negotiation on cash and equity structure will be critical given Ili's seniority (15+ years) and the strategic nature of product leadership in AI infrastructure.</p><p>The pursuit economics favor engagement given AIR's growth trajectory, the crossover of telecom and AI expertise (rare skill combination), and the opportunity to scale a platform approach across verticals like Healthcare. The compensation gap is a material deal point requiring clarification before advancing further in the interview process.</p>",
+      "citations": [
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "$2B revenue, $93B TAM, $10-30MM ARR growth trajectory"
+        },
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "Recently profitable post-layoffs"
+        },
+        {
+          "label": "JD",
+          "source": "Job Description",
+          "detail": "Published salary range $111K-$159K"
+        }
+      ],
+      "confidence": "high"
+    },
+    "existence": {
+      "content": "<p>This role demonstrably exists and is actively being filled. <span class=\"citation\" data-label=\"CTX\">Ili has already established contact with Apoorv Chaudhary</span>, who serves as a credible internal reference point for product strategy at RingCentral. The AI Receptionist product is a material business unit within the company (not exploratory), with clear go-to-market execution underway across verticals.</p><p>The Sr. Director title maps to a leadership position responsible for product vision, roadmap, and cross-functional delivery for what appears to be either the AIR product line itself or a broader AI products portfolio. <span class=\"citation\" data-label=\"CTX\">The platform is actively scaling with healthcare as an initial vertical focus</span>, indicating resource allocation and hiring momentum.</p><p>Role authenticity is reinforced by several factors: (1) Specific technical stack and vendor dependencies mentioned (Google ASR, OpenAI LLM, 11 Labs) suggest mature product architecture requiring experienced leadership; (2) <span class=\"citation\" data-label=\"CTX\">Reference to Ray Chang, Antonio Nucci (Chief AI Officer), and Gary Chevsky as key stakeholders</span> indicates organizational structure and leadership pipeline; (3) Clear operational complexity with <span class=\"citation\" data-label=\"CTX\">China-based engineering team and PM-managed deliverables</span> requiring executive oversight.</p><p>The role is in active interview stage (Ili is past recruiter screen), suggesting hiring velocity and urgency. No indications of frozen reqs, restructuring, or role scope ambiguity emerged from available context.</p>",
+      "citations": [
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "Confirmed Ili already networked internally"
+        },
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "AIR platform scaling with healthcare focus"
+        },
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "Key leaders and technical infrastructure named"
+        }
+      ],
+      "confidence": "high"
+    },
+    "companyMarket": {
+      "content": "<p><span class=\"citation\" data-label=\"CTX\">RingCentral is a 25-year-old phone company</span> operating in the unified communications and contact center software space. The company dominates cloud telephony but faces secular maturity in its core business—a common trajectory for telecom infrastructure players as category adoption plateaus. This structural headwind explains the organization's pivot toward AI-augmented products and the strategic priority assigned to AIR.</p><p>Market dynamics are favorable for AI-driven voice agents. <span class=\"citation\" data-label=\"CTX\">The addressable market spans $93B</span> across UCaaS (unified communications), CCaaS (contact center), and emerging agentic AI applications. RingCentral's existing customer base (SMBs, mid-market enterprises) provides built-in distribution channels for voice AI products—a significant competitive moat versus greenfield AI companies without telephony infrastructure.</p><p>Competitive landscape includes: (1) Native AI plays (e.g., Eleven Labs, Retell AI) focused on voice agent technology; (2) Large CCaaS platforms (Genesys, Five9) integrating AI capabilities; (3) Emerging telephony-AI hybrids (Dialpad, Vonage). RingCentral's advantage lies in <span class=\"citation\" data-label=\"CTX\">platform extensibility and vertical-specific solutions</span>, allowing faster go-to-market in use cases like healthcare where regulated compliance and domain expertise matter.</p><p>Market maturity for voice AI receptionist products is early-to-mid stage (2025-2026), making this a category leadership opportunity. <span class=\"citation\" data-label=\"CTX\">Healthcare vertical focus</span> is strategically sound given high cost-of-care, administrative overhead, and margin pressures creating buyer urgency for appointment automation and lead capture solutions.</p>",
+      "citations": [
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "25-year-old company, $2B revenue, $93B TAM"
+        },
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "Platform approach with vertical extensibility"
+        },
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "Healthcare initial focus"
+        }
+      ],
+      "confidence": "high"
+    },
+    "plausible": {
+      "content": "<p>This role is highly plausible for Ili Selinger given her background and career trajectory. <span class=\"citation\" data-label=\"ILI\">Ili brings 15+ years of product experience</span>, spanning ad tech and data products—domains requiring sophisticated product thinking, technical depth, and cross-functional complexity management. The role requirement for <span class=\"citation\" data-label=\"JD\">4-6+ years of PM experience</span> is substantially below Ili's actual experience level, indicating the role is likely underfitted for her seniority or the posting understates requirements.</p><p>The critical differentiator is Ili's telecom background. <span class=\"citation\" data-label=\"ILI\">She has prior telecom experience from earlier in her career</span>, addressing one of the highest-friction requirements in the job description. This is a rare skill in the broader PM market and a material advantage. Ad tech experience also transfers well to voice AI products—both domains involve real-time bidding/decision-making, audience targeting, and measurement frameworks.</p><p>AI product interest is well-established. The intersection of telecom infrastructure, AI-powered agents, and healthcare verticals aligns with Ili's stated focus areas. The role avoids the common PM challenge of \"learning on the job\"—Ili can contribute meaningfully from day one given her existing telecom knowledge and AI product conviction.</p><p>Potential friction points: (1) <span class=\"citation\" data-label=\"CTX\">4-day in-office expectation in Belmont</span> requires geographic alignment; (2) The lower-than-market compensation range suggests either misaligned expectations or opportunity to reset during negotiation. Neither is a fundamental fit issue, but both require explicit discussion before commitment.</p>",
+      "citations": [
+        {
+          "label": "ILI",
+          "source": "Candidate background",
+          "detail": "15+ years product experience"
+        },
+        {
+          "label": "ILI",
+          "source": "Candidate background",
+          "detail": "Prior telecom experience"
+        },
+        {
+          "label": "JD",
+          "source": "Job Description",
+          "detail": "4-6+ years PM, telecom/UCC/AI background required"
+        },
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "4-day in-office Belmont location"
+        }
+      ],
+      "confidence": "high"
+    },
+    "screenOut": {
+      "content": "<p>No material screen-out risks identified for Ili's candidacy. The published job description screening criteria are broadly satisfied:</p><p><span class=\"citation\" data-label=\"JD\">4-6+ years PM experience</span>: Ili exceeds this substantially (15+ years). <span class=\"citation\" data-label=\"JD\">Telecom/UCC background</span>: Confirmed via prior career experience. <span class=\"citation\" data-label=\"JD\">Cloud telephony experience</span>: Telecom background covers this domain. <span class=\"citation\" data-label=\"JD\">AI-powered product experience (chatbots/voice AI)</span>: Ili's stated AI product interest and ad tech complexity management suggest capability; voice AI specifically may require validation. <span class=\"citation\" data-label=\"JD\">SIP/PSTN/IVR technical knowledge</span>: This is the highest-risk criterion—Ili's telecom experience level on these protocols is unknown and may require ramp-up, though telecom PMs typically acquire this knowledge through platform exposure rather than starting from zero.</p><p>Potential objections from RingCentral's hiring team: (1) Underemployment relative to role seniority (Sr. Director might expect VP-level candidate with more recent public company SaaS experience); (2) Verification of voice AI product expertise (chatbots and IVR systems differ materially from voice agent architectures); (3) Technical depth on SIP/PSTN/IVR protocols. These are addressable through strong interview storytelling but worth proactive framing.</p><p>Ili's ad tech background could be framed as a strength (real-time decision engines, latency sensitivity, complex measurement) rather than a gap, positioning the telecom pivot as intentional vertical expansion rather than career reset. No fundamental disqualifiers present in the published requirements or known organizational preferences.</p>",
+      "citations": [
+        {
+          "label": "JD",
+          "source": "Job Description",
+          "detail": "Posted requirements: 4-6+ years PM, telecom/UCC/AI, cloud telephony, AI products, SIP/PSTN/IVR"
+        },
+        {
+          "label": "ILI",
+          "source": "Candidate background",
+          "detail": "Exceeds years of experience, has telecom background, stated AI interest"
+        }
+      ],
+      "confidence": "high"
+    },
+    "needs": {
+      "content": "<p>RingCentral's hiring needs for this Sr. Director role are driven by two structural forces: (1) Core telephony business maturation requiring product leadership to navigate transition; (2) AIR product scaling demanding experienced PM to manage complex delivery, stakeholder management, and vertical expansion.</p><p><span class=\"citation\" data-label=\"CTX\">The company operates with a China-based engineering team and PM-managed deliverables</span>, indicating the successful candidate must excel at distributed team coordination, asynchronous communication, and clear scope definition—critical for remote engineering structures. This is not a co-located product org, making strong PM process and communication discipline essential.</p><p><span class=\"citation\" data-label=\"CTX\">ARR growth from $10MM to $30MM</span> signals the need for product leadership that can execute at scale without proportional headcount expansion. The Sr. Director role likely owns or heavily influences roadmap prioritization, feature sequencing, and go-to-market strategy across healthcare and expansion verticals. This requires ability to make crisp trade-off decisions and resist scope creep in a complex organization.</p><p><span class=\"citation\" data-label=\"CTX\">The organization recently laid off \"bloat\" post-profitability</span>, indicating lean PM structures and expectation for individual contributors with strong execution bias. The Sr. Director is likely expected to be hands-on (not purely strategic) and drive accountability across technical, GTM, and operational teams.</p><p>Technical credibility is a material need—the stack spans Google ASR, OpenAI LLMs, 11 Labs, Python/TypeScript. While the Sr. Director doesn't code, deep familiarity with these technologies and their constraints (latency, accuracy, cost) is required for informed roadmap trade-offs and vendor evaluation.</p>",
+      "citations": [
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "China engineering team, PM-managed deliverables"
+        },
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "$10-30MM ARR scaling trajectory"
+        },
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "Recently profitable, post-layoff lean structure"
+        },
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "Technical stack: Google ASR, OpenAI, 11 Labs, Python/TypeScript"
+        }
+      ],
+      "confidence": "high"
+    },
+    "fit": {
+      "content": "<p>Ili's fit for this role is strong across several dimensions. <span class=\"citation\" data-label=\"ILI\">Her 15+ years of product experience</span> demonstrates the seniority and track record expected for Sr. Director roles. The combination of <span class=\"citation\" data-label=\"ILI\">ad tech (real-time systems, latency-critical, measurement-obsessed)</span> and <span class=\"citation\" data-label=\"ILI\">prior telecom experience</span> creates a unique skill profile ideally suited for an AI-augmented telephony product.</p><p>Ad tech specifically prepares candidates well for voice AI: both domains require sub-second decision latency, handle high-volume transaction streams, involve vendor integration (ASR, LLM, TTS), and demand rigorous experimentation rigor. Ili's ability to manage complex measurement frameworks and trade-off analyses transfers directly to optimizing voice agent quality metrics (accuracy, latency, cost-per-interaction).</p><p>Telecom experience addresses the core knowledge gap in most AI-native PMs. <span class=\"citation\" data-label=\"ILI\">Ili's prior exposure to telephony domains</span> means she's not starting from zero on SIP/PSTN/IVR concepts—a significant advantage over candidates with pure enterprise SaaS backgrounds. This accelerates ramp-up time and credibility with engineering/ops teams who expect PM to understand protocol constraints.</p><p><span class=\"citation\" data-label=\"ILI\">Ili's stated interest in AI products</span> suggests genuine conviction rather than résumé-driven pursuit. This matters for long-term retention and ability to attract/retain top talent under her leadership. The role offers clear inflection-point opportunity: <span class=\"citation\" data-label=\"CTX\">$10-30MM ARR expansion</span> in an emerging category positions Ili as a category builder, not just a product manager.</p><p>Organizational culture fit is positive. <span class=\"citation\" data-label=\"CTX\">RingCentral's collaborative culture and recent profitability focus</span> suggest pragmatism and bias toward execution—qualities Ili's background demonstrates repeatedly.</p>",
+      "citations": [
+        {
+          "label": "ILI",
+          "source": "Candidate background",
+          "detail": "15+ years product, ad tech + data expertise"
+        },
+        {
+          "label": "ILI",
+          "source": "Candidate background",
+          "detail": "Prior telecom experience, AI product interest"
+        },
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "Collaborative culture, recently profitable"
+        },
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "$10-30MM ARR growth trajectory, category leadership opportunity"
+        }
+      ],
+      "confidence": "high"
+    },
+    "gaps": {
+      "content": "<p>Several capability gaps exist between Ili's known background and the stated role requirements, though none are disqualifying:</p><p><span class=\"citation\" data-label=\"JD\">Voice AI expertise (chatbots, voice agents)</span> is the primary gap. While Ili has demonstrated AI product conviction and has likely worked with ML systems in ad tech, specific experience with voice agent architecture, LLM-powered conversational systems, and real-time voice processing may not be in her background. This is addressable through the first 90 days of ramp-up (voice AI fundamentals are learnable), but it's worth proactive discussion in interviews to avoid perception of overstatement.</p><p><span class=\"citation\" data-label=\"JD\">SIP/PSTN/IVR technical depth</span> is unknown. Telecom experience may be limited to higher-level product strategy rather than protocol-level details. Given RingCentral's complex infrastructure spanning cloud PBX, contact center, and voice agent layers, some candidates may have deeper technical familiarity. Ili should prepare to articulate how she learns technical domains and leverage engineering teams effectively rather than claiming existing expertise.</p><p>Recent enterprise SaaS scale experience may be lighter than some comparable Sr. Director candidates. Ili's ad tech background involves scale and complex systems, but may not include direct experience with enterprise sales motions, multi-customer deployment complexity, or regulatory/compliance frameworks required in healthcare verticals. This is mitigatable through GTM listening and partner engagement but represents a learning curve.</p><p><span class=\"citation\" data-label=\"CTX\">Healthcare vertical expertise</span> is unstated. RingCentral is positioning healthcare as the priority vertical, and candidates with prior healthcare product experience would likely have advantages. This is compensatable through smart hiring of healthcare-specialized product managers or external domain advisors, but it's a gap worth acknowledging.</p>",
+      "citations": [
+        {
+          "label": "JD",
+          "source": "Job Description",
+          "detail": "Voice AI/chatbots/voice agent expertise required"
+        },
+        {
+          "label": "JD",
+          "source": "Job Description",
+          "detail": "SIP/PSTN/IVR technical knowledge expected"
+        },
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "Healthcare vertical focus"
+        }
+      ],
+      "confidence": "high"
+    },
+    "network": {
+      "content": "<p><span class=\"citation\" data-label=\"CTX\">Ili has already established contact with Apoorv Chaudhary</span>, a credible internal connection who can provide perspective on team dynamics, leadership philosophy, and hiring process expectations. This is a significant advantage—internal relationships often accelerate interview processes and provide early feedback on cultural fit. Given this existing relationship, further cold-outreach networking would be redundant and potentially awkward.</p><p>The network strategy should focus on leveraging Apoorv as an internal champion and gathering intelligence rather than initiating new external relationships. Key questions to explore with Apoorv: (1) What is the actual compensation package structure (cash vs. equity split)? The published $111K-$159K seems misaligned and may indicate data staleness; (2) What are the true reporting relationships and peer structure? Is this a VP-reporting or CEO-reporting role?; (3) What are the primary success metrics for the first 90 days?; (4) How does the team perceive the transition from core telephony to AI products?</p><p>Secondary intelligence sources: <span class=\"citation\" data-label=\"CTX\">Ray Chang, Antonio Nucci (Chief AI Officer), and Gary Chevsky (Founder/CTO/CEO)</span> are named leaders. These are individuals worth researching via LinkedIn/Crunchbase to understand product direction and leadership philosophy, but direct outreach from Ili before receiving explicit encouragement from Apoorv would be presumptuous.</p><p>Post-interview network strategy: If Ili advances to final rounds, she should ask Apoorv for warm introductions to cross-functional stakeholders (Engineering, GTM, Finance) to validate vision alignment and assess working relationship potential. This validates interview learnings and demonstrates serious intent to RingCentral's hiring team.</p>",
+      "citations": [
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "Ili already networked with Apoorv"
+        },
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "Key stakeholders: Ray Chang, Antonio Nucci (Chief AI Officer), Gary Chevsky (CEO/Founder/CTO)"
+        }
+      ],
+      "confidence": "high"
+    },
+    "interview": {
+      "content": "<p>Interview strategy should emphasize the telecom-AI convergence as Ili's unique positioning. Rather than playing defense on voice AI inexperience, she should frame her ad tech background as evidence of ability to learn complex, real-time technical domains under time pressure. Specific narrative hooks:</p><p>(1) Telecom reorientation story: Why the shift from ad tech to telecom/AI? The answer should position this as intentional category bet on voice AI + healthcare intersection, not career indecision. Frame it around witnessing administrative overhead in healthcare and believing voice agents are the natural solution.</p><p>(2) AI product learning velocity: Walk through a 1-2 recent AI project examples demonstrating ability to evaluate LLM/ASR vendors, understand latency vs. accuracy tradeoffs, and ship iteratively. This directly addresses the voice AI gap.</p><p>(3) Technical credibility without deep protocol knowledge: <span class=\"citation\" data-label=\"CTX\">The tech stack (Google ASR, OpenAI, 11 Labs, Python/TypeScript)</span> should be researched in depth. Ili should demonstrate familiarity with how these tools work, their limitations, and how to collaborate effectively with engineers building on them—not deep protocol expertise, but informed partnership capability.</p><p>(4) Distributed team execution: <span class=\"citation\" data-label=\"CTX\">Given the China-based engineering team</span>, Ili should discuss experiences managing distributed teams, asynchronous collaboration, and shipping at scale without co-location. This is her differentiator over local-only PMs.</p><p>Questions to ask: (1) How does the organization think about competing vs. partnering with pure-play voice AI startups?; (2) What are the biggest product bets for healthcare vertical over next 18 months?; (3) How much runway/runway-clarity exists for AIR product? (Validates ARR trajectory claims); (4) What did previous Sr. Director do well / what are they looking to improve?</p>",
+      "citations": [
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "Tech stack: Google ASR, OpenAI, 11 Labs, Python/TypeScript"
+        },
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "China-based engineering team"
+        }
+      ],
+      "confidence": "high"
+    },
+    "proofPoints": {
+      "content": "<p>Proof points to emphasize in interview and materials:</p><p>(1) Telecom background: <span class=\"citation\" data-label=\"ILI\">Ili's prior telecom experience</span> is the singular strongest proof point. Most AI-native PMs lack this foundation. Dig into specific achievements during telecom tenure: did she ship products, build teams, navigate regulatory constraints? Quantify impact if possible (revenue, user adoption, key decisions made).</p><p>(2) Ad tech product complexity: The scale, real-time nature, and vendor integration challenges of ad tech directly translate to voice AI. Prepare 2-3 concrete examples: launch of new AI-driven feature, vendor evaluation/integration project, or major technical pivots. Emphasize measurement rigor and experimentation discipline.</p><p>(3) Cross-functional execution: Sr. Director roles require credibility across engineering, sales, operations, and finance. Prepare narratives demonstrating ability to drive consensus in ambiguous situations, negotiate trade-offs, and hold teams accountable. Pick examples showing evidence of changing organizational behavior or strategy based on data.</p><p>(4) Learning velocity on technical domains: If voice AI is a gap, demonstrate rapid onboarding on other technical domains. How did you become credible on [specific technical area] when you didn't start with deep expertise? This addresses the voice AI concern indirectly.</p><p>(5) Founder/CEO relationship: <span class=\"citation\" data-label=\"CTX\">Gary Chevsky is CEO/Founder/CTO</span>, suggesting technical founder culture. Ili should prepare examples of working effectively with technical founders or technical co-founders, demonstrating ability to balance product vision with technical realities.</p>",
+      "citations": [
+        {
+          "label": "ILI",
+          "source": "Candidate background",
+          "detail": "15+ years product, telecom experience, ad tech expertise"
+        },
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "Gary Chevsky is technical founder/CEO"
+        }
+      ],
+      "confidence": "high"
+    },
+    "dealBreaker": {
+      "content": "<p>Several potential deal-breakers merit explicit clarification before commitment:</p><p>(1) Compensation misalignment: <span class=\"citation\" data-label=\"JD\">The published range of $111K-$159K for a Sr. Director role</span> is substantially below market (typically $180K-$250K+ for director-level SaaS roles in major metros). This suggests either outdated job posting data, compressed geographic ranges, or misaligned role level. Ili should request clarity on: actual compensation band (including equity/RSU structure), refresher vesting for external hires, and performance bonus structure. If the band truly caps at $159K, this may not be economically justified for someone with 15+ years experience.</p><p>(2) Geographic anchor: <span class=\"citation\" data-label=\"CTX\">4-day in-office requirement in Belmont</span> is a material constraint. If Ili's location differs significantly, clarify relocation expectations, visa sponsorship (if needed), and whether flexibility exists post-onboarding. This should be explicit before final interviews.</p><p>(3) Role scope clarity: It's unknown whether this Sr. Director owns all AI products, just AIR, or a broader product portfolio. Scope ambiguity at director level creates friction. Clarify: direct reports, budget authority, and whether this is a growth role (building team) or optimization role (managing existing team).</p><p>(4) Career progression: If Ili advances, clarify VP-track potential and timeline. A Sr. Director role should offer clear VP path (typically 2-3 years of strong execution). If RingCentral's structure caps director level, this could limit growth potential.</p><p>(5) Voice AI ramp-up support: Clarify whether RingCentral expects the Sr. Director to come in with deep voice AI expertise or is willing to support ramp-up on agentic AI architectures. If the former is non-negotiable, this may be a mismatch. If the latter, ensure support structures are in place (advisors, training, paired engineering mentorship).</p>",
+      "citations": [
+        {
+          "label": "JD",
+          "source": "Job Description",
+          "detail": "Published salary range $111K-$159K"
+        },
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "4-day in-office Belmont location requirement"
+        }
+      ],
+      "confidence": "high"
+    },
+    "nextSteps": {
+      "content": "<p>Immediate actions (this week):</p><p>(1) Schedule debrief with Apoorv: Use existing relationship to gather intelligence on compensation structure, role scope, and interview process timeline. Frame as \"wanting to come prepared and understand full context.\" Key asks: (a) actual comp package; (b) reporting structure; (c) primary success metrics for first 90 days; (d) what happened with previous Sr. Director (if applicable).</p><p>(2) Technical preparation: Deep-dive on <span class=\"citation\" data-label=\"CTX\">Google ASR, OpenAI LLMs, 11 Labs voice synthesis</span>. Read whitepapers, understand latency characteristics, and familiarize with how these technologies combine in production voice agent systems. This bridges the voice AI knowledge gap and demonstrates serious preparation.</p><p>(3) Healthcare domain research: Given <span class=\"citation\" data-label=\"CTX\">healthcare vertical focus</span>, spend time understanding administrative pain points in medical practices (appointment scheduling, insurance verification, lead nurturing for med spas, etc.). This shows strategic thinking beyond pure technology.</p><p>Pre-interview (1-2 weeks before first call):</p><p>(4) Prepare telecom + AI narrative: Develop a 2-minute story on why Ili is uniquely suited to this role (telecom background + AI conviction + ad tech execution). This should be polished and repeatable.</p><p>(5) Research key leaders: <span class=\"citation\" data-label=\"CTX\">Ray Chang, Antonio Nucci, Gary Chevsky</span>—understand their backgrounds, prior roles, and product philosophy via LinkedIn. This informs interview questions and demonstrates serious intent.</p><p>(6) Compensation negotiation prep: Develop counteroffer strategy if $159K cap is real. Should Ili pursue this role, she'll need clear position on equity, bonus structure, and refresher grants. Have conversation with Apoorv on market realities to set expectations early.</p><p>Post-interview (if advanced):</p><p>(7) Request technical deep-dives: Ask for sessions with Chief AI Officer or lead voice engineers to validate technical direction and assess team quality. This is reasonable ask for Sr. Director candidates.</p><p>(8) Reference calls: Identify prior RingCentral PMs or leaders (if possible) to assess culture, execution philosophy, and working relationships with Gary Chevsky. Apoorv may be able to facilitate.</p>",
+      "citations": [
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "Google ASR, OpenAI LLMs, 11 Labs TTS"
+        },
+        {
+          "label": "CTX",
+          "source": "Apoorv Chaudhary conversation",
+          "detail": "Healthcare vertical, Ray Chang, Antonio Nucci, Gary Chevsky"
+        }
+      ],
+      "confidence": "high"
+    }
+  }
+}
