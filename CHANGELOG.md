@@ -4,6 +4,56 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.22.0 — 2026-03-14
+
+### Research Brief V3 — Pursuit Strategy Rewrite with Live Web Search
+
+Major upgrade per Improvement Spec. Transforms the brief from a research summary into a ruthless pursuit strategy tool.
+
+**New 13-section structure:**
+1. Pursuit Economics — compact decision box (Pursue/Pass, fit level, confidence, time investment, expected yield, gating factor, best next move)
+2. Why This Role Exists — business problem, urgency, first-year mandate, hidden tensions
+3. Company and Market Context — real research with live news, competitive landscape, strategy, AI strategy
+4. Why You Are Plausible — analytical case for candidacy (what transfers, what's adjacent, strongest evidence)
+5. Why You May Get Screened Out — blunt disqualifier analysis (severity, recruiter/HM risk, bridgeability)
+6. What They Actually Need — explicit + implied requirements, leadership expectations, hidden constraints
+7. Your Fit — UPGRADED model with 7 columns: requirement, match type, proof strength, screen-out risk, narrative bridgeability, best framing, evidence labels
+8. Gaps and Mitigation — severity, bridgeability, framing, risk level per stage
+9. Network Strategy — contacts as decision levers (ask type, key question, what answer increases/decreases confidence)
+10. Interview Prep — compressed: top 5 likely, top 3 risky, best stories, objection handling
+11. Proof Points to Add — structured handoff to Resume/Outreach/Mock
+12. Deal-Breaker Test — facts that would make pursuit not worth it
+13. Next-Step Plan — time investment recommendation + 5 concrete actions
+
+**Live web search (Tavily API):**
+- Fetches recent company news via 3 targeted queries before generation
+- Results injected into prompts as EXT evidence with URLs and dates
+- Degrades gracefully if no Tavily key configured
+- Tavily key stored in localStorage alongside Anthropic key
+
+**Additional Context system (new):**
+- Free-text input for role-specific context missing from active resume
+- File upload (drag-and-drop) for older resumes/supporting docs (.docx via mammoth.js, .txt, .md)
+- New evidence labels: CTX (Additional Context) and DOC (Uploaded Supporting Document)
+- Context injected into all section prompts, labeled distinctly from resume data
+
+**7 evidence labels (up from 5):**
+- JD (job description), EXT (external research), ILI (Ili profile/resume), CTX (additional context), DOC (uploaded document), INF (inference), NC (needs confirmation)
+- Color-coded citation badges in UI and PDF
+- Contextual popover explanations for each label type
+
+**Generation engine updates:**
+- Temperature lowered to 0.3 (from 0.4) for higher accuracy
+- All 13 section prompts rewritten with detailed output structures and guardrails
+- Tone directive: "ruthlessly honest pursuit strategist" vs previous "researcher"
+
+**PDF export:**
+- Renamed to "Pursuit Strategy Brief"
+- Pursuit Economics box gets special bordered styling
+- All 7 citation label colors in print-friendly palette
+
+---
+
 ## v3.21.0 — 2026-03-14
 
 ### Research Brief V2 — Complete Rewrite

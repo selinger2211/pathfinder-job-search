@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pathfinder — Research Brief V2</title>
-  <meta name="description" content="Comprehensive research brief with 8-section analysis, fit mapping, network analysis, and interview prep">
+  <title>Pathfinder — Research Brief V3</title>
+  <meta name="description" content="Pursuit strategy brief: 13-section analysis with citation trust layer, fit model, screen-out risks, and PDF export">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>P</text></svg>">
 
   <link rel="stylesheet" href="../shared/pathfinder.css?v=3.5.1">
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
   <script src="../shared/claude-api.js"></script>
 
   <style>
-    /* ====== RESEARCH BRIEF V2 STYLES ====== */
+    /* ====== RESEARCH BRIEF V3 STYLES ====== */
 
     .research-brief-container {
       display: flex;
@@ -24,7 +25,7 @@
 
     /* ====== LEFT SIDEBAR ====== */
     .sidebar {
-      width: 320px;
+      width: 340px;
       background: var(--bg-surface);
       border-right: 1px solid var(--bg-subtle);
       display: flex;
@@ -172,15 +173,8 @@
       text-transform: capitalize;
     }
 
-    .badge.hot {
-      background: rgba(239, 68, 68, 0.1);
-      color: rgb(239, 68, 68);
-    }
-
-    .badge.active {
-      background: rgba(34, 197, 94, 0.1);
-      color: rgb(34, 197, 94);
-    }
+    .badge.hot { background: rgba(239, 68, 68, 0.1); color: rgb(239, 68, 68); }
+    .badge.active { background: rgba(34, 197, 94, 0.1); color: rgb(34, 197, 94); }
 
     .jd-section {
       display: flex;
@@ -206,6 +200,84 @@
       max-height: 200px;
       overflow-y: auto;
       line-height: 1.5;
+    }
+
+    /* ====== ADDITIONAL CONTEXT ====== */
+    .additional-context-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .additional-context-textarea {
+      padding: var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      min-height: 80px;
+      max-height: 160px;
+      resize: vertical;
+      font-family: inherit;
+      line-height: 1.5;
+    }
+
+    .additional-context-textarea::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .additional-context-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+
+    .file-upload-zone {
+      padding: var(--space-3);
+      border: 2px dashed var(--bg-subtle);
+      border-radius: var(--radius-md);
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+    }
+
+    .file-upload-zone:hover {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.05);
+      color: var(--text-secondary);
+    }
+
+    .file-upload-zone.has-file {
+      border-color: rgb(34, 197, 94);
+      background: rgba(34, 197, 94, 0.05);
+      color: rgb(34, 197, 94);
+    }
+
+    .uploaded-file-tag {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      color: var(--text-primary);
+      margin-top: var(--space-2);
+    }
+
+    .uploaded-file-tag .remove-file {
+      cursor: pointer;
+      color: var(--text-tertiary);
+      margin-left: auto;
+      padding: 2px;
+    }
+
+    .uploaded-file-tag .remove-file:hover {
+      color: rgb(239, 68, 68);
     }
 
     .sidebar-actions {
@@ -237,14 +309,8 @@
       color: white;
     }
 
-    .btn-primary:hover:not(:disabled) {
-      opacity: 0.9;
-    }
-
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .btn-ghost {
       background: transparent;
@@ -307,9 +373,7 @@
       gap: var(--space-1);
     }
 
-    .brief-actions button:hover {
-      background: var(--bg-subtle);
-    }
+    .brief-actions button:hover { background: var(--bg-subtle); }
 
     .brief-content {
       flex: 1;
@@ -375,6 +439,102 @@
       border-left-color: var(--accent);
     }
 
+    /* ====== PURSUIT ECONOMICS BOX ====== */
+    .pursuit-economics-box {
+      background: var(--bg-elevated);
+      border: 2px solid var(--accent);
+      border-radius: var(--radius-md);
+      padding: var(--space-6);
+      margin-bottom: var(--space-4);
+    }
+
+    .pursuit-economics-box .pe-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+      padding-bottom: var(--space-3);
+      border-bottom: 1px solid var(--bg-subtle);
+    }
+
+    .pursuit-economics-box .pe-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      color: white;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: var(--text-sm);
+    }
+
+    .pursuit-economics-box .pe-title {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .pe-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+
+    .pe-metric {
+      padding: var(--space-3);
+      background: var(--bg-surface);
+      border-radius: var(--radius-sm);
+      text-align: center;
+    }
+
+    .pe-metric-label {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-1);
+    }
+
+    .pe-metric-value {
+      font-size: var(--text-base);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .pe-metric-value.pursue { color: rgb(34, 197, 94); }
+    .pe-metric-value.stretch { color: rgb(245, 158, 11); }
+    .pe-metric-value.pass { color: rgb(239, 68, 68); }
+    .pe-metric-value.strong { color: rgb(34, 197, 94); }
+    .pe-metric-value.medium { color: rgb(245, 158, 11); }
+    .pe-metric-value.weak { color: rgb(239, 68, 68); }
+    .pe-metric-value.high { color: rgb(34, 197, 94); }
+    .pe-metric-value.low { color: rgb(239, 68, 68); }
+
+    .pe-gating, .pe-next-move {
+      padding: var(--space-3);
+      background: var(--bg-surface);
+      border-radius: var(--radius-sm);
+      margin-top: var(--space-2);
+    }
+
+    .pe-gating-label, .pe-next-move-label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-1);
+    }
+
+    .pe-gating-value, .pe-next-move-value {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
     /* ====== SECTION CARDS ====== */
     .section {
       background: var(--bg-elevated);
@@ -391,9 +551,7 @@
       border-left: 3px solid var(--accent);
     }
 
-    .section.pending {
-      opacity: 0.6;
-    }
+    .section.pending { opacity: 0.6; }
 
     .section-header {
       display: flex;
@@ -416,8 +574,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 32px;
+      min-width: 32px;
       height: 32px;
+      padding: 0 var(--space-2);
       background: rgba(99, 102, 241, 0.15);
       color: var(--accent);
       border-radius: var(--radius-sm);
@@ -440,10 +599,7 @@
       color: var(--text-secondary);
     }
 
-    .spinner {
-      animation: spin 1s linear infinite;
-    }
-
+    .spinner { animation: spin 1s linear infinite; }
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
@@ -454,33 +610,17 @@
       color: var(--text-primary);
     }
 
-    .section-content p {
-      margin: 0 0 var(--space-3) 0;
-      font-size: var(--text-base);
-    }
-
-    .section-content p:last-child {
-      margin-bottom: 0;
-    }
-
-    .section-content strong {
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .section-content em {
-      font-style: italic;
-      color: var(--text-secondary);
-    }
+    .section-content p { margin: 0 0 var(--space-3) 0; font-size: var(--text-base); }
+    .section-content p:last-child { margin-bottom: 0; }
+    .section-content strong { font-weight: 600; color: var(--text-primary); }
+    .section-content em { font-style: italic; color: var(--text-secondary); }
 
     .section-content ul, .section-content ol {
       margin: var(--space-3) 0 var(--space-3) var(--space-4);
       padding-left: var(--space-3);
     }
 
-    .section-content li {
-      margin-bottom: var(--space-2);
-    }
+    .section-content li { margin-bottom: var(--space-2); }
 
     .section-content table {
       width: 100%;
@@ -502,9 +642,7 @@
       color: var(--text-primary);
     }
 
-    .section-content td {
-      color: var(--text-primary);
-    }
+    .section-content td { color: var(--text-primary); }
 
     /* ====== CITATION MARKERS & POPOVER ====== */
     .cite {
@@ -531,6 +669,15 @@
       background: rgb(79, 70, 229);
       transform: scale(1.1);
     }
+
+    /* Color-coded citation labels */
+    .cite-label[data-label="JD"] { background: rgb(34, 150, 94); }
+    .cite-label[data-label="EXT"] { background: rgb(59, 130, 246); }
+    .cite-label[data-label="ILI"] { background: rgb(139, 92, 246); }
+    .cite-label[data-label="CTX"] { background: rgb(14, 165, 233); }
+    .cite-label[data-label="DOC"] { background: rgb(20, 184, 166); }
+    .cite-label[data-label="INF"] { background: rgb(217, 119, 6); }
+    .cite-label[data-label="NC"] { background: rgb(239, 68, 68); }
 
     .citation-popover {
       position: fixed;
@@ -572,30 +719,13 @@
       margin-right: var(--space-1);
     }
 
-    .citation-badge.jd {
-      background: rgba(34, 197, 94, 0.15);
-      color: rgb(34, 197, 94);
-    }
-
-    .citation-badge.ext {
-      background: rgba(59, 130, 246, 0.15);
-      color: rgb(59, 130, 246);
-    }
-
-    .citation-badge.ili {
-      background: rgba(139, 92, 246, 0.15);
-      color: rgb(139, 92, 246);
-    }
-
-    .citation-badge.inf {
-      background: rgba(245, 158, 11, 0.15);
-      color: rgb(217, 119, 6);
-    }
-
-    .citation-badge.nc {
-      background: rgba(239, 68, 68, 0.15);
-      color: rgb(239, 68, 68);
-    }
+    .citation-badge.jd { background: rgba(34, 197, 94, 0.15); color: rgb(34, 197, 94); }
+    .citation-badge.ext { background: rgba(59, 130, 246, 0.15); color: rgb(59, 130, 246); }
+    .citation-badge.ili { background: rgba(139, 92, 246, 0.15); color: rgb(139, 92, 246); }
+    .citation-badge.ctx { background: rgba(14, 165, 233, 0.15); color: rgb(14, 165, 233); }
+    .citation-badge.doc { background: rgba(20, 184, 166, 0.15); color: rgb(20, 184, 166); }
+    .citation-badge.inf { background: rgba(245, 158, 11, 0.15); color: rgb(217, 119, 6); }
+    .citation-badge.nc { background: rgba(239, 68, 68, 0.15); color: rgb(239, 68, 68); }
 
     .section-meta {
       margin-top: var(--space-6);
@@ -623,20 +753,9 @@
       font-size: 0.85em;
     }
 
-    .confidence-high {
-      background: rgba(34, 197, 94, 0.15);
-      color: rgb(34, 197, 94);
-    }
-
-    .confidence-medium {
-      background: rgba(245, 158, 11, 0.15);
-      color: rgb(217, 119, 6);
-    }
-
-    .confidence-low {
-      background: rgba(239, 68, 68, 0.15);
-      color: rgb(239, 68, 68);
-    }
+    .confidence-high { background: rgba(34, 197, 94, 0.15); color: rgb(34, 197, 94); }
+    .confidence-medium { background: rgba(245, 158, 11, 0.15); color: rgb(217, 119, 6); }
+    .confidence-low { background: rgba(239, 68, 68, 0.15); color: rgb(239, 68, 68); }
 
     /* ====== EMPTY STATE ====== */
     .empty-state {
@@ -649,10 +768,7 @@
       color: var(--text-secondary);
     }
 
-    .empty-state-icon {
-      font-size: 48px;
-      opacity: 0.3;
-    }
+    .empty-state-icon { font-size: 48px; opacity: 0.3; }
 
     .empty-state-text {
       font-size: var(--text-base);
@@ -689,15 +805,32 @@
       display: none;
     }
 
-    .generation-progress-text.active {
-      display: block;
+    .generation-progress-text.active { display: block; }
+
+    /* ====== HANDOFF BUTTONS ====== */
+    .handoff-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .handoff-btn:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
     }
 
     /* ====== RESPONSIVE ====== */
     @media (max-width: 1200px) {
-      .toc-sidebar {
-        display: none;
-      }
+      .toc-sidebar { display: none; }
     }
 
     @media (max-width: 768px) {
@@ -707,14 +840,8 @@
         height: 100%;
         z-index: 100;
       }
-
-      .sidebar-toggle {
-        display: flex;
-      }
-
-      .brief-content {
-        padding: var(--space-4);
-      }
+      .sidebar-toggle { display: flex; }
+      .brief-content { padding: var(--space-4); }
     }
   </style>
 </head>
@@ -800,17 +927,50 @@
           <div class="jd-text" id="jdText" role="region" aria-label="Job description content"></div>
         </div>
 
-        <!-- API Key -->
-        <div id="apiKeySection" style="padding: var(--space-3); background: var(--bg-elevated); border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm);">
-          <label class="jd-label" for="apiKeyInput" style="display: flex; align-items: center; gap: 6px;">
-            <i data-lucide="key" style="width: 14px; height: 14px;"></i>
-            Anthropic API Key
+        <!-- Additional Context (NEW in V3) -->
+        <div id="additionalContextSection" class="additional-context-section" style="display: none;">
+          <label class="jd-label" for="additionalContextInput" style="display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="message-square-plus" style="width: 14px; height: 14px;"></i>
+            Additional Context
           </label>
-          <div style="display: flex; gap: 6px; margin-top: var(--space-2);">
-            <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." style="flex: 1; padding: 6px 10px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); font-size: var(--text-sm); background: var(--bg-base); color: var(--text-primary); font-family: monospace;" aria-label="Anthropic API key">
-            <button id="apiKeySaveBtn" onclick="saveApiKey()" title="Save API key" style="padding: 6px 10px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); background: var(--bg-elevated); cursor: pointer; font-size: var(--text-sm); color: var(--text-secondary);">Save</button>
+          <textarea id="additionalContextInput" class="additional-context-textarea" placeholder="Add context missing from your active resume: domain experience, prior projects, older roles, team scope, technical depth..."></textarea>
+          <div class="file-upload-zone" id="fileUploadZone" role="button" tabindex="0" aria-label="Upload supporting document">
+            <i data-lucide="upload" style="width: 16px; height: 16px; margin-bottom: 4px;"></i>
+            <div>Drop or click to upload an older resume or supporting doc</div>
+            <div style="margin-top: 2px; font-size: 10px;">(.docx, .txt, .pdf text)</div>
           </div>
-          <p id="apiKeyStatus" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;" role="status" aria-live="polite"></p>
+          <input type="file" id="fileUploadInput" accept=".docx,.txt,.pdf,.md" style="display: none;">
+          <div id="uploadedFilesContainer"></div>
+        </div>
+
+        <!-- API Keys -->
+        <div id="apiKeySection" style="padding: var(--space-3); background: var(--bg-elevated); border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); display: flex; flex-direction: column; gap: var(--space-3);">
+          <!-- Anthropic API Key -->
+          <div>
+            <label class="jd-label" for="apiKeyInput" style="display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="key" style="width: 14px; height: 14px;"></i>
+              Anthropic API Key
+            </label>
+            <div style="display: flex; gap: 6px; margin-top: var(--space-2);">
+              <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." style="flex: 1; padding: 6px 10px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); font-size: var(--text-sm); background: var(--bg-base); color: var(--text-primary); font-family: monospace;" aria-label="Anthropic API key">
+              <button id="apiKeySaveBtn" onclick="saveApiKey()" title="Save API key" style="padding: 6px 10px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); background: var(--bg-elevated); cursor: pointer; font-size: var(--text-sm); color: var(--text-secondary);">Save</button>
+            </div>
+            <p id="apiKeyStatus" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;" role="status" aria-live="polite"></p>
+          </div>
+          <!-- Tavily Search API Key (for real-time company research) -->
+          <div style="border-top: 1px solid var(--bg-subtle); padding-top: var(--space-3);">
+            <label class="jd-label" for="tavilyKeyInput" style="display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="search" style="width: 14px; height: 14px;"></i>
+              Tavily Search Key <span style="font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text-tertiary);">(for live company news)</span>
+            </label>
+            <div style="display: flex; gap: 6px; margin-top: var(--space-2);">
+              <input type="password" id="tavilyKeyInput" placeholder="tvly-..." style="flex: 1; padding: 6px 10px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); font-size: var(--text-sm); background: var(--bg-base); color: var(--text-primary); font-family: monospace;" aria-label="Tavily search API key">
+              <button id="tavilyKeySaveBtn" onclick="saveTavilyKey()" title="Save Tavily key" style="padding: 6px 10px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); background: var(--bg-elevated); cursor: pointer; font-size: var(--text-sm); color: var(--text-secondary);">Save</button>
+            </div>
+            <p id="tavilyKeyStatus" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;" role="status" aria-live="polite">
+              <a href="https://tavily.com" target="_blank" style="color: var(--accent); text-decoration: none;">Free at tavily.com</a> — enables live company news search
+            </p>
+          </div>
         </div>
 
         <!-- Action Buttons -->
@@ -821,7 +981,7 @@
           </button>
           <button class="btn btn-ghost" id="clearCacheBtn" style="display: none;" aria-label="Clear cache and regenerate">
             <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-            Clear & Regenerate
+            Clear &amp; Regenerate
           </button>
         </div>
       </div>
@@ -879,15 +1039,23 @@
       currentRoleId: null,
       currentBrief: null,
       isGenerating: false,
+      additionalContext: '',
+      uploadedDocuments: [],
+      companyNewsResults: null,
       sections: [
-        { id: 'summary', letter: 'A', title: 'Top Summary' },
-        { id: 'existence', letter: 'B', title: 'Why This Role Exists' },
-        { id: 'needs', letter: 'C', title: 'What They Actually Need' },
-        { id: 'fit', letter: 'D', title: 'Your Fit' },
-        { id: 'gaps', letter: 'E', title: 'Gaps and Mitigation' },
-        { id: 'network', letter: 'F', title: 'Network and Outreach' },
-        { id: 'interview', letter: 'G', title: 'Interview Prep' },
-        { id: 'nextSteps', letter: 'H', title: 'Next-step Plan' }
+        { id: 'pursuitEconomics', letter: '1', title: 'Pursuit Economics' },
+        { id: 'existence', letter: '2', title: 'Why This Role Exists' },
+        { id: 'companyMarket', letter: '3', title: 'Company and Market Context' },
+        { id: 'plausible', letter: '4', title: 'Why You Are Plausible' },
+        { id: 'screenOut', letter: '5', title: 'Why You May Get Screened Out' },
+        { id: 'needs', letter: '6', title: 'What They Actually Need' },
+        { id: 'fit', letter: '7', title: 'Your Fit' },
+        { id: 'gaps', letter: '8', title: 'Gaps and Mitigation' },
+        { id: 'network', letter: '9', title: 'Network Strategy' },
+        { id: 'interview', letter: '10', title: 'Interview Prep' },
+        { id: 'proofPoints', letter: '11', title: 'Proof Points to Add' },
+        { id: 'dealBreaker', letter: '12', title: 'Deal-Breaker Test' },
+        { id: 'nextSteps', letter: '13', title: 'Next-Step Plan' }
       ]
     };
 
@@ -909,42 +1077,197 @@
     }
 
     /* ====== DATA LOADING ====== */
+    /** Get all companies from localStorage */
+    function getCompanies() { return safeJsonParse('pf_companies', []); }
+
+    /** Get all roles from localStorage */
+    function getRoles() { return safeJsonParse('pf_roles', []); }
+
+    /** Get resume/bullet bank from localStorage */
+    function getResumeLog() { return safeJsonParse('pf_resume_log', []); }
+
+    /** Get connections from localStorage */
+    function getConnections() { return safeJsonParse('pf_connections', []); }
+
+    /* ====== FILE UPLOAD HANDLING ====== */
     /**
-     * Get all companies from localStorage
-     * @returns {Array} Company objects
+     * Handle file upload — extract text from .docx, .txt, .md files
+     * @param {File} file - Uploaded file
      */
-    function getCompanies() {
-      return safeJsonParse('pf_companies', []);
+    async function handleFileUpload(file) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      let content = '';
+
+      try {
+        if (ext === 'docx') {
+          const arrayBuffer = await file.arrayBuffer();
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          content = result.value;
+        } else if (ext === 'txt' || ext === 'md') {
+          content = await file.text();
+        } else if (ext === 'pdf') {
+          content = `[PDF uploaded: ${file.name} — PDF text extraction requires server-side processing. Paste key content into Additional Context instead.]`;
+        } else {
+          content = `[Unsupported file type: ${ext}]`;
+        }
+      } catch (err) {
+        console.error('File read error:', err);
+        content = `[Failed to read ${file.name}: ${err.message}]`;
+      }
+
+      if (content && content.trim()) {
+        STATE.uploadedDocuments.push({ name: file.name, content: content.trim(), type: ext });
+        renderUploadedFiles();
+      }
     }
 
     /**
-     * Get all roles from localStorage
-     * @returns {Array} Role objects
+     * Render the list of uploaded files below the upload zone
      */
-    function getRoles() {
-      return safeJsonParse('pf_roles', []);
+    function renderUploadedFiles() {
+      const container = document.getElementById('uploadedFilesContainer');
+      container.innerHTML = '';
+
+      STATE.uploadedDocuments.forEach((doc, idx) => {
+        const tag = document.createElement('div');
+        tag.className = 'uploaded-file-tag';
+        tag.innerHTML = `
+          <i data-lucide="file-text" style="width: 14px; height: 14px; flex-shrink: 0;"></i>
+          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${doc.name}</span>
+          <span class="remove-file" onclick="removeUploadedFile(${idx})" title="Remove file" aria-label="Remove ${doc.name}">
+            <i data-lucide="x" style="width: 12px; height: 12px;"></i>
+          </span>
+        `;
+        container.appendChild(tag);
+      });
+
+      const zone = document.getElementById('fileUploadZone');
+      if (STATE.uploadedDocuments.length > 0) {
+        zone.classList.add('has-file');
+      } else {
+        zone.classList.remove('has-file');
+      }
+
+      lucide.createIcons();
     }
 
     /**
-     * Get resume/bullet bank from localStorage
-     * @returns {Array} Resume entries
+     * Remove an uploaded file by index
+     * @param {number} idx - Index in uploadedDocuments array
      */
-    function getResumeLog() {
-      return safeJsonParse('pf_resume_log', []);
+    function removeUploadedFile(idx) {
+      STATE.uploadedDocuments.splice(idx, 1);
+      renderUploadedFiles();
+    }
+
+    /* ====== WEB SEARCH: Tavily Integration for Live Company Research ====== */
+    /**
+     * Fetch recent company news and research via Tavily Search API.
+     * Called before generating Section 3 (Company & Market Context).
+     * @param {string} companyName - Company name to search for
+     * @param {string} roleTitle - Role title for context
+     * @returns {object} { results: Array, newsItems: Array, searchTimestamp: string }
+     */
+    async function fetchCompanyNews(companyName, roleTitle) {
+      const tavilyKey = localStorage.getItem('pf_tavily_key');
+      if (!tavilyKey) {
+        console.warn('[ResearchBrief] No Tavily key — skipping web search');
+        return { results: [], newsItems: [], searchTimestamp: null, error: 'No Tavily API key configured' };
+      }
+
+      const queries = [
+        `${companyName} recent news announcements ${new Date().getFullYear()}`,
+        `${companyName} AI strategy product launches acquisitions`,
+        `${companyName} ${roleTitle} hiring team growth`
+      ];
+
+      const allResults = [];
+
+      for (const query of queries) {
+        try {
+          const response = await fetch('https://api.tavily.com/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              api_key: tavilyKey,
+              query: query,
+              search_depth: 'advanced',
+              max_results: 5,
+              include_answer: true,
+              include_raw_content: false
+            })
+          });
+
+          if (!response.ok) {
+            console.warn(`[ResearchBrief] Tavily search failed for "${query}": ${response.status}`);
+            continue;
+          }
+
+          const data = await response.json();
+          if (data.results) {
+            allResults.push(...data.results.map(r => ({
+              title: r.title,
+              url: r.url,
+              content: r.content,
+              score: r.score,
+              publishedDate: r.published_date || null,
+              query: query
+            })));
+          }
+          if (data.answer) {
+            allResults.push({
+              title: `Tavily Summary: ${query}`,
+              url: '',
+              content: data.answer,
+              score: 1.0,
+              publishedDate: null,
+              query: query,
+              isSummary: true
+            });
+          }
+        } catch (err) {
+          console.error(`[ResearchBrief] Tavily search error for "${query}":`, err);
+        }
+      }
+
+      /* Deduplicate by URL */
+      const seen = new Set();
+      const dedupedResults = allResults.filter(r => {
+        if (!r.url || r.isSummary) return true;
+        if (seen.has(r.url)) return false;
+        seen.add(r.url);
+        return true;
+      });
+
+      return {
+        results: dedupedResults,
+        newsItems: dedupedResults.filter(r => !r.isSummary).slice(0, 15),
+        summaries: dedupedResults.filter(r => r.isSummary),
+        searchTimestamp: new Date().toISOString(),
+        error: null
+      };
     }
 
     /**
-     * Get connections from localStorage
-     * @returns {Array} Connection objects
+     * Save Tavily API key to localStorage
      */
-    function getConnections() {
-      return safeJsonParse('pf_connections', []);
+    function saveTavilyKey() {
+      const key = document.getElementById('tavilyKeyInput').value.trim();
+      if (key && key.startsWith('tvly-')) {
+        localStorage.setItem('pf_tavily_key', key);
+        document.getElementById('tavilyKeyStatus').textContent = 'Search key saved';
+        document.getElementById('tavilyKeyStatus').style.color = 'rgb(34, 197, 94)';
+        setTimeout(() => {
+          document.getElementById('tavilyKeyStatus').innerHTML = '<a href="https://tavily.com" target="_blank" style="color: var(--accent); text-decoration: none;">Free at tavily.com</a> — enables live company news search';
+        }, 3000);
+      } else {
+        document.getElementById('tavilyKeyStatus').textContent = 'Key should start with tvly-';
+        document.getElementById('tavilyKeyStatus').style.color = 'rgb(239, 68, 68)';
+      }
     }
 
     /* ====== UI: Populate Role Selector ====== */
-    /**
-     * Populate the role selector dropdown
-     */
+    /** Populate the role selector dropdown */
     function populateRoleSelector() {
       const roles = getRoles();
       const select = document.getElementById('roleSelect');
@@ -952,7 +1275,6 @@
       roles.forEach(role => {
         const option = document.createElement('option');
         option.value = role.id;
-        const company = getCompanies().find(c => c.name === role.company);
         option.textContent = `${role.title} @ ${role.company || 'Unknown'}`;
         select.appendChild(option);
       });
@@ -969,7 +1291,7 @@
 
     /* ====== UI: Load Role ====== */
     /**
-     * Load a role and display its details
+     * Load a role and display its details in the sidebar
      * @param {string} roleId - Role ID to load
      */
     function loadRole(roleId) {
@@ -981,11 +1303,11 @@
 
       const company = getCompanies().find(c => c.name === role.company);
 
-      // Update brief header
+      /* Update brief header */
       document.getElementById('briefTitle').textContent = `${role.title} @ ${role.company || 'Unknown'}`;
-      document.getElementById('briefSubtitle').textContent = `Research Brief — ${new Date().toLocaleDateString()}`;
+      document.getElementById('briefSubtitle').textContent = `Pursuit Strategy Brief — ${new Date().toLocaleDateString()}`;
 
-      // Show company card
+      /* Show company card */
       const companyCard = document.getElementById('companyCard');
       if (company) {
         document.getElementById('companyName').textContent = company.name;
@@ -998,27 +1320,30 @@
         companyCard.style.display = 'flex';
       }
 
-      // Show role details
+      /* Show role details */
       document.getElementById('roleTitle').textContent = role.title;
       document.getElementById('roleLevelBadge').textContent = role.level || 'N/A';
       document.getElementById('roleAdded').textContent = role.addedDate ? new Date(role.addedDate).toLocaleDateString() : 'N/A';
       document.getElementById('roleDetails').style.display = 'block';
 
-      // Show JD
+      /* Show JD */
       if (role.jdText) {
         document.getElementById('jdText').textContent = role.jdText;
         document.getElementById('jdSection').style.display = 'flex';
       }
 
-      // Show generate button
+      /* Show Additional Context section */
+      document.getElementById('additionalContextSection').style.display = 'flex';
+
+      /* Show action buttons */
       document.getElementById('generateBtn').style.display = 'flex';
       document.getElementById('clearCacheBtn').style.display = 'flex';
 
-      // Clear sections area
+      /* Clear sections area */
       const sectionsArea = document.getElementById('sectionsArea');
       sectionsArea.innerHTML = '';
 
-      // Try to load cached brief
+      /* Try to load cached brief */
       const cacheKey = `pf_brief_${roleId}`;
       const cached = safeJsonParse(cacheKey, null);
       if (cached && cached.sections) {
@@ -1030,7 +1355,7 @@
     }
 
     /**
-     * Clear the brief UI
+     * Clear the brief UI to empty state
      */
     function clearBriefUI() {
       STATE.currentRoleId = null;
@@ -1038,6 +1363,7 @@
       document.getElementById('companyCard').style.display = 'none';
       document.getElementById('roleDetails').style.display = 'none';
       document.getElementById('jdSection').style.display = 'none';
+      document.getElementById('additionalContextSection').style.display = 'none';
       document.getElementById('generateBtn').style.display = 'none';
       document.getElementById('clearCacheBtn').style.display = 'none';
       document.getElementById('exportBtn').style.display = 'none';
@@ -1059,7 +1385,8 @@
 
     /* ====== GENERATION: Main Generate Function ====== */
     /**
-     * Generate a complete research brief for the current role
+     * Generate a complete research brief for the current role.
+     * Streams each section sequentially, rendering in real time.
      */
     async function generateBrief() {
       if (!STATE.currentRoleId || STATE.isGenerating) return;
@@ -1067,29 +1394,46 @@
       STATE.isGenerating = true;
       document.getElementById('generateBtn').disabled = true;
 
+      /* Capture additional context from UI */
+      STATE.additionalContext = document.getElementById('additionalContextInput').value.trim();
+
       const roles = getRoles();
       const role = roles.find(r => r.id === STATE.currentRoleId);
       const company = getCompanies().find(c => c.name === role.company);
 
       try {
-        // Initialize sections
+        /* Initialize sections */
         const sections = {};
         STATE.sections.forEach(s => {
           sections[s.id] = { content: '', citations: [], confidence: 'Medium' };
         });
 
-        // Clear UI
+        /* Fetch live company news (if Tavily key available) */
+        const companyName = company?.name || role.company || '';
+        if (companyName) {
+          try {
+            STATE.companyNewsResults = await fetchCompanyNews(companyName, role.title);
+            if (STATE.companyNewsResults.newsItems.length > 0) {
+              console.info(`[ResearchBrief] Fetched ${STATE.companyNewsResults.newsItems.length} news items for ${companyName}`);
+            }
+          } catch (err) {
+            console.warn('[ResearchBrief] News fetch failed, continuing without:', err);
+            STATE.companyNewsResults = null;
+          }
+        }
+
+        /* Clear UI */
         const sectionsArea = document.getElementById('sectionsArea');
         sectionsArea.innerHTML = '';
         document.getElementById('tocList').innerHTML = '';
         document.getElementById('tocSidebar').style.display = 'block';
 
-        // Show progress
+        /* Show progress */
         const progressText = document.getElementById('generationProgressText');
         progressText.classList.add('active');
 
-        // Create section elements
-        STATE.sections.forEach((section, idx) => {
+        /* Create section elements */
+        STATE.sections.forEach((section) => {
           const sectionEl = document.createElement('div');
           sectionEl.id = `section-${section.id}`;
           sectionEl.className = 'section pending';
@@ -1111,7 +1455,7 @@
           `;
           sectionsArea.appendChild(sectionEl);
 
-          // Add TOC item
+          /* Add TOC item */
           const tocItem = document.createElement('li');
           tocItem.className = 'toc-item';
           tocItem.textContent = `${section.letter}. ${section.title}`;
@@ -1125,7 +1469,7 @@
 
         lucide.createIcons();
 
-        // Generate each section
+        /* Generate each section sequentially */
         for (let idx = 0; idx < STATE.sections.length; idx++) {
           const section = STATE.sections[idx];
           document.getElementById('generationProgressCurrent').textContent = idx + 1;
@@ -1135,7 +1479,7 @@
           await generateSection(section, role, company, sections);
         }
 
-        // Cache and render
+        /* Cache and render final */
         STATE.currentBrief = { role, company, sections, generatedAt: new Date().toISOString() };
         const cacheKey = `pf_brief_${STATE.currentRoleId}`;
         localStorage.setItem(cacheKey, JSON.stringify(STATE.currentBrief));
@@ -1159,7 +1503,7 @@
 
     /* ====== GENERATION: Per-Section ====== */
     /**
-     * Generate a single section
+     * Generate a single section via streaming
      * @param {object} section - Section config (id, letter, title)
      * @param {object} role - Role data
      * @param {object} company - Company data
@@ -1171,17 +1515,14 @@
 
       try {
         let content = '';
-        let streamedFully = false;
 
         await PF.claude.stream(systemPrompt, userPrompt, (delta, full) => {
           content = full;
           document.getElementById(`content-${section.id}`).innerHTML = sanitizeHtml(content);
         }, {
           maxTokens: 4096,
-          temperature: 0.4
+          temperature: 0.3
         });
-
-        streamedFully = true;
 
         /* Parse citations and metadata from the response */
         const { citations, meta } = extractCitationsAndMeta(content);
@@ -1206,7 +1547,7 @@
           lucide.createIcons();
         }
 
-        /* Show section metadata: source count + confidence badge */
+        /* Show section metadata */
         const confClass = (meta.confidence || 'medium').toLowerCase();
         const metaEl = document.getElementById(`meta-${section.id}`);
         metaEl.innerHTML = `
@@ -1235,28 +1576,34 @@
      * @returns {string} Base system prompt
      */
     function getBaseSystemPrompt() {
-      return `You are a job search preparation researcher generating a research brief for Ili Selinger, a senior product leader.
+      return `You are a ruthlessly honest job-pursuit strategist generating a research brief for Ili Selinger, a senior product leader.
+
+Your job is not to summarize. Your job is to help Ili decide whether this role deserves his time, identify what could kill his candidacy, and recommend the actions that most improve his odds.
 
 CRITICAL RULES:
 1. Output ONLY valid HTML — never markdown. Use <h3>, <p>, <ul>, <li>, <ol>, <table>, <strong>, <em>.
 2. Do NOT include <html>, <body>, <head>, or <style> tags.
 3. Every factual claim must carry a citation badge. Use this format:
    <span class="cite">claim text <span class="cite-label" data-label="LABEL">LABEL</span></span>
-   Where LABEL is one of: JD, EXT, ILI, INF, NC
+   Where LABEL is one of: JD, EXT, ILI, CTX, DOC, INF, NC
 4. Labels mean:
    - JD = sourced from the job description
    - EXT = sourced from external research / public knowledge
-   - ILI = sourced from candidate's resume, bullet bank, or profile
+   - ILI = sourced from Ili's resume, bullet bank, story bank, or profile
+   - CTX = sourced from additional context provided by Ili for this role
+   - DOC = sourced from an uploaded supporting document
    - INF = inference (clearly labeled — never present as fact)
    - NC = needs confirmation (flagged for manual verification)
-5. Do NOT invent candidate experience. If no evidence exists in the candidate data, say "No evidence found in candidate profile" or "Needs confirmation."
-6. Do NOT present inference as fact. If inferring, use INF label.
+5. Do NOT invent candidate experience. If no evidence exists in the candidate data, say so explicitly.
+6. Do NOT present inference as fact. If inferring, use INF label and say "likely" or "inferred."
 7. If evidence is incomplete, say so. Prefer explicit uncertainty over overclaiming.
 8. Be direct. No filler. No "in today's rapidly evolving landscape." Every sentence should give something usable.
 9. When using your training knowledge about a company, label it with EXT and note: "Based on publicly available information as of training data cutoff."
-10. At the END of your response, include a metadata JSON block wrapped in <section-meta> tags:
+10. When Additional Context or Uploaded Documents are provided, treat them as first-class evidence. Label CTX or DOC appropriately. If added context conflicts with resume data, surface the conflict explicitly.
+11. For high-stakes claims (company strategy, competitor claims, leadership structure, market opportunity, network relationships), attach stronger citations or flag as NC.
+12. At the END of your response, include a metadata JSON block:
 <section-meta>
-{"confidence":"High|Medium|Low","sourceCount":N,"citationBreakdown":{"JD":N,"EXT":N,"ILI":N,"INF":N,"NC":N}}
+{"confidence":"High|Medium|Low","sourceCount":N,"citationBreakdown":{"JD":0,"EXT":0,"ILI":0,"CTX":0,"DOC":0,"INF":0,"NC":0}}
 </section-meta>`;
     }
 
@@ -1270,119 +1617,347 @@ CRITICAL RULES:
       const base = getBaseSystemPrompt();
 
       const sectionInstructions = {
-        summary: `\n\nSECTION: A. Top Summary (Executive Summary)
 
-Generate a concise decision-ready summary. This is the FIRST thing the reader sees. It must answer: "Should I pursue this role?"
+        /* ====== SECTION 1: PURSUIT ECONOMICS ====== */
+        pursuitEconomics: `\n\nSECTION: 1. Pursuit Economics (Decision Box)
+
+This is the FIRST thing Ili sees. It must answer "Should I spend time on this role?" in under 10 seconds of reading.
+
+Generate a compact decision box with these EXACT fields. Use an HTML table or structured divs.
 
 Output structure:
-- <h3>Recommendation</h3> — One of: Pursue / Pursue after networking / Stretch but plausible / Low priority / Pass. Bold the recommendation. Include 2-3 sentence rationale.
-- <h3>Fit Level</h3> — Strong / Medium / Weak with one-line justification.
-- <h3>Confidence</h3> — High / Medium / Low based on evidence quality.
-- <h3>Top Strengths</h3> — 3-4 bullet points of strongest fit areas backed by ILI evidence.
-- <h3>Main Risks</h3> — 2-3 bullet points of real gaps or concerns.
-- <h3>Best Next Move</h3> — One specific, actionable recommendation (not "apply" — be specific about WHO to contact or WHAT to do first).
+<h3>Pursuit Economics</h3>
+<table>
+<tr><td><strong>Recommendation</strong></td><td>[Pursue / Pursue after networking / Stretch / Pass] — bold the verdict. Add 1-2 sentence rationale.</td></tr>
+<tr><td><strong>Fit Level</strong></td><td>[Strong / Medium / Weak] with one-line justification</td></tr>
+<tr><td><strong>Confidence</strong></td><td>[High / Medium / Low] based on evidence quality — how much do we actually know vs infer?</td></tr>
+<tr><td><strong>Time Investment</strong></td><td>[Low / Medium / High] — how much effort does this role deserve relative to alternatives?</td></tr>
+<tr><td><strong>Expected Yield</strong></td><td>[High / Medium / Low] — probability of converting if pursued well</td></tr>
+<tr><td><strong>Gating Factor</strong></td><td>One sentence: the single biggest thing that determines whether this works</td></tr>
+<tr><td><strong>Best Next Move</strong></td><td>One specific, actionable recommendation — not "apply" but WHO to contact or WHAT to do first</td></tr>
+</table>
 
-This section must be honest. A brief that says "you're perfect" is useless. Real gaps build trust.`,
+Scoring inputs to weigh:
+- Fit strength (how many requirements match?)
+- Proof strength (how strong is the evidence for each match?)
+- Screen-out risk (any likely disqualifiers?)
+- Narrative bridgeability (can gaps be framed credibly?)
+- Network advantage (does Ili know anyone relevant?)
+- Role attractiveness (is this a role worth pursuing?)
+- Company attractiveness (is this a company worth joining?)
+- Effort-to-pursue (how much work to be competitive?)
 
-        existence: `\n\nSECTION: B. Why This Role Exists
+This section must be HONEST. A brief that says "you're perfect" is useless. Real gaps build trust. If the answer is Pass, say Pass.`,
+
+        /* ====== SECTION 2: WHY THIS ROLE EXISTS ====== */
+        existence: `\n\nSECTION: 2. Why This Role Exists
 
 Decode the business context behind this hire. Not a founding story — a situational briefing.
 
 Output structure:
 - <h3>Business Problem</h3> — What problem is this hire solving? Inferred from JD language, team description, company stage. 2-3 paragraphs.
-- <h3>Why Now</h3> — What changed? New product, re-org, backfill, scaling? Look for urgency signals in the JD.
+- <h3>Why Now</h3> — What changed? New product, re-org, backfill, scaling? Look for urgency signals in the JD. Reference any recent company news that explains timing.
 - <h3>Likely First-Year Mandate</h3> — What will success look like in 12 months? Derive from JD priorities and company context.
 - <h3>Likely Success Measures</h3> — KPIs this role will be measured on. Be specific to the function and level.
 - <h3>Hidden Tensions</h3> — Red flags: unrealistic scope, conflicting requirements, buzzword density suggesting the role isn't well-defined. Missing info that should be there.
 
 Read the JD as a hiring manager would write it — with constraints, urgency signals, and organizational context embedded in word choices. This is not a summary; it's an interpretation.`,
 
-        needs: `\n\nSECTION: C. What They Actually Need
+        /* ====== SECTION 3: COMPANY AND MARKET CONTEXT ====== */
+        companyMarket: `\n\nSECTION: 3. Company and Market Context
+
+This section must feel like it understands the company, not just the posting. Go DEEPER than the JD.
+
+Output structure:
+
+<h3>Company Overview</h3>
+- Business model
+- Primary products and product lines
+- Current strategy
+- AI strategy (where relevant)
+
+<h3>Recent Momentum</h3>
+- Recent announcements relevant to this role (product launches, acquisitions, partnerships, restructuring, earnings, leadership changes, AI announcements)
+- Whether the company is in growth mode, defensive mode, or transformation mode
+- For EACH major news item: what happened, why it matters to the role, whether it improves/weakens/complicates pursuit attractiveness
+
+<h3>Competitive Landscape</h3>
+- Top 3-5 competitors relevant to this role's scope
+- Company differentiation — what's their edge?
+- Company vulnerability — where are they behind?
+- Why this role matters competitively
+
+<h3>Why This Role Matters Now</h3>
+- Connect the role to a public company priority or recent business pressure
+- Whether recent developments increase or reduce the attractiveness of the role
+
+NEWS RETRIEVAL NOTE: Use your training knowledge to provide the most recent and relevant company information available. Label all company/market claims with EXT. If information may be outdated, flag it with NC and recommend Ili verify. Prioritize recent, material developments over generic company descriptions. Distinguish official company statements from third-party reporting.
+
+If you lack recent information about this company, say so explicitly rather than generating vague claims.`,
+
+        /* ====== SECTION 4: WHY YOU ARE PLAUSIBLE ====== */
+        plausible: `\n\nSECTION: 4. Why You Are Plausible
+
+Build the best realistic case for Ili's candidacy. This is NOT a sales pitch — it's an analytical argument.
+
+Output structure:
+<h3>What Transfers Cleanly</h3>
+- Experience from Ili's background that directly matches role requirements. Cite specific bullets/stories.
+
+<h3>What Is Adjacent but Defensible</h3>
+- Skills and experience that aren't exact matches but are credibly related. Explain WHY they transfer. Be specific about the connection.
+
+<h3>Why a Hiring Team Might Still Take Ili Seriously</h3>
+- The broader argument: what about Ili's profile pattern makes him worth interviewing despite gaps? Consider: leadership scope, impact track record, product sense, cross-functional skills, learning velocity.
+
+<h3>Strongest Evidence</h3>
+- The 3-5 bullets or stories from Ili's data that most strengthen this case. Quote them directly and explain why they matter for THIS role.
+
+Tone: analytical, not salesy. Acknowledge limits. If the case is weak, say so. If it requires specific framing to work, explain the framing.
+
+If Additional Context or Uploaded Documents contain relevant evidence not in the active resume, use it — label with CTX or DOC and note that it supplements the base profile.`,
+
+        /* ====== SECTION 5: WHY YOU MAY GET SCREENED OUT ====== */
+        screenOut: `\n\nSECTION: 5. Why You May Get Screened Out
+
+Be blunt. This section exists to prevent wasted effort.
+
+For EACH likely disqualifier, output an HTML table row with these columns:
+<table>
+<thead><tr><th>Issue</th><th>Severity</th><th>Recruiter Screen Risk</th><th>HM Screen Risk</th><th>Bridgeable by Narrative?</th><th>Evidence That Could Reduce Risk</th></tr></thead>
+<tbody>
+[rows here]
+</tbody>
+</table>
+
+Common screen-out categories to evaluate:
+- Missing domain experience (e.g., industry-specific knowledge)
+- Missing technical depth in required stack
+- Missing direct people-management scope at required scale
+- Missing industry credibility or network
+- Title/level mismatch
+- Location/timezone constraints
+- Compensation expectations vs. likely range
+
+For each issue:
+- Severity: Critical / High / Medium
+- Recruiter Screen Risk: High / Medium / Low (will an ATS or recruiter filter you out before a human reads?)
+- HM Screen Risk: High / Medium / Low (will the hiring manager see this as a dealbreaker?)
+- Bridgeable: Yes (with adjacent experience) / Partially / No
+- Evidence needed: What proof point, story, or framing could reduce this risk?
+
+Be honest. If there is a likely fatal screen-out risk, say so clearly and prominently. A brief that minimizes real gaps is useless.`,
+
+        /* ====== SECTION 6: WHAT THEY ACTUALLY NEED ====== */
+        needs: `\n\nSECTION: 6. What They Actually Need
 
 Surface what this role ACTUALLY requires — the stuff between the lines.
 
 Output structure:
-- <h3>Explicit Requirements</h3> — Bulleted list from the JD. Tag each as "must-have" or "nice-to-have" based on JD language ("required" vs "preferred").
-- <h3>Implied Requirements</h3> — What the JD signals without stating. E.g., "comfortable with ambiguity" → early-stage, undefined roadmap. "Cross-functional" → political navigation skills.
-- <h3>Leadership & Execution Expectations</h3> — Scope of ownership, decision-making authority, team size, reporting line hints. Does the level match the scope?
+- <h3>Explicit Requirements</h3> — Bulleted list from the JD. Tag each as "must-have" or "nice-to-have" based on JD language ("required" vs "preferred" vs "bonus").
+- <h3>Implied Requirements</h3> — What the JD signals without stating. E.g., "comfortable with ambiguity" = early-stage, undefined roadmap. "Cross-functional" = political navigation skills. Decode buzzwords.
+- <h3>Leadership and Execution Expectations</h3> — Scope of ownership, decision-making authority, team size, reporting line hints. Does the level match the scope?
 - <h3>Likely Hidden Constraints</h3> — Budget limitations, existing team dynamics, political landmines inferred from company stage, org structure, and JD signals.
 
 For each requirement, assess whether it's real or aspirational. Many JDs describe a unicorn — identify which requirements are negotiable.`,
 
-        fit: `\n\nSECTION: D. Your Fit
+        /* ====== SECTION 7: YOUR FIT (UPGRADED MODEL) ====== */
+        fit: `\n\nSECTION: 7. Your Fit
 
-The honest answer to "why should they hire you?" — mapped requirement by requirement.
+The honest answer to "why should they hire you?" — mapped requirement by requirement using the UPGRADED fit model.
 
-Output structure:
-1. <h3>Requirements Map</h3> — An HTML table:
+Output an HTML table with these columns:
 <table>
-<thead><tr><th>Requirement</th><th>Candidate Evidence</th><th>Fit</th><th>Source</th><th>Positioning Notes</th></tr></thead>
+<thead><tr><th>Requirement</th><th>Match Type</th><th>Proof Strength</th><th>Screen-out Risk</th><th>Narrative Bridgeability</th><th>Best Framing</th><th>Evidence Label(s)</th></tr></thead>
 <tbody>
-<tr><td>[from JD]</td><td>[matched bullet/story from candidate data, or "No evidence found"]</td><td style="color: green;">Strong</td><td>ILI</td><td>[how to talk about it]</td></tr>
-<tr><td>[from JD]</td><td>[adjacent experience]</td><td style="color: orange;">Adjacent</td><td>INF</td><td>[framing suggestion]</td></tr>
-<tr><td>[from JD]</td><td>[genuine gap]</td><td style="color: red;">Gap</td><td>NC</td><td>[mitigation approach]</td></tr>
+<tr>
+  <td>[requirement from JD]</td>
+  <td>[Strong / Adjacent / Weak / Missing]</td>
+  <td>[High / Medium / Low / None]</td>
+  <td>[High / Medium / Low]</td>
+  <td>[High / Medium / Low]</td>
+  <td>[specific framing advice for interview/resume]</td>
+  <td>[ILI / CTX / DOC / INF / NC]</td>
+</tr>
 </tbody>
 </table>
 
-2. <h3>Fit Dimensions</h3> — Score each 1-5 with justification:
+Match Type definitions:
+- Strong = direct, evidenced match from Ili's data
+- Adjacent = related experience that can be credibly positioned
+- Weak = tenuous connection, requires significant narrative work
+- Missing = no evidence in any data source
+
+After the table:
+<h3>Fit Dimensions</h3> — Score each 1-5 with one-line justification:
 - Function match, Domain match, Level match, Leadership match, Technical/product match, Business impact match, Evidence completeness
 
-3. <h3>Overall Fit Score</h3> — X/Y requirements matched (green + yellow count). Not a percentage.
+<h3>Overall Fit Score</h3> — X/Y requirements matched (Strong + Adjacent count). Not a percentage.
 
-4. <h3>Secret Weapons</h3> — Experience from the candidate data that the JD doesn't ask for but would be valuable.
+<h3>Secret Weapons</h3> — Experience from Ili's data that the JD doesn't ask for but would be valuable. Explain WHY.
 
-CRITICAL: This must be HONEST. Never fabricate matches. If the bullet bank is empty, flag it prominently and generate a degraded version using only JD analysis. Mark all gap items clearly.`,
+CRITICAL: This must be HONEST. Never fabricate matches. If the bullet bank is empty, flag it prominently. If Additional Context / Uploaded Documents provide evidence that changes a match from Missing to Adjacent or Strong, highlight the change and label it.`,
 
-        gaps: `\n\nSECTION: E. Gaps and Mitigation
+        /* ====== SECTION 8: GAPS AND MITIGATION ====== */
+        gaps: `\n\nSECTION: 8. Gaps and Mitigation
 
-Every gap from Section D's red/yellow items, with a strategy for each.
+Every gap from Section 7's Weak and Missing items, with a strategy for each.
 
-Output structure (use a table or structured list):
-For EACH gap:
+For EACH gap, output:
 - <strong>Gap:</strong> What's missing
 - <strong>Severity:</strong> Critical / Important / Nice-to-Have
-- <strong>Bridgeable?</strong> Yes (with adjacent experience) / Partially / No
-- <strong>Suggested Framing:</strong> How to talk about this gap in interviews without lying. Specific language.
-- <strong>Evidence Needed:</strong> Whether the candidate needs to add a bullet or story to cover this gap.
-- <strong>Risk Level:</strong> How likely is this to be a dealbreaker?
+- <strong>Bridgeable?</strong> Yes (with adjacent experience) / Partially / No — distinguish bridgeable from potentially fatal
+- <strong>Suggested Framing:</strong> How to talk about this gap in interviews without lying. Specific language and talking points.
+- <strong>Evidence Needed:</strong> Whether Ili needs to add a bullet, story, or proof point to cover this gap.
+- <strong>Risk Level:</strong> How likely is this to be a dealbreaker at each stage? (Recruiter / HM / Final)
 
-Be realistic. If a gap is genuinely a dealbreaker, say so. A brief that minimizes real gaps is useless.`,
+Be realistic. If a gap is genuinely a dealbreaker, say so. A brief that minimizes real gaps is useless.
 
-        network: `\n\nSECTION: F. Network and Outreach
+If Additional Context reduces or eliminates a gap, say so explicitly: "This gap is mitigated by [CTX/DOC evidence]."`,
 
-Turn the candidate's network into a strategic advantage for this specific role.
+        /* ====== SECTION 9: NETWORK STRATEGY ====== */
+        network: `\n\nSECTION: 9. Network Strategy
 
-Output structure:
-- <h3>Direct Connections</h3> — People from the connections data who work at or recently worked at this company. For each: name, title, relationship strength (Strong/Medium/Weak), why they matter to THIS role, best ask type (referral/intro/intel/advice), and a suggested message angle (one sentence hook, not a full email).
-- <h3>Second-Degree Paths</h3> — Connections who might know people at the company. Suggest specific approaches.
-- <h3>Outreach Priority</h3> — Ranked list: who to contact first and why.
-- <h3>No Connections?</h3> — If no matches found: clearly state this and suggest LinkedIn search strategies, alumni networks, or other warm paths.
-
-This section is DATA-DRIVEN. Cross-reference the connections list against the company name. Creative suggestions welcome, but the core list must be factual from the user's data.`,
-
-        interview: `\n\nSECTION: G. Interview Prep
-
-Predict what they'll ask and have answers ready. Every question must be SPECIFIC to this role.
+Networking is a DECISION LEVER, not just information gathering. Reframe networking as something that influences whether this role stays in play.
 
 Output structure:
-- <h3>Likely Interview Themes</h3> — 3-5 themes derived from JD requirements and company values. For each: the theme and why it matters for this role.
-- <h3>Likely Questions</h3> — 5-7 behavioral questions, 3-5 technical/product questions, 2-3 curveballs. For each: the question, why they'd ask it, and a matched story from the candidate data (or "No matching story — prepare one about [topic]").
-- <h3>Likely Objections</h3> — 2-4 objections derived from gaps in Section D/E. For each: the objection, a prepared response that's honest but well-positioned.
-- <h3>Best Stories to Prepare</h3> — 3-5 STAR stories from the candidate's bullet/story bank, mapped to which questions they answer. If no story bank exists, flag it.
-- <h3>Questions to Ask Them</h3> — 4-6 role-specific questions organized by round (recruiter, HM, technical, exec). Every question should demonstrate homework — no generic "tell me about the culture."`,
+<h3>Contacts at Company</h3>
+For each connection at the target company (from connections data):
+<table>
+<thead><tr><th>Name</th><th>Title</th><th>Relationship</th><th>Why They Matter</th><th>Best Ask</th><th>Key Question</th><th>Decision Impact</th></tr></thead>
+<tbody>
+<tr>
+  <td>[name]</td>
+  <td>[title]</td>
+  <td>[Strong/Medium/Weak]</td>
+  <td>[why this person matters to THIS role]</td>
+  <td>[referral / intel / technical validation / org context]</td>
+  <td>[specific question + what answer would increase vs decrease confidence]</td>
+  <td>[High / Medium / Low]</td>
+</tr>
+</tbody>
+</table>
 
-        nextSteps: `\n\nSECTION: H. Next-step Plan
+<h3>Second-Degree Paths</h3> — Connections who might know people at the company. Suggest specific approaches.
 
-Concrete, ordered action items. Not vague advice.
+<h3>Outreach Priority</h3> — Ranked: who to contact first and why. Include what to say (one-sentence hook, not full email).
+
+<h3>No Connections?</h3> — If no matches found: state clearly and suggest LinkedIn strategies, alumni networks, or warm paths.
+
+This section is DATA-DRIVEN. Cross-reference the connections list against the company name. The core list must be factual from the user's data. For each recommended contact, explicitly state what answer to their question would INCREASE confidence in pursuing and what answer would DECREASE confidence.`,
+
+        /* ====== SECTION 10: INTERVIEW PREP (COMPRESSED) ====== */
+        interview: `\n\nSECTION: 10. Interview Prep
+
+Reorganized into four HIGH-VALUE buckets. Less volume, more precision.
 
 Output structure:
-- <h3>Apply Decision</h3> — Apply now / Apply after networking / Hold / Pass. With specific reasoning.
-- <h3>Contact Priority</h3> — Numbered list: who to reach out to first, second, third. Reference Section F connections. Include what to say.
-- <h3>Resume Refinements</h3> — Specific bullets to add, reorder, or emphasize for THIS role. Reference Section D fit dimensions.
-- <h3>Story Prep Priorities</h3> — Which stories to prepare or refine before a recruiter screen. Reference Section G questions.
-- <h3>Timeline</h3> — Suggested cadence: what to do this week, next week, before first interview.
+<h3>Most Likely Questions</h3> — Top 5 ONLY. For each:
+- The question (specific to this role, not generic)
+- Why they'd ask it
+- Best story from Ili's data to answer it (or "Prepare a story about [topic]" if none exists)
 
-Every action item should be specific enough to execute today. Not "network more" — "Message [Name] on LinkedIn about [specific topic]."`
+<h3>Highest-Risk Questions</h3> — Top 3 questions most likely to EXPOSE Ili's gaps. For each:
+- The question
+- Which gap it targets
+- Prepared response that's honest but well-positioned (specific language)
+
+<h3>Best Stories to Use</h3> — Top 3-5 STAR stories from Ili's story bank, mapped to which questions they answer. If no story bank exists, flag it and suggest topics.
+
+<h3>Objection Handling</h3> — Concise framing for each major objection category:
+- Domain gap framing (1-2 sentences)
+- Technical gap framing (1-2 sentences)
+- Management scope gap framing (1-2 sentences)
+- Industry credibility gap framing (1-2 sentences)
+Only include objection categories that are actually relevant to this role's gaps.
+
+Do NOT generate generic interview advice. Every question must be specific to THIS role at THIS company.`,
+
+        /* ====== SECTION 11: PROOF POINTS TO ADD ====== */
+        proofPoints: `\n\nSECTION: 11. Proof Points to Add
+
+Convert gaps into concrete actions for Resume, Outreach, and Mock modules.
+
+Output an HTML table:
+<table>
+<thead><tr><th>Proof Point Needed</th><th>Why It Matters</th><th>Where to Use</th><th>Partial Evidence Exists?</th></tr></thead>
+<tbody>
+<tr>
+  <td>[specific proof point]</td>
+  <td>[which gap or requirement it addresses]</td>
+  <td>[Resume / Outreach / Interview / Mock — can be multiple]</td>
+  <td>[Yes — describe what exists / No]</td>
+</tr>
+</tbody>
+</table>
+
+After the table, add explicit handoff actions:
+<h3>Handoff Actions</h3>
+<ul>
+<li><strong>Send to Resume:</strong> [specific bullets or framing to add to resume for this role]</li>
+<li><strong>Send to Outreach:</strong> [specific talking points or angles for networking messages]</li>
+<li><strong>Send to Mock:</strong> [specific scenarios or questions to practice]</li>
+</ul>
+
+Each proof point should be specific enough to act on today. Not "demonstrate leadership" — "Add a bullet about leading the [X] initiative that resulted in [Y outcome]."`,
+
+        /* ====== SECTION 12: DEAL-BREAKER TEST ====== */
+        dealBreaker: `\n\nSECTION: 12. Deal-Breaker Test
+
+The brief should be a FILTER, not just a prep document. List the facts that would make this role not worth pursuing.
+
+Output structure:
+<h3>Deal-Breaker Test</h3>
+<p>If any of the following are confirmed, the value of pursuing this role drops significantly:</p>
+<ol>
+[3-5 items, each as a <li>]
+</ol>
+
+For EACH deal-breaker, explain:
+- What the fact is (e.g., "Deep [domain] experience is mandatory and non-negotiable")
+- How to test it (e.g., "Ask [contact] directly" or "Check if JD language says 'required' vs 'preferred'")
+- Current assessment: Likely / Unlikely / Unknown
+
+Example deal-breakers to consider:
+- Deep domain experience is mandatory (not just preferred)
+- Exact stack/technical knowledge is mandatory
+- Direct people-management at specific scale is mandatory
+- Location/in-office requirement is inflexible
+- This is effectively an internal-promote role
+- Compensation range is significantly below expectations
+- The role reports to someone who historically churns reports
+
+Be specific to THIS role. Not generic. The goal is to help Ili abandon low-value roles quickly.`,
+
+        /* ====== SECTION 13: NEXT-STEP PLAN ====== */
+        nextSteps: `\n\nSECTION: 13. Next-Step Plan
+
+No more than 5 concrete, ordered actions. Every item must be specific enough to execute today.
+
+Output structure:
+<h3>Time Investment Recommendation</h3>
+<table>
+<tr><td><strong>Time Investment</strong></td><td>[Low / Medium / High]</td></tr>
+<tr><td><strong>Why</strong></td><td>[1-2 sentences]</td></tr>
+<tr><td><strong>What Would Justify Increasing Effort</strong></td><td>[specific trigger]</td></tr>
+<tr><td><strong>What Would Justify Dropping</strong></td><td>[specific trigger]</td></tr>
+</table>
+
+<h3>Priority Actions</h3>
+<ol>
+<li>[Action 1 — specific: WHO to contact, WHAT to say, or WHAT to prepare. Not "network more" — "Message [Name] on LinkedIn about [topic]"]</li>
+<li>[Action 2]</li>
+<li>[Action 3]</li>
+<li>[Action 4]</li>
+<li>[Action 5]</li>
+</ol>
+
+<h3>Timeline</h3>
+- This week: [specific actions]
+- Next week: [specific actions]
+- Before first interview: [specific preparation]
+
+Reference connections from Section 9, stories from Section 10, and proof points from Section 11. Every action should tie back to evidence from earlier sections.`
       };
 
       return base + (sectionInstructions[sectionId] || '\n\nGenerate comprehensive content for this section.');
@@ -1425,7 +2000,7 @@ Remote Policy: ${company?.remotePolicy || 'Not specified'}
 Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
 </company>\n\n`;
 
-      /* -- JD with mismatch guard (from V1) -- */
+      /* -- JD with mismatch guard -- */
       let jdText = role.jdText || '';
       if (jdText && company?.name) {
         const compLower = company.name.toLowerCase();
@@ -1441,13 +2016,13 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
         prompt += `<candidate_background>\n`;
         resume.forEach(entry => {
           const title = entry.title || entry.position || entry.role || '';
-          const company_name = entry.company || entry.employer || '';
+          const companyName = entry.company || entry.employer || '';
           const details = entry.description || entry.details || entry.summary || '';
           const bullets = entry.bullets || entry.achievements || [];
-          prompt += `${title}${company_name ? ' @ ' + company_name : ''}\n`;
+          prompt += `${title}${companyName ? ' @ ' + companyName : ''}\n`;
           if (details) prompt += `  ${details}\n`;
           if (Array.isArray(bullets)) {
-            bullets.forEach(b => { prompt += `  • ${typeof b === 'string' ? b : b.text || b.bullet || JSON.stringify(b)}\n`; });
+            bullets.forEach(b => { prompt += `  - ${typeof b === 'string' ? b : b.text || b.bullet || JSON.stringify(b)}\n`; });
           }
           prompt += `\n`;
         });
@@ -1461,7 +2036,7 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
         prompt += `<bullet_bank>\n`;
         bulletBank.slice(0, 30).forEach(b => {
           const text = typeof b === 'string' ? b : b.text || b.bullet || JSON.stringify(b);
-          prompt += `• ${text}\n`;
+          prompt += `- ${text}\n`;
         });
         prompt += `</bullet_bank>\n\n`;
       }
@@ -1481,7 +2056,51 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
         prompt += `</story_bank>\n\n`;
       }
 
-      /* -- Connections (especially for network section) -- */
+      /* -- Additional Context (NEW in V3) -- */
+      if (STATE.additionalContext) {
+        prompt += `<additional_context>
+${STATE.additionalContext}
+</additional_context>
+
+NOTE: The above is additional context provided by Ili specifically for this role. It may include experience not in the active resume, domain knowledge, or situational notes. Treat as first-class evidence labeled CTX. If it conflicts with resume data, surface the conflict.\n\n`;
+      }
+
+      /* -- Uploaded Documents (NEW in V3) -- */
+      if (STATE.uploadedDocuments.length > 0) {
+        STATE.uploadedDocuments.forEach((doc, idx) => {
+          prompt += `<uploaded_document name="${doc.name}" index="${idx + 1}">
+${doc.content.slice(0, 8000)}
+</uploaded_document>\n\n`;
+        });
+        prompt += `NOTE: The above uploaded document(s) are supporting evidence provided by Ili. Label claims from these as DOC. These may contain older resume content, project descriptions, or domain-specific evidence not in the active resume.\n\n`;
+      }
+
+      /* -- Live Company News (from Tavily web search) -- */
+      if (STATE.companyNewsResults && STATE.companyNewsResults.newsItems.length > 0) {
+        prompt += `<live_company_news search_timestamp="${STATE.companyNewsResults.searchTimestamp}">\n`;
+        prompt += `NOTE: The following news items were retrieved via live web search. Use these as EXT evidence. Cite specific items when making company/market claims.\n\n`;
+
+        /* Summaries first */
+        if (STATE.companyNewsResults.summaries && STATE.companyNewsResults.summaries.length > 0) {
+          STATE.companyNewsResults.summaries.forEach(s => {
+            prompt += `SEARCH SUMMARY: ${s.content}\n\n`;
+          });
+        }
+
+        /* Individual results */
+        STATE.companyNewsResults.newsItems.forEach((item, idx) => {
+          prompt += `[${idx + 1}] ${item.title}\n`;
+          if (item.publishedDate) prompt += `   Date: ${item.publishedDate}\n`;
+          if (item.url) prompt += `   URL: ${item.url}\n`;
+          prompt += `   ${item.content}\n\n`;
+        });
+
+        prompt += `</live_company_news>\n\n`;
+      } else if (sectionId === 'companyMarket' || sectionId === 'existence') {
+        prompt += `<live_company_news>No live news search was performed (Tavily API key not configured or search failed). Use your training knowledge and label all company claims as EXT. Flag any potentially outdated information as NC.</live_company_news>\n\n`;
+      }
+
+      /* -- Connections -- */
       const companyConnections = connections.filter(c =>
         c.company && company?.name && c.company.toLowerCase() === company.name.toLowerCase()
       );
@@ -1493,7 +2112,7 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
         prompt += `<connections_at_company>\n`;
         if (companyConnections.length > 0) {
           companyConnections.forEach(c => {
-            prompt += `• ${c.name || 'Unknown'} — ${c.title || 'Unknown title'} (Relationship: ${c.relationship || c.strength || 'Contact'})\n`;
+            prompt += `- ${c.name || 'Unknown'} — ${c.title || 'Unknown title'} (Relationship: ${c.relationship || c.strength || 'Contact'})\n`;
           });
         } else {
           prompt += `No direct connections found at ${company?.name || 'this company'}.\n`;
@@ -1503,13 +2122,14 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
         if (otherConnections.length > 0 && sectionId === 'network') {
           prompt += `<other_connections>\n`;
           otherConnections.slice(0, 20).forEach(c => {
-            prompt += `• ${c.name || 'Unknown'} @ ${c.company || 'Unknown'} — ${c.title || ''}\n`;
+            prompt += `- ${c.name || 'Unknown'} @ ${c.company || 'Unknown'} — ${c.title || ''}\n`;
           });
           prompt += `</other_connections>\n\n`;
         }
       }
 
-      prompt += `\nGenerate Section ${STATE.sections.find(s => s.id === sectionId)?.letter || ''}. ${STATE.sections.find(s => s.id === sectionId)?.title || sectionId} now. Follow the system prompt structure exactly.`;
+      const sectionDef = STATE.sections.find(s => s.id === sectionId);
+      prompt += `\nGenerate Section ${sectionDef?.letter || ''}. ${sectionDef?.title || sectionId} now. Follow the system prompt structure exactly.`;
 
       return prompt;
     }
@@ -1523,7 +2143,6 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
     function sanitizeHtml(html) {
       const div = document.createElement('div');
       div.innerHTML = html;
-      // Remove scripts and event handlers
       div.querySelectorAll('script, [onclick], [onerror], [onload]').forEach(el => el.remove());
       return div.innerHTML;
     }
@@ -1538,9 +2157,9 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
       const citations = [];
 
       /* Extract citations from <span class="cite-label" data-label="XX"> */
-      const labelRegex = /data-label="(JD|EXT|ILI|INF|NC)"/g;
+      const labelRegex = /data-label="(JD|EXT|ILI|CTX|DOC|INF|NC)"/g;
       let match;
-      const labelCounts = { JD: 0, EXT: 0, ILI: 0, INF: 0, NC: 0 };
+      const labelCounts = { JD: 0, EXT: 0, ILI: 0, CTX: 0, DOC: 0, INF: 0, NC: 0 };
       while ((match = labelRegex.exec(content)) !== null) {
         labelCounts[match[1]]++;
         citations.push({ label: match[1] });
@@ -1570,8 +2189,9 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
     }
 
     /**
-     * Render the complete brief to the UI
-     * @param {object} brief - Brief object
+     * Render the complete brief to the UI.
+     * Special handling: Section 1 (Pursuit Economics) is rendered as a pinned decision box.
+     * @param {object} brief - Brief object with sections data
      */
     function renderBrief(brief) {
       const sectionsArea = document.getElementById('sectionsArea');
@@ -1579,26 +2199,42 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
 
       STATE.sections.forEach((section) => {
         const sectionData = brief.sections[section.id];
+        if (!sectionData || !sectionData.content) return;
+
         const sectionEl = document.createElement('div');
         sectionEl.id = `section-${section.id}`;
-        sectionEl.className = 'section';
-        sectionEl.innerHTML = `
-          <div class="section-header">
-            <div class="section-title-group">
-              <div class="section-badge">${section.letter}</div>
-              <div class="section-title">${section.title}</div>
+
+        /* Pursuit Economics gets special styling */
+        if (section.id === 'pursuitEconomics') {
+          sectionEl.className = 'pursuit-economics-box';
+          sectionEl.innerHTML = `
+            <div class="pe-header">
+              <div class="pe-badge">1</div>
+              <div class="pe-title">Pursuit Economics</div>
             </div>
-          </div>
-          <div class="section-content" id="content-${section.id}"></div>
-          <div class="section-meta" id="meta-${section.id}"></div>
-        `;
+            <div class="section-content" id="content-${section.id}"></div>
+            <div class="section-meta" id="meta-${section.id}"></div>
+          `;
+        } else {
+          sectionEl.className = 'section';
+          sectionEl.innerHTML = `
+            <div class="section-header">
+              <div class="section-title-group">
+                <div class="section-badge">${section.letter}</div>
+                <div class="section-title">${section.title}</div>
+              </div>
+            </div>
+            <div class="section-content" id="content-${section.id}"></div>
+            <div class="section-meta" id="meta-${section.id}"></div>
+          `;
+        }
         sectionsArea.appendChild(sectionEl);
 
-        // Render content with citation handlers
+        /* Render content */
         const contentEl = document.getElementById(`content-${section.id}`);
         contentEl.innerHTML = sanitizeHtml(sectionData.content);
 
-        // Attach citation listeners
+        /* Attach citation listeners */
         contentEl.querySelectorAll('.cite-label').forEach(label => {
           label.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -1606,7 +2242,7 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
           });
         });
 
-        // Render metadata
+        /* Render metadata */
         const metaEl = document.getElementById(`meta-${section.id}`);
         metaEl.innerHTML = `
           <div class="section-meta-item">
@@ -1627,23 +2263,36 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
     }
 
     /**
-     * Show citation popover
-     * @param {element} labelEl - Citation label element
-     * @param {array} citations - Citations array
+     * Show citation popover near the clicked label
+     * @param {Element} labelEl - Citation label element
+     * @param {Array} citations - Citations array
      */
     function showCitationPopover(labelEl, citations) {
       const label = labelEl.getAttribute('data-label');
-      const citation = citations.find(c => c.label === label);
-      if (!citation) return;
+      const labelNames = {
+        JD: 'Job Description',
+        EXT: 'External Research',
+        ILI: 'Ili Profile / Resume / Bullet Bank',
+        CTX: 'Additional Context',
+        DOC: 'Uploaded Supporting Document',
+        INF: 'Inference',
+        NC: 'Needs Confirmation'
+      };
 
       const popover = document.getElementById('citationPopover');
       popover.innerHTML = `
-        <div class="citation-popover-title">Citation: ${label}</div>
+        <div class="citation-popover-title">${labelNames[label] || label}</div>
         <div class="citation-popover-meta">
           <div class="section-meta-item">
             <span class="citation-badge ${label.toLowerCase()}">${label}</span>
           </div>
-          <div style="color: var(--text-primary); margin-top: var(--space-2);">${citation.claim}</div>
+          <div style="color: var(--text-secondary); margin-top: var(--space-2); font-size: 0.85em;">
+            ${label === 'INF' ? 'This claim is inferred, not directly sourced. Verify before relying on it.' :
+              label === 'NC' ? 'This claim needs manual confirmation. Do not assume it is accurate.' :
+              label === 'CTX' ? 'This claim comes from additional context you provided for this role.' :
+              label === 'DOC' ? 'This claim comes from an uploaded supporting document.' :
+              `Source type: ${labelNames[label]}`}
+          </div>
         </div>
       `;
 
@@ -1653,26 +2302,20 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
       popover.style.left = (rect.left + window.scrollX - popover.offsetWidth / 2 + rect.width / 2) + 'px';
     }
 
-    /**
-     * Hide citation popover
-     */
+    /** Hide citation popover */
     function hideCitationPopover() {
       document.getElementById('citationPopover').style.display = 'none';
     }
 
     /* ====== API KEY MANAGEMENT ====== */
-    /**
-     * Save API key to localStorage
-     */
+    /** Save API key to localStorage */
     function saveApiKey() {
       const key = document.getElementById('apiKeyInput').value.trim();
       if (key && key.startsWith('sk-')) {
         localStorage.setItem('pf_anthropic_key', key);
-        document.getElementById('apiKeyStatus').textContent = 'API key saved ✓';
+        document.getElementById('apiKeyStatus').textContent = 'API key saved';
         document.getElementById('apiKeyStatus').style.color = 'rgb(34, 197, 94)';
-        setTimeout(() => {
-          document.getElementById('apiKeyStatus').textContent = '';
-        }, 3000);
+        setTimeout(() => { document.getElementById('apiKeyStatus').textContent = ''; }, 3000);
       } else {
         document.getElementById('apiKeyStatus').textContent = 'Invalid API key format';
         document.getElementById('apiKeyStatus').style.color = 'rgb(239, 68, 68)';
@@ -1681,7 +2324,7 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
 
     /* ====== EXPORT TO PDF ====== */
     /**
-     * Export brief to PDF
+     * Export brief to clean white PDF via html2pdf.js
      */
     async function exportToPDF() {
       if (!STATE.currentBrief) return;
@@ -1697,7 +2340,7 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
         line-height: 1.65; max-width: 7in; margin: 0 auto;
       `;
 
-      /* -- Embedded PDF styles -- */
+      /* Embedded PDF styles */
       const styleBlock = document.createElement('style');
       styleBlock.textContent = `
         .pdf-header { text-align: center; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 2px solid #333; }
@@ -1717,35 +2360,39 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
         .pdf-section-body strong { font-weight: 700; }
         .pdf-section-meta { display: flex; gap: 16px; margin-top: 8px; padding-top: 6px; border-top: 1px dotted #ccc; font-size: 9px; color: #888; }
         .pdf-cite-label { display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 8px; font-weight: 700; margin-left: 2px; vertical-align: super; }
-        .pdf-cite-label.jd { background: #e0e7ff; color: #3730a3; }
-        .pdf-cite-label.ext { background: #d1fae5; color: #065f46; }
-        .pdf-cite-label.ili { background: #fef3c7; color: #92400e; }
-        .pdf-cite-label.inf { background: #f3e8ff; color: #6b21a8; }
+        .pdf-cite-label.jd { background: #d1fae5; color: #065f46; }
+        .pdf-cite-label.ext { background: #dbeafe; color: #1e40af; }
+        .pdf-cite-label.ili { background: #ede9fe; color: #6b21a8; }
+        .pdf-cite-label.ctx { background: #e0f2fe; color: #0369a1; }
+        .pdf-cite-label.doc { background: #ccfbf1; color: #0f766e; }
+        .pdf-cite-label.inf { background: #fef3c7; color: #92400e; }
         .pdf-cite-label.nc { background: #fee2e2; color: #991b1b; }
         .pdf-confidence { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 9px; font-weight: 600; }
         .pdf-confidence.high { background: #d1fae5; color: #065f46; }
         .pdf-confidence.medium { background: #fef3c7; color: #92400e; }
         .pdf-confidence.low { background: #fee2e2; color: #991b1b; }
+        .pdf-pe-box { border: 2px solid #333; padding: 20px; margin-bottom: 28px; }
+        .pdf-pe-box h2 { font-size: 16px; margin: 0 0 12px; border: none; padding: 0; }
       `;
       printDiv.appendChild(styleBlock);
 
-      /* -- Title page header -- */
+      /* Title page header */
       const header = document.createElement('div');
       header.className = 'pdf-header';
       header.innerHTML = `
-        <h1>Research Brief</h1>
+        <h1>Pursuit Strategy Brief</h1>
         <div class="pdf-company">${role.title} — ${companyName}</div>
         <div class="pdf-date">Generated ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
       `;
       printDiv.appendChild(header);
 
-      /* -- Each section A-H -- */
+      /* Each section */
       STATE.sections.forEach(section => {
         const data = sections[section.id];
         if (!data || !data.content) return;
 
         const sectionDiv = document.createElement('div');
-        sectionDiv.className = 'pdf-section';
+        sectionDiv.className = section.id === 'pursuitEconomics' ? 'pdf-pe-box' : 'pdf-section';
 
         /* Section heading */
         const titleDiv = document.createElement('h2');
@@ -1756,9 +2403,8 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
         const bodyDiv = document.createElement('div');
         bodyDiv.className = 'pdf-section-body';
         let htmlContent = data.content;
-        /* Convert dark-theme citation badges to print-friendly ones */
         htmlContent = htmlContent.replace(
-          /<span class="cite-label" data-label="(JD|EXT|ILI|INF|NC)">(.*?)<\/span>/g,
+          /<span class="cite-label" data-label="(JD|EXT|ILI|CTX|DOC|INF|NC)">(.*?)<\/span>/g,
           '<span class="pdf-cite-label $1">$1</span>'
         );
         bodyDiv.innerHTML = htmlContent;
@@ -1777,12 +2423,12 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
         printDiv.appendChild(sectionDiv);
       });
 
-      /* -- Generate the PDF -- */
+      /* Generate the PDF */
       const safeName = companyName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
       const safeTitle = role.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
       const opt = {
         margin: [0.6, 0.7, 0.6, 0.7],
-        filename: `research-brief-${safeName}-${safeTitle}.pdf`,
+        filename: `pursuit-brief-${safeName}-${safeTitle}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
@@ -1798,14 +2444,12 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
     }
 
     /* ====== INITIALIZATION ====== */
-    /**
-     * Initialize the module
-     */
+    /** Initialize the module */
     function init() {
-      // Populate role selector
+      /* Populate role selector */
       populateRoleSelector();
 
-      // Event listeners
+      /* Event listeners */
       document.getElementById('generateBtn').addEventListener('click', generateBrief);
       document.getElementById('clearCacheBtn').addEventListener('click', () => {
         if (confirm('Clear cached brief and regenerate?')) {
@@ -1820,7 +2464,39 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
         document.getElementById('sidebar').classList.toggle('collapsed');
       });
 
-      // Close popover on click outside
+      /* File upload zone — click and drag-and-drop */
+      const uploadZone = document.getElementById('fileUploadZone');
+      const fileInput = document.getElementById('fileUploadInput');
+
+      uploadZone.addEventListener('click', () => fileInput.click());
+      uploadZone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+
+      uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.style.borderColor = 'var(--accent)';
+        uploadZone.style.background = 'rgba(99, 102, 241, 0.08)';
+      });
+
+      uploadZone.addEventListener('dragleave', () => {
+        uploadZone.style.borderColor = '';
+        uploadZone.style.background = '';
+      });
+
+      uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.style.borderColor = '';
+        uploadZone.style.background = '';
+        if (e.dataTransfer.files.length > 0) {
+          Array.from(e.dataTransfer.files).forEach(f => handleFileUpload(f));
+        }
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        Array.from(e.target.files).forEach(f => handleFileUpload(f));
+        fileInput.value = '';
+      });
+
+      /* Close popover on click outside */
       document.addEventListener('click', (e) => {
         if (!e.target.closest('.cite-label')) {
           hideCitationPopover();
@@ -1830,7 +2506,7 @@ Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
       lucide.createIcons();
     }
 
-    // Initialize when DOM is ready
+    /* Initialize when DOM is ready */
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', init);
     } else {
