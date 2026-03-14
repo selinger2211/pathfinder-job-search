@@ -390,54 +390,7 @@
       gap: var(--space-6);
     }
 
-    .toc-sidebar {
-      width: 240px;
-      background: var(--bg-surface);
-      border-left: 1px solid var(--bg-subtle);
-      padding: var(--space-4);
-      overflow-y: auto;
-      flex-shrink: 0;
-      position: sticky;
-      top: 0;
-      height: calc(100vh - var(--nav-height) - 60px - var(--space-12));
-    }
-
-    .toc-title {
-      font-size: var(--text-xs);
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: var(--space-3);
-    }
-
-    .toc-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-2);
-    }
-
-    .toc-item {
-      padding: var(--space-2) var(--space-3);
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: all var(--duration-fast) var(--ease-default);
-      font-size: var(--text-sm);
-      color: var(--text-secondary);
-      border-left: 2px solid transparent;
-    }
-
-    .toc-item:hover {
-      background: var(--bg-elevated);
-      color: var(--text-primary);
-    }
-
-    .toc-item.active {
-      background: rgba(99, 102, 241, 0.1);
-      color: var(--accent);
-      border-left-color: var(--accent);
-    }
+    /* TOC sidebar removed — dead space, content uses full width */
 
     /* ====== PURSUIT ECONOMICS BOX ====== */
     .pursuit-economics-box {
@@ -643,6 +596,22 @@
     }
 
     .section-content td { color: var(--text-primary); }
+
+    /* Compact table headers — prevent long header text from blowing out columns */
+    .section-content th {
+      font-size: var(--text-xs);
+      white-space: nowrap;
+      padding: var(--space-2) var(--space-2);
+    }
+    .section-content td {
+      padding: var(--space-2) var(--space-2);
+      font-size: var(--text-sm);
+    }
+
+    /* Force narrower columns for rating-type cells (High/Med/Low) */
+    .section-content td:nth-child(n+2):not(:last-child) {
+      white-space: nowrap;
+    }
 
     /* ====== CITATION MARKERS & POPOVER ====== */
     .cite {
@@ -1018,9 +987,12 @@
     <!-- ====== RIGHT PANEL: BRIEF AREA ====== -->
     <div id="briefArea" class="brief-area">
       <div class="brief-header">
-        <div>
-          <h1 class="brief-title" id="briefTitle">Research Brief</h1>
-          <p class="brief-subtitle" id="briefSubtitle"></p>
+        <div style="display: flex; align-items: center; gap: var(--space-4);">
+          <img id="briefCompanyLogo" src="" alt="" style="display: none; width: 48px; height: 48px; border-radius: var(--radius-md); object-fit: contain; background: white; border: 1px solid var(--bg-subtle); padding: 4px;">
+          <div>
+            <h1 class="brief-title" id="briefTitle">Research Brief</h1>
+            <p class="brief-subtitle" id="briefSubtitle"></p>
+          </div>
         </div>
         <div class="brief-actions">
           <button id="exportBtn" title="Export as PDF" aria-label="Export as PDF" style="display: none;">
@@ -1048,11 +1020,7 @@
           </div>
         </div>
 
-        <!-- Table of Contents Sidebar -->
-        <div class="toc-sidebar" id="tocSidebar" style="display: none;">
-          <div class="toc-title">Sections</div>
-          <ul class="toc-list" id="tocList"></ul>
-        </div>
+        <!-- TOC removed — sections list was dead space, full width used for content -->
       </div>
     </div>
   </div>
@@ -1441,6 +1409,25 @@
       document.getElementById('briefTitle').textContent = `${role.title} @ ${role.company || 'Unknown'}`;
       document.getElementById('briefSubtitle').textContent = `Pursuit Strategy Brief — ${new Date().toLocaleDateString()}`;
 
+      /* Show company logo in brief header */
+      const briefLogo = document.getElementById('briefCompanyLogo');
+      if (company?.logoUrl) {
+        briefLogo.src = company.logoUrl;
+        briefLogo.alt = `${company.name} logo`;
+        briefLogo.style.display = 'block';
+      } else {
+        /* Try Clearbit logo API as fallback */
+        const domain = company?.domain || '';
+        if (domain) {
+          briefLogo.src = `https://logo.clearbit.com/${domain}`;
+          briefLogo.alt = `${company?.name || role.company} logo`;
+          briefLogo.style.display = 'block';
+          briefLogo.onerror = () => { briefLogo.style.display = 'none'; };
+        } else {
+          briefLogo.style.display = 'none';
+        }
+      }
+
       /* Show company card */
       const companyCard = document.getElementById('companyCard');
       if (company) {
@@ -1559,8 +1546,6 @@
         /* Clear UI */
         const sectionsArea = document.getElementById('sectionsArea');
         sectionsArea.innerHTML = '';
-        document.getElementById('tocList').innerHTML = '';
-        document.getElementById('tocSidebar').style.display = 'block';
 
         /* Show progress */
         const progressText = document.getElementById('generationProgressText');
@@ -1588,17 +1573,6 @@
             <div class="section-meta" id="meta-${section.id}"></div>
           `;
           sectionsArea.appendChild(sectionEl);
-
-          /* Add TOC item */
-          const tocItem = document.createElement('li');
-          tocItem.className = 'toc-item';
-          tocItem.textContent = `${section.letter}. ${section.title}`;
-          tocItem.onclick = () => {
-            sectionEl.scrollIntoView({ behavior: 'smooth' });
-            document.querySelectorAll('.toc-item').forEach(t => t.classList.remove('active'));
-            tocItem.classList.add('active');
-          };
-          document.getElementById('tocList').appendChild(tocItem);
         });
 
         lucide.createIcons();
@@ -1781,7 +1755,9 @@ Scoring inputs to weigh:
 - Company attractiveness (is this a company worth joining?)
 - Effort-to-pursue (how much work to be competitive?)
 
-This section must be HONEST. A brief that says "you're perfect" is useless. Real gaps build trust. If the answer is Pass, say Pass.`,
+This section must be HONEST. A brief that says "you're perfect" is useless. Real gaps build trust. If the answer is Pass, say Pass.
+
+CRITICAL: Check the role's Stage and Notes fields. If Ili has ALREADY networked (e.g., notes mention contacting someone, getting a referral, or having a conversation), do NOT recommend "Pursue after networking" — that step is done. Adjust the recommendation to reflect current pipeline reality.`,
 
         /* ====== SECTION 2: WHY THIS ROLE EXISTS ====== */
         existence: `\n\nSECTION: 2. Why This Role Exists
@@ -1861,13 +1837,20 @@ If Additional Context or Uploaded Documents contain relevant evidence not in the
 
 Be blunt. This section exists to prevent wasted effort.
 
-For EACH likely disqualifier, output an HTML table row with these columns:
+For EACH likely disqualifier, output an HTML table. Use SHORT column headers to keep the table compact:
 <table>
-<thead><tr><th>Issue</th><th>Severity</th><th>Recruiter Screen Risk</th><th>HM Screen Risk</th><th>Bridgeable by Narrative?</th><th>Evidence That Could Reduce Risk</th></tr></thead>
+<thead><tr><th>Issue</th><th>Sev.</th><th>Recruiter</th><th>HM</th><th>Bridge?</th><th>Mitigation</th></tr></thead>
 <tbody>
-[rows here]
+<tr><td>[the disqualifier]</td><td>[Crit/High/Med]</td><td>[H/M/L]</td><td>[H/M/L]</td><td>[Yes/Part/No]</td><td>[evidence or framing that could reduce risk]</td></tr>
 </tbody>
 </table>
+
+Column definitions:
+- Sev. = Severity: Critical / High / Medium
+- Recruiter = Recruiter screen risk: will ATS or recruiter filter out before human reads? H/M/L
+- HM = Hiring manager screen risk: will the HM see this as a dealbreaker? H/M/L
+- Bridge? = Bridgeable by narrative: Yes (with adjacent experience) / Partially / No
+- Mitigation = What proof point, story, or framing could reduce this risk
 
 Common screen-out categories to evaluate:
 - Missing domain experience (e.g., industry-specific knowledge)
@@ -1877,13 +1860,6 @@ Common screen-out categories to evaluate:
 - Title/level mismatch
 - Location/timezone constraints
 - Compensation expectations vs. likely range
-
-For each issue:
-- Severity: Critical / High / Medium
-- Recruiter Screen Risk: High / Medium / Low (will an ATS or recruiter filter you out before a human reads?)
-- HM Screen Risk: High / Medium / Low (will the hiring manager see this as a dealbreaker?)
-- Bridgeable: Yes (with adjacent experience) / Partially / No
-- Evidence needed: What proof point, story, or framing could reduce this risk?
 
 Be honest. If there is a likely fatal screen-out risk, say so clearly and prominently. A brief that minimizes real gaps is useless.`,
 
@@ -1905,21 +1881,28 @@ For each requirement, assess whether it's real or aspirational. Many JDs describ
 
 The honest answer to "why should they hire you?" — mapped requirement by requirement using the UPGRADED fit model.
 
-Output an HTML table with these columns:
+Output an HTML table. Use SHORT column headers to keep the table compact:
 <table>
-<thead><tr><th>Requirement</th><th>Match Type</th><th>Proof Strength</th><th>Screen-out Risk</th><th>Narrative Bridgeability</th><th>Best Framing</th><th>Evidence Label(s)</th></tr></thead>
+<thead><tr><th>Requirement</th><th>Match</th><th>Proof</th><th>Risk</th><th>Bridge</th><th>Best Framing</th><th>Src</th></tr></thead>
 <tbody>
 <tr>
   <td>[requirement from JD]</td>
-  <td>[Strong / Adjacent / Weak / Missing]</td>
-  <td>[High / Medium / Low / None]</td>
-  <td>[High / Medium / Low]</td>
-  <td>[High / Medium / Low]</td>
+  <td>[Strong/Adj/Weak/Miss]</td>
+  <td>[H/M/L/None]</td>
+  <td>[H/M/L]</td>
+  <td>[H/M/L]</td>
   <td>[specific framing advice for interview/resume]</td>
-  <td>[ILI / CTX / DOC / INF / NC]</td>
+  <td>[ILI/CTX/DOC/INF/NC]</td>
 </tr>
 </tbody>
 </table>
+
+Column definitions:
+- Match = Match Type: Strong / Adjacent / Weak / Missing
+- Proof = Proof Strength: High / Medium / Low / None
+- Risk = Screen-out Risk: High / Medium / Low
+- Bridge = Narrative Bridgeability: High / Medium / Low
+- Src = Evidence source label
 
 Match Type definitions:
 - Strong = direct, evidenced match from Ili's data
@@ -1963,16 +1946,16 @@ Output structure:
 <h3>Contacts at Company</h3>
 For each connection at the target company (from connections data):
 <table>
-<thead><tr><th>Name</th><th>Title</th><th>Relationship</th><th>Why They Matter</th><th>Best Ask</th><th>Key Question</th><th>Decision Impact</th></tr></thead>
+<thead><tr><th>Name</th><th>Title</th><th>Rel.</th><th>Why They Matter</th><th>Ask</th><th>Key Question</th><th>Impact</th></tr></thead>
 <tbody>
 <tr>
   <td>[name]</td>
   <td>[title]</td>
-  <td>[Strong/Medium/Weak]</td>
+  <td>[Strong/Med/Weak]</td>
   <td>[why this person matters to THIS role]</td>
-  <td>[referral / intel / technical validation / org context]</td>
-  <td>[specific question + what answer would increase vs decrease confidence]</td>
-  <td>[High / Medium / Low]</td>
+  <td>[referral/intel/validation/context]</td>
+  <td>[specific question + what increases vs decreases confidence]</td>
+  <td>[H/M/L]</td>
 </tr>
 </tbody>
 </table>
@@ -2125,7 +2108,10 @@ Positioning: ${role.positioning || 'ic'}
 Stage: ${role.stage || 'researching'}
 URL: ${role.url || 'Not provided'}
 Salary: ${role.salary || 'Not provided'}
-</role>\n\n`;
+Notes: ${role.notes || 'None'}
+</role>
+
+IMPORTANT: The "Stage" field above reflects where Ili currently is in the pipeline for this role. The "Notes" field contains Ili's personal notes about this role, which may include contacts already reached, conversations had, referrals obtained, or other pursuit progress. Factor this into your recommendations — do NOT suggest networking steps that have already been completed.\n\n`;
 
       /* -- Company context -- */
       prompt += `<company>
