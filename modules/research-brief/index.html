@@ -421,6 +421,57 @@
     /* TOC sidebar removed — dead space, content uses full width */
 
     /* ====== PURSUIT ECONOMICS BOX ====== */
+    /* ====== ERROR BANNER ====== */
+    .error-banner {
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      margin: 16px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .error-banner-icon {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      background: #ef4444;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .error-banner-content { flex: 1; }
+    .error-banner-title {
+      font-weight: 600;
+      color: #991b1b;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .error-banner-message {
+      color: #b91c1c;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .error-banner-message a {
+      color: #991b1b;
+      text-decoration: underline;
+    }
+    .error-banner-dismiss {
+      flex-shrink: 0;
+      background: none;
+      border: none;
+      color: #991b1b;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 0 4px;
+      line-height: 1;
+    }
+
     .pursuit-economics-box {
       background: var(--bg-elevated);
       border: 2px solid var(--accent);
@@ -1645,11 +1696,59 @@
 
       } catch (error) {
         console.error('Failed to generate brief:', error);
-        alert(`Error: ${error.message}`);
+        showErrorBanner(error);
       } finally {
         STATE.isGenerating = false;
         document.getElementById('generateBtn').disabled = false;
+        const progressText = document.getElementById('generationProgressText');
+        progressText.classList.remove('active');
+        document.getElementById('generationProgressBar').style.width = '0%';
       }
+    }
+
+    /**
+     * Show a prominent error banner at the top of the sections area.
+     * Maps API error codes to actionable user guidance.
+     * @param {Error} error - Error with optional .status and .apiMessage properties
+     */
+    function showErrorBanner(error) {
+      /* Remove any existing error banner */
+      document.querySelectorAll('.error-banner').forEach(el => el.remove());
+
+      const status = error.status || 0;
+      let title = 'Generation Failed';
+      let message = error.message;
+
+      /* Enhance with specific guidance based on error type */
+      if (status === 429) {
+        title = 'API Rate Limit Reached';
+        message = 'You\'ve hit your Anthropic API usage limit. This usually means you\'re out of credits or have exceeded your plan\'s rate cap.<br><br>' +
+          '<strong>To fix:</strong> Check your balance at <a href="https://console.anthropic.com/settings/billing" target="_blank">console.anthropic.com/settings/billing</a>. ' +
+          'If you have credits remaining, wait 60 seconds and try again.';
+      } else if (status === 401) {
+        title = 'Invalid API Key';
+        message = 'Your API key was rejected. It may have expired or been revoked.<br><br>' +
+          '<strong>To fix:</strong> Go to <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com/settings/keys</a>, ' +
+          'create a new key, and paste it into the API Key field in the sidebar.';
+      } else if (status === 529 || status === 503) {
+        title = 'Claude API Overloaded';
+        message = 'The Claude API is temporarily at capacity. This is on Anthropic\'s side, not yours.<br><br>' +
+          '<strong>To fix:</strong> Wait 30–60 seconds and click Generate again.';
+      }
+
+      const banner = document.createElement('div');
+      banner.className = 'error-banner';
+      banner.innerHTML = `
+        <div class="error-banner-icon">!</div>
+        <div class="error-banner-content">
+          <div class="error-banner-title">${title}</div>
+          <div class="error-banner-message">${message}</div>
+        </div>
+        <button class="error-banner-dismiss" title="Dismiss" onclick="this.closest('.error-banner').remove();">&times;</button>
+      `;
+
+      const sectionsArea = document.getElementById('sectionsArea');
+      sectionsArea.insertBefore(banner, sectionsArea.firstChild);
     }
 
     /* ====== GENERATION: Per-Section ====== */
@@ -1715,7 +1814,24 @@
       } catch (error) {
         console.error(`Failed to generate section ${section.id}:`, error);
         const contentEl = document.getElementById(`content-${section.id}`);
-        contentEl.innerHTML = `<p style="color: var(--text-secondary);">Failed to generate this section. ${error.message}</p>`;
+        contentEl.innerHTML = `<p style="color: #b91c1c; font-weight: 500;">⚠ ${error.message}</p>`;
+
+        /* Update section status to show failure */
+        const sectionEl = document.getElementById(`section-${section.id}`);
+        sectionEl.classList.remove('pending');
+        const statusEl = sectionEl.querySelector('.section-status');
+        if (statusEl) {
+          statusEl.innerHTML = `
+            <span class="status-icon" style="color: #ef4444;"><i data-lucide="alert-circle" style="width: 14px; height: 14px;"></i></span>
+            <span style="color: #ef4444;">Failed</span>
+          `;
+          lucide.createIcons();
+        }
+
+        /* If it's a rate limit or auth error, stop generating remaining sections */
+        if (error.status === 429 || error.status === 401) {
+          throw error;
+        }
       }
     }
 

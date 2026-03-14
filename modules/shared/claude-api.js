@@ -128,8 +128,28 @@ window.PF.claude = (function () {
 
     if (!resp.ok) {
       const errBody = await resp.json().catch(() => ({}));
-      const msg = errBody.error?.message || `HTTP ${resp.status}`;
-      throw new Error(`Claude API error: ${msg}`);
+      const apiMsg = errBody.error?.message || '';
+      const status = resp.status;
+
+      let userMsg;
+      if (status === 401) {
+        userMsg = 'Invalid API key. Check your key in Settings → Claude API Key.';
+      } else if (status === 429) {
+        userMsg = 'Rate limit exceeded — you\'ve hit your API usage cap. Wait a few minutes or check your Anthropic billing at console.anthropic.com/settings/billing.';
+      } else if (status === 529 || status === 503) {
+        userMsg = 'Claude API is temporarily overloaded. Try again in 30 seconds.';
+      } else if (status === 400 && apiMsg.includes('credit')) {
+        userMsg = 'Out of API credits. Add credits at console.anthropic.com/settings/billing.';
+      } else if (status === 400) {
+        userMsg = `Bad request: ${apiMsg}`;
+      } else {
+        userMsg = `API error (HTTP ${status}): ${apiMsg || 'Unknown error'}`;
+      }
+
+      const err = new Error(userMsg);
+      err.status = status;
+      err.apiMessage = apiMsg;
+      throw err;
     }
 
     const data = await resp.json();
@@ -187,7 +207,29 @@ window.PF.claude = (function () {
 
     if (!resp.ok) {
       const errBody = await resp.json().catch(() => ({}));
-      throw new Error(`Claude API error: ${errBody.error?.message || `HTTP ${resp.status}`}`);
+      const apiMsg = errBody.error?.message || '';
+      const status = resp.status;
+
+      /* Map HTTP status codes to user-friendly error messages */
+      let userMsg;
+      if (status === 401) {
+        userMsg = 'Invalid API key. Check your key in Settings → Claude API Key.';
+      } else if (status === 429) {
+        userMsg = 'Rate limit exceeded — you\'ve hit your API usage cap. Wait a few minutes or check your Anthropic billing at console.anthropic.com/settings/billing.';
+      } else if (status === 529 || status === 503) {
+        userMsg = 'Claude API is temporarily overloaded. Try again in 30 seconds.';
+      } else if (status === 400 && apiMsg.includes('credit')) {
+        userMsg = 'Out of API credits. Add credits at console.anthropic.com/settings/billing.';
+      } else if (status === 400) {
+        userMsg = `Bad request: ${apiMsg}`;
+      } else {
+        userMsg = `API error (HTTP ${status}): ${apiMsg || 'Unknown error'}`;
+      }
+
+      const err = new Error(userMsg);
+      err.status = status;
+      err.apiMessage = apiMsg;
+      throw err;
     }
 
     // Parse SSE stream
