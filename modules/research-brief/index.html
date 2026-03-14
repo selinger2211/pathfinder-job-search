@@ -653,6 +653,7 @@
 
     .cite-label {
       display: inline-block;
+      position: relative;
       font-size: 0.75em;
       vertical-align: super;
       color: white;
@@ -668,6 +669,33 @@
     .cite-label:hover {
       background: rgb(79, 70, 229);
       transform: scale(1.1);
+    }
+
+    /* Tooltip on hover showing full label name */
+    .cite-label[data-label="JD"]:hover::after { content: "Job Description"; }
+    .cite-label[data-label="EXT"]:hover::after { content: "External Research"; }
+    .cite-label[data-label="ILI"]:hover::after { content: "Ili Profile / Resume"; }
+    .cite-label[data-label="CTX"]:hover::after { content: "Additional Context"; }
+    .cite-label[data-label="DOC"]:hover::after { content: "Uploaded Document"; }
+    .cite-label[data-label="INF"]:hover::after { content: "Inference"; }
+    .cite-label[data-label="NC"]:hover::after { content: "Needs Confirmation"; }
+
+    .cite-label:hover::after {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border: 1px solid var(--bg-subtle);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      pointer-events: none;
     }
 
     /* Color-coded citation labels */
@@ -1091,43 +1119,87 @@
 
     /* ====== BINARY TEXT EXTRACTION (for legacy .doc files) ====== */
     /**
-     * Extract readable text from a binary file buffer.
-     * Used as fallback when mammoth can't parse legacy .doc files.
-     * Scans for runs of printable ASCII/UTF characters.
+     * Extract readable text from a legacy .doc binary file.
+     * Word .doc files use the OLE2 Compound Binary Format and store text as UTF-16LE.
+     * This extractor tries three strategies:
+     *   1. UTF-16LE decoding (primary — .doc stores body text this way)
+     *   2. ASCII text run extraction (fallback)
+     *   3. Combined best result
      * @param {ArrayBuffer} arrayBuffer - Raw file bytes
      * @returns {string} Extracted text (best-effort)
      */
     function extractTextFromBinary(arrayBuffer) {
       const bytes = new Uint8Array(arrayBuffer);
-      const chunks = [];
-      let current = '';
 
+      /* Strategy 1: UTF-16LE extraction — .doc body text is stored as 2-byte LE chars */
+      let utf16Text = '';
+      try {
+        const decoder = new TextDecoder('utf-16le');
+        const rawUtf16 = decoder.decode(arrayBuffer);
+
+        /* Extract runs of readable text (letters, numbers, spaces, punctuation) */
+        const utf16Chunks = [];
+        let currentChunk = '';
+        for (let i = 0; i < rawUtf16.length; i++) {
+          const code = rawUtf16.charCodeAt(i);
+          /* Printable range + whitespace, excluding control chars and weird Unicode */
+          if ((code >= 32 && code <= 126) || code === 10 || code === 13 || code === 9 ||
+              (code >= 160 && code <= 255)) {
+            currentChunk += rawUtf16[i];
+          } else {
+            if (currentChunk.length >= 3) {
+              utf16Chunks.push(currentChunk.trim());
+            }
+            currentChunk = '';
+          }
+        }
+        if (currentChunk.length >= 3) {
+          utf16Chunks.push(currentChunk.trim());
+        }
+
+        /* Keep chunks that look like real text */
+        const goodUtf16 = utf16Chunks.filter(chunk => {
+          if (chunk.length < 3) return false;
+          const letterCount = (chunk.match(/[a-zA-Z]/g) || []).length;
+          const hasSpaces = chunk.includes(' ');
+          /* Real text chunks: mostly letters, or short but with spaces */
+          return (letterCount > chunk.length * 0.3 && hasSpaces) || (chunk.length > 20 && letterCount > chunk.length * 0.25);
+        });
+
+        utf16Text = goodUtf16.join('\n');
+      } catch (e) {
+        console.warn('[ResearchBrief] UTF-16LE extraction failed:', e);
+      }
+
+      /* Strategy 2: ASCII single-byte extraction (catches metadata, headers, etc.) */
+      const asciiChunks = [];
+      let asciiCurrent = '';
       for (let i = 0; i < bytes.length; i++) {
         const byte = bytes[i];
-        /* Printable ASCII range + common whitespace */
         if ((byte >= 32 && byte <= 126) || byte === 10 || byte === 13 || byte === 9) {
-          current += String.fromCharCode(byte);
+          asciiCurrent += String.fromCharCode(byte);
         } else {
-          if (current.length >= 4) {
-            chunks.push(current.trim());
+          if (asciiCurrent.length >= 4) {
+            asciiChunks.push(asciiCurrent.trim());
           }
-          current = '';
+          asciiCurrent = '';
         }
       }
-      if (current.length >= 4) {
-        chunks.push(current.trim());
+      if (asciiCurrent.length >= 4) {
+        asciiChunks.push(asciiCurrent.trim());
       }
 
-      /* Filter out obvious binary noise — keep chunks that look like real text */
-      const textChunks = chunks.filter(chunk => {
-        /* Must contain at least one space (real text has spaces) */
+      const goodAscii = asciiChunks.filter(chunk => {
         if (!chunk.includes(' ') && chunk.length < 20) return false;
-        /* Must be mostly letters/spaces, not mostly symbols */
         const letterCount = (chunk.match(/[a-zA-Z]/g) || []).length;
         return letterCount > chunk.length * 0.4;
       });
 
-      return textChunks.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+      const asciiText = goodAscii.join('\n');
+
+      /* Use whichever strategy produced more readable text */
+      const result = utf16Text.length > asciiText.length ? utf16Text : asciiText;
+      return result.replace(/\n{3,}/g, '\n\n').trim();
     }
 
     /* ====== FILE UPLOAD HANDLING ====== */
@@ -1733,10 +1805,15 @@ This section must feel like it understands the company, not just the posting. Go
 Output structure:
 
 <h3>Company Overview</h3>
+- Company type: Public (ticker, market cap, revenue) / Private (funding stage, last raise, key investors) / Subsidiary
+- Approximate headcount and recent headcount trend (growing/flat/shrinking)
 - Business model
 - Primary products and product lines
 - Current strategy
 - AI strategy (where relevant)
+- Key leadership (CEO, relevant C-suite or VP if known)
+
+IMPORTANT: If the company is publicly traded, you MUST include the ticker symbol, approximate market cap, approximate annual revenue, and approximate headcount. This is basic due diligence — never skip it for public companies.
 
 <h3>Recent Momentum</h3>
 - Recent announcements relevant to this role (product launches, acquisitions, partnerships, restructuring, earnings, leadership changes, AI announcements)
