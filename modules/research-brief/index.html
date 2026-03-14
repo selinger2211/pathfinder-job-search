@@ -937,9 +937,9 @@
           <div class="file-upload-zone" id="fileUploadZone" role="button" tabindex="0" aria-label="Upload supporting document">
             <i data-lucide="upload" style="width: 16px; height: 16px; margin-bottom: 4px;"></i>
             <div>Drop or click to upload an older resume or supporting doc</div>
-            <div style="margin-top: 2px; font-size: 10px;">(.docx, .txt, .pdf text)</div>
+            <div style="margin-top: 2px; font-size: 10px;">(.doc, .docx, .txt, .md)</div>
           </div>
-          <input type="file" id="fileUploadInput" accept=".docx,.txt,.pdf,.md" style="display: none;">
+          <input type="file" id="fileUploadInput" accept=".doc,.docx,.txt,.pdf,.md" style="display: none;">
           <div id="uploadedFilesContainer"></div>
         </div>
 
@@ -1089,9 +1089,52 @@
     /** Get connections from localStorage */
     function getConnections() { return safeJsonParse('pf_connections', []); }
 
+    /* ====== BINARY TEXT EXTRACTION (for legacy .doc files) ====== */
+    /**
+     * Extract readable text from a binary file buffer.
+     * Used as fallback when mammoth can't parse legacy .doc files.
+     * Scans for runs of printable ASCII/UTF characters.
+     * @param {ArrayBuffer} arrayBuffer - Raw file bytes
+     * @returns {string} Extracted text (best-effort)
+     */
+    function extractTextFromBinary(arrayBuffer) {
+      const bytes = new Uint8Array(arrayBuffer);
+      const chunks = [];
+      let current = '';
+
+      for (let i = 0; i < bytes.length; i++) {
+        const byte = bytes[i];
+        /* Printable ASCII range + common whitespace */
+        if ((byte >= 32 && byte <= 126) || byte === 10 || byte === 13 || byte === 9) {
+          current += String.fromCharCode(byte);
+        } else {
+          if (current.length >= 4) {
+            chunks.push(current.trim());
+          }
+          current = '';
+        }
+      }
+      if (current.length >= 4) {
+        chunks.push(current.trim());
+      }
+
+      /* Filter out obvious binary noise — keep chunks that look like real text */
+      const textChunks = chunks.filter(chunk => {
+        /* Must contain at least one space (real text has spaces) */
+        if (!chunk.includes(' ') && chunk.length < 20) return false;
+        /* Must be mostly letters/spaces, not mostly symbols */
+        const letterCount = (chunk.match(/[a-zA-Z]/g) || []).length;
+        return letterCount > chunk.length * 0.4;
+      });
+
+      return textChunks.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+    }
+
     /* ====== FILE UPLOAD HANDLING ====== */
     /**
-     * Handle file upload — extract text from .docx, .txt, .md files
+     * Handle file upload — extract text from .doc, .docx, .txt, .md files.
+     * For .doc (legacy binary format), tries mammoth first, then falls back to
+     * raw binary text extraction to pull whatever readable content it can.
      * @param {File} file - Uploaded file
      */
     async function handleFileUpload(file) {
@@ -1099,20 +1142,39 @@
       let content = '';
 
       try {
-        if (ext === 'docx') {
+        if (ext === 'docx' || ext === 'doc') {
           const arrayBuffer = await file.arrayBuffer();
-          const result = await mammoth.extractRawText({ arrayBuffer });
-          content = result.value;
+          try {
+            /* mammoth handles .docx natively; may also work on some .doc files */
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            content = result.value;
+          } catch (mammothErr) {
+            console.warn(`[ResearchBrief] mammoth failed for .${ext}, trying raw text extraction:`, mammothErr);
+            /* Fallback for .doc binary: extract readable ASCII/UTF text from raw bytes */
+            content = extractTextFromBinary(arrayBuffer);
+          }
+
+          if (!content || content.trim().length < 50) {
+            /* If extraction produced too little, try raw binary as last resort */
+            const rawFallback = extractTextFromBinary(await file.arrayBuffer());
+            if (rawFallback.length > content.length) {
+              content = rawFallback;
+            }
+          }
+
+          if (!content || content.trim().length < 50) {
+            content = `[Could not extract sufficient text from ${file.name}. This is a legacy .${ext} file. For best results, open in Word and re-save as .docx, or paste the key content into Additional Context above.]`;
+          }
         } else if (ext === 'txt' || ext === 'md') {
           content = await file.text();
         } else if (ext === 'pdf') {
           content = `[PDF uploaded: ${file.name} — PDF text extraction requires server-side processing. Paste key content into Additional Context instead.]`;
         } else {
-          content = `[Unsupported file type: ${ext}]`;
+          content = `[Unsupported file type: ${ext}. Supported: .docx, .doc, .txt, .md]`;
         }
       } catch (err) {
         console.error('File read error:', err);
-        content = `[Failed to read ${file.name}: ${err.message}]`;
+        content = `[Failed to read ${file.name}: ${err.message}. Try pasting the content into Additional Context instead.]`;
       }
 
       if (content && content.trim()) {
