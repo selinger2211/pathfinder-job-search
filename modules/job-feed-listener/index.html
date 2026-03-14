@@ -2815,6 +2815,17 @@
 
   <script src="../shared/claude-api.js?v=3.5.1"></script>
   <script>
+    /** Safely parse JSON from localStorage with fallback */
+    function safeJsonParse(key, fallback = null) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (e) {
+        console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
+        return fallback;
+      }
+    }
+
     // ================================================================
     // FEATURE 35: MCP SYNC STATUS - Check server availability
     // ================================================================
@@ -2900,19 +2911,6 @@
         gmailStatus.innerHTML = '<span style="color: var(--success); font-weight: 600;">✓ Gmail Connected</span>';
       } else {
         gmailStatus.innerHTML = '<span style="color: var(--text-tertiary); font-weight: 600;">○ Gmail Not Connected</span>';
-      }
-    }
-
-    /**
-     * Safely parse JSON from localStorage with fallback
-     */
-    function safeJsonParse(key, fallback = null) {
-      try {
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : fallback;
-      } catch (e) {
-        console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
-        return fallback;
       }
     }
 
@@ -7105,10 +7103,13 @@
      * @returns {string} The mission statement, or empty string if not found
      */
     function getCompanyDescription(companyName) {
-      const companies = safeJsonParse('pf_companies', []);
-      const co = companies.find(c => c.name === companyName);
-      return co?.missionStatement || '';
-    }
+      try {
+        const companies = safeJsonParse('pf_companies', []);
+        const co = companies.find(c => c.name === companyName);
+        return co?.missionStatement || '';
+      } catch {
+        return '';
+      }
     }
 
     function renderCardLogo(item) {

@@ -1381,9 +1381,7 @@
   </div>
 
   <script>
-    /**
-     * Safely parse JSON from localStorage with fallback
-     */
+    /** Safely parse JSON from localStorage with fallback */
     function safeJsonParse(key, fallback = null) {
       try {
         const raw = localStorage.getItem(key);

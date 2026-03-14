@@ -1360,6 +1360,17 @@
   </div>
 
   <script>
+    /** Safely parse JSON from localStorage with fallback */
+    function safeJsonParse(key, fallback = null) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (e) {
+        console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
+        return fallback;
+      }
+    }
+
     /**
      * ================================================================
      * RESEARCH BRIEF AGENT — Architecture Overview
@@ -1403,19 +1414,6 @@
      *
      * ================================================================
      */
-
-    // ================================================================
-    // SAFE JSON PARSING HELPER
-    // ================================================================
-    function safeJsonParse(key, fallback = null) {
-      try {
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : fallback;
-      } catch (e) {
-        console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
-        return fallback;
-      }
-    }
 
     // ================================================================
     // SECTION DEFINITIONS

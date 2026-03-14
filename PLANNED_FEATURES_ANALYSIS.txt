@@ -1,0 +1,371 @@
+PATHFINDER JOB SEARCH SYSTEM - PLANNED FEATURES EXTRACTION
+===========================================================
+Total Planned Items Found: 53
+
+================================================================================
+
+MODULE: Calendar
+FEATURE: Confidence Scoring Algorithm
+DESCRIPTION: Event-to-pipeline classification with confidence scoring (high/medium/low signals). Matches calendar events to roles based on title keywords, attendee domains, recruiter names, JD mentions, and timing heuristics.
+DEPENDS ON: Pipeline data, company/role metadata
+COMPLEXITY: M
+
+MODULE: Calendar
+FEATURE: Specific Nudge Timing
+DESCRIPTION: Pre-interview nudges scheduled at 72h, 48h, morning-of, and 1h after event times. Currently basic scheduling implemented, specific timing not yet.
+DEPENDS ON: Interview events detection, Nudge system
+COMPLEXITY: S
+
+MODULE: Calendar
+FEATURE: Post-Interview Triggers & Follow-Up
+DESCRIPTION: Auto-detects post-interview patterns including rejection signals (no follow-up email, LinkedIn unfollow), next round scheduling, offer received. Triggers follow-up nudges and stage transitions.
+DEPENDS ON: Email/Gmail integration, Interview event data, Stage tracking
+COMPLEXITY: L
+
+MODULE: Calendar
+FEATURE: Interviewer Linking & Research Brief Integration
+DESCRIPTION: Auto-links calendar event attendees to Pipeline connections. Fetches interviewer context from LinkedIn/Glassdoor for Research Brief Section 8 (Interviewer Insights). Matches interviewer names/emails to connection records.
+DEPENDS ON: Connections/relationship data, LinkedIn API, Research Brief, Calendar events
+COMPLEXITY: M
+
+MODULE: Calendar
+FEATURE: Phase 2: Nudges & UX Polish (v1.1)
+DESCRIPTION: Full nudge display on Dashboard. Pre-interview nudges triggering at correct times. Nudge actions linking to Research Brief and Debrief. Post-event nudges. Manual event linking UI. Interviewer context fetching.
+DEPENDS ON: Dashboard, Research Brief, Debrief, Gmail integration
+COMPLEXITY: L
+
+MODULE: Calendar
+FEATURE: Phase 3: Post-Event Triggers (v1.2)
+DESCRIPTION: Detect next round scheduled within 1-2 weeks. Auto-link follow-up events. No-follow-up nudge after 2 weeks. Offer detection and stage auto-advance. 30-day check-in for stalled roles.
+DEPENDS ON: Email pattern analysis, Stage system, Role data
+COMPLEXITY: L
+
+MODULE: Calendar
+FEATURE: Phase 4: Intelligence & Feedback Loops (v1.3+)
+DESCRIPTION: Interview outcome patterns analysis. Interviewer reputation scoring (leads to next round by interviewer). Stage transition success rates by company. Historical interview data analysis.
+DEPENDS ON: Historical interview data, Debrief records, Analytics
+COMPLEXITY: XL
+
+================================================================================
+
+MODULE: Comp Intelligence
+FEATURE: Phase 2: Negotiation Support (v1.0.1)
+DESCRIPTION: Offer stage detection. Negotiation Scorecard generation. Market percentile calculation. Counter-offer suggestion engine. Equity valuation context (funding stage to share value). Multi-offer comparison table. Negotiation attempt tracking.
+DEPENDS ON: Offer detection, Comp data, Equity data, Market data
+COMPLEXITY: L
+
+MODULE: Comp Intelligence
+FEATURE: Phase 3: Positioning Intelligence (v1.1)
+DESCRIPTION: Automated IC vs. Director comp comparison at same company. Cross-company positioning analysis. Comp impact on positioning field decision. Integration with Research Brief Section 2. Positioning recommendations based on comp data.
+DEPENDS ON: Comp benchmarks, Research Brief, Role level detection
+COMPLEXITY: M
+
+MODULE: Comp Intelligence
+FEATURE: Phase 4: Advanced Analytics (v1.2+)
+DESCRIPTION: Historical offer analysis tracking comp trends across full search. Comp by company tier/funding stage/size. Salary trend visualization over time. Market evolution tracking.
+DEPENDS ON: Historical offer data, Market data sources, Analytics
+COMPLEXITY: M
+
+================================================================================
+
+MODULE: Dashboard
+FEATURE: Conversion Funnel Card
+DESCRIPTION: Shows conversion rates from stage to stage. Useful after closing 10+ roles. Bar chart of progression percentages through pipeline stages.
+DEPENDS ON: Pipeline data with stage tracking
+COMPLEXITY: S
+
+MODULE: Dashboard
+FEATURE: Average Time-in-Stage Card
+DESCRIPTION: Shows how long roles typically spend at each stage. Identifies bottlenecks. Sortable by oldest-first when clicking stage.
+DEPENDS ON: Pipeline stage history, Role timestamps
+COMPLEXITY: S
+
+MODULE: Dashboard
+FEATURE: Feed Review Section
+DESCRIPTION: Job Feed Listener matches appear here grouped by match score. Accepts, snoozes (7 days), or dismisses roles. Auto-tags Hot/Active/Watching based on match score. Hidden if Feed not integrated.
+DEPENDS ON: Job Feed, Pipeline, Match scoring
+COMPLEXITY: M
+
+MODULE: Dashboard
+FEATURE: Interview Intelligence Card
+DESCRIPTION: Appears after 10+ debriefs accumulated. Summary card showing patterns: types of questions asked, which companies ask similar questions, common interview structures.
+DEPENDS ON: Debrief records (10+ minimum), Analytics
+COMPLEXITY: M
+
+MODULE: Dashboard
+FEATURE: Company Profile Sparse Nudge Rule
+DESCRIPTION: Triggers when company has <50% enriched fields complete. Prompts user to add funding, tech stack, etc. Appears on role advancement or company add.
+DEPENDS ON: Company enrichment data, Pipeline
+COMPLEXITY: S
+
+MODULE: Dashboard
+FEATURE: Nudge Deduplication UI
+DESCRIPTION: Advanced deduplication UI for multiple triggering rules for same role. Currently basic rule prioritization in place. Show highest-priority nudge; secondary visible on expand or dismiss.
+DEPENDS ON: Nudge engine, Rule system
+COMPLEXITY: S
+
+MODULE: Dashboard
+FEATURE: Suppression Chains
+DESCRIPTION: Dismissing "Prep for interview at {company}" suppresses "Generate research brief for {company}" for 48h. Dismissing "Follow up" suppresses "Outreach needed" for 24h. Coordinated nudge suppression across related rules.
+DEPENDS ON: Nudge system, Rule engine
+COMPLEXITY: M
+
+MODULE: Dashboard
+FEATURE: Nudge Logging
+DESCRIPTION: Every nudge trigger logs to pf_nudge_log with ruleId, roleId, firedAt, dismissed, dismissedAt, reason. Dashboard analytics shows nudge effectiveness (fired vs acted on).
+DEPENDS ON: Database, Analytics
+COMPLEXITY: S
+
+MODULE: Dashboard
+FEATURE: Per-Rule Nudge Preferences
+DESCRIPTION: Sidebar "Nudge Preferences" allows user to disable specific rule IDs entirely. Disabled rules stored in pf_nudge_disabled array. Per-rule granular control.
+DEPENDS ON: Nudge system, User settings
+COMPLEXITY: S
+
+================================================================================
+
+MODULE: Debrief
+FEATURE: Phase 2: Research Brief & Outreach Integration
+DESCRIPTION: Enhanced pf_finalize_debrief tool to trigger research brief refresh. Research Brief Section updates after debrief completion. Outreach message personalization using debrief insights.
+DEPENDS ON: Research Brief module, Outreach module, MCP tools
+COMPLEXITY: M
+
+MODULE: Debrief
+FEATURE: Phase 3: Pattern Analysis & Intelligence
+DESCRIPTION: pf_analyze_debrief_patterns background job after 10+ debriefs. Analyzes trends: question types by company, interviewer patterns, successful answers, common feedback themes.
+DEPENDS ON: Analytics, Background job system, MCP tools, 10+ debrief records
+COMPLEXITY: L
+
+================================================================================
+
+MODULE: Job Feed
+FEATURE: Career Page Monitoring (Tiered Cadence)
+DESCRIPTION: Scheduled automated monitoring of career pages on different cadences: Hot (3x/week), Active (weekly), Watching (monthly). Supports ATS platforms (Lever, Greenhouse, Ashby, Workday) with auto-detection. Falls back to Claude parsing for custom pages.
+DEPENDS ON: Career page URLs, ATS detection, Claude API, Scheduled task system
+COMPLEXITY: L
+
+MODULE: Job Feed
+FEATURE: Gmail Integration
+DESCRIPTION: Highest-value source: inbound recruiter outreach, job alert emails, networking follow-ups. Monitors Gmail for job opportunities. Requires Gmail OAuth and email parsing.
+DEPENDS ON: Gmail OAuth, Email parsing, Claude API
+COMPLEXITY: L
+
+MODULE: Job Feed
+FEATURE: Automatic Dedup vs Pipeline
+DESCRIPTION: Auto-dedup newly matched roles against existing Pipeline roles before scoring. Currently manual dedup review at feed card level. Planned for Phase 3 to reduce duplicates.
+DEPENDS ON: Pipeline data, Dedup logic/similarity matching
+COMPLEXITY: M
+
+MODULE: Job Feed
+FEATURE: Tier Management Suggestions
+DESCRIPTION: Feed suggests tier promotion/demotion: No new roles for 60+ days → demote to Watching. All roles closed as rejected/ghosted → demote to Dormant. Company in layoff news → flag review. Never auto-changes; nudges surface suggestions.
+DEPENDS ON: Tier data, Company news monitoring, Role history
+COMPLEXITY: M
+
+MODULE: Job Feed
+FEATURE: Feed Analytics
+DESCRIPTION: Feed tracks performance to tune scoring model. Logs matching accuracy, false positive rates, user acceptance rates. Phase 5 analytics infrastructure. Current implementation includes basic role counters.
+DEPENDS ON: Analytics infrastructure, Logging system
+COMPLEXITY: M
+
+MODULE: Job Feed
+FEATURE: Feed Run Logging to MCP
+DESCRIPTION: Every run logged with run duration, roles queued/scored/discarded, error tracking. Planned for Phase 5 MCP integration. Currently runs not logged systematically.
+DEPENDS ON: MCP server, Logging system
+COMPLEXITY: S
+
+MODULE: Job Feed
+FEATURE: MCP Tool Integration
+DESCRIPTION: Exposes MCP tools for other agents to query feed. pf_search_feed, pf_get_role, pf_run_feed manually. Currently operates as scheduled Cowork skill. Phase 5 planned for full MCP integration.
+DEPENDS ON: MCP server, Tool registration
+COMPLEXITY: M
+
+================================================================================
+
+MODULE: Mock Interview
+FEATURE: Phase 2: Intelligence & Calibration
+DESCRIPTION: pf_scrape_interview_questions background job to cache company-specific questions weekly. Question library building. Practice mode calibration.
+DEPENDS ON: MCP tools, Background jobs, Web scraping
+COMPLEXITY: M
+
+MODULE: Mock Interview
+FEATURE: Phase 4: Polish & Analytics
+DESCRIPTION: pf_generate_session_summary MCP tool. Full summary with trend analysis. Session comparison (improvement tracking). Analytics on question types vs performance.
+DEPENDS ON: MCP tools, Analytics, Session history
+COMPLEXITY: M
+
+================================================================================
+
+MODULE: Outreach
+FEATURE: InMail (LinkedIn)
+DESCRIPTION: 3-5 sentence LinkedIn InMail to someone not yet reached out to. Requires direct hook based on research, credible intro, specific value add. Not yet implemented.
+DEPENDS ON: LinkedIn integration, Connection research, Claude API
+COMPLEXITY: M
+
+MODULE: Outreach
+FEATURE: Thank You (Interview Round)
+DESCRIPTION: 4-5 sentences thank you after interview. Uses specific discussion points from Debrief Agent notes for personalization. Requires debrief integration.
+DEPENDS ON: Debrief records, Interview data, Claude API
+COMPLEXITY: M
+
+MODULE: Outreach
+FEATURE: Phase 2: Debrief Integration & Refinement
+DESCRIPTION: Read debrief notes and pull specific discussion points for interview thank-yous. Message quality scorer checks personalization signals and flags generic patterns. Edit context sidebar for research enrichment. Message templates. Draft saving.
+DEPENDS ON: Debrief module, Database (localStorage), Claude API
+COMPLEXITY: L
+
+MODULE: Outreach
+FEATURE: Phase 3: Intelligence & Optimization
+DESCRIPTION: A/B testing framework tracking response rates by message structure/type. Response rate analytics by message type, company tier, connection type. Performance optimization.
+DEPENDS ON: Analytics infrastructure, Historical message data
+COMPLEXITY: L
+
+================================================================================
+
+MODULE: Pipeline Tracker
+FEATURE: Auto-Enrichment on Company Entry
+DESCRIPTION: Logo fetch via Clearbit API. Basic profile scrape from LinkedIn (funding, headcount, mission). News scan via Google News API. Glassdoor lookup (rating, company profile URL). Async enrichment with spinner; failed enrichments non-blocking.
+DEPENDS ON: Clearbit API, LinkedIn API, Google News API, Glassdoor API
+COMPLEXITY: M
+
+MODULE: Pipeline Tracker
+FEATURE: Company Web Search Suggestions
+DESCRIPTION: When manually adding company, UI suggests web search results. User types company name → system suggests matches. Helps find correct company profile and existing enrichment.
+DEPENDS ON: Web search API, UI/UX
+COMPLEXITY: S
+
+MODULE: Pipeline Tracker
+FEATURE: Stage Transition Reason Field
+DESCRIPTION: Optional reason field for why stage changed (user-provided). Captures context when advancing/retreating through pipeline. Helps with analysis and auditing.
+DEPENDS ON: Database schema update, Pipeline data
+COMPLEXITY: S
+
+MODULE: Pipeline Tracker
+FEATURE: Interview & Offer Substages
+DESCRIPTION: Fine-grained tracking within Interview and Offer stages. Allows distinction between phone screen, onsite, offer negotiation, etc. More granular journey visibility.
+DEPENDS ON: Database schema, Pipeline UI
+COMPLEXITY: M
+
+MODULE: Pipeline Tracker
+FEATURE: Opaque Recruiter Outreach
+DESCRIPTION: Handles recruiter emails with hidden company/role details. Supports "opaque" entries that reveal over time. "Reveal Company" and "Reveal Role" buttons link to detail panel. Minimal info storage until revealed.
+DEPENDS ON: Pipeline data model, Email parsing
+COMPLEXITY: M
+
+================================================================================
+
+MODULE: Research Brief
+FEATURE: Degraded Mode (Opaque Recruiter Outreach)
+DESCRIPTION: Handles roles with partial info (company-unknown, role-unknown, or both). Reconstructs info as available. Auto-regenerates sections when new data revealed.
+DEPENDS ON: Pipeline data, Debrief notes, Gmail data
+COMPLEXITY: M
+
+MODULE: Research Brief
+FEATURE: MCP Tool: pf_generate_brief_section
+DESCRIPTION: Optional MCP tool interface for server-side generation. Currently browser calls Claude directly without MCP. Server-side generation deferred for potential future use.
+DEPENDS ON: MCP server
+COMPLEXITY: M
+
+MODULE: Research Brief
+FEATURE: Automatic Cache Invalidation
+DESCRIPTION: Detects stale cache and invalidates sections intelligently. Monitors for data changes: JD changes, profile updates, comp updates. Auto-triggers refreshes where needed.
+DEPENDS ON: Cache system, Change detection
+COMPLEXITY: M
+
+MODULE: Research Brief
+FEATURE: Citation Markers & Popovers
+DESCRIPTION: Clickable [n] citation markers show: claim text, source type badge, source link, fetch date, trust level. Supports full source traceability and editing.
+DEPENDS ON: UI/UX, Source tracking
+COMPLEXITY: S
+
+MODULE: Research Brief
+FEATURE: Section Status Badges (Extended)
+DESCRIPTION: Cached badge (>24h old), Fresh (recent), Stale (data changed), Degraded (partial info), Error (generation failed). Visual status indicators.
+DEPENDS ON: UI, Cache management
+COMPLEXITY: S
+
+MODULE: Research Brief
+FEATURE: Generation Progress Bar
+DESCRIPTION: Top-of-page progress bar showing "Generating section 3/13... (Batch 1: 6/8 complete)". Real-time batch progress visibility.
+DEPENDS ON: UI/UX, Generation batching
+COMPLEXITY: S
+
+MODULE: Research Brief
+FEATURE: Keyboard Shortcut: G for Generate
+DESCRIPTION: G key generates full brief from scratch. Keyboard UX enhancement for power users.
+DEPENDS ON: UI event handling
+COMPLEXITY: S
+
+MODULE: Research Brief
+FEATURE: MCP-Based Artifact Persistence
+DESCRIPTION: Save brief to MCP server as research_brief artifact with metadata (sectionsGenerated, inputsMissing, generatedAt). Previous versions never overwritten; supports version comparison.
+DEPENDS ON: MCP server, Artifact storage
+COMPLEXITY: M
+
+MODULE: Research Brief
+FEATURE: Export Formats (HTML, Markdown, Print)
+DESCRIPTION: HTML export (standalone file with embedded CSS, citations, links). Markdown export (for notes apps). Print-optimized CSS. Currently PDF only implemented.
+DEPENDS ON: Export libraries (html2pdf, markdown), UI
+COMPLEXITY: M
+
+MODULE: Research Brief
+FEATURE: Phase 2: Smart Caching & Invalidation
+DESCRIPTION: Invalidation trigger detection. Stale/fresh/degraded badges. Cross-module invalidation. Pipeline edits trigger brief staleness.
+DEPENDS ON: Cache system, Cross-module signals
+COMPLEXITY: M
+
+MODULE: Research Brief
+FEATURE: Phase 3: Deep Integrations
+DESCRIPTION: Interviewer name research (LinkedIn profile fetch). Cross-module invalidation signals from Calendar, Pipeline, Debrief.
+DEPENDS ON: LinkedIn API, Cross-module event system
+COMPLEXITY: L
+
+MODULE: Research Brief
+FEATURE: Phase 4: Polish
+DESCRIPTION: Generation progress bar. Citation popovers with source links. Export to Markdown and HTML. Extended keyboard shortcuts.
+DEPENDS ON: UI/UX, Export libraries
+COMPLEXITY: M
+
+================================================================================
+
+MODULE: Resume Builder
+FEATURE: Phase 2: MCP-Powered Generation
+DESCRIPTION: pf_generate_resume MCP tool with Claude API integration. Server-side generation of summary, skills bar, subtitles, bullet selection. New bullet proposal flow (agent proposes → user approves). DOCX and PDF export. Research Brief data feed.
+DEPENDS ON: MCP server, Claude API, docx library, Research Brief
+COMPLEXITY: L
+
+MODULE: Resume Builder
+FEATURE: Phase 3: Feedback Loops & Intelligence
+DESCRIPTION: Keyword gap analysis post-generation. Suggested Bullets section in Bullet Bank. Iterative improvement. Job description matching optimization.
+DEPENDS ON: Analytics, Keyword matching, Claude API
+COMPLEXITY: M
+
+================================================================================
+
+SUMMARY BY MODULE:
+  Calendar: 7 planned items
+  Comp Intelligence: 3 planned items
+  Dashboard: 9 planned items
+  Debrief: 2 planned items
+  Job Feed: 7 planned items
+  Mock Interview: 2 planned items
+  Outreach: 4 planned items
+  Pipeline Tracker: 5 planned items
+  Research Brief: 13 planned items
+  Resume Builder: 2 planned items
+
+COMPLEXITY BREAKDOWN:
+  S (Small): 14 items
+  M (Medium): 22 items
+  L (Large): 13 items
+  XL (Extra Large): 1 item
+
+KEY DEPENDENCIES:
+  - MCP Server: 10+ items
+  - Claude API: 8+ items
+  - LinkedIn API: 5+ items
+  - Gmail OAuth: 3+ items
+  - Database/Schema: 4+ items
+  - Analytics Infrastructure: 7+ items
+  - Cross-module integration: 15+ items
+

@@ -1,0 +1,200 @@
+QA AUDIT REPORT: PATHFINDER PROJECT CROSS-MODULE CHECKS
+================================================================
+
+PROJECT LOCATION: /sessions/gallant-stoic-goodall/mnt/job-search-agents-v2
+MODULES AUDITED: 11 (pipeline, dashboard, job-feed-listener, research-brief, resume-tailor, calendar, comp-intel, debrief, outreach, mock-interview, sync)
+
+================================================================
+1. NAVIGATION BAR CONSISTENCY
+================================================================
+
+EXPECTED STRUCTURE:
+- All 11 modules should have nav links to all other modules
+- Current module marked as active
+- Nav order: Dashboard → Feed → Pipeline → Research → Resume → Outreach → Comp → Mock → Debrief → Calendar → Sync Hub
+- Paths: ../module-name/index.html OR ../module-name/ (for sync)
+
+FINDINGS:
+
+✗ CRITICAL ISSUE: resume-tailor module has NO NAVIGATION BAR
+  - Module exists at: /sessions/gallant-stoic-goodall/mnt/job-search-agents-v2/modules/resume-tailor/index.html
+  - This module is isolated from the rest of the application
+  - Users cannot navigate out of resume-tailor to other modules
+
+✓ PASS: 10 modules have complete, consistent navigation
+  - dashboard/ (marks ./index.html as active)
+  - pipeline/ (marks ./index.html as active) 
+  - job-feed-listener/ (marks ./index.html as active)
+  - research-brief/ (marks ./index.html as active)
+  - outreach/ (marks ./index.html as active)
+  - comp-intel/ (marks ./index.html as active)
+  - mock-interview/ (marks ./index.html as active)
+  - debrief/ (marks ./index.html as active)
+  - calendar/ (marks ./index.html as active)
+  - sync/ (marks ./sync/ as active, uses trailing slash paths)
+
+⚠ WARNING: Path Inconsistency in sync module
+  - sync/ uses trailing slash paths: ../dashboard/, ../pipeline/, etc.
+  - All other 10 modules use full paths: ../dashboard/index.html, ../pipeline/index.html, etc.
+  - This inconsistency may cause routing issues
+  - sync nav links: 11 links (all modules correct)
+
+✓ PASS: Nav link order consistent across 10 modules
+  Order verified: Dashboard → Feed → Pipeline → Research → Resume → Outreach → Comp → Mock → Debrief → Calendar → Sync Hub
+
+================================================================
+2. SHARED CSS/JS REFERENCES
+================================================================
+
+EXPECTED REFERENCES (all modules should have):
+- ../shared/pathfinder.css
+- ../shared/claude-api.js (for API-heavy modules)
+- ../shared/data-layer.js (for data persistence)
+
+VERIFIED SHARED FILES EXIST:
+✓ /sessions/gallant-stoic-goodall/mnt/job-search-agents-v2/modules/shared/pathfinder.css
+✓ /sessions/gallant-stoic-goodall/mnt/job-search-agents-v2/modules/shared/claude-api.js
+✓ /sessions/gallant-stoic-goodall/mnt/job-search-agents-v2/modules/shared/data-layer.js
+
+USAGE AUDIT:
+
+pathfinder.css references:
+✓ ALL 11 modules reference pathfinder.css
+⚠ Version query parameter INCONSISTENCY:
+  - 10 modules: ../shared/pathfinder.css?v=3.5.1 (WITH version)
+  - resume-tailor: ../shared/pathfinder.css (NO version query)
+
+data-layer.js references:
+✓ ALL 11 modules reference data-layer.js
+⚠ Version query parameter INCONSISTENCY:
+  - 10 modules: ../shared/data-layer.js?v=3.5.1 (WITH version)
+  - resume-tailor: ../shared/data-layer.js (NO version query)
+  - sync/: ../shared/data-layer.js?v=3.5.1 (WITH version) ✓
+
+claude-api.js references:
+⚠ INCONSISTENT USAGE:
+  USED (9 modules):
+    ✓ calendar/
+    ✓ comp-intel/
+    ✓ debrief/
+    ✓ job-feed-listener/
+    ✓ mock-interview/
+    ✓ outreach/
+    ✓ research-brief/
+    ✓ resume-tailor/
+    
+  NOT USED (3 modules):
+    ✗ dashboard/ (NO claude-api.js reference)
+    ✗ pipeline/ (NO claude-api.js reference)
+    ✗ sync/ (NO claude-api.js reference)
+  
+  Note: Some modules may legitimately not need API calls (e.g., dashboard may only aggregate data)
+
+VERSION CONSISTENCY:
+⚠ ISSUE: resume-tailor has different versioning
+  - All shared file references missing ?v=3.5.1 query parameter
+  - Other 10 modules consistently use v=3.5.1
+
+================================================================
+3. localStorage KEY CONSISTENCY
+================================================================
+
+SHARED KEYS (should be used consistently):
+✓ pf_companies - Used by: pipeline, dashboard, job-feed-listener, research-brief, resume-tailor, outreach, comp-intel, mock-interview, calendar, debrief
+✓ pf_roles - Used by: ALL 11 modules 
+✓ pf_connections - Used by: pipeline, job-feed-listener, outreach, research-brief, debrief
+✓ pf_theme - Used by: pipeline, dashboard, sync (inconsistently available)
+✓ pf_preferences - Used by: job-feed-listener, comp-intel, outreach, research-brief
+✓ pf_feed_queue - Used by: job-feed-listener, comp-intel, dashboard
+
+DATA-LAYER SYNC_KEYS (verified from /modules/shared/data-layer.js):
+The data layer defines these sync keys for MCP persistence:
+  - pf_roles, pf_companies, pf_connections, pf_linkedin_network, pf_preferences
+  - pf_feed_queue, pf_feed_runs, pf_bullet_bank, pf_resume_log, pf_outreach_messages
+  - pf_outreach_sequences, pf_mock_sessions, pf_story_bank, pf_debriefs, pf_comp_data
+  - pf_calendar_events, pf_calendar_nudges, pf_sync_log, pf_streak, pf_dismissed_nudges
+
+MODULE-SPECIFIC KEYS (not shared):
+✓ Properly isolated: pf_pending_debrief (calendar), pf_comp_benchmarks (comp-intel), pf_feed_dismissed (dashboard/job-feed), pf_nudge_* (dashboard), etc.
+
+⚠ WARNING: Calendar does not set pf_theme despite being a theme-using module
+  - dashboard, pipeline, and sync set/get pf_theme
+  - calendar does not reference pf_theme at all (may be oversight or intentional)
+
+================================================================
+4. ISSUES FOUND - PRIORITY RANKING
+================================================================
+
+CRITICAL (P0 - Block navigation):
+1. resume-tailor module missing navigation bar
+   Location: /sessions/gallant-stoic-goodall/mnt/job-search-agents-v2/modules/resume-tailor/index.html
+   Impact: Users trapped in module, cannot navigate elsewhere
+   Fix: Add nav bar HTML block matching other modules
+
+HIGH (P1 - Broken links):
+2. pipeline module has broken link: ../sync-hub/index.html
+   Location: Line 7409 of /sessions/gallant-stoic-goodall/mnt/job-search-agents-v2/modules/pipeline/index.html
+   Correct path: ../sync/index.html
+   Impact: One link from pipeline to sync will 404
+   Fix: Change "../sync-hub/index.html" to "../sync/" (or "../sync/index.html")
+
+MEDIUM (P2 - Inconsistent versioning):
+3. resume-tailor missing version query parameters on shared files
+   Location: /sessions/gallant-stoic-goodall/mnt/job-search-agents-v2/modules/resume-tailor/index.html
+   Issue: References are ../shared/pathfinder.css and ../shared/data-layer.js (no ?v=3.5.1)
+   All other modules: ../shared/pathfinder.css?v=3.5.1
+   Impact: May cause caching issues or version mismatch
+   Fix: Add ?v=3.5.1 to both references
+
+MEDIUM (P2 - Path inconsistency):
+4. sync module uses trailing slash paths while all others use /index.html
+   Location: /sessions/gallant-stoic-goodall/mnt/job-search-agents-v2/modules/sync/index.html
+   Issue: Links like ../dashboard/ instead of ../dashboard/index.html
+   While this works, it's inconsistent with 10 other modules
+   Fix: Standardize all nav links to use /index.html pattern for consistency
+
+LOW (P3 - Documentation):
+5. calendar module does not handle pf_theme key
+   While other modules set/read pf_theme, calendar doesn't reference it
+   This may be intentional (modal overlays?) but worth verifying
+
+================================================================
+5. SUMMARY STATISTICS
+================================================================
+
+Total Modules: 11
+Navigation Present: 10 (91%) ✓
+Navigation Missing: 1 (9%) ✗ resume-tailor
+
+Shared Files Present: 3/3 ✓
+Shared Files Referenced: 11/11 modules ✓
+
+Navigation Consistency: 10/11 modules (91%)
+Link Path Consistency: 10/11 modules (91%) - sync uses trailing slashes
+Version Parameter Consistency: 10/11 modules (91%) - resume-tailor missing
+
+Critical Issues: 1
+High Priority Issues: 1
+Medium Priority Issues: 2
+Low Priority Issues: 1
+
+================================================================
+RECOMMENDATIONS
+================================================================
+
+1. IMMEDIATE: Add navigation bar to resume-tailor/index.html
+   Copy nav structure from any other module (e.g., pipeline/index.html)
+   Mark Resume as active link
+
+2. IMMEDIATE: Fix pipeline module's broken sync-hub reference
+   Line 7409: change ../sync-hub/index.html to ../sync/
+
+3. HIGH PRIORITY: Standardize resume-tailor shared file references
+   Add ?v=3.5.1 query parameters to pathfinder.css and data-layer.js
+
+4. MEDIUM PRIORITY: Standardize sync module navigation paths
+   Change all ../module/ to ../module/index.html for consistency
+   Verify that trailing slash routing works correctly
+
+5. VERIFY: Confirm calendar module's pf_theme handling is intentional
+   Check if theme switching should affect calendar module UI

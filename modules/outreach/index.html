@@ -885,6 +885,17 @@
 
   <script src="../shared/data-layer.js?v=3.5.1"></script> <!-- v3.0.0: MCP-backed data persistence -->
   <script>
+    /** Safely parse JSON from localStorage with fallback */
+    function safeJsonParse(key, fallback = null) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (e) {
+        console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
+        return fallback;
+      }
+    }
+
     /**
      * ============================================================
      * PATHFINDER OUTREACH MODULE — Real Claude API Integration
@@ -999,19 +1010,6 @@
     // ════════════════════════════════════════════════════════
     // GMAIL INTEGRATION: Helper functions
     // ════════════════════════════════════════════════════════
-
-    /**
-     * Safely parse JSON from localStorage with fallback
-     */
-    function safeJsonParse(key, fallback = null) {
-      try {
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : fallback;
-      } catch (e) {
-        console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
-        return fallback;
-      }
-    }
 
     /**
      * Checks if a message type is email-based

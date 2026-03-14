@@ -2025,6 +2025,17 @@
   </div>
 
   <script>
+    /** Safely parse JSON from localStorage with fallback */
+    function safeJsonParse(key, fallback = null) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (e) {
+        console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
+        return fallback;
+      }
+    }
+
     /* ================================================================
        DASHBOARD ARCHITECTURE OVERVIEW
 
@@ -2100,19 +2111,6 @@
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const day = String(now.getDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
-    }
-
-    /**
-     * Safely parse JSON from localStorage with fallback
-     */
-    function safeJsonParse(key, fallback = null) {
-      try {
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : fallback;
-      } catch (e) {
-        console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
-        return fallback;
-      }
     }
 
     // ================================================================

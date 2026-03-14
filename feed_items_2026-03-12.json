@@ -1,0 +1,85 @@
+[
+  {
+    "id": "gmail-19ce292d1c38cedf",
+    "company": "RingCentral",
+    "title": "Senior Product Manager, AI",
+    "source": "Gmail",
+    "posted": "Mar 12, 2026",
+    "feedMetadata": {
+      "sourceType": "gmail",
+      "sourceId": "19ce292d1c38cedf",
+      "sourceUrl": "https://mail.google.com/mail/u/0/#all/19ce292d1c38cedf",
+      "extractedAt": "2026-03-12T22:00:00Z",
+      "from": "Annie Luna <annie.luna@ringcentral.com>",
+      "subject": "RingCentral – Video Interview for the Senior Product Manager, AI Opportunity",
+      "referredBy": null
+    }
+  },
+  {
+    "id": "linkedin-4384373670",
+    "company": "BlackRock",
+    "title": "Vice President, Senior Product Manager II",
+    "source": "LinkedIn",
+    "posted": "Mar 12, 2026",
+    "feedMetadata": {
+      "sourceType": "linkedin-alert",
+      "sourceId": "19ce40c17943a9ca",
+      "sourceUrl": "https://mail.google.com/mail/u/0/#all/19ce40c17943a9ca",
+      "linkedinJobUrl": "https://www.linkedin.com/jobs/view/4384373670/",
+      "extractedAt": "2026-03-12T22:00:00Z",
+      "from": "LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>",
+      "subject": "\"Principal Product Manager\": BlackRock - Vice President, Senior Product Manager II and more",
+      "referredBy": null
+    }
+  },
+  {
+    "id": "linkedin-4373609063",
+    "company": "Yahoo",
+    "title": "Principal Product Manager, Client Platforms - Yahoo Mail",
+    "source": "LinkedIn",
+    "posted": "Mar 12, 2026",
+    "feedMetadata": {
+      "sourceType": "linkedin-alert",
+      "sourceId": "19ce39e6705b2ab2",
+      "sourceUrl": "https://mail.google.com/mail/u/0/#all/19ce39e6705b2ab2",
+      "linkedinJobUrl": "https://www.linkedin.com/jobs/view/4373609063/",
+      "extractedAt": "2026-03-12T22:00:00Z",
+      "from": "LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>",
+      "subject": "\"Principal Product Manager\": Yahoo - Principal Product Manager, Client Platforms - Yahoo Mail and more",
+      "referredBy": null
+    }
+  },
+  {
+    "id": "linkedin-4373632950",
+    "company": "Yahoo",
+    "title": "Sr. Product Manager, Platforms",
+    "source": "LinkedIn",
+    "posted": "Mar 12, 2026",
+    "feedMetadata": {
+      "sourceType": "linkedin-alert",
+      "sourceId": "19ce330cba6cb4d5",
+      "sourceUrl": "https://mail.google.com/mail/u/0/#all/19ce330cba6cb4d5",
+      "linkedinJobUrl": "https://www.linkedin.com/jobs/view/4373632950/",
+      "extractedAt": "2026-03-12T22:00:00Z",
+      "from": "LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>",
+      "subject": "\"Senior Product Manager\": Yahoo - Sr. Product Manager, Platforms and more",
+      "referredBy": null
+    }
+  },
+  {
+    "id": "gmail-19ce3e72f4c7c6d4",
+    "company": "SoFi",
+    "title": "Principal Product Manager, AI SDLC",
+    "source": "Gmail",
+    "posted": "Mar 12, 2026",
+    "feedMetadata": {
+      "sourceType": "gmail",
+      "sourceId": "19ce3e72f4c7c6d4",
+      "sourceUrl": "https://mail.google.com/mail/u/0/#all/19ce3e72f4c7c6d4",
+      "extractedAt": "2026-03-13T04:15:00Z",
+      "from": "Built In <support@builtin.com>",
+      "subject": "New Principal Product Manager Job Matches",
+      "referredBy": null
+    }
+  }
+]

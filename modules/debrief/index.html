@@ -1125,9 +1125,7 @@
   </div>
 
   <script>
-    /**
-     * Safely parse JSON from localStorage with fallback
-     */
+    /** Safely parse JSON from localStorage with fallback */
     function safeJsonParse(key, fallback = null) {
       try {
         const raw = localStorage.getItem(key);
@@ -1172,10 +1170,33 @@
        * Gracefully handles corrupted data with fallback to empty arrays
        */
       loadData() {
-        this.state.debriefs = safeJsonParse('pf_debriefs', []);
-        this.state.roles = safeJsonParse('pf_roles', []);
-        this.state.companies = safeJsonParse('pf_companies', []);
-        this.state.storyBank = safeJsonParse('pf_story_bank', []);
+        try {
+          this.state.debriefs = safeJsonParse('pf_debriefs', []);
+        } catch (e) {
+          console.warn('Failed to load debriefs. Starting fresh.');
+          this.state.debriefs = [];
+        }
+
+        try {
+          this.state.roles = safeJsonParse('pf_roles', []);
+        } catch (e) {
+          console.warn('Failed to load roles. Starting fresh.');
+          this.state.roles = [];
+        }
+
+        try {
+          this.state.companies = safeJsonParse('pf_companies', []);
+        } catch (e) {
+          console.warn('Failed to load companies. Starting fresh.');
+          this.state.companies = [];
+        }
+
+        try {
+          this.state.storyBank = safeJsonParse('pf_story_bank', []);
+        } catch (e) {
+          console.warn('Failed to load story bank. Starting fresh.');
+          this.state.storyBank = [];
+        }
       },
 
       /* ====== CALENDAR INTEGRATION: PENDING DEBRIEF ====== */
@@ -1186,8 +1207,15 @@
        * OUTPUT: auto-populates form if found, clears pending data
        */
       checkPendingDebrief() {
+        try {
+          const pendingDebrief = safeJsonParse('pf_pending_debrief', null);
+          if (!pendingDebrief) return;
+        } catch (e) {
+          console.warn('Could not parse pending debrief data');
+          return;
+        }
+
         const pendingDebrief = safeJsonParse('pf_pending_debrief', null);
-        if (!pendingDebrief) return;
 
         // Store for later use when saving
         this.state.pendingDebriefEvent = pendingDebrief;
