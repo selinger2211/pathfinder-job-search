@@ -1,0 +1,42 @@
+{
+  "analysis": {
+    "seniority": "Principal PM",
+    "summaryOpener": "Principal-level Product leader",
+    "topKeywords": ["ad tech", "advertiser products", "go-to-market", "agentic AI", "product-market fit", "ad systems"],
+    "borderlineKeywords": ["sponsored ads"],
+    "missingKeywords": ["Amazon retail integration"],
+    "domain": "AdTech / Sponsored Advertising",
+    "roleType": "0-to-1 / GTM-heavy",
+    "stakeholders": "Advertisers, agencies, tool providers, internal ad sales/operations, S-Team",
+    "fitLevel": "Strong",
+    "fitReasons": [
+      "Deep ad tech background from 9 years at Yahoo — owned advertiser-facing products and targeting infrastructure",
+      "Currently building agentic AI platform at JPMC — directly maps to 'new agentic ad product' requirement",
+      "Proven GTM track record — scaled ad product adoption across advertisers and agencies",
+      "$500M+ revenue ownership demonstrates ability to drive product outcomes at Amazon's scale",
+      "Technical PM skills with ranking models, real-time decisioning, and data pipeline experience"
+    ],
+    "gaps": [
+      "No direct Amazon/e-commerce advertising experience — will need to learn retail media context",
+      "Sponsored Ads is a specific product family — Ili's experience is in display/targeting rather than search ads"
+    ],
+    "strategy": "Frame the agentic AI angle hard — Ili is one of few PMs with both deep adtech AND hands-on agentic AI experience. Position the Yahoo advertiser products work as directly transferable to Amazon's advertiser ecosystem. Emphasize technical depth with ranking models and real-time systems.",
+    "recommendedSkills": ["Advertiser Products & Monetization", "Agentic AI Systems", "Real-Time Decisioning", "Ranking & Optimization", "GTM & Adoption", "0-to-1 Product Development", "Programmatic & RTB", "LLM / RAG Platforms"],
+    "recommendedBullets": {
+      "jpmc": ["jpmc-1", "jpmc-2", "jpmc-3"],
+      "yahoo": ["yahoo-1", "yahoo-2", "yahoo-3"],
+      "newrelic": ["nr-1"],
+      "conversant": ["conv-2"]
+    },
+    "subtitles": {
+      "jpmc": "Agentic AI platform for investment banking – LLM-powered search, ranking, and workflow automation",
+      "yahoo": "Advertiser-facing ad products, targeting infrastructure, and monetization across 20B+ daily ad decisions",
+      "newrelic": "Billing, provisioning, and packaging systems during hypergrowth",
+      "conversant": "Mobile measurement and conversion tracking for advertiser products"
+    }
+  },
+  "resumeData": {
+    "summary": "Principal-level Product leader with 15+ years building advertiser-facing ad products and AI-powered platforms at scale. Currently leading agentic AI platform development at JPMorgan Chase, delivering LLM-powered search and ranking with 99% top-5 accuracy to 7,000+ users. Previously owned $500M+ annual revenue across ad targeting infrastructure at Yahoo, driving product-market fit for advertiser and agency demand across 20B+ daily ad decisions. Proven go-to-market track record scaling ad product adoption, rebuilding ranking models for 50% revenue increase, and delivering $100M+ growth. Combines deep ad tech expertise with hands-on agentic AI and real-time decisioning experience.",
+    "skills": ["Advertiser Products & Monetization", "Agentic AI Systems", "Real-Time Decisioning", "Ranking & Optimization", "GTM & Adoption", "0-to-1 Product Development", "Programmatic & RTB", "LLM / RAG Platforms"]
+  }
+}

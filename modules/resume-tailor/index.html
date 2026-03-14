@@ -1464,8 +1464,8 @@ function renderContextPhase() {
 
   container.innerHTML = `
     ${!hasKey ? `
-      <div class="api-key-banner">
-        <p><strong>API key required</strong> for AI-powered analysis and generation.</p>
+      <div class="api-key-banner" style="display:none;">
+        <p><strong>API key optional</strong> — pre-generated data available for pipeline roles.</p>
         <div id="api-key-settings"></div>
       </div>
     ` : ''}
@@ -1519,7 +1519,7 @@ function renderContextPhase() {
 
     <button class="btn-primary" id="analyze-btn"
       onclick="runAnalysis()"
-      ${!state.jdText.trim() || !hasKey ? 'disabled' : ''}>
+      ${!state.jdText.trim() ? 'disabled' : ''}>
       <i data-lucide="search" style="width:16px;height:16px;"></i>
       Analyze Role & Assess Fit
     </button>
@@ -1587,18 +1587,55 @@ function removeUploadedFile(index) {
 
 
 /* ================================================================
+   SECTION 7.5: STATIC RESUME DATA — Cowork Pre-generated
+   ================================================================
+   Briefs are pre-generated as JSON files in ./cowork-resume/.
+   The app auto-loads them so no API key is needed for analysis.
+   ================================================================ */
+
+/**
+ * Try to load pre-generated resume analysis + data from static file.
+ * Returns the data object if found, null otherwise.
+ */
+async function loadStaticResumeData(roleId) {
+  try {
+    const resp = await fetch(`./cowork-resume/${roleId}.json?t=${Date.now()}`);
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (!data.analysis || !data.resumeData) return null;
+    return data;
+  } catch (err) {
+    console.warn('[ResumeTailor] Static resume data fetch failed:', err);
+    return null;
+  }
+}
+
+
+/* ================================================================
    SECTION 8: PHASE 2 — Role Analysis (Claude-Powered)
    ================================================================ */
 
 /**
  * Run Claude-powered analysis on the JD.
- * Extracts seniority, keywords, domain, role type, fit assessment.
- * This is the decision gate before resume generation.
+ * First tries to load pre-generated static data from Cowork.
+ * Falls back to Claude API if no static data exists.
  */
 async function runAnalysis() {
   if (!state.jdText.trim()) {
     showToast('Paste a job description first', 'error');
     return;
+  }
+
+  /* Try static pre-generated data first */
+  if (state.currentRole && state.currentRole.id) {
+    const staticData = await loadStaticResumeData(state.currentRole.id);
+    if (staticData) {
+      state.analysis = staticData.analysis;
+      state._staticResumeData = staticData.resumeData; /* Save for generateResume */
+      unlockPhase('analysis', true);
+      showToast('Analysis loaded', 'success');
+      return;
+    }
   }
 
   if (!PF.claude.hasApiKey()) {
@@ -1846,8 +1883,54 @@ async function generateResume() {
     return;
   }
 
-  state.isGenerating = true;
   const a = state.analysis;
+
+  /* Build selected bullets from analysis recommendations */
+  const selectedBullets = {};
+  Object.entries(a.recommendedBullets || {}).forEach(([key, ids]) => {
+    const co = BULLET_BANK[key];
+    if (!co) return;
+    selectedBullets[key] = {
+      company: co.company,
+      title: co.title,
+      dates: co.dates,
+      subtitle: (a.subtitles && a.subtitles[key]) || co.defaultSubtitle,
+      bullets: (ids || []).map(id => {
+        const b = co.bullets.find(x => x.id === id);
+        return b ? b.text.replace(/<\/?strong>/g, '**').replace(/&lt;/g, '<').replace(/&amp;/g, '&') : null;
+      }).filter(Boolean),
+    };
+  });
+
+  /* Try static pre-generated data first */
+  if (state._staticResumeData) {
+    const generated = state._staticResumeData;
+    state.resumeData = {
+      name: ILI_PROFILE.name,
+      contact: `${ILI_PROFILE.email} · ${ILI_PROFILE.phone} · ${ILI_PROFILE.location} · ${ILI_PROFILE.linkedin}`,
+      summary: generated.summary || '',
+      skills: generated.skills || a.recommendedSkills || [],
+      roles: Object.entries(selectedBullets).map(([key, data]) => ({
+        key, company: data.company, title: data.title, dates: data.dates, subtitle: data.subtitle, bullets: data.bullets,
+      })),
+      publication: PUBLICATION,
+      certifications: CERTIFICATIONS,
+      generatedAt: new Date().toISOString(),
+      analysis: a,
+    };
+    showToast('Resume generated', 'success');
+    /* Unlock builder phase and switch to it */
+    unlockPhase('builder', true);
+    return;
+  }
+
+  /* Fall back to Claude API */
+  if (!PF.claude.hasApiKey()) {
+    showToast('No pre-generated data and no API key configured', 'error');
+    return;
+  }
+
+  state.isGenerating = true;
 
   /* Show loading in preview */
   const preview = document.getElementById('preview-scroll');
@@ -1861,22 +1944,6 @@ async function generateResume() {
     </div>`;
 
   try {
-    const selectedBullets = {};
-    Object.entries(a.recommendedBullets || {}).forEach(([key, ids]) => {
-      const co = BULLET_BANK[key];
-      if (!co) return;
-      selectedBullets[key] = {
-        company: co.company,
-        title: co.title,
-        dates: co.dates,
-        subtitle: (a.subtitles && a.subtitles[key]) || co.defaultSubtitle,
-        bullets: (ids || []).map(id => {
-          const b = co.bullets.find(x => x.id === id);
-          return b ? b.text.replace(/<\/?strong>/g, '**').replace(/&lt;/g, '<').replace(/&amp;/g, '&') : null;
-        }).filter(Boolean),
-      };
-    });
-
     const userPrompt = `Generate a tailored resume summary for this role. Use the analysis below to guide the summary and skills bar.
 
 ## Role
@@ -2796,6 +2863,7 @@ function handleRoleChange(roleId) {
     state.researchBrief = '';
     state.analysis = null;
     state.resumeData = null;
+    state._staticResumeData = null;
     state.versions = [];
     state.unlockedPhases = new Set(['context']);
     switchPhase('context');
@@ -2816,6 +2884,7 @@ function handleRoleChange(roleId) {
   state.researchBrief = getResearchBrief(role);
   state.analysis = null;
   state.resumeData = null;
+  state._staticResumeData = null;
   state.versions = getResumeVersions(roleId);
   state.unlockedPhases = new Set(['context']);
 

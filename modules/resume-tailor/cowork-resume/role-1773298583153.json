@@ -1,0 +1,43 @@
+{
+  "analysis": {
+    "seniority": "Sr. Director",
+    "summaryOpener": "Sr. Director-level Product leader",
+    "topKeywords": ["addressability", "programmatic advertising", "privacy compliance", "audience targeting", "publisher monetization", "identity resolution", "first-party data"],
+    "borderlineKeywords": ["Identity Resolution"],
+    "missingKeywords": ["Clean Rooms"],
+    "domain": "AdTech / Identity & Addressability",
+    "roleType": "Addressability / Privacy-Compliant Targeting",
+    "stakeholders": "Brands, Publishers, Platforms, Data teams, Legal/Compliance",
+    "fitLevel": "Strong",
+    "fitReasons": [
+      "Built audience addressability systems at Yahoo for brands, publishers, DSPs, and SSPs at massive scale (20B+ daily decisions)",
+      "Deep expertise in privacy-compliant targeting under GDPR and CCPA — directly aligned with LiveRamp's mission",
+      "Publisher monetization and IAB taxonomy audience management experience translates directly to brand/publisher focus",
+      "Proven ability to navigate technical complexity while maintaining customer advocacy and cross-team discovery",
+      "Track record of reducing ad fraud 90% through trust and verification — critical for addressability platforms",
+      "Sr. Director experience managing PM teams with technical depth and cross-functional stakeholder alignment"
+    ],
+    "gaps": [
+      "Has consumed Identity Resolution capabilities but hasn't built end-to-end Identity Resolution systems from scratch",
+      "Clean Rooms — LiveRamp's flagship product — not explicitly built by Ili; experience is in earlier-generation addressability solutions"
+    ],
+    "strategy": "Lead with addressability and privacy expertise as the foundation, which is more valuable than clean rooms expertise. Emphasize the Yahoo heritage as having built the underlying infrastructure that modern clean room solutions depend on. Frame the 15+ years of adtech as proof of ability to navigate regulatory change, evolve targeting under privacy constraints, and earn trust across brands and publishers. Position JPMC as adding modern product platform thinking and AI capabilities on top of battle-tested addressability foundation.",
+    "recommendedSkills": ["Addressability & Identity", "Privacy-Compliant Targeting", "Programmatic Advertising", "First-Party Data Activation", "Publisher Monetization", "Privacy Regulations (GDPR / CCPA)", "Fraud Detection & Verification", "Cross-Platform Campaign Measurement"],
+    "recommendedBullets": {
+      "jpmc": ["jpmc-1"],
+      "yahoo": ["yahoo-1", "yahoo-2", "yahoo-4", "yahoo-5", "yahoo-7"],
+      "newrelic": [],
+      "conversant": []
+    },
+    "subtitles": {
+      "jpmc": "Agentic AI platform for enterprise workflows – demonstrating ability to scale product complexity",
+      "yahoo": "Addressability, targeting infrastructure, and privacy-compliant data activation across 20B+ daily ad decisions",
+      "newrelic": "Omitted for LiveRamp role",
+      "conversant": "Omitted for LiveRamp role"
+    }
+  },
+  "resumeData": {
+    "summary": "Sr. Director-level Product leader with 15+ years of expertise in addressability, privacy-compliant targeting, and programmatic advertising. At Yahoo, built foundational audience addressability systems enabling targeted advertising for brands, publishers, DSPs, and SSPs at scale—processing 20B+ daily ad decisions while maintaining privacy compliance under GDPR and CCPA. Drove publisher monetization through advanced audience targeting and IAB taxonomy integration. Implemented trust and verification systems that reduced ad fraud by 90%, protecting the entire ecosystem. Currently at JPMorgan Chase developing agentic AI platforms for enterprise workflows. Proven customer advocate with ability to navigate complex technical and regulatory landscapes. Track record of managing cross-functional PM teams and aligning stakeholders across product, data science, engineering, legal, and compliance functions.",
+    "skills": ["Addressability & Identity", "Privacy-Compliant Targeting", "Programmatic Advertising", "First-Party Data Activation", "Publisher Monetization", "Privacy Regulations (GDPR / CCPA)", "Fraud Detection & Verification", "Cross-Platform Campaign Measurement"]
+  }
+}

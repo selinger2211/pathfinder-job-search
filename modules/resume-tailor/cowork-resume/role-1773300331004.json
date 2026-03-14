@@ -1,0 +1,40 @@
+{
+  "analysis": {
+    "seniority": "VP / Head of Product",
+    "summaryOpener": "Sr. Director-level Product leader",
+    "topKeywords": ["0-to-1", "product strategy", "team leadership", "platform development"],
+    "borderlineKeywords": [],
+    "missingKeywords": [],
+    "domain": "Unknown (0-to-1 startup)",
+    "roleType": "0-to-1 / Head of Product",
+    "stakeholders": "CEO, engineering, cross-functional leadership",
+    "fitLevel": "Moderate",
+    "fitReasons": [
+      "Head of Product role matches Ili's Sr. Director trajectory and people management experience",
+      "0-to-1 experience from JPMC agentic AI platform — built from scratch to 7,000+ users",
+      "Broad product leadership across adtech, AI, and enterprise — versatile for unknown domain"
+    ],
+    "gaps": [
+      "No JD available — analysis is based on role title and user notes only",
+      "Domain fit cannot be assessed without more information"
+    ],
+    "strategy": "Without a detailed JD, lead with breadth of experience: 0-to-1 AI platform at JPMC, $500M+ revenue management at Yahoo, and people leadership. Emphasize adaptability and full-stack product leadership.",
+    "recommendedSkills": ["0-to-1 Product Development", "Agentic AI Systems", "LLM / RAG Platforms", "Data Platforms", "GTM & Adoption", "Enterprise SaaS", "Real-Time Decisioning", "Ranking & Optimization"],
+    "recommendedBullets": {
+      "jpmc": ["jpmc-1", "jpmc-2", "jpmc-3", "jpmc-4"],
+      "yahoo": ["yahoo-1", "yahoo-2"],
+      "newrelic": ["nr-1"],
+      "conversant": ["conv-1"]
+    },
+    "subtitles": {
+      "jpmc": "Agentic AI platform – 0-to-1 product development with LLM-powered search and automation",
+      "yahoo": "Product strategy and P&L ownership across targeting and monetization infrastructure",
+      "newrelic": "SaaS billing and provisioning systems during hypergrowth",
+      "conversant": "Tag management and cross-product integration at scale"
+    }
+  },
+  "resumeData": {
+    "summary": "Sr. Director-level Product leader with 15+ years of 0-to-1 product development, platform strategy, and team leadership across AI, adtech, and enterprise SaaS. Currently leading agentic AI platform at JPMorgan Chase from inception to 7,000+ active users, delivering LLM-powered search with 99% top-5 accuracy and automated workflows eliminating 90%+ manual work. Previously owned $500M+ annual revenue at Yahoo across targeting and monetization infrastructure, managing PM teams and driving cross-functional execution at 20B+ daily scale. Proven ability to build, scale, and lead product organizations in fast-moving, high-stakes environments.",
+    "skills": ["0-to-1 Product Development", "Agentic AI Systems", "LLM / RAG Platforms", "Data Platforms", "GTM & Adoption", "Enterprise SaaS", "Real-Time Decisioning", "Ranking & Optimization"]
+  }
+}

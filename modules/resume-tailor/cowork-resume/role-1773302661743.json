@@ -1,0 +1,42 @@
+{
+  "analysis": {
+    "seniority": "VP / Head of Product",
+    "summaryOpener": "Sr. Director-level Product leader",
+    "topKeywords": ["AI products", "relevancy", "product leadership", "user experience", "vertical AI"],
+    "borderlineKeywords": ["sports domain"],
+    "missingKeywords": [],
+    "domain": "AdTech / Vertical AI (Sports)",
+    "roleType": "0-to-1 / Head of Product",
+    "stakeholders": "CEO (Michael Yavonditte), engineering, design",
+    "fitLevel": "Moderate",
+    "fitReasons": [
+      "Deep adtech background aligns with Yieldmo's core business",
+      "AI platform experience at JPMC — building relevancy and ranking systems",
+      "Head of Product scope matches Ili's Sr. Director trajectory",
+      "Ranking and optimization experience directly relevant to 'very good relevancy' requirement"
+    ],
+    "gaps": [
+      "No sports domain experience",
+      "Limited JD information — analysis based on CEO note only",
+      "Project is stealth — cannot assess full scope"
+    ],
+    "strategy": "Lead with the relevancy/ranking angle — Ili has built ranking models at Yahoo (50% revenue increase) and LLM-powered search at JPMC (99% top-5 accuracy). Frame adtech heritage as native understanding of Yieldmo's business. Emphasize 0-to-1 and AI product leadership.",
+    "recommendedSkills": ["Ranking & Optimization", "Agentic AI Systems", "LLM / RAG Platforms", "0-to-1 Product Development", "Advertiser Products & Monetization", "Real-Time Decisioning", "Data Platforms", "GTM & Adoption"],
+    "recommendedBullets": {
+      "jpmc": ["jpmc-1", "jpmc-2"],
+      "yahoo": ["yahoo-1", "yahoo-2", "yahoo-3"],
+      "newrelic": ["nr-1"],
+      "conversant": ["conv-2"]
+    },
+    "subtitles": {
+      "jpmc": "Agentic AI platform – LLM-powered search and ranking with 99% top-5 accuracy",
+      "yahoo": "Ranking, relevancy, and monetization infrastructure across 20B+ daily ad decisions",
+      "newrelic": "SaaS product integration and billing systems during hypergrowth",
+      "conversant": "Mobile SDK and conversion tracking for advertiser measurement"
+    }
+  },
+  "resumeData": {
+    "summary": "Sr. Director-level Product leader with 15+ years building AI-powered relevancy systems, ranking infrastructure, and advertiser products at scale. Currently leading agentic AI platform at JPMorgan Chase, delivering LLM-powered search and ranking with 99% top-5 accuracy across 45M+ documents for 7,000+ users. At Yahoo, rebuilt ranking models driving 50% revenue increase and $100M+ growth, with deep experience in real-time decisioning across 20B+ daily ad decisions. Proven track record in 0-to-1 product development, combining technical depth in AI/ML with strong product intuition for user experience and relevancy.",
+    "skills": ["Ranking & Optimization", "Agentic AI Systems", "LLM / RAG Platforms", "0-to-1 Product Development", "Advertiser Products & Monetization", "Real-Time Decisioning", "Data Platforms", "GTM & Adoption"]
+  }
+}

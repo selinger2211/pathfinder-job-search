@@ -1,0 +1,43 @@
+{
+  "analysis": {
+    "seniority": "Sr. Director",
+    "summaryOpener": "Sr. Director of Product",
+    "topKeywords": ["agentic AI", "platform scaling", "enterprise product", "conversational AI", "regulated industry", "product roadmap execution"],
+    "borderlineKeywords": ["cloud telephony", "UCaaS", "CCaaS"],
+    "missingKeywords": ["SIP", "PSTN", "IVR", "PBX", "NLU/ASR"],
+    "domain": "Telecom / Conversational AI",
+    "roleType": "Platform / Agentic AI",
+    "stakeholders": "Enterprise customers, IT admins, end users, operations team, compliance/legal, R&D",
+    "fitLevel": "Moderate",
+    "fitReasons": [
+      "Currently building agentic AI platform at JPMC — directly aligned with RingCentral's AI product strategy and receptionist use case",
+      "Proven ability to scale platform products at enterprise level with deep regulated industry experience from JPMorgan Chase",
+      "Yahoo background demonstrates comfort with massive-scale infrastructure, ranking systems, and billions of daily transactions",
+      "Team management experience — has hired, coached, and scaled PM organizations",
+      "Technical PM foundation enables depth on complex AI/ML product decisions at intersection of conversational AI and enterprise platforms"
+    ],
+    "gaps": [
+      "No direct telecom/UCaaS/CCaaS background — will require immersion in cloud telephony, call routing, IVR, and voice infrastructure",
+      "Limited hands-on experience with voice AI / chatbot products compared to text-based agentic AI",
+      "Not deeply familiar with telecom-specific concepts (SIP, PSTN, call signaling) — would need ramp-up period"
+    ],
+    "strategy": "Position as bringing rare combination of agentic AI expertise (AI receptionist is perfect intersection) plus enterprise-scale platform experience from JPMC's regulated environment. Frame lack of direct telecom experience as advantage — fresh perspective unbound by legacy industry constraints. Lead with JPMC agentic AI work; emphasize ability to ramp on telecom domain quickly given platform PM foundation.",
+    "recommendedSkills": ["Agentic AI Systems", "Conversational AI / Voice AI", "Enterprise Platform Product", "Regulated Industry Experience", "Team Leadership & Scaling", "Real-Time Decisioning", "API-First Architecture", "GTM for Enterprise"],
+    "recommendedBullets": {
+      "jpmc": ["jpmc-1", "jpmc-2", "jpmc-3", "jpmc-4"],
+      "yahoo": ["yahoo-1", "yahoo-7"],
+      "newrelic": [],
+      "conversant": []
+    },
+    "subtitles": {
+      "jpmc": "Agentic AI platform for investment banking – LLM-powered search, ranking, and workflow automation for regulated financial systems",
+      "yahoo": "Built billion-scale platform infrastructure and handled enterprise customer trust at global scale",
+      "newrelic": "Enterprise product scaling during hypergrowth",
+      "conversant": "Mobile and conversion measurement at enterprise scale"
+    }
+  },
+  "resumeData": {
+    "summary": "Sr. Director of Product with 15+ years building agentic AI and enterprise platform products at scale. Currently leading agentic AI platform development at JPMorgan Chase, delivering LLM-powered search and conversational workflows with 99% top-5 accuracy serving 7,000+ investment professionals in a heavily regulated financial environment. Deep expertise in platform scaling, team leadership, and bringing AI-powered solutions to large enterprises. Previously managed $500M+ revenue streams at Yahoo, scaling ad platform infrastructure across 20B+ daily transactions while maintaining enterprise customer trust and compliance rigor. Combines hands-on agentic AI system expertise with enterprise product acumen, team scaling experience, and proven ability to navigate complex organizational landscapes.",
+    "skills": ["Agentic AI Systems", "Conversational AI / Voice AI", "Enterprise Platform Product", "Regulated Industry Experience", "Team Leadership & Scaling", "Real-Time Decisioning", "API-First Architecture", "GTM for Enterprise"]
+  }
+}

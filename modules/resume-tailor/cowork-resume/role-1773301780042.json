@@ -1,0 +1,42 @@
+{
+  "analysis": {
+    "seniority": "Principal PM",
+    "summaryOpener": "Principal-level Product leader",
+    "topKeywords": ["agentic AI", "conversational experiences", "GenAI", "product strategy", "cross-functional leadership", "customer-facing AI"],
+    "borderlineKeywords": ["chat assistants", "voice assistants"],
+    "missingKeywords": ["QuickBooks", "fintech SMB"],
+    "domain": "FinTech / Conversational AI",
+    "roleType": "0-to-1 / Platform",
+    "stakeholders": "Senior leadership, engineering partners, customer success, cross-functional matrix org",
+    "fitLevel": "Strong",
+    "fitReasons": [
+      "Currently building agentic AI platform at JPMC — hands-on GenAI/LLM product leadership is the core requirement",
+      "Designed RAG pipeline over 45M+ documents — directly relevant to conversational AI knowledge retrieval",
+      "Proven ability to evangelize AI vision with senior leadership and drive execution across matrix organizations",
+      "15+ years PM experience well exceeds the 8+ year requirement",
+      "Track record of creating innovative products that delivered measurable customer and business outcomes at scale"
+    ],
+    "gaps": [
+      "No direct chat/voice assistant product experience — JPMC work is search/ranking rather than conversational",
+      "No fintech SMB or QuickBooks domain experience — will need to learn customer success context"
+    ],
+    "strategy": "Lead with JPMC agentic AI as the #1 proof point — Ili is building exactly the kind of AI-powered platform Intuit wants. Frame the RAG pipeline as foundational to conversational experiences. Emphasize the 'reimagine' mandate — Ili has done 0-to-1 AI product work in a regulated, high-stakes environment.",
+    "recommendedSkills": ["Agentic AI Systems", "LLM / RAG Platforms", "0-to-1 Product Development", "GTM & Adoption", "Enterprise SaaS", "Data Platforms", "Real-Time Decisioning", "Ranking & Optimization"],
+    "recommendedBullets": {
+      "jpmc": ["jpmc-1", "jpmc-2", "jpmc-3"],
+      "yahoo": ["yahoo-1", "yahoo-2"],
+      "newrelic": ["nr-1"],
+      "conversant": ["conv-1"]
+    },
+    "subtitles": {
+      "jpmc": "Agentic AI platform – LLM-powered search, RAG pipeline, and workflow automation for 7,000+ users",
+      "yahoo": "Product strategy and cross-functional leadership across targeting infrastructure at 20B+ daily scale",
+      "newrelic": "SaaS billing and provisioning systems during hypergrowth",
+      "conversant": "Tag management and cross-product integration at scale"
+    }
+  },
+  "resumeData": {
+    "summary": "Principal-level Product leader with 15+ years building AI-powered platforms and data-driven products at scale. Currently leading agentic AI platform development at JPMorgan Chase, delivering LLM-powered search, RAG retrieval over 45M+ documents, and automated workflows to 7,000+ users – reducing time-to-insight 40-60%. Proven track record of creating bold product vision, evangelizing with senior leadership, and driving execution across matrix organizations. At Yahoo, owned $500M+ annual revenue across targeting infrastructure, demonstrating deep experience translating customer behavior data into measurable business outcomes. Passionate about reimagining customer experiences through GenAI and cross-functional product leadership.",
+    "skills": ["Agentic AI Systems", "LLM / RAG Platforms", "0-to-1 Product Development", "GTM & Adoption", "Enterprise SaaS", "Data Platforms", "Real-Time Decisioning", "Ranking & Optimization"]
+  }
+}

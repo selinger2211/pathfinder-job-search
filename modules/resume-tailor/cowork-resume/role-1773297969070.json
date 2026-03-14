@@ -1,0 +1,42 @@
+{
+  "analysis": {
+    "seniority": "Sr. Director",
+    "summaryOpener": "Sr. Director-level Product leader",
+    "topKeywords": ["audience segmentation", "data activation", "personalization", "targeting", "monetization", "consumer data", "cross-functional leadership"],
+    "borderlineKeywords": ["AI-driven tools"],
+    "missingKeywords": ["Google Cloud Platform"],
+    "domain": "AdTech / Consumer Data",
+    "roleType": "Platform / Data Activation",
+    "stakeholders": "Business unit leaders, Data Science, Engineering, advertisers",
+    "fitLevel": "Strong",
+    "fitReasons": [
+      "9 years at Yahoo in nearly identical domain — targeting, audience segmentation, data activation at scale",
+      "Owned $500M+ revenue across targeting infrastructure with direct experience in audience addressability",
+      "Sr. Director experience managing PM teams with cross-functional leadership across engineering and data science",
+      "Deep privacy compliance experience (GDPR/CCPA) across targeting and identity systems",
+      "Current JPMC role adds AI/ML and agentic platform experience — directly relevant to JD's AI requirement"
+    ],
+    "gaps": [
+      "Left Yahoo in 2023 — may need to address 2-year gap from the specific Yahoo ecosystem",
+      "Google Cloud Platform listed as nice-to-have — Ili's cloud experience is less GCP-specific"
+    ],
+    "strategy": "Lead with the Yahoo heritage — Ili essentially built the data activation capabilities this role now manages. Frame JPMC as adding cutting-edge AI/agentic skills on top of deep adtech foundation. Emphasize the $500M revenue ownership and cross-vertical data leverage.",
+    "recommendedSkills": ["Audience Segmentation", "First-Party Data Activation", "Real-Time Decisioning", "Addressability & Identity Resolution", "Privacy Law (GDPR / CCPA)", "Agentic AI Systems", "Advertiser Products & Monetization", "Data Platforms"],
+    "recommendedBullets": {
+      "jpmc": ["jpmc-1", "jpmc-2"],
+      "yahoo": ["yahoo-1", "yahoo-2", "yahoo-4", "yahoo-5", "yahoo-6"],
+      "newrelic": ["nr-1"],
+      "conversant": ["conv-1"]
+    },
+    "subtitles": {
+      "jpmc": "Agentic AI platform for investment banking – search, ranking, and workflow automation",
+      "yahoo": "Addressability, targeting infrastructure, and consumer data activation across 20B+ daily ad decisions",
+      "newrelic": "Billing, provisioning, and packaging systems during hypergrowth",
+      "conversant": "Tag management, mobile measurement, and conversion tracking"
+    }
+  },
+  "resumeData": {
+    "summary": "Sr. Director-level Product leader with 15+ years driving consumer data activation, audience segmentation, and targeting infrastructure at scale. At Yahoo, owned $500M+ annual revenue across targeting systems and led data activation strategies that drove measurable business impact across multiple verticals. Built and scaled audience addressability systems for brands, publishers, and DSPs/SSPs, enabling personalized ad experiences across 20B+ daily decisions. Currently leading agentic AI platform development at JPMorgan Chase, applying LLM-powered search and automation to enterprise workflows. Proven track record of managing PM teams, driving cross-functional alignment with data science and engineering, and delivering privacy-compliant data solutions under GDPR and CCPA.",
+    "skills": ["Audience Segmentation", "First-Party Data Activation", "Real-Time Decisioning", "Addressability & Identity Resolution", "Privacy Law (GDPR / CCPA)", "Agentic AI Systems", "Advertiser Products & Monetization", "Data Platforms"]
+  }
+}
