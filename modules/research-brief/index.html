@@ -7,11 +7,11 @@
   <meta name="description" content="Pursuit strategy brief: 13-section analysis with citation trust layer, fit model, screen-out risks, and PDF export">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>P</text></svg>">
 
-  <link rel="stylesheet" href="../shared/pathfinder.css?v=3.5.1">
+  <link rel="stylesheet" href="../shared/pathfinder.css?v=3.22.3">
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-  <script src="../shared/claude-api.js"></script>
+  <script src="../shared/claude-api.js?v=3.22.3"></script>
 
   <style>
     /* ====== RESEARCH BRIEF V3 STYLES ====== */
@@ -1464,14 +1464,22 @@
       const sectionsArea = document.getElementById('sectionsArea');
       sectionsArea.innerHTML = '';
 
-      /* Try to load cached brief */
+      /* Try to load cached brief — but only if it matches V3 section structure */
       const cacheKey = `pf_brief_${roleId}`;
       const cached = safeJsonParse(cacheKey, null);
       if (cached && cached.sections) {
-        STATE.currentBrief = cached;
-        renderBrief(cached);
-        document.getElementById('exportBtn').style.display = 'flex';
-        document.getElementById('printBtn').style.display = 'flex';
+        /* Check if cached brief uses V3 section IDs (has pursuitEconomics) */
+        const isV3 = cached.sections.pursuitEconomics !== undefined;
+        if (isV3) {
+          STATE.currentBrief = cached;
+          renderBrief(cached);
+          document.getElementById('exportBtn').style.display = 'flex';
+          document.getElementById('printBtn').style.display = 'flex';
+        } else {
+          /* V2 brief cached — clear it, sections don't match V3 structure */
+          console.info('[ResearchBrief] Clearing V2 cached brief — section IDs changed in V3');
+          localStorage.removeItem(cacheKey);
+        }
       }
     }
 
