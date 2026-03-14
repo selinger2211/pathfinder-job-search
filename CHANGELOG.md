@@ -4,6 +4,45 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.21.0 — 2026-03-14
+
+### Research Brief V2 — Complete Rewrite
+
+Full rewrite of the Research Brief module per PRD V2. Replaces the previous 14-section layout with a decision-first, citation-forward 8-section structure.
+
+**New section structure (A–H):**
+- A. Top Summary — Pursue/Pass recommendation, fit level, confidence, top strengths, main risks, best next move
+- B. Why This Role Exists — Business problem, why now, first-year mandate, success measures, hidden tensions
+- C. What They Actually Need — Explicit/implied requirements, leadership expectations, hidden constraints
+- D. Your Fit — Requirement-by-requirement mapping to Ili's evidence with confidence and positioning guidance
+- E. Gaps and Mitigation — Severity, bridgeability, suggested framing, evidence needs
+- F. Network and Outreach — Ranked contacts with relationship strength, ask type, message angle
+- G. Interview Prep — Likely themes, questions, objections, best stories, questions to ask
+- H. Next-step Plan — Prioritized actions (apply, contact, resume, prep)
+
+**Citation and trust layer:**
+- 5 evidence labels: JD (job description), EXT (external research), ILI (Ili profile/resume), INF (inference), NC (needs confirmation)
+- Inline citation badges rendered as styled spans
+- Per-section confidence scoring (High/Medium/Low) with source count and last-refreshed metadata
+- Section-meta JSON parsing from Claude responses
+
+**Generation engine:**
+- Streaming via PF.claude.stream() with progressive section rendering
+- Temperature 0.4 for accuracy, maxTokens 4096 for depth
+- Detailed section-specific prompts with output structures and guardrails
+- Context includes: role data, company data, JD, resume log, bullet bank (up to 30), story bank (up to 10), connections
+
+**PDF export:**
+- Clean white layout via html2pdf.js (client-side)
+- Print-friendly citation badge colors
+- Per-section confidence badges
+- Georgia/serif typography, 0.6–0.7in margins
+
+**Data model fix:**
+- Corrected company lookup to use `role.company` (string name) matched via `c.name === role.company` instead of incorrect `role.companyId`
+
+---
+
 ## v3.20.4 — 2026-03-13
 
 ### Resume Builder: Spacing Polish + QA Fixes
