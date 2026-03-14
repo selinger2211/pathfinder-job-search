@@ -617,7 +617,7 @@
       color: #444;
       text-align: left;
       margin: 4px 0 10px;
-      padding: 0;
+      padding: 0 0 0 6px;
     }
 
     .resume-paper .section-heading {
@@ -636,7 +636,7 @@
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      margin: 8px 0 1px;
+      margin: 12px 0 1px;
     }
 
     .resume-paper .role-header .company-title {
@@ -2275,7 +2275,14 @@ async function exportDOCX() {
 
     /* Build role sections */
     const roleChildren = [];
+    let roleIndex = 0;
     for (const role of rd.roles) {
+      /* v3.20.3: Add spacing between roles (not before the first one) */
+      roleChildren.push(
+        new Paragraph({ spacing: { before: roleIndex === 0 ? 40 : 100, after: 0 }, children: [] }),
+      );
+      roleIndex++;
+
       /* Two-column borderless table: Company | Title on left, Dates on right */
       const leftText = `${role.company} | ${role.title}`;
       const rightText = role.dates;
@@ -2406,9 +2413,10 @@ async function exportDOCX() {
             children: [new TextRun({ text: rd.summary, font: DOCX_SPEC.font, size: 19 })],
           }),
 
-          /* Skills Bar — v3.20.3: left-aligned, italic */
+          /* Skills Bar — v3.20.3: left-aligned, italic, indented to align with body */
           new Paragraph({
-            spacing: { after: 80 },
+            spacing: { after: 120 },
+            indent: { left: 60 },
             children: [new TextRun({ text: rd.skills.join(' · '), italics: true, font: DOCX_SPEC.font, size: 18, color: '444444' })],
           }),
 
