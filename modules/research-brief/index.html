@@ -3,15 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Pathfinder — Research Brief V3</title>
   <meta name="description" content="Pursuit strategy brief: 13-section analysis with citation trust layer, fit model, screen-out risks, and PDF export">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>P</text></svg>">
 
-  <link rel="stylesheet" href="../shared/pathfinder.css?v=3.22.3">
+  <!-- Self-healing: purge stale caches before anything else loads -->
+  <script>
+    (function() {
+      var APP_VERSION = '3.23.0';
+      var storedVersion = localStorage.getItem('pf_brief_app_version');
+
+      /* If version changed or first load, purge all V2/stale brief caches */
+      if (storedVersion !== APP_VERSION) {
+        console.info('[ResearchBrief] Version changed from ' + (storedVersion || 'none') + ' to ' + APP_VERSION + ' — purging stale caches');
+        var keysToRemove = [];
+        for (var i = 0; i < localStorage.length; i++) {
+          var key = localStorage.key(i);
+          if (key && key.startsWith('pf_brief_')) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(function(key) {
+          localStorage.removeItem(key);
+          console.info('[ResearchBrief] Purged: ' + key);
+        });
+        localStorage.setItem('pf_brief_app_version', APP_VERSION);
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="../shared/pathfinder.css?v=3.23.0">
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-  <script src="../shared/claude-api.js?v=3.22.3"></script>
+  <script src="../shared/claude-api.js?v=3.23.0"></script>
 
   <style>
     /* ====== RESEARCH BRIEF V3 STYLES ====== */
@@ -827,7 +855,14 @@
 
     /* ====== RESPONSIVE ====== */
     @media (max-width: 1200px) {
-      .toc-sidebar { display: none; }
+      /* Safety net: force-hide any leftover V2 TOC sidebar elements */
+      .toc-sidebar, .toc-title, .toc-list, .toc-item,
+      [class*="toc-sidebar"], [id*="tocSidebar"], [id*="tocList"] {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+      }
     }
 
     @media (max-width: 768px) {
@@ -2579,6 +2614,12 @@ ${doc.content.slice(0, 8000)}
     /* ====== INITIALIZATION ====== */
     /** Initialize the module */
     function init() {
+      /* Self-healing: remove any orphaned V2 TOC elements from the DOM */
+      document.querySelectorAll('.toc-sidebar, .toc-title, .toc-list, [id*="tocSidebar"], [id*="tocList"]').forEach(el => {
+        console.info('[ResearchBrief] Removed orphaned V2 element:', el.className || el.id);
+        el.remove();
+      });
+
       /* Populate role selector */
       populateRoleSelector();
 
