@@ -8,13 +8,13 @@
 
 Pathfinder is an agentic job search system with 11 standalone HTML modules sharing data via localStorage + IndexedDB. Each module is a single `index.html` file in `modules/`. There is no backend server required for core functionality — Claude API calls happen directly from the browser via `modules/shared/claude-api.js`.
 
-**Current Version:** v3.20.4 (as of 2026-03-13)
-**Last Major Features:** Resume builder spacing polish (v3.20.4), stat pill filters (v3.20.1), domain expansion (v3.20.1), compact feed cards with detail sidebar (v3.20.0). All 53 planned features now implemented.
-**Status:** Resume builder matches example formatting (blue left-accent headings, left-aligned name/contact, italic skills, LinkedIn hyperlink, no browser print artifacts). Feed stat pills are clickable filters.
+**Current Version:** v3.20.6 (as of 2026-03-14)
+**Last Major Features:** Full QA pass with safeJsonParse hardening (v3.20.5), resume builder spacing polish (v3.20.4), stat pill filters (v3.20.1), compact feed cards with detail sidebar (v3.20.0). All 53 planned features now implemented.
+**Status:** All 11 modules pass HTML integrity + brace balance + safeJsonParse coverage. Resume builder has nav bar + cache-bust params. Zero bare JSON.parse(localStorage) calls remaining.
 
 **Owner:** Ili Selinger (ilan.selinger@gmail.com)
 **Repo:** github.com/selinger2211/pathfinder-job-search
-**Local Path:** ~/Projects/job-search-agents
+**Local Path:** ~/Projects/job-search-agents-v2
 
 ---
 
@@ -111,6 +111,26 @@ No exceptions. This was established as a permanent rule in v1.5.0.
 - API key stored in `pf_anthropic_key`
 - Model stored in `pf_claude_model` (default: `claude-sonnet-4-20250514`)
 - MCP HTTP bridge (localhost:3456) provides data sync + backup endpoints
+
+### 8. No Git Worktree Isolation (MANDATORY)
+**NEVER use `isolation: "worktree"` when launching agents on this repo.** Worktree agents create `.git/worktrees/` directories and lock files that the VM cannot clean up, requiring manual intervention from the user. Use in-process agents only. This rule was established after a v3.20.5 incident where a worktree agent introduced brace mismatches and created persistent lock files.
+
+If git lock files appear: `find ~/Projects/job-search-agents-v2/.git -name "*.lock" -delete && find ~/Projects/job-search-agents-v2/.git/objects -name "tmp_obj_*" -delete`
+
+### 9. safeJsonParse Pattern (MANDATORY)
+All localStorage reads MUST use the `safeJsonParse()` helper (defined in every module's script block). Never use bare `JSON.parse(localStorage.getItem(...))`. The pattern:
+```javascript
+function safeJsonParse(key, fallback = null) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (e) {
+    console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
+    return fallback;
+  }
+}
+```
+Usage: `safeJsonParse('pf_roles', [])` instead of `JSON.parse(localStorage.getItem('pf_roles') || '[]')`.
 
 ### 7. Company Logo Pattern (MANDATORY)
 Any module showing company logos MUST use the canonical logo system (ported from Pipeline → Feed in v3.8.4). Do NOT reinvent logo rendering. The pattern is:
@@ -479,9 +499,9 @@ MCP-backed artifact persistence (SQLite table). Queried via MCP tools: `pf_save_
 
 ## Current State (Update This After Major Changes)
 
-**Current Version:** v3.18.0
-**Last Updated:** 2026-03-13
-**Status:** ROADMAP COMPLETE — All 53 planned features have been implemented. The system is feature-complete as designed.
+**Current Version:** v3.20.6
+**Last Updated:** 2026-03-14
+**Status:** ROADMAP COMPLETE — All 53 planned features implemented. Full QA pass completed v3.20.5-6: safeJsonParse hardening (9 modules, 90 replacements), resume-tailor nav bar restored, pipeline Sync Hub link fixed, brace mismatches fixed in job-feed-listener and comp-intel.
 
 ---
 
@@ -521,10 +541,18 @@ The MCP server at `mcp-servers/pathfinder-artifacts-mcp/` provides the following
 | MCP Server | ~95% | **All 9 tools fully implemented** (save, get, list, search, tag, delete, generate-brief, **backup-pipeline**, **restore-pipeline**), **enhanced storage (SHA-256, excerpts, relevance search)**, **soft/hard delete**, HTTP bridge with backup/restore endpoints, **comprehensive README + implementation status docs** | Build on Mac (`npm run build`), end-to-end testing |
 
 ### Known Issues
-- MCP server TypeScript build requires a real machine (OOMs in lightweight VMs)
+- MCP server TypeScript build requires a real machine (OOMs in lightweight VMs). Start with: `cd mcp-servers/pathfinder-artifacts-mcp && npm run build && node dist/index.js`
 - JD enrichment: roles without LinkedIn URLs or ATS links rely on DuckDuckGo web search fallback — coverage is good but not 100%
 - CORS proxy 1 (allorigins.win) tends to timeout; proxy 2 (corsproxy.io) works reliably as fallback
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
+- Git lock files: if commits fail with "index.lock exists", run: `find ~/Projects/job-search-agents-v2/.git -name "*.lock" -delete`
+
+### Recently Fixed (v3.20.5-6) — QA Pass
+- **Resume Builder nav bar**: Was completely missing — users got trapped in the module. Added full 11-module nav bar with Resume tab marked active.
+- **Pipeline Sync Hub link**: Was pointing to `../sync-hub/` (wrong) — fixed to `../sync/`.
+- **safeJsonParse hardening**: Added `safeJsonParse()` helper to 9 modules (90 replacements). Protects against corrupt localStorage crashing modules.
+- **Cache-bust params**: Added `?v=3.5.1` to Resume Builder's shared CSS/JS imports.
+- **Brace mismatches**: Fixed duplicate closing brace in job-feed-listener and missing closing brace in comp-intel (introduced by worktree agent copy).
 
 ### Recently Fixed (v3.16.0)
 - **Research Brief Smart Caching Phase 2**: Cross-module invalidation signals from Pipeline, Company, Comp, Debrief. Section-level staleness tracking with source hashing. Smart regeneration only refreshes stale sections. New `pf_section_meta_*` and `pf_brief_section_collapse` localStorage keys. (#51)

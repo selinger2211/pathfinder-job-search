@@ -16,3 +16,8 @@ Thumbs.db
 # Node.js
 node_modules/
 dist/
+
+# Pathfinder runtime
+.pids/
+.logs/
+.claude/
