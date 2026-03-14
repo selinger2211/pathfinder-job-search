@@ -13,7 +13,7 @@
   <!-- Self-healing: purge stale caches before anything else loads -->
   <script>
     (function() {
-      var APP_VERSION = '3.23.0';
+      var APP_VERSION = '3.23.2';
       var storedVersion = localStorage.getItem('pf_brief_app_version');
 
       /* If version changed or first load, purge all V2/stale brief caches */
@@ -35,11 +35,11 @@
     })();
   </script>
 
-  <link rel="stylesheet" href="../shared/pathfinder.css?v=3.23.0">
+  <link rel="stylesheet" href="../shared/pathfinder.css?v=3.23.2">
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-  <script src="../shared/claude-api.js?v=3.23.0"></script>
+  <script src="../shared/claude-api.js?v=3.23.2"></script>
 
   <style>
     /* ====== RESEARCH BRIEF V3 STYLES ====== */
@@ -1062,6 +1062,15 @@
             <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i>
             Generate Brief
           </button>
+          <button class="btn btn-primary" id="coworkGenerateBtn" style="display: none; background: linear-gradient(135deg, #8b5cf6, #6366f1);" aria-label="Generate via Cowork">
+            <i data-lucide="message-circle" style="width: 16px; height: 16px;"></i>
+            Generate via Cowork
+          </button>
+          <button class="btn btn-ghost" id="coworkLoadBtn" style="display: none;" aria-label="Load brief from Cowork">
+            <i data-lucide="upload" style="width: 16px; height: 16px;"></i>
+            Load Cowork Brief
+          </button>
+          <input type="file" id="coworkBriefInput" accept=".json" style="display: none;">
           <button class="btn btn-ghost" id="clearCacheBtn" style="display: none;" aria-label="Clear cache and regenerate">
             <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
             Clear &amp; Regenerate
@@ -1544,6 +1553,8 @@
 
       /* Show action buttons */
       document.getElementById('generateBtn').style.display = 'flex';
+      document.getElementById('coworkGenerateBtn').style.display = 'flex';
+      document.getElementById('coworkLoadBtn').style.display = 'flex';
       document.getElementById('clearCacheBtn').style.display = 'flex';
 
       /* Clear sections area */
@@ -1580,6 +1591,8 @@
       document.getElementById('jdSection').style.display = 'none';
       document.getElementById('additionalContextSection').style.display = 'none';
       document.getElementById('generateBtn').style.display = 'none';
+      document.getElementById('coworkGenerateBtn').style.display = 'none';
+      document.getElementById('coworkLoadBtn').style.display = 'none';
       document.getElementById('clearCacheBtn').style.display = 'none';
       document.getElementById('exportBtn').style.display = 'none';
       document.getElementById('printBtn').style.display = 'none';
@@ -2729,6 +2742,139 @@ ${doc.content.slice(0, 8000)}
 
     /* ====== INITIALIZATION ====== */
     /** Initialize the module */
+    /* ====== COWORK BRIDGE: Export context + Import brief ====== */
+
+    /**
+     * Export the current role context as a JSON file for Cowork generation.
+     * Packages role data, company data, JD, additional context, and uploaded docs
+     * into a single JSON file saved to the workspace.
+     */
+    function exportForCowork() {
+      if (!STATE.currentRoleId) return;
+
+      const roles = getRoles();
+      const role = roles.find(r => r.id === STATE.currentRoleId);
+      if (!role) return;
+
+      const company = getCompanies().find(c => c.name === role.company);
+      const additionalContext = document.getElementById('additionalContextInput').value.trim();
+
+      const request = {
+        _coworkRequest: true,
+        _version: '3.23.2',
+        _timestamp: new Date().toISOString(),
+        roleId: role.id,
+        role: {
+          id: role.id,
+          title: role.title,
+          company: role.company,
+          level: role.level || '',
+          stage: role.stage || '',
+          addedDate: role.addedDate || '',
+          notes: role.notes || '',
+          jdText: role.jdText || '',
+          jdUrl: role.jdUrl || '',
+          source: role.source || '',
+          status: role.status || ''
+        },
+        company: company ? {
+          name: company.name,
+          domain: company.domain || '',
+          stage: company.stage || '',
+          headcount: company.headcount || '',
+          hq: company.hq || '',
+          industry: company.industry || '',
+          description: company.description || '',
+          logoUrl: company.logoUrl || ''
+        } : null,
+        additionalContext: additionalContext,
+        uploadedDocuments: STATE.uploadedDocuments.map(doc => ({
+          name: doc.name,
+          type: doc.type,
+          content: doc.content
+        })),
+        sections: STATE.sections.map(s => ({ id: s.id, letter: s.letter, title: s.title }))
+      };
+
+      /* Download the request JSON */
+      const blob = new Blob([JSON.stringify(request, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cowork-request-${role.id}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      /* Show confirmation toast */
+      showCoworkToast('Context exported! Open Cowork and say: "generate my brief"');
+    }
+
+    /**
+     * Import a Cowork-generated brief JSON and render it.
+     * Reads a JSON file with the V3 section structure, caches it, and renders.
+     * @param {File} file - JSON file to import
+     */
+    function importCoworkBrief(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const brief = JSON.parse(e.target.result);
+
+          /* Validate structure */
+          if (!brief.sections || !brief.sections.pursuitEconomics) {
+            showCoworkToast('Invalid brief file — missing V3 section structure.', true);
+            return;
+          }
+
+          /* Cache it */
+          const roleId = brief.roleId || STATE.currentRoleId;
+          if (roleId) {
+            const cacheKey = `pf_brief_${roleId}`;
+            localStorage.setItem(cacheKey, JSON.stringify(brief));
+          }
+
+          /* Render it */
+          STATE.currentBrief = brief;
+          renderBrief(brief);
+          document.getElementById('exportBtn').style.display = 'flex';
+          document.getElementById('printBtn').style.display = 'flex';
+
+          showCoworkToast('Brief loaded successfully!');
+        } catch (err) {
+          console.error('[Cowork Import] Failed:', err);
+          showCoworkToast('Failed to parse brief JSON: ' + err.message, true);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    /**
+     * Show a temporary toast notification.
+     * @param {string} message - Message to display
+     * @param {boolean} isError - If true, show as red error toast
+     */
+    function showCoworkToast(message, isError = false) {
+      const existing = document.getElementById('coworkToast');
+      if (existing) existing.remove();
+
+      const toast = document.createElement('div');
+      toast.id = 'coworkToast';
+      toast.style.cssText = `
+        position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+        padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 500;
+        z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        background: ${isError ? '#fef2f2' : '#f0fdf4'};
+        color: ${isError ? '#991b1b' : '#166534'};
+        border: 1px solid ${isError ? '#fca5a5' : '#86efac'};
+        transition: opacity 0.3s ease;
+      `;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 4000);
+    }
+
     function init() {
       /* Self-healing: remove any orphaned V2 TOC elements from the DOM */
       document.querySelectorAll('.toc-sidebar, .toc-title, .toc-list, [id*="tocSidebar"], [id*="tocList"]').forEach(el => {
@@ -2745,6 +2891,18 @@ ${doc.content.slice(0, 8000)}
         if (confirm('Clear cached brief and regenerate?')) {
           localStorage.removeItem(`pf_brief_${STATE.currentRoleId}`);
           generateBrief();
+        }
+      });
+
+      /* Cowork bridge buttons */
+      document.getElementById('coworkGenerateBtn').addEventListener('click', exportForCowork);
+      document.getElementById('coworkLoadBtn').addEventListener('click', () => {
+        document.getElementById('coworkBriefInput').click();
+      });
+      document.getElementById('coworkBriefInput').addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          importCoworkBrief(e.target.files[0]);
+          e.target.value = '';
         }
       });
 

@@ -30,6 +30,8 @@ window.PF.claude = (function () {
   // ── Configuration ──────────────────────────────────────────
   const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
   const DEFAULT_MODEL = 'claude-sonnet-4-20250514';
+  /* Max plan models: 'claude-opus-4-20250514', 'claude-sonnet-4-20250514' */
+  /* Override via localStorage key 'pf_claude_model' */
   const MAX_TOKENS_DEFAULT = 4096;
   const BRIDGE_URL = 'http://localhost:3456';
 
