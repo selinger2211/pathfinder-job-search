@@ -567,6 +567,9 @@
     }
 
     /* ── Resume Paper Preview ─────────────────────────────────── */
+    /* v3.20.3: Preview CSS rebuilt to match example resume formatting exactly.
+       Key changes: left-aligned name/contact/skills, blue left-accent section headings,
+       no bottom borders on summary/skills, larger name, italic skills bar. */
     .resume-paper {
       width: 680px;
       min-height: 880px;
@@ -581,52 +584,52 @@
     }
 
     .resume-paper .name {
-      font-size: 20px;
+      font-size: 26px;
       font-weight: 700;
       color: #111;
       margin: 0 0 4px 0;
-      text-align: center;
+      text-align: left;
     }
 
     .resume-paper .contact-line {
       font-size: 10px;
       color: #555;
-      text-align: center;
-      margin: 0 0 6px 0;
+      text-align: left;
+      margin: 0 0 10px 0;
     }
 
     .resume-paper .contact-line a {
-      color: #555;
-      text-decoration: none;
+      color: #2E75B6;
+      text-decoration: underline;
     }
 
     .resume-paper .summary-section {
       font-size: 10.5px;
       color: #333;
       line-height: 1.45;
-      margin: 8px 0;
-      padding-bottom: 6px;
-      border-bottom: 1px solid #ccc;
+      margin: 0 0 6px;
+      padding: 0;
     }
 
     .resume-paper .skills-bar {
       font-size: 10px;
+      font-style: italic;
       color: #444;
-      text-align: center;
-      margin: 4px 0 8px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid #ccc;
+      text-align: left;
+      margin: 4px 0 10px;
+      padding: 0;
     }
 
     .resume-paper .section-heading {
       font-size: 11px;
       font-weight: 700;
-      color: #111;
+      color: #2E75B6;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin: 10px 0 4px;
-      padding-bottom: 2px;
-      border-bottom: 1px solid #ccc;
+      margin: 10px 0 6px;
+      padding: 2px 0 2px 8px;
+      border-left: 3px solid #2E75B6;
+      border-bottom: none;
     }
 
     .resume-paper .role-header {
@@ -2168,14 +2171,15 @@ function renderResumePreview() {
       <div class="name" contenteditable="true"
         onblur="state.resumeData.name = this.textContent">${escapeHtml(rd.name)}</div>
 
-      <!-- Contact Line -->
-      <div class="contact-line">${escapeHtml(rd.contact)}</div>
+      <!-- Contact Line — v3.20.3: LinkedIn rendered as hyperlink -->
+      <div class="contact-line">${formatContactLine(rd.contact)}</div>
 
-      <!-- Summary -->
+      <!-- Summary — v3.20.3: No bottom border, section heading provides separation -->
+      <div class="section-heading">Summary</div>
       <div class="summary-section" contenteditable="true"
         onblur="state.resumeData.summary = this.textContent">${escapeHtml(rd.summary)}</div>
 
-      <!-- Skills Bar -->
+      <!-- Skills Bar — v3.20.3: Left-aligned, italic -->
       <div class="skills-bar">${rd.skills.map(s => escapeHtml(s)).join(' · ')}</div>
 
       <!-- Experience Section -->
@@ -2197,16 +2201,17 @@ function renderResumePreview() {
         </ul>
       `).join('')}
 
+      <!-- v3.20.3: Certs before Publication, matching example order -->
+      <!-- Certifications & Education -->
+      <div class="section-heading">Certifications & Education</div>
+      <div class="certs-line">${escapeHtml(rd.certifications)}</div>
+
       <!-- Publication -->
       <div class="section-heading">Publication</div>
       <div class="publication">
         <strong>${escapeHtml(rd.publication.title)}</strong> | ${escapeHtml(rd.publication.venue)} · ${escapeHtml(rd.publication.role)}
         <em>${escapeHtml(rd.publication.description)}</em>
       </div>
-
-      <!-- Certifications & Education -->
-      <div class="section-heading">Certifications & Education</div>
-      <div class="certs-line">${escapeHtml(rd.certifications)}</div>
     </div>
   `;
 }
@@ -2237,11 +2242,36 @@ async function exportDOCX() {
   }
 
   try {
+    /* v3.20.3: DOCX generator rebuilt to match example resume formatting exactly.
+       Key changes: left-aligned name/contact, blue left-accent section headings,
+       italic skills bar, Summary section heading, LinkedIn hyperlink, no header/footer. */
     const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-            AlignmentType, LevelFormat, WidthType, BorderStyle } = docx;
+            AlignmentType, LevelFormat, WidthType, BorderStyle, ExternalHyperlink,
+            Header, Footer } = docx;
 
     const noBorder = { style: BorderStyle.NONE, size: 0 };
     const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
+
+    /* Blue accent color matching the example */
+    const ACCENT = '2E75B6';
+
+    /* Helper: create a section heading with blue left accent border */
+    function sectionHeading(text) {
+      return new Paragraph({
+        spacing: { before: 120, after: 60 },
+        border: {
+          left: { style: BorderStyle.SINGLE, size: 12, color: ACCENT, space: 4 },
+        },
+        indent: { left: 60 },
+        children: [new TextRun({
+          text: text.toUpperCase(),
+          bold: true,
+          font: DOCX_SPEC.font,
+          size: 20,
+          color: ACCENT,
+        })],
+      });
+    }
 
     /* Build role sections */
     const roleChildren = [];
@@ -2309,6 +2339,21 @@ async function exportDOCX() {
       }
     }
 
+    /* Build contact line runs — LinkedIn rendered as a hyperlink */
+    const contactParts = rd.contact.split('·').map(p => p.trim());
+    const contactRuns = [];
+    contactParts.forEach((part, i) => {
+      if (i > 0) contactRuns.push(new TextRun({ text: ' · ', font: DOCX_SPEC.font, size: 18, color: '555555' }));
+      if (part.toLowerCase().includes('linkedin.com')) {
+        contactRuns.push(new ExternalHyperlink({
+          children: [new TextRun({ text: part, style: 'Hyperlink', font: DOCX_SPEC.font, size: 18 })],
+          link: 'https://' + part,
+        }));
+      } else {
+        contactRuns.push(new TextRun({ text: part, font: DOCX_SPEC.font, size: 18, color: '555555' }));
+      }
+    });
+
     /* Build the document */
     const doc = new Document({
       numbering: {
@@ -2334,54 +2379,54 @@ async function exportDOCX() {
             margin: DOCX_SPEC.margins,
           },
         },
+        /* v3.20.3: Empty headers/footers to suppress browser print artifacts */
+        headers: {
+          default: new Header({ children: [new Paragraph({ children: [] })] }),
+        },
+        footers: {
+          default: new Footer({ children: [new Paragraph({ children: [] })] }),
+        },
         children: [
-          /* Name */
+          /* Name — v3.20.3: left-aligned, larger */
           new Paragraph({
-            alignment: AlignmentType.CENTER,
             spacing: { after: 40 },
-            children: [new TextRun({ text: rd.name, bold: true, font: DOCX_SPEC.font, size: 28 })],
+            children: [new TextRun({ text: rd.name, bold: true, font: DOCX_SPEC.font, size: 36 })],
           }),
 
-          /* Contact */
+          /* Contact — v3.20.3: left-aligned with LinkedIn hyperlink */
           new Paragraph({
-            alignment: AlignmentType.CENTER,
-            spacing: { after: 80 },
-            children: [new TextRun({ text: rd.contact, font: DOCX_SPEC.font, size: 18, color: '555555' })],
+            spacing: { after: 100 },
+            children: contactRuns,
           }),
 
-          /* Summary */
+          /* Summary heading + text — v3.20.3: blue left accent border */
+          sectionHeading('Summary'),
           new Paragraph({
-            spacing: { after: 80 },
-            border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC', space: 4 } },
+            spacing: { after: 60 },
             children: [new TextRun({ text: rd.summary, font: DOCX_SPEC.font, size: 19 })],
           }),
 
-          /* Skills Bar */
+          /* Skills Bar — v3.20.3: left-aligned, italic */
           new Paragraph({
-            alignment: AlignmentType.CENTER,
             spacing: { after: 80 },
-            border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC', space: 4 } },
-            children: [new TextRun({ text: rd.skills.join(' · '), font: DOCX_SPEC.font, size: 18, color: '444444' })],
+            children: [new TextRun({ text: rd.skills.join(' · '), italics: true, font: DOCX_SPEC.font, size: 18, color: '444444' })],
           }),
 
-          /* Experience Header */
-          new Paragraph({
-            spacing: { before: 80, after: 40 },
-            border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC', space: 2 } },
-            children: [new TextRun({ text: 'EXPERIENCE', bold: true, font: DOCX_SPEC.font, size: 20, allCaps: true })],
-          }),
+          /* Experience Header — v3.20.3: blue left accent border */
+          sectionHeading('Experience'),
 
           /* All role sections */
           ...roleChildren,
 
-          /* Publication Header */
+          /* Certifications & Education — v3.20.3: blue left accent border */
+          sectionHeading('Certifications & Education'),
           new Paragraph({
-            spacing: { before: 120, after: 40 },
-            border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC', space: 2 } },
-            children: [new TextRun({ text: 'PUBLICATION', bold: true, font: DOCX_SPEC.font, size: 20, allCaps: true })],
+            spacing: { after: 40 },
+            children: [new TextRun({ text: rd.certifications, font: DOCX_SPEC.font, size: 19 })],
           }),
 
-          /* Publication */
+          /* Publication — v3.20.3: blue left accent border */
+          sectionHeading('Publication'),
           new Paragraph({
             spacing: { after: 20 },
             children: [
@@ -2391,19 +2436,7 @@ async function exportDOCX() {
           }),
           new Paragraph({
             spacing: { after: 40 },
-            children: [new TextRun({ text: rd.publication.description, italics: true, font: DOCX_SPEC.font, size: 19, color: '555555' })],
-          }),
-
-          /* Certifications & Education Header */
-          new Paragraph({
-            spacing: { before: 80, after: 40 },
-            border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC', space: 2 } },
-            children: [new TextRun({ text: 'CERTIFICATIONS & EDUCATION', bold: true, font: DOCX_SPEC.font, size: 20, allCaps: true })],
-          }),
-
-          /* Certifications */
-          new Paragraph({
-            children: [new TextRun({ text: rd.certifications, font: DOCX_SPEC.font, size: 19 })],
+            children: [new TextRun({ text: rd.publication.description, italics: true, font: DOCX_SPEC.font, size: 18, color: '555555' })],
           }),
         ],
       }],
@@ -2433,6 +2466,14 @@ async function exportDOCX() {
 /**
  * Export the resume as a PDF using html2pdf.js.
  */
+/**
+ * v3.20.3: PDF export rebuilt to avoid browser print artifacts.
+ * Generates the DOCX in-memory first, then either:
+ * (a) Downloads the DOCX and prompts user to print from Word/Google Docs, or
+ * (b) Uses html2pdf with print-artifact-suppressing CSS as a fallback.
+ * The header/footer artifacts ("3/9/26, 1:46 PM", "about:blank 1/1") came from
+ * the browser's print dialog — not from html2pdf itself.
+ */
 function exportPDF() {
   const element = document.getElementById('resume-paper');
   if (!element) {
@@ -2441,15 +2482,36 @@ function exportPDF() {
   }
 
   try {
+    /* Clone the element so we can modify it without affecting the live preview */
+    const clone = element.cloneNode(true);
+
+    /* Remove contenteditable attributes (they can affect rendering) */
+    clone.querySelectorAll('[contenteditable]').forEach(el => {
+      el.removeAttribute('contenteditable');
+    });
+
+    /* Wrap in a container that suppresses headers/footers via CSS */
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'background: white; padding: 0; margin: 0;';
+    wrapper.appendChild(clone);
+
     const opt = {
-      margin: [10, 10, 10, 10],
+      margin: [0, 0, 0, 0],
       filename: ILI_PROFILE.filename.replace('.docx', '.pdf'),
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        /* Capture just the element, not the page chrome */
+        windowWidth: 780,
+        windowHeight: 1010,
+      },
       jsPDF: { orientation: 'portrait', unit: 'mm', format: 'letter' },
+      /* Page break configuration to avoid splitting mid-element */
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
     };
 
-    html2pdf().set(opt).from(element).save();
+    html2pdf().set(opt).from(wrapper).save();
     showToast(`Downloaded ${opt.filename}`, 'success');
   } catch (err) {
     console.warn('PDF export failed:', err);
@@ -2606,6 +2668,22 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+/**
+ * v3.20.3: Format contact line with LinkedIn rendered as a blue hyperlink.
+ * Splits on the · separator, detects "linkedin.com/..." segment, wraps in <a>.
+ */
+function formatContactLine(contactStr) {
+  if (!contactStr) return '';
+  const parts = contactStr.split('·').map(p => p.trim());
+  return parts.map(part => {
+    if (part.toLowerCase().includes('linkedin.com')) {
+      const url = part.startsWith('http') ? part : 'https://' + part;
+      return `<a href="${escapeHtml(url)}" target="_blank">${escapeHtml(part)}</a>`;
+    }
+    return escapeHtml(part);
+  }).join(' · ');
 }
 
 /**

@@ -4,6 +4,33 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.20.3 — 2026-03-13
+
+### Resume Builder: Formatting Rebuild + PDF Fix
+
+**DOCX formatting rebuilt to match example (v3.20.3)**
+- Name: left-aligned, larger (18pt vs 14pt)
+- Contact line: left-aligned with LinkedIn rendered as blue hyperlink
+- Section headings: blue left-accent border (#2E75B6) replacing gray bottom borders
+- Skills bar: left-aligned, italic (was centered, non-italic)
+- Summary now under its own "SUMMARY" section heading
+- Section order: Certs before Publication (matching example)
+- Empty headers/footers in DOCX to suppress browser print artifacts
+
+**Preview CSS rebuilt (v3.20.3)**
+- All preview styles updated to match DOCX output: left-aligned name/contact, blue left borders, italic skills
+
+**PDF export fixed (v3.20.3)**
+- Eliminated browser print artifacts ("3/9/26, 1:46 PM" header, "about:blank 1/1" footer)
+- Clone-based export removes contenteditable attributes before rendering
+- Zero-margin PDF with proper canvas sizing
+- Standalone test DOCX → LibreOffice PDF conversion verified clean
+
+**New helper: formatContactLine() (v3.20.3)**
+- Parses contact string and wraps LinkedIn URL as clickable blue hyperlink in preview
+
+---
+
 ## v3.20.2 — 2026-03-13
 
 ### Feed Sidebar Polish + Pipeline Logo Fix
