@@ -2,9 +2,11 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/calendar/`
-**Version:** v3.18.0
-**Last Updated:** 2026-03-13
-**Status:** Complete — v3.18.0 features live (Final planned feature implemented)
+**Version:** v3.29.0
+**Last Updated:** 2026-03-15
+**Status:** Planned — This module is designed but not yet implemented in code.
+
+> **Status: Planned** — This module is designed but not yet implemented in code.
 
 ---
 

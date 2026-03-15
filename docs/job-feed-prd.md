@@ -2,8 +2,8 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/job-feed-listener/`
-**Version:** v3.17
-**Last Updated:** 2026-03-13
+**Version:** v3.29.0
+**Last Updated:** 2026-03-15
 **Status:** Active — v3.16.0 features live
 
 ---
@@ -91,11 +91,43 @@ Runs are idempotent — running twice produces no duplicates because of the dedu
 
 ---
 
-## 3. User Profile — "What I'm Looking For"
+## 3. Implemented Features Checklist
+
+### v3.28.0–v3.29.0
+
+- [x] Search bar with live filtering across all tabs (saved, new, archived)
+- [x] Explore dialog for external job board discovery
+- [x] Feed → Pipeline data transfer carrying: domain, location, salary, remote status, positioning, headcount, stage
+- [x] Feed run logging (pf_feed_run_log)
+- [x] Google Favicon API for company logos
+- [x] Cache-busting meta tags
+
+### Earlier Phases
+
+- [x] Scoring engine with 7 weighted dimensions (v3.0)
+- [x] Feed card UI with live data (v3.0)
+- [x] Sidebar layout with preference sections (v3.0)
+- [x] Company auto-creation from new roles (v3.0)
+- [x] LinkedIn network signal detection and display (v3.0)
+- [x] LinkedIn CORS proxy chain for JD enrichment (v3.10)
+- [x] ATS public APIs (Greenhouse, Lever, Ashby) (v3.10)
+- [x] DuckDuckGo web search with ATS-first extraction (v3.10)
+- [x] JD quality badges (stub vs. full) (v3.10)
+- [x] Company name validation for extracted JDs (v3.13)
+- [x] JD detail panel with sticky header and full text (v3.11)
+- [x] Compensation labeling ("Posted Base" + "Est. Total Comp") (v3.11)
+- [x] Tier promotion/demotion suggestions (v3.14)
+- [x] Analytics dashboard (match accuracy, false positive rate, acceptance trends) (v3.14)
+- [x] MCP tool integration (pf_search_feed, pf_get_role) (v3.16)
+- [x] Career page monitoring with tiered cadence (v3.28)
+
+---
+
+## 4. User Profile — "What I'm Looking For"
 
 The Feed needs a structured version of your preferences to score incoming roles. This profile lives in `pf_preferences` and powers the match scoring engine.
 
-### 3.1 Preference Fields
+### 4.1 Preference Fields
 
 | Field | Type | Description | Example |
 |-------|------|-------------|---------|
@@ -114,11 +146,11 @@ The Feed needs a structured version of your preferences to score incoming roles.
 | `boostKeywords` | `string[]` | Strong positive signals | `["AdTech", "targeting", "LLM", "agents", "real-time"]` |
 | `excludeKeywords` | `string[]` | Disqualifiers | `["junior", "associate", "intern", "contract"]` |
 
-### 3.2 Preference Versioning
+### 4.2 Preference Versioning
 
 The preference profile should be versioned. When you tighten or relax criteria, the Feed stores a snapshot so you can correlate preference changes with match rate changes. Did relaxing the location filter actually surface better roles? The data answers this.
 
-### 3.3 Preference UI
+### 4.3 Preference UI
 
 The Feed sidebar exposes the preference editor:
 - **Target Roles section** — title pills (add/remove), seniority range slider
@@ -130,11 +162,11 @@ The Feed sidebar exposes the preference editor:
 
 ---
 
-## 4. Input Sources
+## 5. Input Sources
 
 The Feed monitors multiple channels. Each source has different signal quality, extraction complexity, and monitoring frequency.
 
-### 4.1 Source Configuration
+### 5.1 Source Configuration
 
 | Source | Method | Signal Quality | What It Captures | Default Cadence |
 |--------|--------|---------------|-----------------|-----------------|
@@ -152,7 +184,7 @@ The Feed monitors multiple channels. Each source has different signal quality, e
 - **Indeed API & Dice API** are Planned for Phase 3 (see Section 12)
 - **Career page RSS/monitoring** is Planned for Phase 4 (see Section 12) — currently supported via manual URL import only
 
-### 4.2 Source Priority
+### 5.2 Source Priority
 
 Processing order matters. High-signal sources first:
 1. Gmail recruiter outreach (inbound, pre-qualified)
@@ -161,9 +193,9 @@ Processing order matters. High-signal sources first:
 4. Company career pages (direct, fresh)
 5. Job board APIs (broad, structured)
 
-### 4.3 Career Page Monitoring (Tiered Cadence)
+### 5.3 Career Page Monitoring (Tiered Cadence)
 
-> **Status: Implemented (v3.17.0)** — Tracked company URLs with auto-detect ATS (Greenhouse/Lever/Ashby/generic), career page crawler, new job detection vs cache, "Check All" button, daily auto-check.
+> **Status: Implemented (v3.28.0)** — Tracked company URLs with auto-detect ATS (Greenhouse/Lever/Ashby/generic), career page crawler, new job detection vs cache, "Check All" button, daily auto-check.
 
 Career pages are monitored on a schedule tied to company tier:
 
@@ -176,9 +208,9 @@ Career pages are monitored on a schedule tied to company tier:
 
 The Feed supports adding career page URLs in the source configuration. For companies using standard ATS platforms (Lever, Greenhouse, Ashby, Workday), the Feed automatically detects the job listing format and extracts structured data. For custom career pages, it uses Claude-powered parsing. New jobs are detected against cached listings, and a "Check All" button triggers manual refresh with visual progress indicator.
 
-### 4.4 Gmail Integration
+### 5.4 Gmail Integration
 
-> **Status: Implemented (v3.17.0)** — Token-based OAuth UI, email scanner (Gmail API search for job emails), parsed emails as feed items with "Gmail" badge, auto-scan with cooldown.
+> **Status: Planned** — Token-based OAuth UI, email scanner (Gmail API search for job emails), parsed emails as feed items with "Gmail" badge, auto-scan with cooldown.
 
 Gmail is the highest-value source because it captures inbound signal — recruiters reaching out to you, job alerts from saved searches, and networking follow-ups mentioning opportunities.
 
@@ -204,11 +236,11 @@ Only the first three types proceed through the pipeline. Emails are parsed and d
 
 ---
 
-## 5. Processing Pipeline
+## 6. Processing Pipeline
 
 Every incoming signal follows a five-stage processing pipeline. Each stage has clear inputs, outputs, and failure modes.
 
-### 5.1 Stage 1: Extract
+### 6.1 Stage 1: Extract
 
 Parse the source to extract structured data. Different sources require different strategies:
 
@@ -238,7 +270,7 @@ interface RawFeedItem {
 }
 ```
 
-### 5.2 Stage 2: Enrich
+### 6.2 Stage 2: Enrich
 
 For signals that only have a link (e.g., LinkedIn alert emails), attempt to fetch the full JD text:
 - **Public postings** (Lever, Greenhouse, company websites): scrape and extract JD text
@@ -247,7 +279,7 @@ For signals that only have a link (e.g., LinkedIn alert emails), attempt to fetc
 
 Enrichment also attempts to resolve company identity — mapping email domains and company names to existing `pf_companies` records.
 
-#### 5.2.1 JD Enrichment Engine (v3.10)
+#### 6.2.1 JD Enrichment Engine (v3.10)
 
 The system employs a **three-strategy approach** to fetch full job descriptions from a variety of sources:
 
@@ -290,7 +322,7 @@ All three platforms expose their full job posting data via free public APIs, mak
 - Reduces false positives where an ATS search result belongs to the wrong company
 - Logs validation results for debugging
 
-### 5.3 Stage 3: Deduplicate
+### 6.3 Stage 3: Deduplicate
 
 > **Status: Implemented (v3.13.0)** — Exact + fuzzy matching. "In Pipeline" and "Possible Duplicate" badges.
 
@@ -304,7 +336,7 @@ Before scoring, check for duplicates against the existing pipeline:
 
 Dedup runs against both active pipeline entries and recently closed roles (last 90 days).
 
-### 5.4 Stage 4: Score
+### 6.4 Stage 4: Score
 
 Each extracted role is scored against the user profile. The scoring model produces a **match score (0-100)** with a transparent breakdown.
 
@@ -332,7 +364,7 @@ Each extracted role is scored against the user profile. The scoring model produc
 
 Hard cap: roles with `excludeKeywords` present get max score of 39 regardless of other factors.
 
-### 5.5 Role Quick-Check Filter
+### 6.5 Role Quick-Check Filter
 
 Before the full scoring pipeline, a fast 6-point binary filter eliminates clearly unfit roles:
 
@@ -347,7 +379,7 @@ Before the full scoring pipeline, a fast 6-point binary filter eliminates clearl
 
 Roles must pass 5 of 6 checks to proceed to scoring. Exception: Tier 1 company roles get a pass (dream targets always get scored).
 
-### 5.6 Stage 5: Create & Notify
+### 6.6 Stage 5: Create & Notify
 
 For roles scoring 40+, the Feed creates a pipeline entry:
 
@@ -376,7 +408,7 @@ interface FeedCreatedRole {
 
 The Dashboard surfaces new discoveries in a **Feed Review** section, grouped by match quality. Each card shows the score with a breakdown tooltip, and one-click actions: **Accept** (confirms in pipeline), **Dismiss** (archives), or **Snooze** (hide for 7 days).
 
-#### 5.6.1 JD Sidebar Detail Panel (v3.11)
+#### 6.6.1 JD Sidebar Detail Panel (v3.11)
 
 Clicking **"View"** on any feed card opens a slide-out panel from the right edge of the screen:
 
@@ -398,7 +430,7 @@ Clicking **"View"** on any feed card opens a slide-out panel from the right edge
 - **Confidence Indicator** — Visual badge showing enrichment quality (green "✅ Full JD" vs. yellow "📄 Stub JD")
 - **"View Full JD" Button** — Links directly to the original posting URL (opens in new tab)
 
-#### 5.6.2 Compensation Labeling (v3.11)
+#### 6.6.2 Compensation Labeling (v3.11)
 
 The Feed displays compensation in two tiers: **Posted Base** (extracted from JD) and **Estimated Total Comp** (calculated via archetype ratios).
 
@@ -425,7 +457,7 @@ Posted Base: $285K–$310K
 Est. Total Comp: ~$350K–$450K    ℹ️ (hover for details)
 ```
 
-#### 5.6.3 Company Visibility (v3.11)
+#### 6.6.3 Company Visibility (v3.11)
 
 The Feed elevates company information to support quick discovery and context.
 
@@ -444,7 +476,7 @@ The Feed elevates company information to support quick discovery and context.
 - Shows company stage + location (e.g., "Series B • San Francisco")
 - Gives instant context without needing to hover
 
-#### 5.6.4 URL Import (v3.11)
+#### 6.6.4 URL Import (v3.11)
 
 Users can import job postings directly from career pages by pasting the URL.
 
@@ -468,7 +500,7 @@ Users can import job postings directly from career pages by pasting the URL.
 4. Creates a feed item with extracted/enriched data
 5. Role appears in the feed queue for scoring and review
 
-#### 5.6.5 Manual Role Add (v3.11)
+#### 6.6.5 Manual Role Add (v3.11)
 
 A form-based entry method for adding roles that don't have a URL or came from offline sources (conversations, recruiter calls, etc.).
 
@@ -487,7 +519,7 @@ A form-based entry method for adding roles that don't have a URL or came from of
 4. If JD text is missing and URL exists, triggers enrichment
 5. Role appears in feed queue for scoring and review
 
-#### 5.6.6 Leader/IC Bonus Scoring (v3.11)
+#### 6.6.6 Leader/IC Bonus Scoring (v3.11)
 
 The Feed applies a context-aware bonus for leadership vs. individual contributor roles based on company size.
 
@@ -512,7 +544,7 @@ The system scans the JD title and description for keywords indicating leadership
 - Each card shows a badge with the detected signal (e.g., "Leader@Small", "IC", "Leader")
 - Helps users quickly identify role trajectory at a glance
 
-#### 5.6.7 Snoozed Tab (v3.11)
+#### 6.6.7 Snoozed Tab (v3.11)
 
 Users can temporarily hide roles they're not ready to act on but want to revisit later.
 
@@ -537,11 +569,11 @@ Users can temporarily hide roles they're not ready to act on but want to revisit
 
 ---
 
-## 6. Feed Review UI
+## 7. Feed Review UI
 
 The Feed module's browser interface is the review and configuration surface. It's NOT where the processing happens (that's the scheduled skill) — it's where the user reviews results, configures sources, and tunes preferences.
 
-### 6.1 Layout
+### 7.1 Layout
 
 Two-panel design: sidebar (left, 320px) + feed content (right, fills remaining).
 
@@ -555,7 +587,7 @@ Two-panel design: sidebar (left, 320px) + feed content (right, fills remaining).
 - Feed cards sorted by score (descending), grouped by match tier
 - Each card shows: company logo, role title, match score bar, source icon, posting date, one-click actions
 
-### 6.2 Feed Card
+### 7.2 Feed Card
 
 Each feed card displays:
 
@@ -577,7 +609,7 @@ Each feed card displays:
 
 **Accept** moves the role to the Pipeline in `discovered` stage. **Dismiss** archives it (hidden from feed, logged for analytics). **Snooze** hides for 7 days, then resurfaces. **View** opens the full JD in a slide-out panel.
 
-### 6.3 Filters
+### 7.3 Filters
 
 The feed can be filtered by:
 - Score range (slider)
@@ -587,11 +619,11 @@ The feed can be filtered by:
 - Date range (posted within)
 - Status (new, snoozed, dismissed — with "show dismissed" toggle)
 
-### 6.4 Feed Queue
+### 7.4 Feed Queue
 
 Below the main feed, a collapsible "Weak Matches" section shows roles scoring 20-39. These didn't auto-create pipeline entries but are available for manual review. The user can promote any of these to the pipeline with one click.
 
-### 6.5 Source Management
+### 7.5 Source Management
 
 A dedicated "Sources" tab in the sidebar lets the user:
 - Add/remove career page URLs for monitoring
@@ -602,7 +634,7 @@ A dedicated "Sources" tab in the sidebar lets the user:
 
 ---
 
-## 7. Company Auto-Creation
+## 8. Company Auto-Creation
 
 When the Feed encounters a company not yet in the system, it auto-creates a profile:
 
@@ -619,7 +651,7 @@ New companies start at **Dormant** tier by default. The match score on the trigg
 
 ---
 
-## 8. Tier Management Suggestions
+## 9. Tier Management Suggestions
 
 > **Status: Implemented (v3.14.0)** — Tier promotion/demotion suggestions now active. Auto-suggest company tier promotion/demotion based on activity with "Update Tier" button.
 
@@ -640,7 +672,7 @@ All suggestions are surfaced as nudges on the Dashboard. The Feed **never auto-c
 
 ---
 
-## 9. Feed Analytics
+## 10. Feed Analytics
 
 > **Status: Implemented (v3.14.0)** — Analytics tab with match accuracy, false positive rate, score distribution histogram, acceptance trends, and top sources.
 
@@ -658,9 +690,9 @@ The analytics UI lives in the Feed sidebar as a collapsible summary, with a full
 
 ---
 
-## 10. Scheduled Execution
+## 11. Scheduled Execution
 
-### 10.1 Default Schedule
+### 11.1 Default Schedule
 
 | Task | Frequency | Timing |
 |------|-----------|--------|
@@ -670,13 +702,13 @@ The analytics UI lives in the Feed sidebar as a collapsible summary, with a full
 | Check Tier 2 career pages | Weekly | Monday morning |
 | Check Tier 3 career pages | Monthly | First Monday |
 
-### 10.2 Trigger Modes
+### 11.2 Trigger Modes
 
 - **Scheduled** — runs automatically per the cadence above via Pathfinder's task scheduler
 - **Manual** — user clicks "Check Now" in the Feed UI or invokes from Dashboard
 - **Event-driven** — future: trigger on new Gmail notification (requires webhook)
 
-### 10.3 Run Logging
+### 11.3 Run Logging
 
 > **Status: Planned** — Feed run logging to MCP is planned for Phase 5. Currently, runs are not logged.
 
@@ -699,7 +731,7 @@ interface FeedRun {
 
 ---
 
-## 11. MCP Tools
+## 12. MCP Tools
 
 > **Status: Implemented (v3.16.0)** — MCP tool integration (#35) is now live via the MCP server.
 
@@ -723,7 +755,7 @@ The Feed exposes tools for other agents to query and supports feed operations:
 
 ---
 
-## 12. Implementation Phases
+## 13. Implementation Phases
 
 ### Phase 1: Manual Feed + Preferences UI (v3.0–3.1 — SHIPPED)
 Core feed UI and preference management:
@@ -794,7 +826,7 @@ Legacy JD enrichment (now superseded by v3.10):
 
 ---
 
-## 13. Inspiration & Credits
+## 14. Inspiration & Credits
 
 ### 13.1 Abhijay Arora Vuyyuru — AI Job Search Automation Pioneer
 
@@ -831,7 +863,7 @@ Key patterns adopted from these workflows:
 
 ---
 
-## 14. Relationship to Other Modules
+## 15. Relationship to Other Modules
 
 ```
                     ┌─────────────┐

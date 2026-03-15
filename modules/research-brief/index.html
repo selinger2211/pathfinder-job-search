@@ -116,36 +116,87 @@
       gap: var(--space-4);
     }
 
-    .role-selector {
+    /* ── Role Card Strip ─────────────────────────────────────── */
+    /* v3.27.0: Pinned between sidebar-header and sidebar-content so it's
+       always visible regardless of scroll position */
+    .role-strip {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      padding: 8px 12px;
+      scrollbar-width: none;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--bg-subtle);
+      background: var(--bg-surface);
+    }
+    .role-strip::-webkit-scrollbar { display: none; }
+
+    .role-chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px 4px 5px;
+      background: var(--bg-base);
+      border: 1.5px solid var(--bg-subtle);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .role-chip:hover {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.04);
+    }
+
+    .role-chip.active {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.1);
+      box-shadow: 0 0 0 2px var(--accent-subtle);
+    }
+
+    .role-chip-logo {
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .role-chip-text {
       display: flex;
       flex-direction: column;
-      gap: var(--space-2);
+      gap: 0;
+      min-width: 0;
     }
 
-    .role-selector label {
-      font-size: var(--text-xs);
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .role-selector select {
-      padding: var(--space-2) var(--space-3);
-      border: 1px solid var(--bg-subtle);
-      border-radius: var(--radius-md);
-      background: var(--bg-elevated);
+    .role-chip-company {
+      font-size: 11px;
+      font-weight: 700;
       color: var(--text-primary);
-      font-size: var(--text-sm);
-      cursor: pointer;
-      transition: border-color var(--duration-fast) var(--ease-default);
+      line-height: 1.2;
     }
 
-    .role-selector select:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-subtle);
+    .role-chip-title {
+      font-size: 9px;
+      color: var(--text-tertiary);
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 140px;
     }
+
+    .role-chip-tier {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    .role-chip-tier.hot { background: #ef4444; }
+    .role-chip-tier.active { background: #3b82f6; }
 
     .company-card {
       padding: var(--space-3);
@@ -968,15 +1019,12 @@
         </button>
       </div>
 
-      <div class="sidebar-content">
-        <!-- Role Selector -->
-        <div class="role-selector">
-          <label for="roleSelect">Select Role</label>
-          <select id="roleSelect">
-            <option value="">-- Choose a role --</option>
-          </select>
-        </div>
+      <!-- Role Selector — pinned outside scrollable content (v3.27.0) -->
+      <div class="role-strip" id="roleStrip">
+        <!-- Populated by JS -->
+      </div>
 
+      <div class="sidebar-content">
         <!-- Company Card -->
         <div id="companyCard" class="company-card" style="display: none;">
           <div class="company-card-logo">
@@ -995,12 +1043,26 @@
           <div style="padding: var(--space-3); background: var(--bg-elevated); border: 1px solid var(--bg-subtle); border-radius: var(--radius-md);">
             <div style="font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2);">Title</div>
             <div id="roleTitle" style="font-size: var(--text-sm); color: var(--text-primary); margin-bottom: var(--space-3);"></div>
-            <div style="font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2);">Level</div>
-            <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-3);">
-              <span class="badge" id="roleLevelBadge" style="font-size: 11px;"></span>
+            <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-3);">
+              <div style="flex: 1; min-width: 80px;">
+                <div style="font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Level</div>
+                <span class="badge" id="roleLevelBadge" style="font-size: 11px;"></span>
+              </div>
+              <div style="flex: 1; min-width: 80px;">
+                <div style="font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Added</div>
+                <div id="roleAdded" style="font-size: var(--text-sm); color: var(--text-primary);"></div>
+              </div>
             </div>
-            <div style="font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2);">Added</div>
-            <div id="roleAdded" style="font-size: var(--text-sm); color: var(--text-primary);"></div>
+            <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-3);">
+              <div style="flex: 1; min-width: 80px;">
+                <div style="font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Salary</div>
+                <div id="roleSalary" style="font-size: var(--text-sm); color: var(--text-primary);">Not listed</div>
+              </div>
+              <div style="flex: 1; min-width: 80px;">
+                <div style="font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Location</div>
+                <div id="roleLocation" style="font-size: var(--text-sm); color: var(--text-primary);">Not listed</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1027,7 +1089,7 @@
         </div>
 
         <!-- API Keys -->
-        <div id="apiKeySection" style="padding: var(--space-3); background: var(--bg-elevated); border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); display: flex; flex-direction: column; gap: var(--space-3);">
+        <div id="apiKeySection" style="padding: var(--space-3); background: var(--bg-elevated); border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); display: none; flex-direction: column; gap: var(--space-3);">
           <!-- Anthropic API Key -->
           <div>
             <label class="jd-label" for="apiKeyInput" style="display: flex; align-items: center; gap: 6px;">
@@ -1456,25 +1518,84 @@
 
     /* ====== UI: Populate Role Selector ====== */
     /** Populate the role selector dropdown */
+    /**
+     * Escape HTML special characters to prevent XSS.
+     */
+    function escapeHTML(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
     function populateRoleSelector() {
-      const roles = getRoles();
-      const select = document.getElementById('roleSelect');
+      const rolesRaw = localStorage.getItem('pf_roles');
+      if (!rolesRaw) return;
 
-      roles.forEach(role => {
-        const option = document.createElement('option');
-        option.value = role.id;
-        option.textContent = `${role.title} @ ${role.company || 'Unknown'}`;
-        select.appendChild(option);
-      });
+      let roles;
+      try { roles = JSON.parse(rolesRaw); } catch { return; }
 
-      select.addEventListener('change', (e) => {
-        const roleId = e.target.value;
-        if (roleId) {
-          loadRole(roleId);
-        } else {
-          clearBriefUI();
-        }
-      });
+      roles = roles
+        .filter(r => r.status !== 'rejected' && r.status !== 'passed')
+        .sort((a, b) => {
+          const tierOrder = { hot: 0, active: 1, passive: 2 };
+          const ta = tierOrder[a.tier] ?? 2;
+          const tb = tierOrder[b.tier] ?? 2;
+          if (ta !== tb) return ta - tb;
+          const dateA = typeof a.lastActivity === 'number' ? a.lastActivity : new Date(a.lastActivity || 0).getTime();
+          const dateB = typeof b.lastActivity === 'number' ? b.lastActivity : new Date(b.lastActivity || 0).getTime();
+          return dateB - dateA;
+        });
+
+      /**
+       * Get company logo URL from pf_companies or derived domain.
+       */
+      function getLogoUrl(role) {
+        const companyLower = (role.company || '').toLowerCase().trim();
+
+        /* Check pf_companies in localStorage for authoritative logoUrl */
+        try {
+          const companies = JSON.parse(localStorage.getItem('pf_companies') || '[]');
+          const match = companies.find(c =>
+            (c.name || '').toLowerCase() === companyLower
+          );
+          if (match && match.logoUrl) return match.logoUrl;
+          if (match && match.domain) return `https://www.google.com/s2/favicons?domain=${match.domain}&sz=64`;
+        } catch {}
+
+        /* Derive from company name */
+        const slug = companyLower.replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+        return `https://www.google.com/s2/favicons?domain=${slug}.com&sz=64`;
+      }
+
+      const container = document.getElementById('roleStrip');
+      function shortTitle(title) {
+        if (!title) return '';
+        return title
+          .replace(/^(Sr\.\s*|Senior\s*|Principal\s*|Head of\s*)/i, '')
+          .replace(/\s*[-–—]\s*.*$/, '')
+          .substring(0, 28);
+      }
+
+      container.innerHTML = roles.map(role => `
+        <div class="role-chip" data-role-id="${role.id}" onclick="selectRoleCard('${role.id}')" title="${escapeHTML(role.title || '')}">
+          <img class="role-chip-logo" src="${getLogoUrl(role)}" alt="" onerror="this.style.display='none'">
+          <div class="role-chip-text">
+            <span class="role-chip-company">${escapeHTML(role.company || 'Unknown')}</span>
+            <span class="role-chip-title">${escapeHTML(shortTitle(role.title))}</span>
+          </div>
+          <span class="role-chip-tier ${role.tier || ''}"></span>
+        </div>
+      `).join('');
+    }
+
+    function selectRoleCard(roleId) {
+      document.querySelectorAll('.role-chip').forEach(c => c.classList.remove('active'));
+      const chip = document.querySelector(`.role-chip[data-role-id="${roleId}"]`);
+      if (chip) {
+        chip.classList.add('active');
+        chip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+      loadRole(roleId);
     }
 
     /* ====== UI: Load Role ====== */
@@ -1495,42 +1616,71 @@
       document.getElementById('briefTitle').textContent = `${role.title} @ ${role.company || 'Unknown'}`;
       document.getElementById('briefSubtitle').textContent = `Pursuit Strategy Brief — ${new Date().toLocaleDateString()}`;
 
-      /* Show company logo in brief header */
+      /* Show company logo in brief header — v3.27.0: multi-fallback chain */
       const briefLogo = document.getElementById('briefCompanyLogo');
+      const briefDomain = company?.domain || role.domain || '';
+      const briefCompanySlug = (role.company || '').toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
       if (company?.logoUrl) {
         briefLogo.src = company.logoUrl;
-        briefLogo.alt = `${company.name} logo`;
-        briefLogo.style.display = 'block';
-      } else {
-        /* Try Clearbit logo API as fallback */
-        const domain = company?.domain || '';
-        if (domain) {
-          briefLogo.src = `https://logo.clearbit.com/${domain}`;
-          briefLogo.alt = `${company?.name || role.company} logo`;
-          briefLogo.style.display = 'block';
-          briefLogo.onerror = () => { briefLogo.style.display = 'none'; };
-        } else {
-          briefLogo.style.display = 'none';
-        }
+      } else if (briefDomain) {
+        briefLogo.src = `https://www.google.com/s2/favicons?domain=${briefDomain}&sz=128`;
+      } else if (briefCompanySlug) {
+        briefLogo.src = `https://www.google.com/s2/favicons?domain=${briefCompanySlug}.com&sz=128`;
       }
+      briefLogo.alt = `${role.company || 'Company'} logo`;
+      briefLogo.style.display = 'block';
+      briefLogo.onerror = () => { briefLogo.style.display = 'none'; };
 
-      /* Show company card */
+      /* Show company card — v3.27.0: fill from role data when company data is sparse */
       const companyCard = document.getElementById('companyCard');
-      if (company) {
-        document.getElementById('companyName').textContent = company.name;
-        document.getElementById('companyDomain').textContent = company.domain || 'N/A';
-        document.getElementById('companyStage').textContent = company.stage || 'N/A';
-        document.getElementById('companyHeadcount').textContent = company.headcount || 'N/A';
-        if (company.logoUrl) {
-          document.getElementById('companyLogo').src = company.logoUrl;
-        }
-        companyCard.style.display = 'flex';
+      const companyName = company?.name || role.company || 'Unknown';
+      document.getElementById('companyName').textContent = companyName;
+      document.getElementById('companyDomain').textContent = company?.domain || role.domain || 'N/A';
+      document.getElementById('companyStage').textContent = company?.stage || 'N/A';
+      document.getElementById('companyHeadcount').textContent = company?.headcount || 'N/A';
+
+      /* Logo: try pf_companies logoUrl → Clearbit → Google Favicon from domain → fallback */
+      const companyLogoEl = document.getElementById('companyLogo');
+      const logoDomain = company?.domain || role.domain || '';
+      if (company?.logoUrl) {
+        companyLogoEl.src = company.logoUrl;
+      } else if (logoDomain) {
+        companyLogoEl.src = `https://www.google.com/s2/favicons?domain=${logoDomain}&sz=128`;
+      } else {
+        const slug = companyName.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+        companyLogoEl.src = `https://www.google.com/s2/favicons?domain=${slug}.com&sz=128`;
+      }
+      companyLogoEl.onerror = () => { companyLogoEl.style.display = 'none'; };
+      companyCard.style.display = 'flex';
+
+      /* Show role details — v3.27.0: handle all field formats from feed and pipeline */
+      document.getElementById('roleTitle').textContent = role.title;
+      document.getElementById('roleLevelBadge').textContent = role.positioning || role.level || 'N/A';
+
+      /* Date added: handle both ISO string and epoch ms */
+      const addedDate = role.dateAdded || role.addedDate;
+      if (addedDate) {
+        const d = typeof addedDate === 'number' ? new Date(addedDate) : new Date(addedDate);
+        document.getElementById('roleAdded').textContent = isNaN(d.getTime()) ? 'N/A' : d.toLocaleDateString();
+      } else {
+        document.getElementById('roleAdded').textContent = 'N/A';
       }
 
-      /* Show role details */
-      document.getElementById('roleTitle').textContent = role.title;
-      document.getElementById('roleLevelBadge').textContent = role.level || 'N/A';
-      document.getElementById('roleAdded').textContent = role.addedDate ? new Date(role.addedDate).toLocaleDateString() : 'N/A';
+      /* Salary: handle string, {raw: string}, or null */
+      const salaryEl = document.getElementById('roleSalary');
+      if (salaryEl) {
+        const salaryVal = typeof role.salary === 'object' && role.salary?.raw
+          ? role.salary.raw
+          : (typeof role.salary === 'string' ? role.salary : null);
+        salaryEl.textContent = salaryVal || 'Not listed';
+      }
+
+      /* Location */
+      const locationEl = document.getElementById('roleLocation');
+      if (locationEl) {
+        locationEl.textContent = role.location || 'Not listed';
+      }
+
       document.getElementById('roleDetails').style.display = 'block';
 
       /* Show JD */
@@ -1627,10 +1777,290 @@
       `;
     }
 
+    /* ====== OFFLINE BRIEF GENERATOR (v3.27.0) ====== */
+    /**
+     * Generate a structured research brief locally from JD text without any API calls.
+     * Parses the JD to extract requirements, keywords, salary, and context,
+     * then builds each section as structured HTML.
+     *
+     * @param {object} role - Role data from pf_roles
+     * @param {object} company - Company data from pf_companies
+     * @returns {object} Brief object with sections matching API-generated format
+     */
+    function generateOfflineBrief(role, company) {
+      const jd = role.jdText || role.jd || '';
+      const jdLower = jd.toLowerCase();
+      const title = role.title || 'Unknown Role';
+      const companyName = company?.name || role.company || 'Unknown';
+      const stage = company?.stage || role.stage || '';
+      const domain = company?.domain || role.domain || '';
+      /* Handle salary: string, {raw: string}, or null */
+      const rawSalary = typeof role.salary === 'object' && role.salary?.raw
+        ? role.salary.raw
+        : (typeof role.salary === 'string' ? role.salary : null);
+      const salary = rawSalary || extractSalaryFromText(jd);
+      const location = role.location || extractLocationFromText(jd);
+
+      /* Extract key requirements */
+      const yearsMatch = jd.match(/(\d+)\+?\s*years?\s*(of\s+)?experience/i);
+      const yearsReq = yearsMatch ? yearsMatch[1] + '+' : '';
+
+      /* Extract skills/keywords */
+      const techKeywords = extractKeywordsFromJD(jdLower);
+      const isLeadership = /director|vp|head of|lead.*team|manage.*team|people management/i.test(jd);
+      const isIC = /individual contributor|hands-on|ic\b/i.test(jd) || !isLeadership;
+
+      /* Extract responsibilities (lines starting with action verbs or bullets) */
+      const responsibilities = jd.split(/\n/)
+        .map(l => l.trim())
+        .filter(l => /^[-•·]\s|^(Lead|Define|Drive|Own|Build|Create|Manage|Develop|Partner|Collaborate|Work)/i.test(l))
+        .slice(0, 8)
+        .map(l => l.replace(/^[-•·]\s*/, ''));
+
+      /* Extract required qualifications */
+      const qualifications = jd.split(/\n/)
+        .map(l => l.trim())
+        .filter(l => /years|experience|degree|proficiency|fluent|demonstrated|proven|track record/i.test(l))
+        .slice(0, 8);
+
+      /* LinkedIn network connections at this company */
+      let networkCount = 0;
+      try {
+        const network = JSON.parse(localStorage.getItem('pf_linkedin_network') || '[]');
+        networkCount = network.filter(c => (c.company || '').toLowerCase() === companyName.toLowerCase()).length;
+      } catch (e) {}
+
+      /* Build sections */
+      const sections = {};
+
+      /* 1. Pursuit Economics */
+      sections.pursuitEconomics = {
+        content: `<h3>Pursuit Economics Assessment</h3>
+          <p><strong>${title}</strong> at <strong>${companyName}</strong> ${salary ? `with compensation range of <span class="cite">${salary} <span class="cite-label" data-label="JD">JD</span></span>` : '(compensation not listed)'}. ${stage ? `${companyName} is a ${stage} company` : ''} ${domain ? `in the ${domain} space` : ''}.</p>
+          <p>${yearsReq ? `The role requires <span class="cite">${yearsReq} years of experience <span class="cite-label" data-label="JD">JD</span></span>. ` : ''}${isLeadership ? 'This is a leadership position involving team management and cross-functional coordination.' : 'This appears to be an individual contributor role with high scope.'}</p>
+          <p><strong>Note:</strong> This brief was generated offline from the JD text. For deeper analysis including competitive intelligence, market context, and personalized fit assessment, connect an API key in the sidebar.</p>`,
+        citations: [{ label: 'JD' }],
+        confidence: 'Medium'
+      };
+
+      /* 2. Why This Role Exists */
+      sections.existence = {
+        content: `<h3>Why This Role Exists</h3>
+          <p>The <strong>${title}</strong> position at ${companyName} ${responsibilities.length > 0 ? 'focuses on:' : 'exists to drive product strategy and execution.'}</p>
+          ${responsibilities.length > 0 ? '<ul>' + responsibilities.map(r => `<li><span class="cite">${escapeHTML(r)} <span class="cite-label" data-label="JD">JD</span></span></li>`).join('') + '</ul>' : ''}
+          <p>${isLeadership ? 'The leadership scope suggests this team is established and the company is investing in scaling this function.' : 'The role appears to be a key IC position driving core product outcomes.'}${location ? ` Based in <span class="cite">${escapeHTML(location)} <span class="cite-label" data-label="JD">JD</span></span>.` : ''}</p>`,
+        citations: [{ label: 'JD' }],
+        confidence: 'Medium'
+      };
+
+      /* 3. Company and Market Context */
+      sections.companyMarket = {
+        content: `<h3>Company & Market Context</h3>
+          <p><strong>${companyName}</strong>${stage ? ` is a ${stage} company` : ''}${domain ? ` operating in the ${domain} vertical` : ''}. ${company?.headcount ? `The company has approximately ${company.headcount} employees.` : ''}</p>
+          <p><strong>Key domains referenced in the JD:</strong> ${techKeywords.slice(0, 10).join(', ') || 'See JD for details'}.</p>
+          <p><em>For deeper market analysis including competitive landscape, recent news, and industry trends, connect an API key.</em></p>`,
+        citations: [{ label: 'JD' }, { label: 'EXT' }],
+        confidence: 'Low'
+      };
+
+      /* 4. Why You Are Plausible */
+      sections.plausible = {
+        content: `<h3>Plausibility Assessment</h3>
+          <p>Based on the JD requirements:</p>
+          <ul>
+            ${yearsReq ? `<li><strong>Experience:</strong> <span class="cite">${yearsReq} years required <span class="cite-label" data-label="JD">JD</span></span> — Ili has 15+ years of senior product leadership experience in ad tech and data products.</li>` : ''}
+            ${isLeadership ? '<li><strong>Leadership:</strong> The role requires team management — Ili has extensive experience leading PM teams and cross-functional organizations.</li>' : ''}
+            <li><strong>Domain:</strong> ${techKeywords.slice(0, 5).join(', ')} — review against your specific experience to identify strongest overlaps.</li>
+          </ul>
+          <p><em>For personalized fit scoring, connect an API key.</em></p>`,
+        citations: [{ label: 'JD' }, { label: 'ILI' }],
+        confidence: 'Low'
+      };
+
+      /* 5. Screen-Out Risks */
+      sections.screenOut = {
+        content: `<h3>Potential Screen-Out Risks</h3>
+          <p>Review these JD requirements carefully for potential gaps:</p>
+          <ul>
+            ${qualifications.slice(0, 5).map(q => `<li><span class="cite">${escapeHTML(q)} <span class="cite-label" data-label="JD">JD</span></span></li>`).join('')}
+          </ul>
+          <p>Cross-reference each requirement against your resume. Any requirement you cannot address with a concrete example is a potential screen-out risk.</p>`,
+        citations: [{ label: 'JD' }],
+        confidence: 'Medium'
+      };
+
+      /* 6. What They Actually Need */
+      sections.needs = {
+        content: `<h3>What They Actually Need</h3>
+          <p>Reading between the lines of the JD, ${companyName} likely needs someone who can:</p>
+          <ul>
+            ${responsibilities.slice(0, 4).map(r => `<li>${escapeHTML(r)}</li>`).join('')}
+            ${responsibilities.length === 0 ? '<li>Drive product strategy aligned with company goals</li><li>Build and scale the product function</li>' : ''}
+          </ul>
+          <p><strong>Keywords emphasized:</strong> ${techKeywords.slice(0, 8).join(', ')}.</p>`,
+        citations: [{ label: 'JD' }],
+        confidence: 'Medium'
+      };
+
+      /* 7. Your Fit */
+      sections.fit = {
+        content: `<h3>Fit Assessment</h3>
+          <p>Map your experience to these key areas from the JD:</p>
+          <ul>
+            <li><strong>Domain expertise:</strong> ${techKeywords.slice(0, 4).join(', ')}</li>
+            <li><strong>Role type:</strong> ${isLeadership ? 'Leadership / People Management' : 'Individual Contributor / Hands-on'}</li>
+            <li><strong>Level match:</strong> ${yearsReq ? `${yearsReq} years required` : 'Senior level'}</li>
+          </ul>
+          <p><em>For a detailed fit analysis with specific talking points, connect an API key.</em></p>`,
+        citations: [{ label: 'JD' }, { label: 'ILI' }],
+        confidence: 'Low'
+      };
+
+      /* 8. Gaps and Mitigation */
+      sections.gaps = {
+        content: `<h3>Gaps & Mitigation Strategies</h3>
+          <p>Review the "Nice to Have" or "Preferred" qualifications in the JD for potential gaps. Common mitigation strategies:</p>
+          <ul>
+            <li><strong>Missing specific technology:</strong> Emphasize adjacent experience and fast learning track record</li>
+            <li><strong>Industry vertical gap:</strong> Highlight transferable domain expertise and framework-level thinking</li>
+            <li><strong>Team size mismatch:</strong> Focus on impact and outcomes rather than headcount</li>
+          </ul>
+          <p><em>For personalized gap analysis, connect an API key.</em></p>`,
+        citations: [{ label: 'JD' }],
+        confidence: 'Low'
+      };
+
+      /* 9. Network Strategy */
+      sections.network = {
+        content: `<h3>Network Strategy</h3>
+          <p>${networkCount > 0
+            ? `You have <strong>${networkCount} LinkedIn connection${networkCount > 1 ? 's' : ''}</strong> at ${companyName}. Prioritize reaching out for insider context on the team, hiring manager, and role expectations.`
+            : `No direct LinkedIn connections found at ${companyName}. Consider searching for 2nd-degree connections or alumni networks.`}</p>
+          <p><strong>Recommended outreach:</strong></p>
+          <ul>
+            <li>Identify the hiring manager and their background</li>
+            <li>Find current team members to understand culture and priorities</li>
+            <li>Check for alumni connections from your previous companies</li>
+          </ul>`,
+        citations: [{ label: 'NET' }],
+        confidence: networkCount > 0 ? 'Medium' : 'Low'
+      };
+
+      /* 10. Interview Prep */
+      sections.interview = {
+        content: `<h3>Interview Preparation</h3>
+          <p>Based on the JD, prepare for these likely interview topics:</p>
+          <ul>
+            ${responsibilities.slice(0, 3).map(r => `<li><strong>${escapeHTML(r.split(/[.,:]/)[0])}:</strong> Prepare a specific STAR example</li>`).join('')}
+            ${isLeadership ? '<li><strong>Team leadership:</strong> Prepare examples of building/scaling teams, resolving conflicts, driving alignment</li>' : ''}
+            <li><strong>Technical depth:</strong> Be ready to discuss ${techKeywords.slice(0, 3).join(', ')} with concrete examples</li>
+          </ul>`,
+        citations: [{ label: 'JD' }],
+        confidence: 'Medium'
+      };
+
+      /* 11. Proof Points to Add */
+      sections.proofPoints = {
+        content: `<h3>Proof Points to Prepare</h3>
+          <p>For each of these JD requirements, prepare a concrete metric-backed example:</p>
+          <ul>
+            ${techKeywords.slice(0, 6).map(k => `<li><strong>${k}:</strong> [Your specific example with metrics]</li>`).join('')}
+          </ul>
+          <p>Format: <em>"At [Company], I [action] which resulted in [measurable outcome]."</em></p>`,
+        citations: [{ label: 'JD' }],
+        confidence: 'Medium'
+      };
+
+      /* 12. Deal-Breaker Test */
+      sections.dealBreaker = {
+        content: `<h3>Deal-Breaker Checklist</h3>
+          <ul>
+            <li><strong>Location:</strong> ${location || 'Check with recruiter'} — does this work for you?</li>
+            <li><strong>Compensation:</strong> ${salary || 'Not listed'} — within your range?</li>
+            <li><strong>Level:</strong> ${title} — is this the right career trajectory?</li>
+            <li><strong>Company stage:</strong> ${stage || 'Unknown'} — does this match your preference?</li>
+            ${isLeadership ? '<li><strong>Management scope:</strong> Confirm team size and budget authority</li>' : ''}
+          </ul>
+          <p>If any of these are deal-breakers, address them early in the process to avoid wasting time.</p>`,
+        citations: [{ label: 'JD' }],
+        confidence: 'Medium'
+      };
+
+      /* 13. Next Steps */
+      sections.nextSteps = {
+        content: `<h3>Recommended Next Steps</h3>
+          <ol>
+            <li><strong>Tailor resume:</strong> Use the Resume Tailor module to optimize for this specific JD</li>
+            ${networkCount > 0 ? `<li><strong>Activate network:</strong> Reach out to your ${networkCount} connection${networkCount > 1 ? 's' : ''} at ${companyName}</li>` : '<li><strong>Build network:</strong> Find connections at ' + companyName + ' through LinkedIn</li>'}
+            <li><strong>Research:</strong> Read recent ${companyName} news, earnings calls, and product announcements</li>
+            <li><strong>Prepare stories:</strong> Draft 5-7 STAR examples covering key JD requirements</li>
+            <li><strong>Apply:</strong> Submit tailored resume and track in Pathfinder pipeline</li>
+          </ol>`,
+        citations: [],
+        confidence: 'High'
+      };
+
+      return {
+        role: { title: role.title, company: role.company },
+        company: company || { name: companyName },
+        sections,
+        generatedAt: new Date().toISOString(),
+        offlineGenerated: true
+      };
+    }
+
+    /**
+     * Extract salary text from JD content.
+     * @param {string} text - JD text
+     * @returns {string|null} Salary range or null
+     */
+    function extractSalaryFromText(text) {
+      const match = text.match(/\$[\d,]+[\s\S]{0,20}\$[\d,]+/);
+      return match ? match[0].replace(/\s+/g, ' ') : null;
+    }
+
+    /**
+     * Extract location from JD content.
+     * @param {string} text - JD text
+     * @returns {string|null} Location or null
+     */
+    function extractLocationFromText(text) {
+      const match = text.match(/(San Francisco|New York|Seattle|Austin|Boston|Chicago|Los Angeles|Remote|Hybrid)[,\s]*(CA|NY|WA|TX|MA|IL)?/i);
+      return match ? match[0] : null;
+    }
+
+    /**
+     * Extract domain keywords from JD text.
+     * @param {string} jdLower - Lowercased JD text
+     * @returns {string[]} Array of matched keywords
+     */
+    function extractKeywordsFromJD(jdLower) {
+      const keywordList = [
+        'AI', 'ML', 'machine learning', 'deep learning', 'NLP', 'GenAI', 'LLM',
+        'ad tech', 'programmatic', 'RTB', 'DSP', 'SSP', 'DMP',
+        'data product', 'analytics', 'data science', 'data engineering',
+        'product management', 'product strategy', 'roadmap', 'A/B testing',
+        'SaaS', 'B2B', 'B2C', 'enterprise', 'marketplace',
+        'fintech', 'healthtech', 'edtech', 'martech',
+        'cloud', 'AWS', 'GCP', 'Azure', 'Kubernetes',
+        'Python', 'SQL', 'Java', 'TypeScript', 'React',
+        'agile', 'scrum', 'OKR', 'KPI',
+        'privacy', 'GDPR', 'CCPA', 'identity', 'consent',
+        'API', 'microservices', 'distributed systems',
+        'customer success', 'retention', 'engagement', 'monetization',
+        'cross-functional', 'stakeholder management', 'executive communication',
+        'mobile', 'web', 'platform', 'infrastructure',
+        'personalization', 'recommendation', 'segmentation', 'targeting',
+        'experimentation', 'growth', 'activation', 'onboarding'
+      ];
+
+      return keywordList.filter(kw => jdLower.includes(kw.toLowerCase()));
+    }
+
     /* ====== GENERATION: Main Generate Function ====== */
     /**
      * Generate a complete research brief for the current role.
-     * Streams each section sequentially, rendering in real time.
+     * v3.27.0: Falls back to offline generation if API is unavailable.
      */
     async function generateBrief() {
       if (!STATE.currentRoleId || STATE.isGenerating) return;
@@ -1644,6 +2074,35 @@
       const roles = getRoles();
       const role = roles.find(r => r.id === STATE.currentRoleId);
       const company = getCompanies().find(c => c.name === role.company);
+
+      /* v3.27.0: Check if API is available — if not, use offline generator.
+         Also catches cases where PF object is missing or API key is saved but invalid. */
+      let hasApiKey = false;
+      try {
+        hasApiKey = typeof PF !== 'undefined' && PF.claude && PF.claude.hasApiKey && PF.claude.hasApiKey();
+      } catch (e) {
+        console.warn('[ResearchBrief] PF.claude check failed:', e);
+      }
+      if (!hasApiKey) {
+        console.info('[ResearchBrief] No API key — using offline brief generator');
+        try {
+          const brief = generateOfflineBrief(role, company);
+          STATE.currentBrief = brief;
+          const cacheKey = `pf_brief_${STATE.currentRoleId}`;
+          localStorage.setItem(cacheKey, JSON.stringify(brief));
+          renderBrief(brief);
+          document.getElementById('exportBtn').style.display = 'flex';
+          document.getElementById('printBtn').style.display = 'flex';
+          showCoworkToast('Brief generated (offline mode — connect API key for deeper analysis)');
+        } catch (err) {
+          console.error('[ResearchBrief] Offline generation failed:', err);
+          showErrorBanner(err);
+        } finally {
+          STATE.isGenerating = false;
+          document.getElementById('generateBtn').disabled = false;
+        }
+        return;
+      }
 
       try {
         /* Initialize sections */
@@ -1724,8 +2183,30 @@
         document.getElementById('generationProgressBar').style.width = '0%';
 
       } catch (error) {
-        console.error('Failed to generate brief:', error);
-        showErrorBanner(error);
+        console.error('Failed to generate brief via API:', error);
+
+        /* v3.27.0: Fall back to offline generation on API error.
+           Clear any partial progress UI first, then render offline brief. */
+        console.info('[ResearchBrief] API failed — falling back to offline brief generator');
+        try {
+          /* Clean up progress UI */
+          const pt = document.getElementById('generationProgressText');
+          if (pt) pt.classList.remove('active');
+          const pb = document.getElementById('generationProgressBar');
+          if (pb) pb.style.width = '0%';
+
+          const brief = generateOfflineBrief(role, company);
+          STATE.currentBrief = brief;
+          const cacheKey = `pf_brief_${STATE.currentRoleId}`;
+          localStorage.setItem(cacheKey, JSON.stringify(brief));
+          renderBrief(brief);
+          document.getElementById('exportBtn').style.display = 'flex';
+          document.getElementById('printBtn').style.display = 'flex';
+          showCoworkToast('Brief generated (offline mode — API was unavailable)');
+        } catch (offlineErr) {
+          console.error('[ResearchBrief] Offline fallback also failed:', offlineErr);
+          showErrorBanner(error);
+        }
       } finally {
         STATE.isGenerating = false;
         document.getElementById('generateBtn').disabled = false;
@@ -1857,8 +2338,10 @@
           lucide.createIcons();
         }
 
-        /* If it's a rate limit or auth error, stop generating remaining sections */
-        if (error.status === 429 || error.status === 401) {
+        /* If it's any API error (has status code), stop generating remaining sections
+           and let the outer catch trigger the offline fallback. v3.28.0: expanded from
+           just 401/429 to ALL API errors (400=credits, 529/503=overloaded, etc.) */
+        if (error.status) {
           throw error;
         }
       }
@@ -2800,6 +3283,38 @@ ${doc.content.slice(0, 8000)}
       });
 
       lucide.createIcons();
+
+      /* v3.27.0: Auto-refresh when pipeline data changes.
+         - 'storage' event fires when ANOTHER tab writes to localStorage
+         - 'visibilitychange' fires when user switches back to this tab
+         Both re-read pf_roles so edits in Pipeline are reflected here. */
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'pf_roles' || e.key === 'pf_companies') {
+          console.info('[ResearchBrief] Pipeline data changed in another tab — refreshing');
+          populateRoleSelector();
+          if (STATE.currentRoleId) {
+            loadRole(STATE.currentRoleId);
+          }
+        }
+      });
+
+      /* When user tabs back, re-read roles in case Pipeline was edited in same tab */
+      let lastRolesSnapshot = localStorage.getItem('pf_roles') || '';
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          const current = localStorage.getItem('pf_roles') || '';
+          if (current !== lastRolesSnapshot) {
+            console.info('[ResearchBrief] Pipeline data changed — refreshing on tab focus');
+            lastRolesSnapshot = current;
+            populateRoleSelector();
+            if (STATE.currentRoleId) {
+              /* Clear cached brief so regeneration picks up new JD */
+              localStorage.removeItem(`pf_brief_${STATE.currentRoleId}`);
+              loadRole(STATE.currentRoleId);
+            }
+          }
+        }
+      });
     }
 
     /* Initialize when DOM is ready */

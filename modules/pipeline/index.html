@@ -2966,8 +2966,9 @@
      * RETURNS: URL string for the company logo
      */
     function getCompanyLogoUrl(companyName, url) {
+      /* v3.28.0: Use Google Favicon as primary — Clearbit was shut down by HubSpot */
       const domain = getCompanyDomain(companyName, url);
-      return `https://logo.clearbit.com/${domain}`;
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
     }
 
     /**
@@ -3406,13 +3407,12 @@
     }
 
     function companyLogoHtml(companyName, cssClass, url) {
-      // v3.20.0: Clearbit as primary → Google Favicon fallback → letter avatar
+      // v3.28.0: Google Favicon as primary → letter avatar fallback (Clearbit is dead)
       var domain = getCompanyDomain(companyName, url);
-      var logoUrl = 'https://logo.clearbit.com/' + domain;
-      var fallbackUrl = 'https://www.google.com/s2/favicons?domain=' + domain + '&sz=128';
+      var logoUrl = 'https://www.google.com/s2/favicons?domain=' + domain + '&sz=128';
       var safeName = companyName.replace(/'/g, "\\'");
       return '<img src="' + logoUrl + '" alt="' + companyName + '" class="' + cssClass + '"'
-        + " onerror=\"this.onerror=function(){handleLogoError(this,'" + safeName + "','" + cssClass + "');}; this.src='" + fallbackUrl + "';\">";
+        + " onerror=\"handleLogoError(this,'" + safeName + "','" + cssClass + "');\">";
     }
 
     /**
@@ -3886,10 +3886,10 @@
       };
 
       try {
-        // Source 1: Clearbit Logo API (v3.20.0 — higher quality than favicons)
+        // Source 1: Google Favicon API (v3.28.0 — Clearbit shut down by HubSpot)
         if (domain) {
-          enrichment.logoUrl = `https://logo.clearbit.com/${domain}`;
-          enrichment.enrichmentSource.push('Clearbit Logo API');
+          enrichment.logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+          enrichment.enrichmentSource.push('Google Favicon API');
         }
 
         // Source 2: DuckDuckGo Instant Answer API
@@ -3915,18 +3915,10 @@
           // DuckDuckGo failed silently, continue to next source
         }
 
-        // Source 3: Clearbit Logo API (high-res logo fallback)
+        // Source 3: Google Favicon fallback (if Source 1 didn't set it)
         if (domain && !enrichment.logoUrl) {
-          try {
-            const clearbitUrl = `https://logo.clearbit.com/${domain}`;
-            const testResponse = await fetch(clearbitUrl, { method: 'HEAD' });
-            if (testResponse.ok) {
-              enrichment.logoUrl = clearbitUrl;
-              enrichment.enrichmentSource.push('Clearbit Logo API');
-            }
-          } catch (e) {
-            // Clearbit unavailable, continue
-          }
+          enrichment.logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+          enrichment.enrichmentSource.push('Google Favicon API');
         }
 
         // Source 4: Company website meta tags via CORS proxy
@@ -4301,7 +4293,7 @@
           name: role.company,
           url: companyUrl,
           domain: domain,
-          logoUrl: `https://logo.clearbit.com/${domain}`,
+          logoUrl: `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
           tier: role.tier || 'active',
           enrichmentStatus: 'pending',
           missionStatement: '',
@@ -4626,23 +4618,29 @@
       ];
 
       transitions.forEach(t => {
-        const fromCount = analytics.stageCounts[t.from] || 0;
-        const toCount = analytics.stageCounts[t.to] || 0;
-        const previousCount = roles.filter(r => {
+        /* v3.28.0: Fixed conversion rate formula.
+         * Denominator = roles that EVER reached the FROM stage (via stageHistory).
+         * Numerator   = roles that EVER reached the TO stage (via stageHistory).
+         * This avoids double-counting and caps at 100%.
+         */
+        const everInFrom = roles.filter(r => {
           const history = r.stageHistory || [];
           return history.some(h => h.stage === t.from);
         }).length;
 
-        // Conversion rate: roles that moved to next stage / roles that were in current stage
-        const totalTouchedByStage = (previousCount > 0 ? previousCount : 0) + fromCount;
-        const rate = totalTouchedByStage > 0
-          ? Math.round((toCount / totalTouchedByStage) * 100)
+        const everInTo = roles.filter(r => {
+          const history = r.stageHistory || [];
+          return history.some(h => h.stage === t.to);
+        }).length;
+
+        const rate = everInFrom > 0
+          ? Math.min(100, Math.round((everInTo / everInFrom) * 100))
           : 0;
 
         analytics.conversions[`${t.from} → ${t.to}`] = {
           rate: rate,
-          from: fromCount,
-          to: toCount
+          from: analytics.stageCounts[t.from] || 0,
+          to: analytics.stageCounts[t.to] || 0
         };
       });
 
@@ -7710,7 +7708,7 @@
       existingCompanies.forEach(c => {
         if (c.logoUrl && c.logoUrl.includes('logo.clearbit.com')) {
           const domain = c.domain || c.logoUrl.replace('https://logo.clearbit.com/', '');
-          c.logoUrl = `https://logo.clearbit.com/${domain}`;
+          c.logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
           migrated = true;
         }
       });

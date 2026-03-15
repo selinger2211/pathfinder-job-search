@@ -2,8 +2,8 @@
 
 **Module:** Sync Hub
 **Path:** `modules/sync/index.html`
-**Version:** v3.11
-**Last Updated:** 2026-03-13
+**Version:** v3.29.0
+**Last Updated:** 2026-03-15
 **Status:** Active — core sync framework implemented
 
 ---

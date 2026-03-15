@@ -4,6 +4,29 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.29.0 — 2026-03-15
+
+### Full PRD Reconciliation + Bug Fixes
+
+Comprehensive audit of PRD vs. codebase. All documentation updated to match actual implementation state.
+
+**Bug fixes (code):**
+- **Clearbit Logo API → Google Favicon API:** Clearbit was acquired by HubSpot and shut down. Replaced all references across Pipeline Tracker (6 locations: `getCompanyLogoUrl`, `companyLogoHtml`, `enrichCompanyData` Sources 1+3, company creation, migration fixer) and Job Feed Listener (3 locations: detail panel, card logo, header logo). Primary source is now `https://www.google.com/s2/favicons?domain={domain}&sz=128`.
+- **Pipeline Analytics 300% conversion rate:** Fixed formula from broken `toCount / (previousCount + fromCount)` to correct `everReachedTo / everReachedFrom` via stageHistory, capped at 100%.
+- **Research Brief API error fallback:** Expanded `generateSection()` error re-throw from just 401/429 to ANY error with a `.status` property, so all API failures (400 credits, 503/529 overloaded) now trigger the offline fallback.
+- **Logo migration copy-paste bug:** Pipeline's one-time Clearbit→Favicon migration was replacing Clearbit URLs with the same Clearbit URLs. Fixed to actually write Google Favicon URLs.
+
+**Documentation reconciliation (14 files updated):**
+- **Main PRD (v3.29.0):** Bucket 1 — fixed logo API refs, 10→13 section count, generation architecture (MCP→browser-first), version sync. Bucket 2 — added 13 undocumented features (search bar, explore dialog, offline brief, cross-tab refresh, cache-busting, role strip pinning, feed→pipeline transfer, Tavily, Additional Context, evidence labels, PDF export, analytics formula, favicon migration). Bucket 3 — flagged 7 unimplemented features as "Status: Planned" (Calendar, Debrief conversational, Mock Interview, Command Palette, Source Ledger, Data Import, Metrics Page).
+- **Research Brief sub-PRD:** Complete rewrite to v3.29.0. Now documents V3 browser-first architecture, 13-section structure per Improvement Spec, Tavily integration, Additional Context system, 7 evidence labels, offline fallback, PDF export.
+- **Pipeline Tracker sub-PRD (v3.29.0):** Logo API, conversion analytics formula, cross-tab auto-refresh, cache-busting. Planned features flagged.
+- **Job Feed sub-PRD (v3.29.0):** Search bar, explore dialog, feed→pipeline data transfer, feed run logging. Scoring weights reconciled (network 15%, comp 5%). Planned features flagged.
+- **All other sub-PRDs (v3.29.0):** Dashboard, Outreach, Comp Intelligence, Resume Builder, Calendar, Debrief, Mock Interview, Artifacts MCP, Sync Hub — all updated with version sync and accurate implementation status flags.
+- **CLAUDE_CONTEXT.md:** Version, logo references, known issues (3 resolved).
+- **README.md:** 13-section brief description, Google Favicon in tech stack, Tavily added.
+
+---
+
 ## v3.22.0 — 2026-03-14
 
 ### Research Brief V3 — Pursuit Strategy Rewrite with Live Web Search
