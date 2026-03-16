@@ -259,6 +259,21 @@ describe('getTimeUntil', () => {
     const fiveDays = new Date(Date.now() + 5 * 86400 * 1000);
     expect(getTimeUntil(fiveDays)).toBe('in 5 days');
   });
+
+  test('singular day', () => {
+    const future = new Date(Date.now() + 1.5 * 86400000);
+    expect(getTimeUntil(future)).toBe('in 1 day');
+  });
+
+  test('singular hour', () => {
+    const future = new Date(Date.now() + 1.5 * 3600000);
+    expect(getTimeUntil(future)).toBe('in 1 hour');
+  });
+
+  test('singular minute', () => {
+    const future = new Date(Date.now() + 90000);
+    expect(getTimeUntil(future)).toBe('in 1 minute');
+  });
 });
 
 /* ====== calculateFreshness ====== */

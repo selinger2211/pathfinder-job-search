@@ -413,4 +413,23 @@ describe('matchConfidence', () => {
     const result = matchConfidence(job, role);
     expect(result.reason).toContain('Company match');
   });
+
+  test('partial title overlap scores 15 points', () => {
+    const job = { title: 'Senior Product Manager, Payments', company: 'Acme' };
+    const role = { title: 'Product Manager, Analytics', company: 'Acme' };
+    const result = matchConfidence(job, role);
+    // Both have "Product" and "Manager" (2 overlaps / max(5,4) = 0.4 > 0.25)
+    expect(result.score).toBeGreaterThanOrEqual(15);
+  });
+
+  test('partial title overlap is detected when word overlap ratio is between 0.25 and 0.5', () => {
+    const job = { title: 'Senior Product Manager Engineering', company: 'TechCorp' };
+    const role = { title: 'Product Manager', company: 'TechCorp' };
+    const result = matchConfidence(job, role);
+    // job words: senior, product, manager, engineering (4)
+    // role words: product, manager (2)
+    // overlap: product, manager (2 words both > 2 chars)
+    // ratio: 2 / max(4, 2) = 2/4 = 0.5, which is NOT > 0.5, but is > 0.25
+    expect(result.reason).toContain('Partial title overlap');
+  });
 });

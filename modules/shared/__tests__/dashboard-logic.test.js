@@ -365,6 +365,25 @@ describe('getMutualConnections', () => {
     const result = getMutualConnections('Acme Corp', connections, linkedinNetwork);
     expect(result).toEqual([]);
   });
+
+  test('word boundary regex fails when connection company is embedded substring', () => {
+    // targetLower = "testing corp", connLower = "test" (4 chars, >= MIN_SUBSTR_LEN)
+    // "testing corp".includes("test") = true, BUT \btest\b fails on "testing corp"
+    const connections = [];
+    const linkedin = [{ name: 'Alice', company: 'test', title: 'Engineer' }];
+    const result = getMutualConnections('testing corp', connections, linkedin);
+    expect(result.length).toBe(0);
+  });
+
+  test('word boundary regex succeeds when connection company is at word boundary', () => {
+    // targetLower = "test corp", connLower = "test" (4 chars)
+    // "test corp".includes("test") = true, AND \btest\b matches "test corp"
+    const connections = [];
+    const linkedin = [{ name: 'Bob', company: 'test', title: 'Manager' }];
+    const result = getMutualConnections('test corp', connections, linkedin);
+    expect(result.length).toBe(1);
+    expect(result[0].name).toBe('Bob');
+  });
 });
 
 // ============================================================

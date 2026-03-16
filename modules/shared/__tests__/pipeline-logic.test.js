@@ -905,6 +905,39 @@ describe('parseJobPosting()', () => {
     const result = parseJobPosting(text, 'https://example.com');
     expect(result.jdText).not.toContain('Apply');
   });
+
+  test('should extract company from Greenhouse ATS URL', () => {
+    const text = 'Senior Product Manager\nGreat opportunity';
+    const url = 'https://boards.greenhouse.io/stripe/jobs/123';
+    const result = parseJobPosting(text, url);
+    expect(result.company).toBe('stripe');
+  });
+
+  test('should extract company from Lever ATS URL', () => {
+    const text = 'Product Manager\nJoin us';
+    const url = 'https://jobs.lever.co/notion/abc-123';
+    const result = parseJobPosting(text, url);
+    expect(result.company).toBe('notion');
+  });
+
+  test('should extract company from Ashby ATS URL', () => {
+    const text = 'Engineer\nWe are hiring';
+    const url = 'https://jobs.ashbyhq.com/linear/xyz';
+    const result = parseJobPosting(text, url);
+    expect(result.company).toBe('linear');
+  });
+
+  test('should detect management positioning for director title', () => {
+    const text = 'Director of Product\nLeading our product strategy';
+    const result = parseJobPosting(text, 'https://example.com');
+    expect(result.positioning).toBe('management');
+  });
+
+  test('should detect management positioning for vp title', () => {
+    const text = 'VP of Engineering\nOversee the engineering team';
+    const result = parseJobPosting(text, 'https://example.com');
+    expect(result.positioning).toBe('management');
+  });
 });
 
 // ============================================================

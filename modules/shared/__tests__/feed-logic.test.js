@@ -959,3 +959,259 @@ describe('analyzeTierSuggestions', () => {
     expect(googleSuggestion.suggestedTier).toBe('active');
   });
 });
+
+// ============================================================
+// COVERAGE GAPS — Additional Tests
+// ============================================================
+
+describe('fuzzyMatch word boundary edge case', () => {
+  test('fuzzy match: word boundary regex fails for embedded substring', () => {
+    // companyLower="testing" includes connLower="test" (length >= 4)
+    // But \btest\b doesn't match "testing" since "test" isn't at word boundary
+    const linkedin = [{ name: 'Eve', company: 'test' }];
+    const result = getNetworkAtCompany('testing', linkedin, []);
+    expect(result.total).toBe(0);
+  });
+});
+
+describe('scoreRole — secondary domain scoring', () => {
+  test('secondary domain scores 50 for domain dimension', () => {
+    const role = {
+      title: 'Product Manager',
+      domain: 'payments',
+      location: 'Remote',
+      stage: 'Series A',
+      company: 'PayCo',
+      jd: 'Short',
+      remote: true,
+      networkInfo: { tracked: [], linkedin: [], total: 0 }
+    };
+    const prefs = {
+      targetTitles: ['Product Manager'],
+      primaryDomains: ['fintech'],
+      secondaryDomains: ['payments'],
+      excludedDomains: [],
+      mustHaveKeywords: [],
+      boostKeywords: [],
+      excludeKeywords: [],
+      locations: ['Remote'],
+      excludedLocations: [],
+      companyStage: ['Series A'],
+      compRange: {}
+    };
+    const result = scoreRole(role, prefs);
+    expect(result.breakdown.domain).toBe(50);
+  });
+});
+
+describe('scoreRole — must-have keywords missing', () => {
+  test('mustHaveKeywords: partial match sets MISSING_MUST_HAVE note', () => {
+    const role = {
+      title: 'Product Manager',
+      domain: 'fintech',
+      location: 'Remote',
+      stage: 'Series A',
+      company: 'Stripe',
+      jd: 'We use AI and build fintech products. ' + 'a'.repeat(200),
+      remote: true,
+      networkInfo: { tracked: [], linkedin: [], total: 0 }
+    };
+    const prefs = {
+      targetTitles: ['Product Manager'],
+      primaryDomains: ['fintech'],
+      secondaryDomains: [],
+      excludedDomains: [],
+      mustHaveKeywords: ['ai', 'blockchain', 'defi'],
+      boostKeywords: [],
+      excludeKeywords: [],
+      locations: ['Remote'],
+      excludedLocations: [],
+      companyStage: ['Series A'],
+      compRange: {}
+    };
+    const result = scoreRole(role, prefs);
+    expect(result.keywordNote).toBe('MISSING_MUST_HAVE');
+  });
+});
+
+describe('scoreRole — city location match', () => {
+  test('location scoring: city match scores 100', () => {
+    const role = {
+      title: 'Manager',
+      domain: 'fintech',
+      location: 'San Francisco',
+      stage: 'Series A',
+      company: 'Co',
+      jd: 'Short',
+      remote: false,
+      networkInfo: { tracked: [], linkedin: [], total: 0 }
+    };
+    const prefs = {
+      targetTitles: [],
+      primaryDomains: [],
+      secondaryDomains: [],
+      excludedDomains: [],
+      mustHaveKeywords: [],
+      boostKeywords: [],
+      excludeKeywords: [],
+      locations: ['San Francisco'],
+      excludedLocations: [],
+      companyStage: ['Series A'],
+      compRange: {}
+    };
+    const result = scoreRole(role, prefs);
+    expect(result.breakdown.location).toBe(100);
+  });
+});
+
+describe('scoreRole — stage mismatch', () => {
+  test('stage mismatch scores 30 when preferred stages are set', () => {
+    const role = {
+      title: 'Manager',
+      domain: 'fintech',
+      location: 'Remote',
+      stage: 'Seed',
+      company: 'Co',
+      jd: 'Short',
+      remote: true,
+      networkInfo: { tracked: [], linkedin: [], total: 0 }
+    };
+    const prefs = {
+      targetTitles: [],
+      primaryDomains: [],
+      secondaryDomains: [],
+      excludedDomains: [],
+      mustHaveKeywords: [],
+      boostKeywords: [],
+      excludeKeywords: [],
+      locations: ['Remote'],
+      excludedLocations: [],
+      companyStage: ['Series A', 'Series B'],
+      compRange: {}
+    };
+    const result = scoreRole(role, prefs);
+    expect(result.breakdown.stage).toBe(30);
+  });
+});
+
+describe('scoreRole — compensation estimation with callback', () => {
+  test('comp scoring with parseSalaryAndEstimate: high estimate >= target scores 100', () => {
+    const mockParseSalary = jest.fn().mockReturnValue({ estLow: 180000, estHigh: 250000 });
+    const role = {
+      title: 'Product Manager',
+      domain: 'fintech',
+      location: 'Remote',
+      stage: 'Series A',
+      company: 'Co',
+      jd: 'Short',
+      remote: true,
+      salary: '$180k-$250k',
+      networkInfo: { tracked: [], linkedin: [], total: 0 }
+    };
+    const prefs = {
+      targetTitles: ['Product Manager'],
+      primaryDomains: ['fintech'],
+      secondaryDomains: [],
+      excludedDomains: [],
+      mustHaveKeywords: [],
+      boostKeywords: [],
+      excludeKeywords: [],
+      locations: ['Remote'],
+      excludedLocations: [],
+      companyStage: ['Series A'],
+      compRange: { minBase: 150000, targetBase: 200000 }
+    };
+    const result = scoreRole(role, prefs, mockParseSalary);
+    expect(result.breakdown.comp).toBe(100);
+    expect(mockParseSalary).toHaveBeenCalled();
+  });
+
+  test('comp scoring: estimate below min scores 0', () => {
+    const mockParseSalary = jest.fn().mockReturnValue({ estLow: 80000, estHigh: 100000 });
+    const role = {
+      title: 'Manager',
+      domain: '',
+      location: 'Remote',
+      stage: '',
+      company: 'Co',
+      jd: 'Short',
+      remote: true,
+      salary: '$80k-$100k',
+      networkInfo: { tracked: [], linkedin: [], total: 0 }
+    };
+    const prefs = {
+      targetTitles: [],
+      primaryDomains: [],
+      secondaryDomains: [],
+      excludedDomains: [],
+      mustHaveKeywords: [],
+      boostKeywords: [],
+      excludeKeywords: [],
+      locations: ['Remote'],
+      excludedLocations: [],
+      companyStage: [],
+      compRange: { minBase: 150000, targetBase: 200000 }
+    };
+    const result = scoreRole(role, prefs, mockParseSalary);
+    expect(result.breakdown.comp).toBe(0);
+  });
+
+  test('comp scoring: estimate between min and target scores 70', () => {
+    const mockParseSalary = jest.fn().mockReturnValue({ estLow: 150000, estHigh: 180000 });
+    const role = {
+      title: 'Manager',
+      domain: '',
+      location: 'Remote',
+      stage: '',
+      company: 'Co',
+      jd: 'Short',
+      remote: true,
+      salary: '$150k-$180k',
+      networkInfo: { tracked: [], linkedin: [], total: 0 }
+    };
+    const prefs = {
+      targetTitles: [],
+      primaryDomains: [],
+      secondaryDomains: [],
+      excludedDomains: [],
+      mustHaveKeywords: [],
+      boostKeywords: [],
+      excludeKeywords: [],
+      locations: ['Remote'],
+      excludedLocations: [],
+      companyStage: [],
+      compRange: { minBase: 150000, targetBase: 200000 }
+    };
+    const result = scoreRole(role, prefs, mockParseSalary);
+    expect(result.breakdown.comp).toBe(70);
+  });
+
+  test('comp scoring: null estimate defaults to 50', () => {
+    const mockParseSalary = jest.fn().mockReturnValue(null);
+    const role = {
+      title: 'Manager',
+      domain: '',
+      location: 'Remote',
+      stage: '',
+      company: 'Co',
+      jd: 'Short',
+      remote: true,
+      networkInfo: { tracked: [], linkedin: [], total: 0 }
+    };
+    const prefs = {
+      targetTitles: [],
+      primaryDomains: [],
+      secondaryDomains: [],
+      excludedDomains: [],
+      mustHaveKeywords: [],
+      boostKeywords: [],
+      excludeKeywords: [],
+      locations: ['Remote'],
+      excludedLocations: [],
+      companyStage: [],
+      compRange: { minBase: 150000, targetBase: 200000 }
+    };
+    const result = scoreRole(role, prefs, mockParseSalary);
+    expect(result.breakdown.comp).toBe(50);
+  });
+});

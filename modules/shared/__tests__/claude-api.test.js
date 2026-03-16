@@ -627,3 +627,88 @@ describe('renderApiKeyUI', () => {
     expect(() => api().renderApiKeyUI('#nonexistent')).not.toThrow();
   });
 });
+
+/* ====== stream — additional coverage ====== */
+describe('stream — additional branches', () => {
+  test('throws when no API key configured', async () => {
+    localStorage.clear();
+    jest.resetModules();
+    require(path.join(__dirname, '..', 'claude-api.js'));
+    global.prompt = jest.fn().mockReturnValue(null);
+    await expect(api().stream('sys', 'user', () => {}))
+      .rejects.toThrow('No API key configured');
+  });
+
+  test('passes temperature option in request body', async () => {
+    api().setApiKey('sk-ant-api03-test');
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      body: { getReader: () => ({ read: () => Promise.resolve({ done: true }) }) },
+    });
+    await api().stream('sys', 'user', () => {}, { temperature: 0.7 });
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body.temperature).toBe(0.7);
+  });
+
+  test('maps 401 error in stream', async () => {
+    api().setApiKey('sk-ant-api03-test');
+    global.fetch = jest.fn().mockResolvedValue(mockApiError(401));
+    await expect(api().stream('sys', 'user', () => {}))
+      .rejects.toThrow(/Invalid API key/);
+  });
+
+  test('maps 429 error in stream', async () => {
+    api().setApiKey('sk-ant-api03-test');
+    global.fetch = jest.fn().mockResolvedValue(mockApiError(429));
+    await expect(api().stream('sys', 'user', () => {}))
+      .rejects.toThrow(/Rate limit exceeded/);
+  });
+
+  test('maps 529 error in stream', async () => {
+    api().setApiKey('sk-ant-api03-test');
+    global.fetch = jest.fn().mockResolvedValue(mockApiError(529));
+    await expect(api().stream('sys', 'user', () => {}))
+      .rejects.toThrow(/temporarily overloaded/);
+  });
+
+  test('maps 400 with credit error in stream', async () => {
+    api().setApiKey('sk-ant-api03-test');
+    global.fetch = jest.fn().mockResolvedValue(mockApiError(400, 'insufficient credit balance'));
+    await expect(api().stream('sys', 'user', () => {}))
+      .rejects.toThrow(/Out of API credits/);
+  });
+
+  test('maps generic 400 error in stream', async () => {
+    api().setApiKey('sk-ant-api03-test');
+    global.fetch = jest.fn().mockResolvedValue(mockApiError(400, 'bad request'));
+    await expect(api().stream('sys', 'user', () => {}))
+      .rejects.toThrow(/Bad request/);
+  });
+
+  test('maps other status codes in stream', async () => {
+    api().setApiKey('sk-ant-api03-test');
+    global.fetch = jest.fn().mockResolvedValue(mockApiError(500));
+    await expect(api().stream('sys', 'user', () => {}))
+      .rejects.toThrow(/API error \(HTTP 500\)/);
+  });
+});
+
+/* ====== converse — additional coverage ====== */
+describe('converse — additional branches', () => {
+  test('throws when no API key configured', async () => {
+    localStorage.clear();
+    jest.resetModules();
+    require(path.join(__dirname, '..', 'claude-api.js'));
+    global.prompt = jest.fn().mockReturnValue(null);
+    await expect(api().converse('sys', [{ role: 'user', content: 'hi' }]))
+      .rejects.toThrow('No API key configured');
+  });
+
+  test('passes temperature option in request body', async () => {
+    api().setApiKey('sk-ant-api03-test');
+    global.fetch = jest.fn().mockResolvedValue(mockApiResponse('ok'));
+    await api().converse('sys', [{ role: 'user', content: 'hi' }], { temperature: 0.3 });
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body.temperature).toBe(0.3);
+  });
+});

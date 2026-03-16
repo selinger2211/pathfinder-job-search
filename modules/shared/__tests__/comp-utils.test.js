@@ -433,6 +433,14 @@ describe('parseSalaryAndEstimate', () => {
     expect(result.estHigh).toBeLessThanOrEqual(Math.round(150000 * 1.65));
   });
 
+  test('guardrail enforces 1.65x cap when equity multiplier pushes estimate too high', () => {
+    // Use high equity scenario: TCC + high equity addon for principal level
+    // This should trigger the guardrail cap at postedHigh * 1.65
+    const result = parseSalaryAndEstimate('$100K-$120K total target cash', 'Public', 'Principal PM', 'significant equity, stock options');
+    // estHigh from TCC + equity addon should be capped at 120K * 1.65
+    expect(result.estHigh).toBeLessThanOrEqual(Math.round(120000 * 1.65));
+  });
+
   test('returns full metadata object', () => {
     const result = parseSalaryAndEstimate('$200K-$300K base salary', 'Series A', 'Senior PM', '');
     expect(result).toHaveProperty('rawMin');

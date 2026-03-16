@@ -129,6 +129,22 @@ describe('getCompanyDomain', () => {
     expect(getCompanyDomain('Test', 'not-a-url')).toBe('test.com');
     expect(getCompanyDomain('Test', '://broken')).toBe('test.com');
   });
+
+  test('Workday URL extracts company', () => {
+    expect(getCompanyDomain('Yahoo', 'https://ouryahoo.wd5.myworkdayjobs.com/careers')).toBe('yahoo.com');
+  });
+
+  test('Greenhouse URL extracts company', () => {
+    expect(getCompanyDomain('Stripe', 'https://boards.greenhouse.io/stripe/jobs/123')).toBe('stripe.com');
+  });
+
+  test('Lever URL extracts company', () => {
+    expect(getCompanyDomain('Notion', 'https://jobs.lever.co/notion/abc-123')).toBe('notion.so');
+  });
+
+  test('Ashby URL extracts company', () => {
+    expect(getCompanyDomain('Linear', 'https://jobs.ashbyhq.com/linear/xyz')).toBe('linear.com');
+  });
 });
 
 /* ====== guessDomain() ====== */
