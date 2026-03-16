@@ -1126,6 +1126,26 @@
       color: rgb(20, 184, 166);
     }
 
+    /* ====== QUALITY GATE WARNING ====== */
+    .quality-gate-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      font-weight: 500;
+      margin-bottom: var(--space-3);
+      background: rgba(239, 68, 68, 0.08);
+      color: rgb(220, 60, 60);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      line-height: 1.4;
+    }
+    .quality-gate-warning .qg-icon {
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
     /* ====== RESPONSIVE ====== */
     @media (max-width: 1200px) {
       /* Safety net: force-hide any leftover V2 TOC sidebar elements */
@@ -1667,8 +1687,14 @@
       let roles;
       try { roles = JSON.parse(rolesRaw); } catch { return; }
 
+      /* v3.34.4: Filter on actual pipeline `stage` field (not defunct `status`).
+         Show all roles EXCEPT those explicitly closed as rejected/passed/archived.
+         If a role is in any active pipeline stage, it should always be researchable. */
       roles = roles
-        .filter(r => r.status !== 'rejected' && r.status !== 'passed')
+        .filter(r => {
+          const stage = (r.stage || '').toLowerCase();
+          return stage !== 'rejected' && stage !== 'passed' && stage !== 'archived';
+        })
         .sort((a, b) => {
           const tierOrder = { hot: 0, active: 1, passive: 2 };
           const ta = tierOrder[a.tier] ?? 2;
@@ -2474,10 +2500,11 @@
 Your single objective: help Ili decide whether this role deserves his time, identify what could kill his candidacy, and recommend specific actions that improve his odds.
 
 HARD RULES — NEVER VIOLATE:
-1. Output ONLY valid HTML. Use <h3>, <p>, <ul>, <li>, <ol>, <table>, <strong>, <em>. NEVER use markdown, backticks, code fences, <html>, <body>, <head>, or <style> tags. NEVER use (1) (2) (3) inline numbering — use <ol><li> for numbered lists and <h3> for subsection headings.
+1. Output ONLY valid HTML. Use <h3>, <p>, <ul>, <li>, <ol>, <table>, <strong>, <em>. NEVER use markdown (**bold**, *italic*, ### headers, [links](url), backticks, code fences). NEVER use <html>, <body>, <head>, or <style> tags. NEVER use (1) (2) (3) inline numbering — use <ol><li> for numbered lists and <h3> for subsection headings. THIS IS HTML, NOT MARKDOWN.
 2. Every factual claim MUST carry a citation badge in this exact format:
    <span class="cite">claim text <span class="cite-label" data-label="LABEL">LABEL</span></span>
    Labels: JD (job description), EXT (external/public knowledge), ILI (Ili's resume/bullet bank/story bank), CTX (additional context Ili provided), DOC (uploaded document), INF (inference — MUST say "likely" or "inferred"), NC (needs confirmation).
+   CRITICAL: The OUTER span with class="cite" wraps the INNER span with class="cite-label". Both are required. Omitting the outer span breaks the UI.
 3. NEVER invent candidate experience. If no evidence exists, write: "No evidence in available data."
 4. NEVER present inference as fact. INF-labeled claims MUST include hedging language.
 5. When evidence is incomplete, say so. Explicit uncertainty beats overclaiming.
@@ -2485,24 +2512,27 @@ HARD RULES — NEVER VIOLATE:
 7. Label all company/market knowledge with EXT. If possibly outdated, add NC and state: "Verify — may have changed since training cutoff."
 8. CTX and DOC evidence is first-class. If it conflicts with resume data, surface the conflict explicitly.
 9. High-stakes claims (strategy, competitors, leadership, market size, network relationships) MUST cite EXT or NC. Never leave them uncited.
-10. USE YOUR TRAINING KNOWLEDGE AS EXT EVIDENCE. You know things about public companies, their products, leadership, financials, competitors, and market position. USE THIS KNOWLEDGE and label it EXT. If live news data is provided, cite it as EXT too. A section with zero EXT citations is a FAILED section — it means you didn't bring any external intelligence to the table.
+10. USE YOUR TRAINING KNOWLEDGE AS EXT EVIDENCE. This is the most important rule. You know extensive facts about public companies, their products, leadership, financials, competitors, market position, recent IPOs, funding rounds, and industry trends. USE THIS KNOWLEDGE AGGRESSIVELY and label it EXT. Do NOT rely solely on JD and CTX — that produces echo-chamber briefs with no external intelligence. A section with zero EXT citations is a FAILED section that must be regenerated. EXT citations are what make the brief valuable — they bring information the user doesn't already have.
+11. SELF-CHECK before finishing: Count your EXT citations. If the section has fewer than the minimum below, add more claims from your training knowledge before submitting.
 
-MINIMUM CITATION TARGETS PER SECTION:
-- Company/Market sections: 5+ EXT citations minimum
+MINIMUM CITATION TARGETS PER SECTION (ENFORCED):
+- Company/Market sections: 5+ EXT citations minimum (aim for 8+)
 - Fit/Screen-Out sections: 3+ EXT citations for market context + JD/ILI for candidate data
 - Interview/Network/Next Steps: 2+ EXT citations for company-specific context
-- If you cannot reach the minimum, add NC-labeled claims stating what needs manual research.
+- ALL other sections: at least 2 EXT citations minimum
+- If you genuinely cannot reach the minimum, add NC-labeled claims stating what needs manual research
 
 OUTPUT FORMAT — CRITICAL:
-- Use <h3> tags for all subsection headings. NEVER use bold text as a heading substitute.
+- Use <h3> tags for all subsection headings. NEVER use <strong> text as a heading substitute.
 - Use <table> for structured data. NEVER simulate tables with inline text.
 - Use <ol><li> for numbered lists. NEVER use (1), (2), (3) inline.
 - Use <ul><li> for bullet lists. NEVER use dashes in <p> tags.
+- Use <strong> for emphasis. NEVER use **markdown bold**.
 - Each section MUST follow the exact HTML structure specified in its section instructions below.
 
 OUTPUT BUDGET: 300–500 words per section. No padding. Dense, actionable content only.
 
-DONE WHEN: Every claim is cited, every recommendation is specific enough to act on today, removing any sentence would lose information, and EXT citation minimums are met.
+DONE WHEN: Every claim is cited, every recommendation is specific enough to act on today, removing any sentence would lose information, EXT citation minimums are met, and output is valid HTML with zero markdown syntax.
 
 At the END of your response, include:
 <section-meta>
@@ -3037,14 +3067,107 @@ ${doc.content.slice(0, 8000)}
     }
 
     /* ====== UTILITIES ====== */
+
     /**
-     * Sanitize HTML (basic XSS prevention)
-     * @param {string} html - Raw HTML
-     * @returns {string} Sanitized HTML
+     * v3.34.4: Convert markdown artifacts to valid HTML.
+     * Safety net for when Claude outputs markdown instead of HTML.
+     * Handles: **bold**, *italic*, ```code blocks```, `inline code`,
+     * markdown headers (###), markdown links, and (1)(2)(3) inline numbering.
+     * @param {string} text - Raw text that may contain markdown
+     * @returns {string} HTML-safe text with markdown converted
+     */
+    function markdownToHtml(text) {
+      if (!text) return '';
+
+      /* Skip conversion if content already has substantial HTML tags */
+      const htmlTagCount = (text.match(/<(p|h[1-6]|ul|ol|li|table|strong|em|span|div)\b/gi) || []).length;
+      const mdBoldCount = (text.match(/\*\*[^*]+\*\*/g) || []).length;
+      if (htmlTagCount > 5 && mdBoldCount === 0) return text; /* Already good HTML */
+
+      let html = text;
+
+      /* Code blocks: ```...``` → <pre><code>...</code></pre> */
+      html = html.replace(/```[\s\S]*?```/g, (m) => {
+        const inner = m.slice(3, -3).replace(/^\w+\n/, ''); /* strip language hint */
+        return `<pre><code>${inner.trim()}</code></pre>`;
+      });
+
+      /* Inline code: `...` → <code>...</code> */
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+      /* Bold: **text** → <strong>text</strong> */
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+      /* Italic: *text* → <em>text</em> (but not inside HTML attributes) */
+      html = html.replace(/(?<![="'])\*([^*\n]+)\*(?![>"'])/g, '<em>$1</em>');
+
+      /* Markdown headers: ### text → <h3>text</h3> (only at line start) */
+      html = html.replace(/^#{4}\s+(.+)$/gm, '<h4>$1</h4>');
+      html = html.replace(/^#{3}\s+(.+)$/gm, '<h3>$1</h3>');
+      html = html.replace(/^#{2}\s+(.+)$/gm, '<h3>$1</h3>'); /* h2 → h3 to keep section hierarchy flat */
+
+      /* Markdown links: [text](url) → <a href="url">text</a> */
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+      /* Inline numbering: (1) (2) (3) at line start → <ol><li> */
+      html = html.replace(/(?:^|\n)\s*\(\d+\)\s+/g, '\n• ');
+
+      return html;
+    }
+
+    /**
+     * v3.34.4: Repair broken or missing citation tags in brief content.
+     * Handles: double-nested spans, missing outer cite wrapper, malformed attributes.
+     * @param {string} content - Brief section content
+     * @returns {string} Content with repaired citation tags
+     */
+    function repairCitations(content) {
+      if (!content) return '';
+
+      let fixed = content;
+
+      /* Fix double-nested broken cite labels like: ILI">ILI</span></span> */
+      fixed = fixed.replace(
+        /(\w+)">\1<\/span><\/span>/g,
+        (_, label) => `${label}</span></span>`
+      );
+
+      /* Fix malformed data-label attributes with extra quotes */
+      fixed = fixed.replace(
+        /data-label="([^"]*)"([^"]*?)"/g,
+        (m, label) => `data-label="${label}"`
+      );
+
+      /* Ensure cite-label spans have proper outer cite wrapper */
+      /* Match cite-label spans NOT inside a class="cite" parent */
+      fixed = fixed.replace(
+        /(?<!class="cite">[\s\S]{0,500})<span class="cite-label" data-label="(\w+)">\1<\/span>/g,
+        (match, label) => {
+          /* Already wrapped — don't double-wrap */
+          return match;
+        }
+      );
+
+      return fixed;
+    }
+
+    /**
+     * Sanitize HTML (basic XSS prevention) + markdown conversion + citation repair.
+     * v3.34.4: Now includes markdown-to-HTML conversion and citation tag repair
+     * as a safety net for malformed model output.
+     * @param {string} html - Raw HTML (possibly with markdown artifacts)
+     * @returns {string} Clean, sanitized HTML
      */
     function sanitizeHtml(html) {
+      /* Step 1: Convert any markdown artifacts to HTML */
+      let clean = markdownToHtml(html);
+
+      /* Step 2: Repair broken citation tags */
+      clean = repairCitations(clean);
+
+      /* Step 3: XSS sanitization */
       const div = document.createElement('div');
-      div.innerHTML = html;
+      div.innerHTML = clean;
       div.querySelectorAll('script, [onclick], [onerror], [onload]').forEach(el => el.remove());
       return div.innerHTML;
     }
@@ -3088,6 +3211,43 @@ ${doc.content.slice(0, 8000)}
      */
     function stripSectionMeta(content) {
       return content.replace(/<section-meta>[\s\S]*?<\/section-meta>/, '').trim();
+    }
+
+    /**
+     * v3.34.4: Build a quality gate warning banner for sections missing EXT citations.
+     * EXT citations represent external intelligence — without them, the brief is just
+     * echoing back the user's own data (JD + CTX) with no added value.
+     * @param {string} content - Section content HTML
+     * @param {string} sectionId - Section identifier
+     * @returns {string} Warning HTML or empty string if quality is sufficient
+     */
+    function buildQualityGateHTML(content, sectionId) {
+      if (!content) return '';
+
+      const extCount = (content.match(/data-label="EXT"/g) || []).length;
+      const ncCount = (content.match(/data-label="NC"/g) || []).length;
+      const totalCitations = (content.match(/data-label="(JD|EXT|ILI|CTX|DOC|INF|NC)"/g) || []).length;
+
+      /* Sections that require substantial EXT citations */
+      const highExtSections = ['companyMarket', 'pursuitEconomics', 'existence', 'needs'];
+      const minExt = highExtSections.includes(sectionId) ? 3 : 1;
+
+      if (extCount >= minExt) return ''; /* Passes quality gate */
+
+      /* Build warning message */
+      let msg = '';
+      if (extCount === 0 && totalCitations === 0) {
+        msg = 'No citations found in this section. The brief may have formatting issues — try regenerating.';
+      } else if (extCount === 0) {
+        msg = `This section has ${totalCitations} citation${totalCitations > 1 ? 's' : ''} but zero external research (EXT). It may be echoing back your own data without adding independent intelligence. Consider regenerating or enriching via Cowork.`;
+      } else {
+        msg = `Only ${extCount} EXT citation${extCount > 1 ? 's' : ''} (minimum ${minExt} recommended). Section would benefit from more external research.`;
+      }
+
+      return `<div class="quality-gate-warning" role="status">
+        <span class="qg-icon">⚠️</span>
+        <span>${msg}</span>
+      </div>`;
     }
 
     /* ====== HANDOFF: Send proof points to other modules ====== */
@@ -3241,6 +3401,7 @@ ${doc.content.slice(0, 8000)}
               <div class="pe-badge">1</div>
               <div class="pe-title">Pursuit Economics</div>
             </div>
+            <div id="indicators-${section.id}"></div>
             <div class="section-content" id="content-${section.id}"></div>
             <div class="section-meta" id="meta-${section.id}"></div>
           `;
@@ -3278,6 +3439,9 @@ ${doc.content.slice(0, 8000)}
 
           /* Context evidence indicator — show on any section that uses CTX/DOC */
           indicatorHTML += buildContextIndicatorHTML(sectionData.content, hasAdditionalContext, hasUploadedDocs);
+
+          /* v3.34.4: Quality gate warning for sections missing EXT citations */
+          indicatorHTML += buildQualityGateHTML(sectionData.content, section.id);
 
           indicatorsEl.innerHTML = indicatorHTML;
         }
