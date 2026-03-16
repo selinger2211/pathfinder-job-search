@@ -3036,15 +3036,9 @@
   <script src="../shared/claude-api.js?v=3.5.1"></script>
   <script src="../shared/logos.js?v=3.30.0"></script>
   <!-- Shared modules v3.32.0 - Extracted business logic for testing -->
-  <script src="../shared/state-utils.js?v=3.32.0"></script>
-  <script src="../shared/date-utils.js?v=3.32.0"></script>
-  <script src="../shared/text-utils.js?v=3.32.0"></script>
-  <script src="../shared/comp-utils.js?v=3.32.0"></script>
-  <script src="../shared/feed-logic.js?v=3.32.0"></script>
   <script>
     /** Safely parse JSON from localStorage with fallback */
-    /* === MOVED TO ../shared/MODULE.js === safeJsonParse ===
-    function safeJsonParse(key, fallback = null) {
+        function safeJsonParse(key, fallback = null) {
       try {
         const raw = localStorage.getItem(key);
         return raw ? JSON.parse(raw) : fallback;
@@ -3053,7 +3047,6 @@
         return fallback;
       }
     }
-    === END safeJsonParse === */
 
     // ================================================================
     // FEATURE 35: MCP SYNC STATUS - Check server availability
@@ -3378,14 +3371,12 @@
     /**
      * Detect ATS type from URL pattern
      */
-    /* === MOVED TO ../shared/MODULE.js === detectAtsType ===
-    function detectAtsType(url) {
+        function detectAtsType(url) {
       if (url.includes('greenhouse.io') || url.includes('job-boards.greenhouse.io')) return 'greenhouse';
       if (url.includes('lever.co')) return 'lever';
       if (url.includes('ashby')) return 'ashby';
       return 'generic';
     }
-    === END detectAtsType === */
 
     /**
      * Crawl a career page and return job listings
@@ -3745,8 +3736,7 @@
      * INPUT: role object from Feed
      * OUTPUT: true if JD is a stub (too short or generic), false if it's a real full JD
      */
-    /* === MOVED TO ../shared/MODULE.js === isStubJD ===
-    function isStubJD(role) {
+        function isStubJD(role) {
       const jd = role.jd || '';
       if (jd.length < MIN_FULL_JD_LENGTH) return true;
 
@@ -3760,7 +3750,6 @@
       ];
       return stubPatterns.some(p => p.test(jd));
     }
-    === END isStubJD === */
 
     /**
      * Update the enrichment status indicator in the sidebar.
@@ -3818,8 +3807,7 @@
      * INPUT: html (string) — HTML content
      * OUTPUT: string — plain text
      */
-    /* === MOVED TO ../shared/MODULE.js === stripHtmlTags ===
-    function stripHtmlTags(html) {
+        function stripHtmlTags(html) {
       return html
         .replace(/<br\s*\/?>/gi, '\n')
         .replace(/<\/p>/gi, '\n\n')
@@ -3836,7 +3824,6 @@
         .replace(/\n{3,}/g, '\n\n')
         .trim();
     }
-    === END stripHtmlTags === */
 
     /**
      * Extract job description from LinkedIn page HTML.
@@ -3844,8 +3831,7 @@
      * INPUT: html (string) — full page HTML
      * OUTPUT: object|null — { description, title, company, salary } or null
      */
-    /* === MOVED TO ../shared/MODULE.js === extractLinkedInJD ===
-    function extractLinkedInJD(html) {
+        function extractLinkedInJD(html) {
       // Strategy A: JSON-LD structured data (most reliable)
       const jsonLdMatches = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
       if (jsonLdMatches) {
@@ -3890,7 +3876,6 @@
 
       return null;
     }
-    === END extractLinkedInJD === */
 
     /**
      * Try to extract a JD from an ATS (Applicant Tracking System) API.
@@ -4031,8 +4016,7 @@
      * INPUT: job (object from any source), feedRole (object from Feed)
      * OUTPUT: number 0-100 (match confidence)
      */
-    /* === MOVED TO ../shared/MODULE.js === matchConfidence ===
-    function matchConfidence(job, feedRole) {
+        function matchConfidence(job, feedRole) {
       let score = 0;
       // Handle multiple field name patterns from different sources
       const aCompany = (job.companyName || job.company || job.companyname || '').toLowerCase().trim();
@@ -4068,7 +4052,6 @@
 
       return score;
     }
-    === END matchConfidence === */
 
     /**
      * Enrich a single Feed role with a full JD using direct fetching.
@@ -4461,15 +4444,13 @@
      * INPUT: items (array of Feed role objects)
      * OUTPUT: none (side effect: writes to localStorage)
      */
-    /* === MOVED TO ../shared/MODULE.js === saveFeedQueue ===
-    function saveFeedQueue(items) {
+        function saveFeedQueue(items) {
       try {
         localStorage.setItem('pf_feed_queue', JSON.stringify(items));
       } catch (e) {
         console.warn('Failed to save feed queue:', e);
       }
     }
-    === END saveFeedQueue === */
 
 
     // ============================================================
@@ -4495,8 +4476,7 @@
     };
 
     // Load companies from localStorage
-    /* === MOVED TO ../shared/MODULE.js === loadCompanies ===
-    function loadCompanies() {
+        function loadCompanies() {
       try {
         const stored = localStorage.getItem('pf_companies');
         return stored ? JSON.parse(stored) : [];
@@ -4505,11 +4485,9 @@
         return [];
       }
     }
-    === END loadCompanies === */
 
     // Save companies to localStorage
-    /* === MOVED TO ../shared/MODULE.js === saveCompanies ===
-    function saveCompanies(companies) {
+        function saveCompanies(companies) {
       try {
         localStorage.setItem('pf_companies', JSON.stringify(companies));
         state.companies = companies;
@@ -4517,11 +4495,9 @@
         console.warn('Failed to save companies to localStorage:', e);
       }
     }
-    === END saveCompanies === */
 
     // Load roles from localStorage (pipeline)
-    /* === MOVED TO ../shared/MODULE.js === loadRoles ===
-    function loadRoles() {
+        function loadRoles() {
       try {
         const stored = localStorage.getItem('pf_roles');
         return stored ? JSON.parse(stored) : [];
@@ -4530,18 +4506,15 @@
         return [];
       }
     }
-    === END loadRoles === */
 
     // Save roles to localStorage
-    /* === MOVED TO ../shared/MODULE.js === saveRoles ===
-    function saveRoles(roles) {
+        function saveRoles(roles) {
       try {
         localStorage.setItem('pf_roles', JSON.stringify(roles));
       } catch (e) {
         console.warn('Failed to save roles to localStorage:', e);
       }
     }
-    === END saveRoles === */
 
     // ============================================================
     // LINKEDIN NETWORK + PIPELINE CROSS-REFERENCE
@@ -4552,8 +4525,7 @@
      * INPUT: none
      * RETURNS: array of LinkedIn connection objects {name, company, position, ...}
      */
-    /* === MOVED TO ../shared/MODULE.js === loadLinkedInNetwork ===
-    function loadLinkedInNetwork() {
+        function loadLinkedInNetwork() {
       try {
         const stored = localStorage.getItem('pf_linkedin_network');
         return stored ? JSON.parse(stored) : [];
@@ -4562,7 +4534,6 @@
         return [];
       }
     }
-    === END loadLinkedInNetwork === */
 
     /**
      * Load tracked connections from Pipeline
@@ -4588,8 +4559,7 @@
      * INPUT: companyName (string), linkedinNetwork (array), trackedConnections (array)
      * RETURNS: { tracked: [...names], linkedin: [...names], total: number }
      */
-    /* === MOVED TO ../shared/MODULE.js === getNetworkAtCompany ===
-    function getNetworkAtCompany(companyName, linkedinNetwork, trackedConnections) {
+        function getNetworkAtCompany(companyName, linkedinNetwork, trackedConnections) {
       if (!companyName) return { tracked: [], linkedin: [], total: 0 };
 
       const companyLower = companyName.toLowerCase().trim();
@@ -4632,7 +4602,6 @@
         total: tracked.length + linkedin.length
       };
     }
-    === END getNetworkAtCompany === */
 
     /**
      * Check if a feed item already exists in the Pipeline at an active stage.
@@ -4647,8 +4616,7 @@
      * INPUT: feedItem (object), pipelineRoles (array)
      * RETURNS: { inPipeline: boolean, stage: string|null, roleId: string|null }
      */
-    /* === MOVED TO ../shared/MODULE.js === checkPipelineStatus ===
-    function checkPipelineStatus(feedItem, pipelineRoles) {
+        function checkPipelineStatus(feedItem, pipelineRoles) {
       const companyLower = (feedItem.company || '').toLowerCase().trim();
       const titleLower = (feedItem.title || '').toLowerCase().trim();
 
@@ -4684,7 +4652,6 @@
 
       return { inPipeline: false, stage: null, roleId: null };
     }
-    === END checkPipelineStatus === */
 
     // ============================================================
     // UTILITY FUNCTIONS
@@ -4694,8 +4661,7 @@
      * Load preferences from localStorage. If none exist, use defaults.
      * @returns {Object} User preferences object
      */
-    /* === MOVED TO ../shared/MODULE.js === loadPreferences ===
-    function loadPreferences() {
+        function loadPreferences() {
       try {
         const stored = localStorage.getItem('pf_preferences');
         if (!stored) return DEFAULT_PREFERENCES;
@@ -4763,14 +4729,12 @@
         return DEFAULT_PREFERENCES;
       }
     }
-    === END loadPreferences === */
 
     /**
      * Save preferences to localStorage.
      * @param {Object} prefs - Preferences to save
      */
-    /* === MOVED TO ../shared/MODULE.js === savePreferences ===
-    function savePreferences(prefs) {
+        function savePreferences(prefs) {
       try {
         localStorage.setItem('pf_preferences', JSON.stringify(prefs));
         state.preferences = prefs;
@@ -4778,7 +4742,6 @@
         console.warn('Failed to save preferences to localStorage:', e);
       }
     }
-    === END savePreferences === */
 
     /**
      * v3.19.2: Re-score all feed items with updated preferences and re-render.
@@ -4805,8 +4768,7 @@
      * INPUT: none
      * RETURNS: array of feed item objects (may be empty if no syncs have run)
      */
-    /* === MOVED TO ../shared/MODULE.js === loadFeedQueue ===
-    function loadFeedQueue() {
+        function loadFeedQueue() {
       try {
         const stored = localStorage.getItem('pf_feed_queue');
         return stored ? JSON.parse(stored) : [];
@@ -4815,14 +4777,12 @@
         return [];
       }
     }
-    === END loadFeedQueue === */
 
     /**
      * Load feed run history from localStorage.
      * @returns {Array} Array of feed run records
      */
-    /* === MOVED TO ../shared/MODULE.js === loadFeedRuns ===
-    function loadFeedRuns() {
+        function loadFeedRuns() {
       try {
         const stored = localStorage.getItem('pf_feed_runs');
         if (stored) {
@@ -4836,7 +4796,6 @@
       }
       return []; // v2.6.0: no demo data — empty until real feed runs happen
     }
-    === END loadFeedRuns === */
 
     /**
      * Show a toast notification (temporary message).
@@ -4861,19 +4820,16 @@
      * @param {number} value - Value in thousands
      * @returns {string} Formatted string like "$285K"
      */
-    /* === MOVED TO ../shared/MODULE.js === formatComp ===
-    function formatComp(value) {
+        function formatComp(value) {
       return `$${value}K`;
     }
-    === END formatComp === */
 
     /**
      * Format a date relative to now (e.g., "2 days ago").
      * @param {Date} date - Date to format
      * @returns {string} Relative time string
      */
-    /* === MOVED TO ../shared/MODULE.js === formatRelativeTime ===
-    function formatRelativeTime(date) {
+        function formatRelativeTime(date) {
       const now = new Date();
       const seconds = Math.floor((now - date) / 1000);
       const intervals = {
@@ -4893,15 +4849,13 @@
       }
       return 'just now';
     }
-    === END formatRelativeTime === */
 
     /**
      * Format a timestamp for display in logs.
      * @param {Date} date - Date to format
      * @returns {string} Formatted string like "2026-03-09 14:32"
      */
-    /* === MOVED TO ../shared/MODULE.js === formatTimestamp ===
-    function formatTimestamp(date) {
+        function formatTimestamp(date) {
       return date.toLocaleString('en-US', {
         month: '2-digit',
         day: '2-digit',
@@ -4910,7 +4864,6 @@
         hour12: false
       });
     }
-    === END formatTimestamp === */
 
     // ============================================================
     // DEDUP ENGINE: Check for existing roles (PRD Section 5.3)
@@ -4920,8 +4873,7 @@
      * Check if a role already exists in pipeline or feed.
      * Returns { type: 'exact' | 'fuzzy' | 'none', existingRole?: {...}, distance?: number }
      */
-    /* === MOVED TO ../shared/MODULE.js === checkDedup ===
-    function checkDedup(company, title) {
+        function checkDedup(company, title) {
       const roles = loadRoles();
       const feedItems = state.feedItems;
       const allRoles = [...roles, ...feedItems];
@@ -4987,7 +4939,6 @@
 
       return { type: 'none' };
     }
-    === END checkDedup === */
 
     // ============================================================
     // QUICK-CHECK FILTER: 6-point binary filter (PRD Section 5.5)
@@ -4999,8 +4950,7 @@
      *
      * Returns { passed: boolean, checks: [...] }
      */
-    /* === MOVED TO ../shared/MODULE.js === runQuickCheckFilter ===
-    function runQuickCheckFilter(role, prefs) {
+        function runQuickCheckFilter(role, prefs) {
       const jdLower = role.jd ? role.jd.toLowerCase() : '';
       const titleLower = role.title ? role.title.toLowerCase() : '';
       const domainLower = role.domain ? role.domain.toLowerCase() : '';
@@ -5092,7 +5042,6 @@
         checks
       };
     }
-    === END runQuickCheckFilter === */
 
     // ============================================================
     // SCORING ENGINE: Real weighted matching algorithm
@@ -5125,8 +5074,7 @@
     /* ====== STAGE NORMALIZATION (v3.7.0) ======
        Existing feed items may have old stage values from before v3.7.0.
        Map them to the new canonical values so scoring/filtering still works. */
-    /* === MOVED TO ../shared/MODULE.js === normalizeStage ===
-    function normalizeStage(stage) {
+        function normalizeStage(stage) {
       if (!stage) return '';
       const map = {
         'Series B+': 'Series B',          // Old "B+" → "B"
@@ -5136,7 +5084,6 @@
       };
       return map[stage] || stage;
     }
-    === END normalizeStage === */
 
     /* ====== COMP ESTIMATION ENGINE v2 (v3.8.0) ======
        Classification-first total comp estimator for PM roles.
@@ -5162,8 +5109,7 @@
      * @param {string} jdText - Full JD text (lowercase) for secondary signal detection
      * @returns {string} One of: 'BASE_SALARY', 'TOTAL_TARGET_CASH', 'OTE', 'UNKNOWN'
      */
-    /* === MOVED TO ../shared/MODULE.js === detectCompType ===
-    function detectCompType(salaryText, jdText) {
+        function detectCompType(salaryText, jdText) {
       const text = ((salaryText || '') + ' ' + (jdText || '')).toLowerCase();
 
       // v3.19.5: Check BASE_SALARY first — it's the most common type for PM roles.
@@ -5200,7 +5146,6 @@
 
       return 'UNKNOWN';
     }
-    === END detectCompType === */
 
     /**
      * Detect whether the role is IC or people-manager from JD text.
@@ -5208,8 +5153,7 @@
      * @param {string} jdText - Full JD text (lowercase)
      * @returns {string} 'IC_PM', 'MANAGER_PM', or 'UNKNOWN'
      */
-    /* === MOVED TO ../shared/MODULE.js === detectRoleArchetype ===
-    function detectRoleArchetype(title, jdText) {
+        function detectRoleArchetype(title, jdText) {
       const text = ((title || '') + ' ' + (jdText || '')).toLowerCase();
 
       const managerSignals = ['manage a team', 'build or lead a team', 'direct reports',
@@ -5229,7 +5173,6 @@
       if (hasManager && hasIC) return 'UNKNOWN'; // Conflicting signals
       return 'UNKNOWN';
     }
-    === END detectRoleArchetype === */
 
     /**
      * Infer PM seniority level from title + JD text.
@@ -5238,8 +5181,7 @@
      * @param {string} jdText - Full JD text (lowercase)
      * @returns {string} 'mid', 'senior', or 'principal'
      */
-    /* === MOVED TO ../shared/MODULE.js === inferPMLevel ===
-    function inferPMLevel(title, jdText) {
+        function inferPMLevel(title, jdText) {
       const titleLower = (title || '').toLowerCase();
       const text = (jdText || '').toLowerCase();
 
@@ -5261,7 +5203,6 @@
       // Default: mid-level PM
       return 'mid';
     }
-    === END inferPMLevel === */
 
     /**
      * Determine calibration mode based on company stage.
@@ -5876,8 +5817,7 @@
       if (panel) panel.classList.remove('open');
     }
 
-    /* === MOVED TO ../shared/MODULE.js === scoreRole ===
-    function scoreRole(role, prefs) {
+        function scoreRole(role, prefs) {
       // ===== JD-FIRST TEXT SELECTION =====
       // When we have a full JD, scan it for all keyword/title matching.
       // When we only have a stub (email snippet), fall back to title+company.
@@ -6148,7 +6088,6 @@
         quickCheck: quickCheck
       };
     }
-    === END scoreRole === */
 
     // ============================================================
     // UI RENDERING FUNCTIONS
@@ -7864,21 +7803,18 @@
     /**
      * Save snoozed roles to localStorage
      */
-    /* === MOVED TO ../shared/MODULE.js === saveSnoozedRoles ===
-    function saveSnoozedRoles() {
+        function saveSnoozedRoles() {
       try {
         localStorage.setItem('pf_snoozed_roles', JSON.stringify(state.snoozedRoles));
       } catch (e) {
         console.warn('Failed to save snoozed roles to localStorage:', e);
       }
     }
-    === END saveSnoozedRoles === */
 
     /**
      * Load snoozed roles from localStorage
      */
-    /* === MOVED TO ../shared/MODULE.js === loadSnoozedRoles ===
-    function loadSnoozedRoles() {
+        function loadSnoozedRoles() {
       try {
         const stored = localStorage.getItem('pf_snoozed_roles');
         if (!stored) return [];
@@ -7907,7 +7843,6 @@
         return [];
       }
     }
-    === END loadSnoozedRoles === */
 
     /**
      * Update snoozed badge with count

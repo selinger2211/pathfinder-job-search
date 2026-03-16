@@ -2518,10 +2518,6 @@
   </div>
 
   <!-- Shared modules v3.32.0 - Extracted business logic for testing -->
-  <script src="../shared/state-utils.js?v=3.32.0"></script>
-  <script src="../shared/date-utils.js?v=3.32.0"></script>
-  <script src="../shared/text-utils.js?v=3.32.0"></script>
-  <script src="../shared/pipeline-logic.js?v=3.32.0"></script>
   <script>
     /* ================================================================
        PATHFINDER PIPELINE TRACKER
@@ -2545,19 +2541,16 @@
        ================================================================ */
 
     /* Job stages in the order they appear on the kanban board */
-    /* === MOVED TO ../shared/MODULE.js === STAGES ===
-    const STAGES = ['discovered', 'researching', 'outreach', 'applied', 'screen', 'interviewing', 'offer', 'closed'];
+        const STAGES = ['discovered', 'researching', 'outreach', 'applied', 'screen', 'interviewing', 'offer', 'closed'];
 
     /* Tier categories for prioritizing opportunities */
     const TIERS = ['hot', 'active', 'watching', 'dormant'];
-    === END STAGES === */
 
     /* Job positioning types */
     const POSITIONINGS = ['ic', 'management'];
 
     /* Color coding for each stage (used to color the vertical bars and badges) */
-    /* === MOVED TO ../shared/MODULE.js === STAGE_COLORS ===
-    const STAGE_COLORS = {
+        const STAGE_COLORS = {
       discovered: '#64748b',
       researching: '#38bdf8',
       outreach: '#3b82f6',
@@ -2567,21 +2560,17 @@
       offer: '#10b981',
       closed: '#52525b'
     };
-    === END STAGE_COLORS === */
 
     /* Color coding for priority tiers */
-    /* === MOVED TO ../shared/MODULE.js === TIER_COLORS ===
-    const TIER_COLORS = {
+        const TIER_COLORS = {
       hot: '#ef4444',
       active: '#6366f1',
       watching: '#71717a',
       dormant: '#3f3f46'
     };
-    === END TIER_COLORS === */
 
     /** Safely parse JSON from localStorage with fallback */
-    /* === MOVED TO ../shared/MODULE.js === safeJsonParse ===
-    function safeJsonParse(key, fallback = null) {
+        function safeJsonParse(key, fallback = null) {
       try {
         const raw = localStorage.getItem(key);
         return raw ? JSON.parse(raw) : fallback;
@@ -2590,7 +2579,6 @@
         return fallback;
       }
     }
-    === END safeJsonParse === */
 
     /** Helper function to escape HTML special characters and prevent XSS */
     function escapeHtml(text) {
@@ -3322,11 +3310,9 @@
      * Saves connections to browser memory
      * INPUT: connections = array of connection objects
      */
-    /* === MOVED TO ../shared/MODULE.js === saveConnections ===
-    function saveConnections(connections) {
+        function saveConnections(connections) {
       localStorage.setItem('pf_connections', JSON.stringify(connections));
     }
-    === END saveConnections === */
 
     /**
      * Gets connections for a specific company
@@ -3419,8 +3405,7 @@
      * INPUT: connections = array of LinkedIn connection objects
      * RETURNS: sorted array (same objects, new order)
      */
-    /* === MOVED TO ../shared/MODULE.js === sortLinkedInConnections ===
-    function sortLinkedInConnections(connections) {
+        function sortLinkedInConnections(connections) {
       // Seniority tiers — lower number = higher seniority
       const SENIORITY_TIERS = [
         { tier: 0, patterns: [/\b(ceo|cto|cpo|coo|cfo|chief)\b/i] },
@@ -3468,7 +3453,6 @@
         return (a.name || '').localeCompare(b.name || '');
       });
     }
-    === END sortLinkedInConnections === */
 
     /**
      * Detects whether a LinkedIn connection's title is in Product or Engineering.
@@ -3476,15 +3460,13 @@
      * INPUT: position = string (job title)
      * RETURNS: 'product' | 'engineering' | null
      */
-    /* === MOVED TO ../shared/MODULE.js === getLinkedInDeptCategory ===
-    function getLinkedInDeptCategory(position) {
+        function getLinkedInDeptCategory(position) {
       if (!position) return null;
       const p = position.toLowerCase();
       if (/\b(product)\b/.test(p)) return 'product';
       if (/\b(engineer|software|developer|architect|devops|sre|infrastructure|backend|frontend|full.?stack|mobile|data|ml|ai|machine learning|technical|tech lead)\b/.test(p)) return 'engineering';
       return null;
     }
-    === END getLinkedInDeptCategory === */
 
     /**
      * Promotes a LinkedIn connection to an active tracked connection.
@@ -3704,11 +3686,9 @@
      * INPUT: companies = array of company objects
      * OUTPUT: data is persisted in browser memory
      */
-    /* === MOVED TO ../shared/MODULE.js === saveCompanies ===
-    function saveCompanies(companies) {
+        function saveCompanies(companies) {
       localStorage.setItem('pf_companies', JSON.stringify(companies));
     }
-    === END saveCompanies === */
 
     // ================================================================
     // FEATURE 26: INTERVIEW & OFFER SUBSTAGES
@@ -3719,15 +3699,13 @@
      * INPUT: stage (string, e.g., 'interviewing', 'offer')
      * OUTPUT: array of substage strings, or empty array if stage has no substages
      */
-    /* === MOVED TO ../shared/MODULE.js === getSubstages ===
-    function getSubstages(stage) {
+        function getSubstages(stage) {
       const substages = {
         interviewing: ['Phone Screen', 'Technical', 'Onsite', 'Final Round', 'Team Match'],
         offer: ['Verbal Offer', 'Written Offer', 'Negotiating', 'Accepted', 'Declined']
       };
       return substages[stage] || [];
     }
-    === END getSubstages === */
 
     /**
      * Update substage dropdown options when stage changes
@@ -3760,11 +3738,9 @@
      * INPUT: roles = array of job/role objects
      * OUTPUT: data is persisted in browser memory
      */
-    /* === MOVED TO ../shared/MODULE.js === saveRoles ===
-    function saveRoles(roles) {
+        function saveRoles(roles) {
       localStorage.setItem('pf_roles', JSON.stringify(roles));
     }
-    === END saveRoles === */
 
     // ================================================================
     // FEATURE 39: AUTO-ENRICHMENT ON COMPANY ENTRY
@@ -4366,37 +4342,31 @@
      * INPUT: stage = stage name (e.g., "researching", "interviewing")
      * RETURNS: hex color code as a string
      */
-    /* === MOVED TO ../shared/MODULE.js === getColorForStage ===
-    function getColorForStage(stage) {
+        function getColorForStage(stage) {
       return STAGE_COLORS[stage] || '#64748b';
     }
-    === END getColorForStage === */
 
     /**
      * Returns the color code for a given tier (priority level)
      * INPUT: tier = tier name (e.g., "hot", "active")
      * RETURNS: hex color code as a string
      */
-    /* === MOVED TO ../shared/MODULE.js === getColorForTier ===
-    function getColorForTier(tier) {
+        function getColorForTier(tier) {
       return TIER_COLORS[tier] || '#71717a';
     }
-    === END getColorForTier === */
 
     /**
      * Calculates how many days a job has been in its current stage
      * INPUT: role = job object
      * RETURNS: number of days (rounded down)
      */
-    /* === MOVED TO ../shared/MODULE.js === getDaysInStage ===
-    function getDaysInStage(role) {
+        function getDaysInStage(role) {
       const raw = role.lastActivity || role.dateAdded;
       // Handle both timestamp numbers and ISO date strings
       const stageEntryTime = typeof raw === 'string' ? new Date(raw).getTime() : raw;
       const days = Math.floor((Date.now() - stageEntryTime) / (1000 * 60 * 60 * 24));
       return isNaN(days) ? 0 : days;
     }
-    === END getDaysInStage === */
 
     /**
      * Creates HTML for a single job card displayed in kanban column
@@ -4497,8 +4467,7 @@
      * INPUT: roles = array of role objects
      * OUTPUT: object with conversion data and stage timing info
      */
-    /* === MOVED TO ../shared/MODULE.js === calculatePipelineAnalytics ===
-    function calculatePipelineAnalytics(roles) {
+        function calculatePipelineAnalytics(roles) {
       const analytics = {
         conversions: {},  // stage transitions
         avgDaysPerStage: {},  // average time in each stage
@@ -4558,7 +4527,6 @@
 
       return analytics;
     }
-    === END calculatePipelineAnalytics === */
 
     /**
      * Renders the kanban board view with all columns and cards
@@ -5114,8 +5082,7 @@
      * INPUT: rawText (string from fetched page), pageUrl (for domain hints)
      * RETURNS: { company, title, location, salary, jdText, positioning }
      */
-    /* === MOVED TO ../shared/MODULE.js === parseJobPosting ===
-    function parseJobPosting(rawText, pageUrl) {
+        function parseJobPosting(rawText, pageUrl) {
       const result = {
         company: '',
         title: '',
@@ -5218,7 +5185,6 @@
 
       return result;
     }
-    === END parseJobPosting === */
 
     /**
      * Fetches a job posting URL via CORS proxy, parses the content,
@@ -6230,8 +6196,7 @@
      * INPUT: ts = timestamp (number ms), ISO string, or falsy
      * RETURNS: string in "YYYY-MM-DDTHH:MM" format, or "" if invalid
      */
-    /* === MOVED TO ../shared/MODULE.js === formatDatetimeLocal ===
-    function formatDatetimeLocal(ts) {
+        function formatDatetimeLocal(ts) {
       if (!ts) return '';
       try {
         const d = new Date(ts);
@@ -6247,7 +6212,6 @@
         return '';
       }
     }
-    === END formatDatetimeLocal === */
 
     /**
      * Builds the stage history timeline HTML with editable datetime inputs.

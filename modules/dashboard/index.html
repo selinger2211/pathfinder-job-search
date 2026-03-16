@@ -2125,13 +2125,9 @@
   </div>
 
   <!-- Shared modules v3.32.0 - Extracted business logic for testing -->
-  <script src="../shared/state-utils.js?v=3.32.0"></script>
-  <script src="../shared/date-utils.js?v=3.32.0"></script>
-  <script src="../shared/dashboard-logic.js?v=3.32.0"></script>
   <script>
     /** Safely parse JSON from localStorage with fallback */
-    /* === MOVED TO ../shared/MODULE.js === safeJsonParse ===
-    function safeJsonParse(key, fallback = null) {
+        function safeJsonParse(key, fallback = null) {
       try {
         const raw = localStorage.getItem(key);
         return raw ? JSON.parse(raw) : fallback;
@@ -2140,7 +2136,6 @@
         return fallback;
       }
     }
-    === END safeJsonParse === */
 
     /* ================================================================
        DASHBOARD ARCHITECTURE OVERVIEW
@@ -2171,63 +2166,53 @@
      * Generate a stable unique ID for a nudge based on trigger type and entity
      * This ensures dismissed nudges stay dismissed even if data changes
      */
-    /* === MOVED TO ../shared/MODULE.js === generateNudgeId ===
-    function generateNudgeId(trigger, entityId) {
+        function generateNudgeId(trigger, entityId) {
       return `nudge_${trigger}_${entityId}`;
     }
-    === END generateNudgeId === */
 
     /**
      * Calculate days between two dates
      * Returns negative number if date2 is in future, positive if in past
      */
-    /* === MOVED TO ../shared/MODULE.js === daysSince ===
-    function daysSince(date) {
+        function daysSince(date) {
       if (!date) return 0;
       const dateObj = new Date(date);
       const now = new Date();
       const diffMs = now - dateObj;
       return Math.floor(diffMs / (1000 * 60 * 60 * 24));
     }
-    === END daysSince === */
 
     /**
      * Get time of day for greeting (morning, afternoon, evening)
      */
-    /* === MOVED TO ../shared/MODULE.js === getTimeOfDay ===
-    function getTimeOfDay() {
+        function getTimeOfDay() {
       const hour = new Date().getHours();
       if (hour < 12) return 'morning';
       if (hour < 17) return 'afternoon';
       return 'evening';
     }
-    === END getTimeOfDay === */
 
     /**
      * Format a date as a readable string (e.g., "3 days ago")
      */
-    /* === MOVED TO ../shared/MODULE.js === formatRelativeDate ===
-    function formatRelativeDate(date) {
+        function formatRelativeDate(date) {
       const days = daysSince(date);
       if (days === 0) return 'today';
       if (days === 1) return 'yesterday';
       if (days < 7) return `${days} days ago`;
       return new Date(date).toLocaleDateString();
     }
-    === END formatRelativeDate === */
 
     /**
      * Get today's date as YYYY-MM-DD string
      */
-    /* === MOVED TO ../shared/MODULE.js === getTodayDateString ===
-    function getTodayDateString() {
+        function getTodayDateString() {
       const now = new Date();
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const day = String(now.getDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
     }
-    === END getTodayDateString === */
 
     // ================================================================
     // DATA LAYER
@@ -2254,8 +2239,7 @@
      * RETURNS: latest comms entry object or null if no comms found
      * STRUCTURE: { date, type, direction, subject, snippet, channel }
      */
-    /* === MOVED TO ../shared/MODULE.js === getLatestCommsForRole ===
-    function getLatestCommsForRole(roleId, roles) {
+        function getLatestCommsForRole(roleId, roles) {
       const role = roles.find(r => r.id === roleId);
       if (!role || !role.commsLog || role.commsLog.length === 0) return null;
 
@@ -2263,7 +2247,6 @@
       const sorted = [...role.commsLog].sort((a, b) => new Date(b.date) - new Date(a.date));
       return sorted[0];
     }
-    === END getLatestCommsForRole === */
 
     /**
      * Find mutual connections at a specific company
@@ -2271,8 +2254,7 @@
      * INPUT: companyName = string, connections = array, linkedinNetwork = array
      * RETURNS: array of connection objects sorted by seniority, limited to top 2
      */
-    /* === MOVED TO ../shared/MODULE.js === getMutualConnections ===
-    function getMutualConnections(companyName, connections, linkedinNetwork) {
+        function getMutualConnections(companyName, connections, linkedinNetwork) {
       if (!companyName) return [];
 
       const targetLower = companyName.toLowerCase().trim();
@@ -2330,7 +2312,6 @@
       // Return top 2
       return topConnections.slice(0, 2);
     }
-    === END getMutualConnections === */
 
     /**
      * Save streak data to localStorage
@@ -2367,15 +2348,13 @@
      * Check if a role represents a meaningful action for streak counting
      * Meaningful actions: added today, advanced today, interview completed, offer received
      */
-    /* === MOVED TO ../shared/MODULE.js === isActionToday ===
-    function isActionToday(role) {
+        function isActionToday(role) {
       const today = getTodayDateString();
       const dateAdded = role.dateAdded ? new Date(role.dateAdded).toISOString().split('T')[0] : null;
       const stageChanged = role.stageChangedDate ? new Date(role.stageChangedDate).toISOString().split('T')[0] : null;
 
       return dateAdded === today || stageChanged === today;
     }
-    === END isActionToday === */
 
     /**
      * Update streak based on today's actions
@@ -3028,14 +3007,12 @@
      * INPUT: company (object from pf_companies)
      * OUTPUT: percentage (0-100) of fields populated
      */
-    /* === MOVED TO ../shared/MODULE.js === getCompanyProfileCompletion ===
-    function getCompanyProfileCompletion(company) {
+        function getCompanyProfileCompletion(company) {
       if (!company) return 0;
       const fields = ['domain', 'missionStatement', 'headcount', 'fundingStage', 'remotePolicy', 'url'];
       const populated = fields.filter(f => company[f] && company[f].toString().trim().length > 0).length;
       return Math.round((populated / fields.length) * 100);
     }
-    === END getCompanyProfileCompletion === */
 
     // ================================================================
     // PIPELINE STATS ENGINE
@@ -3044,8 +3021,7 @@
     /**
      * Compute pipeline statistics: stage counts, conversions, activity
      */
-    /* === MOVED TO ../shared/MODULE.js === computePipelineStats ===
-    function computePipelineStats() {
+        function computePipelineStats() {
       const { roles } = loadData();
       const now = new Date();
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -3093,7 +3069,6 @@
         },
       };
     }
-    === END computePipelineStats === */
 
     // ================================================================
     // FEATURE 37: INTERVIEW INTELLIGENCE CARD
@@ -3111,8 +3086,7 @@
      * INPUT: debriefs array, roles array
      * OUTPUT: intelligence object with patterns or unlock progress
      */
-    /* === MOVED TO ../shared/MODULE.js === computeInterviewIntelligence ===
-    function computeInterviewIntelligence(debriefs, roles) {
+        function computeInterviewIntelligence(debriefs, roles) {
       if (!debriefs || debriefs.length < 5) {
         return {
           unlocked: false,
@@ -3218,7 +3192,6 @@
         strongestAreas: strongestAreas
       };
     }
-    === END computeInterviewIntelligence === */
 
     /**
      * Render interview intelligence card (Feature 37)
