@@ -2586,7 +2586,7 @@
               roleId: role.id,
               company: role.company || 'Unknown',
               text: `Prep for your <span class="nudge-highlight">${role.title}</span> screen at <span class="nudge-highlight">${role.company}</span>`,
-              action: { label: 'Generate Brief', href: `../research-brief/index.html?roleId=${role.id}` },
+              action: { label: 'Generate Brief', href: `../research-brief/index.html?roleId=${role.id}&action=generate` },
             });
           }
         }
@@ -2607,7 +2607,7 @@
                 roleId: role.id,
                 company: role.company || 'Unknown',
                 text: `<span class="nudge-highlight">${role.title}</span> interview at <span class="nudge-highlight">${role.company}</span> in ${daysUntil} day${daysUntil !== 1 ? 's' : ''}!`,
-                action: { label: 'Prepare', href: `../research-brief/index.html?roleId=${role.id}` },
+                action: { label: 'Prepare', href: `../research-brief/index.html?roleId=${role.id}&action=generate` },
               });
             }
           }
@@ -4555,7 +4555,7 @@
               <div class="interview-company">${event.summary || 'Calendar Event'}</div>
               <span class="interview-type">${type}</span>
               <div class="interview-actions">
-                ${matchedRole ? `<a href="../research-brief/index.html?roleId=${matchedRole.id}" class="btn-sm">Prep</a>` : ''}
+                ${matchedRole ? `<a href="../research-brief/index.html?roleId=${matchedRole.id}&action=generate" class="btn-sm">Prep</a>` : ''}
                 <a href="../mock-interview/index.html" class="btn-sm">Practice</a>
               </div>
             </div>

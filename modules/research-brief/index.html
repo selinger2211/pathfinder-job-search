@@ -39,6 +39,7 @@
   <script src="https://unpkg.com/lucide@latest" onerror="window._lucideLoaded = false;"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js" onerror="window._html2pdfLoaded = false;"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js" onerror="window._mammothLoaded = false;"></script>
+  <script src="../shared/logos.js?v=3.30.0"></script>
   <script src="../shared/claude-api.js?v=3.23.2"></script>
 
   <style>
@@ -1550,7 +1551,8 @@
         });
 
       /**
-       * Get company logo URL from pf_companies or derived domain.
+       * Get company logo URL — delegates to shared/logos.js for domain overrides
+       * and ATS-aware domain extraction.  Falls back to pf_companies logoUrl first.
        */
       function getLogoUrl(role) {
         const companyLower = (role.company || '').toLowerCase().trim();
@@ -1562,12 +1564,10 @@
             (c.name || '').toLowerCase() === companyLower
           );
           if (match && match.logoUrl) return match.logoUrl;
-          if (match && match.domain) return `https://www.google.com/s2/favicons?domain=${match.domain}&sz=64`;
         } catch {}
 
-        /* Derive from company name */
-        const slug = companyLower.replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
-        return `https://www.google.com/s2/favicons?domain=${slug}.com&sz=64`;
+        /* Use shared logo system (domain overrides + ATS-aware extraction) */
+        return getCompanyLogoUrl(role.company, role.url || '');
       }
 
       const container = document.getElementById('roleStrip');
@@ -1581,7 +1581,7 @@
 
       container.innerHTML = roles.map(role => `
         <div class="role-chip" data-role-id="${role.id}" onclick="selectRoleCard('${role.id}')" title="${escapeHTML(role.title || '')}">
-          <img class="role-chip-logo" src="${getLogoUrl(role)}" alt="" onerror="this.style.display='none'">
+          <img class="role-chip-logo" src="${getLogoUrl(role)}" alt="" onerror="handleLogoError(this,'${escapeHTML((role.company||'').replace(/'/g,"\\'"))}','role-chip-logo')">
           <div class="role-chip-text">
             <span class="role-chip-company">${escapeHTML(role.company || 'Unknown')}</span>
             <span class="role-chip-title">${escapeHTML(shortTitle(role.title))}</span>
@@ -1619,20 +1619,12 @@
       document.getElementById('briefTitle').textContent = `${role.title} @ ${role.company || 'Unknown'}`;
       document.getElementById('briefSubtitle').textContent = `Pursuit Strategy Brief — ${new Date().toLocaleDateString()}`;
 
-      /* Show company logo in brief header — v3.27.0: multi-fallback chain */
+      /* Show company logo in brief header — v3.30.1: uses shared logo system */
       const briefLogo = document.getElementById('briefCompanyLogo');
-      const briefDomain = company?.domain || role.domain || '';
-      const briefCompanySlug = (role.company || '').toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
-      if (company?.logoUrl) {
-        briefLogo.src = company.logoUrl;
-      } else if (briefDomain) {
-        briefLogo.src = `https://www.google.com/s2/favicons?domain=${briefDomain}&sz=128`;
-      } else if (briefCompanySlug) {
-        briefLogo.src = `https://www.google.com/s2/favicons?domain=${briefCompanySlug}.com&sz=128`;
-      }
+      briefLogo.src = getCompanyLogoUrl(role.company, role.url || '');
       briefLogo.alt = `${role.company || 'Company'} logo`;
       briefLogo.style.display = 'block';
-      briefLogo.onerror = () => { briefLogo.style.display = 'none'; };
+      briefLogo.onerror = function() { handleLogoError(this, role.company || '', ''); };
 
       /* Show company card — v3.27.0: fill from role data when company data is sparse */
       const companyCard = document.getElementById('companyCard');
@@ -1642,18 +1634,10 @@
       document.getElementById('companyStage').textContent = company?.stage || 'N/A';
       document.getElementById('companyHeadcount').textContent = company?.headcount || 'N/A';
 
-      /* Logo: try pf_companies logoUrl → Clearbit → Google Favicon from domain → fallback */
+      /* Logo: uses shared logo system — v3.30.1 */
       const companyLogoEl = document.getElementById('companyLogo');
-      const logoDomain = company?.domain || role.domain || '';
-      if (company?.logoUrl) {
-        companyLogoEl.src = company.logoUrl;
-      } else if (logoDomain) {
-        companyLogoEl.src = `https://www.google.com/s2/favicons?domain=${logoDomain}&sz=128`;
-      } else {
-        const slug = companyName.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
-        companyLogoEl.src = `https://www.google.com/s2/favicons?domain=${slug}.com&sz=128`;
-      }
-      companyLogoEl.onerror = () => { companyLogoEl.style.display = 'none'; };
+      companyLogoEl.src = getCompanyLogoUrl(role.company, role.url || '');
+      companyLogoEl.onerror = function() { handleLogoError(this, role.company || '', ''); };
       companyCard.style.display = 'flex';
 
       /* Show role details — v3.27.0: handle all field formats from feed and pipeline */
@@ -3290,6 +3274,23 @@ ${doc.content.slice(0, 8000)}
       });
 
       if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+
+      /* v3.30.1: Auto-trigger from URL params (Dashboard deep links).
+         ?roleId=X        → select that role
+         ?action=generate → auto-start brief generation
+         Both together = one-click "Generate Brief" from Dashboard */
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramRoleId = urlParams.get('roleId');
+      const paramAction = urlParams.get('action');
+      if (paramRoleId) {
+        selectRoleCard(paramRoleId);
+        /* Small delay so DOM updates before generation starts */
+        if (paramAction === 'generate') {
+          setTimeout(() => { generateBrief(); }, 400);
+        }
+        /* Clean URL so refresh doesn't re-trigger */
+        window.history.replaceState({}, '', window.location.pathname);
+      }
 
       /* v3.27.0: Auto-refresh when pipeline data changes.
          - 'storage' event fires when ANOTHER tab writes to localStorage

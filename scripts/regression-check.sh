@@ -115,6 +115,15 @@ else
   pass "No inline handleLogoError() (all in shared/logos.js)"
 fi
 
+# Check for calls to removed/undefined logo functions (e.g., getCompanyLogoFallbackUrl)
+GHOST_FNS=$(grep -r "getCompanyLogoFallbackUrl" "$MODULES_DIR" --include="*.html" -l 2>/dev/null | wc -l | tr -d ' ')
+if [ "$GHOST_FNS" -gt 0 ]; then
+  fail "Found calls to removed getCompanyLogoFallbackUrl() — use handleLogoError() instead"
+  grep -r "getCompanyLogoFallbackUrl" "$MODULES_DIR" --include="*.html" -l 2>/dev/null
+else
+  pass "No calls to removed logo functions"
+fi
+
 # Check that modules using SHARED logo functions import logos.js
 # Only flag functions unique to the shared system (handleLogoError, companyLogoHtml,
 # DOMAIN_OVERRIDES, guessDomain). Some modules (Calendar, Dashboard) have their own

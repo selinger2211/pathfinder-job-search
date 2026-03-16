@@ -4,6 +4,37 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.30.1 — 2026-03-15
+
+### Critical Bug Fixes + Workflow Regression Test System
+
+**Pipeline fixes (3 bugs):**
+- Fixed `getCompanyLogoFallbackUrl` — function removed in v3.30.0 but still called in detail panel and companies view, causing JS ReferenceError that broke ALL card clicks and side panel opening. Replaced with shared `handleLogoError()` fallback
+- Fixed table view row onclick: `openRoleDetail(); closeRoleDetail()` called back-to-back — panel opened then immediately closed. Removed spurious `closeRoleDetail()` call
+- Fixed "Why the change?" modal Save button: `querySelector('button:last-child')` matched the "Withdrew" reason chip instead of the Save button. Changed to `.querySelector('.btn-primary')`
+
+**Research Brief fixes:**
+- Added `shared/logos.js` import — role pill logos now use shared logo system with DOMAIN_OVERRIDES and two-stage fallback instead of bare Google Favicon with hidden-on-error
+- Updated brief header and company card logos to use shared `getCompanyLogoUrl()` + `handleLogoError()`
+
+**Dashboard auto-trigger deep links:**
+- "Generate Brief", "Prepare", and "Prep" buttons now pass `?roleId=X&action=generate` to Research Brief
+- Research Brief `init()` reads URL params and auto-selects role + auto-starts generation
+- Pipeline `init()` now handles `?modal=add` (opens add-role dialog) and `?roleId=X` (opens detail panel)
+
+**Workflow regression test (`scripts/workflow-regression.js`):**
+- New Node.js static analysis engine — 79 checks across all 11 modules
+- Check 1: onclick handlers reference defined functions (catches broken event handlers)
+- Check 2: Contradictory sequential calls (catches open+close in same handler)
+- Check 3: getElementById references existing HTML elements
+- Check 4: Removed function blocklist (catches calls to deleted functions like `getCompanyLogoFallbackUrl`)
+- Check 5: Script load order (shared scripts must load before inline code)
+- Check 6: querySelector ambiguity (catches generic selectors that match wrong element)
+- Check 7: Cross-module URL param contracts (sender sends ?param, target handles it)
+- Added `getCompanyLogoFallbackUrl` to regression-check.sh removed-function detector
+
+---
+
 ## v3.30.0 — 2026-03-15
 
 ### Anti-Regression Architecture: Shared Logo System + Regression Check Script

@@ -2,8 +2,8 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/pipeline/`
-**Version:** v3.29.0
-**Last Updated:** 2026-03-15
+**Version:** v3.17
+**Last Updated:** 2026-03-13
 **Status:** Active — core features and advanced views implemented
 
 ---
@@ -99,7 +99,7 @@ interface Company {
   id: string;                   // Unique identifier (slug: lowercase, hyphens)
   name: string;                 // Full company name
   url: string;                  // Website URL
-  logoUrl?: string;             // Google Favicon API (Clearbit shut down by HubSpot)
+  logoUrl?: string;             // Clearbit logo fetch result
 
   // Tracking
   tier: 'Hot' | 'Active' | 'Watching' | 'Dormant';
@@ -141,11 +141,11 @@ Career page monitoring happens at these frequencies (see Job Feed PRD for detail
 
 ### Auto-Enrichment on Company Entry
 
-> **Status: Implemented (v3.17.0)** — DuckDuckGo Instant Answer API + Google Favicon API (primary) + website meta tags. Enrichment panel, re-enrich button, batch "Enrich All" with progress.
+> **Status: Implemented (v3.17.0)** — DuckDuckGo Instant Answer API + Clearbit Logo + Google Favicon + website meta tags. Enrichment panel, re-enrich button, batch "Enrich All" with progress.
 
 When a company is added (manually or by Job Feed), the system runs auto-enrichment:
 
-1. **Logo fetch** (Google Favicon API) — attempt to get company logo
+1. **Logo fetch** (Clearbit API + Google Favicon fallback) — attempt to get company logo
 2. **Website meta tags** — scrape website for mission, description, keywords
 3. **DuckDuckGo Instant Answer** — get quick facts about company
 4. **News scan** — fetch recent articles from DuckDuckGo
@@ -803,24 +803,24 @@ What exists today:
 - [x] Fit Assessment badge on cards and detail panel (v3.11)
 
 ### Phase 2: Enrichment & Automation (v3.17)
-- [x] Auto-enrichment on company entry (DuckDuckGo Instant Answer API, Google Favicon API, website meta tags) (v3.17)
+- [x] Auto-enrichment on company entry (DuckDuckGo Instant Answer API, Clearbit logo, Google Favicon, website meta tags) (v3.17)
 - [x] Company lookup web search on manual add (v3.12)
 - [x] URL import for adding roles (CORS proxy) (v3.11)
 - [ ] Tier management suggestions from Job Feed
 - [ ] Stage-based notifications ("interview in 2 days")
-- [ ] Bulk actions (Status: Planned) — move multiple roles, change tier for multiple companies
+- [ ] Bulk actions (move multiple roles, change tier for multiple companies)
 
 ### Phase 3: Feedback Loops & Intelligence (v1.2+)
 - [x] Research Brief data writeback to role fitAssessment (v3.11)
 - [x] Fit assessment visible in Pipeline (v3.11)
 - [x] Interview prep notes linkage (v3.11)
-- [ ] Tier demotion suggestions (Status: Planned) — no activity, all roles closed, news alerts
-- [ ] Historical analytics (Status: Planned) — funnel conversion rate by source, stage, tier (note: basic conversion analytics now implemented in v3.29.0)
+- [ ] Tier demotion suggestions (no activity, all roles closed, news alerts)
+- [ ] Historical analytics (funnel conversion rate by source, stage, tier)
 
 ### Phase 4: Advanced Integrations (Future)
-- [ ] Calendar sync for interview scheduling (Status: Planned) — Google Calendar integration
-- [ ] Email tracking (Status: Planned) — when resume read, interview invite accepted
-- [ ] LinkedIn message tracking (Status: Planned) — outreach follow-up reminders
+- [ ] Calendar sync for interview scheduling (Google Calendar integration)
+- [ ] Email tracking (when resume read, interview invite accepted)
+- [ ] LinkedIn message tracking (outreach follow-up reminders)
 - [ ] Salary data aggregation from multiple roles
 - [x] Export to CSV (v3.11)
 
@@ -838,33 +838,6 @@ What exists today:
 | Score visibility | 100% of roles with fit assessment show color | UI audit |
 | User engagement | 3+ interactions per role | Analytics |
 | Export completeness | 100% of roles, companies, connections exportable | CSV validation |
-
----
-
-## 13.1 Pipeline Analytics
-
-> **Status: Implemented (v3.29.0)** — Basic conversion analytics with stage transition tracking and visual progress representation.
-
-Conversion metrics are calculated dynamically from `stageHistory` data:
-
-**Conversion Rate Formula:**
-- `everReachedTo / everReachedFrom` (capped at 100%)
-- Tracks the ratio of roles that advanced to the next stage versus roles that entered the previous stage
-- E.g., "3 out of 5 roles that reached Applied stage made it to Screen" = 60% conversion
-
-**Stage Transitions Tracked:**
-- Discovered → Researching
-- Researching → Outreach
-- Outreach → Applied
-- Applied → Screen
-- Screen → Interviewing
-- Interviewing → Offer
-
-**Visual Representation:**
-- Horizontal progress bars per stage transition showing percentage conversion
-- Percentage labels displayed above or within bars
-- Color-coded: green for ≥70%, yellow for 40-69%, muted for <40%
-- Appears in a dedicated Analytics section in the Pipeline detail view
 
 ---
 
@@ -946,8 +919,6 @@ Define which fields are authoritative vs. inferred, when data goes stale, and wh
 - **Data corruption recovery:** If `pf_roles` or `pf_companies` is corrupted (unparseable JSON), attempt auto-recovery from MCP bridge (`GET /data/pf_roles`). If MCP unavailable, show "Data recovery needed" modal with option to restore from backup (`~/.pathfinder/backups/`).
 - **Bulk operation rollback:** Bulk stage transitions, bulk tier changes, and CSV imports create a snapshot in `pf_pipeline_undo` before executing. "Undo" button available for 30 seconds after bulk action.
 - **Concurrent editing:** If user has Pipeline open in two tabs and edits the same role, last-write-wins (localStorage is single-threaded). Future: `storage` event listener detects external changes and prompts merge.
-- **Cross-tab auto-refresh:** Implemented via localStorage `storage` event + `visibilitychange` listener. When another tab modifies pipeline data (`pf_roles`, `pf_companies`, `pf_connections`), the current tab detects the change and auto-refreshes. Prevents stale data when user has multiple tabs open.
-- **Cache-busting:** Cache-busting meta tags are added to prevent stale assets from being served.
 - **localStorage quota exceeded:** If `setItem` throws `QuotaExceededError`, show warning: "Storage full. Export data and clear old roles to free space." Suggest archiving closed/rejected roles.
 - **Drag-drop failures:** If drag-drop stage transition fails (DOM event lost), show toast "Stage change didn't save. Try again." Log error for debugging.
 

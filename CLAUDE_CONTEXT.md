@@ -8,7 +8,7 @@
 
 Pathfinder is an agentic job search system with 11 standalone HTML modules sharing data via localStorage + IndexedDB. Each module is a single `index.html` file in `modules/`. There is no backend server required for core functionality — Claude API calls happen directly from the browser via `modules/shared/claude-api.js`.
 
-**Current Version:** v3.30.0 (as of 2026-03-15)
+**Current Version:** v3.30.1 (as of 2026-03-15)
 **Last Major Features:** Research Brief V3 — pursuit strategy rewrite with 13 sections, Tavily web search for live company news, Additional Context input (text + file upload via mammoth.js), 7 evidence labels (JD/EXT/ILI/CTX/DOC/INF/NC), upgraded fit model, Pursuit Economics decision box, screen-out risk analysis, deal-breaker test, proof-point handoff. Previous: V2 (v3.21.0), safeJsonParse hardening (v3.20.5).
 **Status:** All 11 modules pass HTML integrity + brace balance + safeJsonParse coverage. Research Brief V3: 2518 lines, 356/356 braces balanced, temperature 0.3, maxTokens 4096. Tavily API key optional — degrades gracefully. Zero bare JSON.parse(localStorage) calls remaining.
 

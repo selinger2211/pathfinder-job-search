@@ -4278,8 +4278,8 @@
         `;
 
         const textarea = modal.querySelector('textarea');
-        const saveBtn = modal.querySelector('button:last-child');
-        const skipBtn = modal.querySelector('button:last-child').previousElementSibling;
+        const saveBtn = modal.querySelector('.btn-primary');
+        const skipBtn = modal.querySelector('.btn-ghost');
 
         // Wire up chip selection
         modal.querySelectorAll('.stage-reason-chip').forEach(chip => {
@@ -5697,15 +5697,11 @@
       selectedCardId = roleId;
       renderKanban();
 
-      // Populate header with logo — v3.20.0: Clearbit → Google Favicon → letter fallback
+      // Populate header with logo — v3.30.1: uses shared handleLogoError fallback
       const company = getCompanies().find(c => c.name === role.company);
       const logoUrl = getCompanyLogoUrl(role.company, role.url);
-      const fallbackLogoUrl = getCompanyLogoFallbackUrl(role.company, role.url);
       const headerLogo = document.getElementById('detail-header-logo');
-      headerLogo.onerror = function() {
-        this.onerror = function() { this.style.display = 'none'; };
-        this.src = fallbackLogoUrl;
-      };
+      headerLogo.onerror = function() { handleLogoError(this, role.company || '', 'detail-header-logo'); };
       headerLogo.src = logoUrl;
       headerLogo.style.display = '';
       const companyDesc = getCompanyDescription(role.company);
@@ -7299,7 +7295,7 @@
             <div class="modal-body">
               <div style="display: flex; gap: var(--space-4); margin-bottom: var(--space-4);">
                 <img src="${company.logoUrl || getCompanyLogoUrl(company.name, company.url)}"
-                     alt="${escapeHtml(company.name)}" style="width: 64px; height: 64px; border-radius: var(--radius-md); object-fit: contain; background: var(--bg-elevated);" onerror="this.onerror=function(){this.style.display='none';}; this.src=getCompanyLogoFallbackUrl('${escapeHtml(company.name).replace(/'/g, "\\'")}');">
+                     alt="${escapeHtml(company.name)}" style="width: 64px; height: 64px; border-radius: var(--radius-md); object-fit: contain; background: var(--bg-elevated);" onerror="handleLogoError(this,'${escapeHtml(company.name).replace(/'/g, "\\'")}','');">
                 <div>
                   <div style="display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2);">
                     <span class="company-card-tier ${company.tier}">${company.tier}</span>
@@ -7484,7 +7480,7 @@
         const rawDate = role.lastActivity || role.dateAdded;
         const days = Math.floor((Date.now() - (typeof rawDate === 'string' ? new Date(rawDate).getTime() : rawDate)) / (1000 * 60 * 60 * 24));
         return `
-          <tr onclick="openRoleDetail('${role.id}'); closeRoleDetail();">
+          <tr onclick="openRoleDetail('${role.id}')">
             <td>
               <div class="table-company">
                 ${companyLogoHtml(role.company, 'table-company-logo', role.url)}
@@ -7592,6 +7588,27 @@
 
     // Render icons from Lucide icon library
     if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+
+    /* v3.30.1: Handle URL params from Dashboard deep links.
+       ?modal=add  → open the Add Role modal
+       ?roleId=X   → select and open detail panel for that role */
+    (function handleUrlParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramModal = urlParams.get('modal');
+      const paramRoleId = urlParams.get('roleId');
+
+      if (paramRoleId) {
+        setTimeout(() => { openRoleDetail(paramRoleId); }, 300);
+      }
+      if (paramModal === 'add') {
+        const addBtn = document.getElementById('add-role-btn');
+        if (addBtn) setTimeout(() => { addBtn.click(); }, 300);
+      }
+      /* Clean URL so refresh doesn't re-trigger */
+      if (paramModal || paramRoleId) {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    })();
   </script>
   <script src="../shared/data-layer.js?v=3.5.1"></script> <!-- v3.0.0: MCP-backed data persistence -->
 </body>
