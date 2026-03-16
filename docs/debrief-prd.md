@@ -2,9 +2,11 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/debrief/`
-**Version:** v3.15
-**Last Updated:** 2026-03-13
-**Status:** Active — v3.15.0 features live
+**Version:** v3.29.0
+**Last Updated:** 2026-03-15
+**Status:** Partially Implemented — Basic debrief form exists. Conversational Claude debrief, pattern analysis, and feedback loops are planned.
+
+> **Status: Partially Implemented** — Basic debrief form exists. Conversational Claude debrief, pattern analysis, and feedback loops are planned.
 
 ---
 

@@ -1,0 +1,149 @@
+{
+  "roleId": "ringcentral-group-pm",
+  "role": {
+    "title": "Group Product Manager",
+    "company": "RingCentral"
+  },
+  "company": {
+    "name": "RingCentral",
+    "domain": "ringcentral.com"
+  },
+  "generatedAt": "2026-03-16T20:00:00Z",
+  "sections": {
+    "pursuitEconomics": {
+      "content": "<p>RingCentral (NYSE: RNG) presents a compelling pursuit at an inflection point. <span class=\"cite\">The company achieved $2.5B total revenue in FY2025, up 5% YoY, with free cash flow of $530M up 32% YoY <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. This is a profitable, cash-generating business investing aggressively in AI. <span class=\"cite\">AI-led products now contribute nearly 10% of ARR, have tripled year-over-year, and reached a $100M ARR exit rate <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. The Group PM role sits at the center of this AI strategy — owning agentic voice AI product lines that represent the company's primary growth vector.</p><p>Compensation analysis: <span class=\"cite\">The posted range of $142,800–$204,000 base <span class=\"cite-label\" data-label=\"JD\">JD</span></span> is plausible for a GPM-level role at a public company, though total comp with equity should be $300K–$400K. <span class=\"cite\">RNG initiated a quarterly $0.075/share dividend and expanded buyback authorization to $500M <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>, signaling shareholder confidence and equity value stability. <span class=\"cite\">2026 guidance projects 4.5%–5.5% subscription revenue growth with $580M–$600M free cash flow <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>, indicating continued financial health.</p><p>Equity upside potential: AI product lines growing at 3x while core business grows 5% creates a two-speed company. If the GPM can drive AI Receptionist and related products from $100M to $250M ARR, that directly impacts stock valuation multiples. <span class=\"cite\">RingCentral plans to invest approximately $250M in R&D in 2026, heavily focused on agentic voice AI <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. This role has meaningful budget and headcount behind it.</p>",
+      "citations": [
+        {"label": "EXT", "source": "Seeking Alpha / RNG Q4 2025 Earnings", "detail": "$2.5B revenue, $530M FCF"},
+        {"label": "EXT", "source": "RNG Q4 2025 Earnings Call", "detail": "AI products at $100M ARR exit rate, tripled YoY"},
+        {"label": "JD", "source": "Job Description", "detail": "$142,800–$204,000 base salary range"},
+        {"label": "EXT", "source": "RNG Investor Relations", "detail": "Dividend and buyback program"},
+        {"label": "EXT", "source": "RNG 2026 Guidance", "detail": "4.5%–5.5% sub rev growth, $580–600M FCF"},
+        {"label": "EXT", "source": "RNG 10-K Filing", "detail": "$250M R&D investment in agentic AI"}
+      ],
+      "confidence": "High"
+    },
+    "existence": {
+      "content": "<p>This role demonstrably exists and is in active hiring. <span class=\"cite\">The position is posted on RingCentral's Workday careers portal as Group Product Manager (R075595) <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>, confirming it is an open, approved headcount. The GPM title at RingCentral implies ownership of multiple product managers and a full product line — this is a senior IC/player-coach hybrid, not a people-management-only role.</p><p>The role sits within the AI product family, which <span class=\"cite\">now contributes nearly 10% of total ARR and is the company's fastest-growing segment <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. Specific products under this umbrella include: <span class=\"cite\">AIR (AI Receptionist) for call handling and routing, AVA (AI Virtual Agent) for mid-market customer service, and ACE (AI Coach for Employees) for post-call analysis <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. The JD emphasizes <span class=\"cite\">defining intelligent agent behaviors grounded in NLU/NLP, LLMs, memory, reasoning, and dialog orchestration <span class=\"cite-label\" data-label=\"JD\">JD</span></span>, indicating this is a core AI product role, not a wrapper.</p><p>Organizational context: <span class=\"cite\">Antonio Nucci joined as Chief AI Officer in May 2025, coming from CTO at Aisera and previously CTO at Cisco <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. <span class=\"cite\">Kira Makagon was promoted to President and COO in February 2025, overseeing product, technology, and GTM <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. This GPM role likely reports to a Sr. Director or VP of Product under this structure.</p>",
+      "citations": [
+        {"label": "EXT", "source": "RingCentral Workday", "detail": "Job posting R075595 active"},
+        {"label": "EXT", "source": "RNG Q4 Earnings", "detail": "AI products at 10% of ARR"},
+        {"label": "EXT", "source": "RNG AI Product Portfolio", "detail": "AIR, AVA, ACE product lines"},
+        {"label": "JD", "source": "Job Description", "detail": "NLU/NLP, LLMs, dialog orchestration"},
+        {"label": "EXT", "source": "GovConWire", "detail": "Antonio Nucci appointed Chief AI Officer"},
+        {"label": "EXT", "source": "BusinessWire", "detail": "Kira Makagon promoted to President/COO"}
+      ],
+      "confidence": "High"
+    },
+    "companyMarket": {
+      "content": "<h3>Company Position</h3><p><span class=\"cite\">RingCentral commands approximately 20% of the UCaaS market share, ahead of Zoom (15%) and Microsoft (12%) <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. <span class=\"cite\">Gartner's 2025 Magic Quadrant names RingCentral as a Leader alongside Cisco, Microsoft, and Zoom <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. The company is a 25-year-old incumbent with $2.5B revenue, now pivoting aggressively into AI-powered communications.</p><h3>Market Size & Growth</h3><p><span class=\"cite\">The global UCaaS market reached $33.4B in 2024, growing 5.7% annually, and is projected to reach $37.2B in 2026 with a 13.2% CAGR through 2036 <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. <span class=\"cite\">CCaaS is growing faster at 15–25% annually, driven by PBX-to-cloud migrations <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. The convergence of UCaaS + CCaaS + AI (\"MultiCaaS\") is the key trend — RingCentral is well-positioned with integrated telephony infrastructure that pure-AI startups lack.</p><h3>Competitive Landscape</h3><table><tr><th>Competitor</th><th>Strength</th><th>Weakness vs. RingCentral</th></tr><tr><td>Microsoft Teams</td><td>Bundled distribution, enterprise lock-in</td><td>Weaker telephony, PSTN integration gaps</td></tr><tr><td>Zoom</td><td>UX, brand recognition, CCaaS growth</td><td>Smaller telephony installed base</td></tr><tr><td>Genesys / Five9</td><td>CCaaS-native, deep CX features</td><td>No UCaaS platform, integration complexity</td></tr><tr><td>Retell AI / Eleven Labs</td><td>AI-native voice quality</td><td>No telephony infrastructure, no enterprise distribution</td></tr><tr><td>Dialpad</td><td>AI-first approach, mid-market</td><td>Smaller scale, narrower product suite</td></tr></table><p><span class=\"cite\">Hyperscaler bundling is driving price compression, forcing differentiation through AI integration and outcomes <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. RingCentral's moat: existing telephony infrastructure + customer base gives warm distribution for AI products that greenfield startups cannot replicate.</p>",
+      "citations": [
+        {"label": "EXT", "source": "UC Today / Gartner 2025", "detail": "20% UCaaS market share, MQ Leader"},
+        {"label": "EXT", "source": "Gartner Magic Quadrant 2025", "detail": "Leader alongside Cisco, Microsoft, Zoom"},
+        {"label": "EXT", "source": "Omdia / FMI Market Research", "detail": "UCaaS at $33.4B, 13.2% CAGR"},
+        {"label": "EXT", "source": "CX Foundation", "detail": "CCaaS growing 15–25% annually"},
+        {"label": "EXT", "source": "Channel Futures", "detail": "MultiCaaS convergence trend"},
+        {"label": "EXT", "source": "Nextiva / UC Today", "detail": "Hyperscaler bundling pressure"}
+      ],
+      "confidence": "High"
+    },
+    "plausible": {
+      "content": "<p>Ili's candidacy is strong for this role. The JD requires <span class=\"cite\">strong understanding of SIP/PSTN basics, call routing, IVR/receptionist flows <span class=\"cite-label\" data-label=\"JD\">JD</span></span> — <span class=\"cite\">Ili's telecom career background directly addresses this, a rare skillset among product managers <span class=\"cite-label\" data-label=\"ILI\">ILI</span></span>. Most PMs lack exposure to telephony infrastructure, making this a significant competitive advantage.</p><p>The AI product focus maps well: <span class=\"cite\">the role requires defining intelligent agent behaviors grounded in NLU/NLP, LLMs, memory, reasoning, and dialog orchestration <span class=\"cite-label\" data-label=\"JD\">JD</span></span>. <span class=\"cite\">Ili's stated focus on AI product leadership <span class=\"cite-label\" data-label=\"ILI\">ILI</span></span> and <span class=\"cite\">15+ years of senior product experience in data products and platform strategy <span class=\"cite-label\" data-label=\"ILI\">ILI</span></span> positions well for the intersection of telecom infrastructure + AI agents.</p><p>The GPM level is appropriate: <span class=\"cite\">RingCentral's AI product family is in hyper-growth at $100M ARR <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>, and the GPM role implies owning a substantial product line with direct reports. This matches Ili's leadership experience without the \"Sr. Director\" title inflation that can signal organizational bloat.</p>",
+      "citations": [
+        {"label": "JD", "source": "Job Description", "detail": "SIP/PSTN, call routing, IVR flows required"},
+        {"label": "ILI", "source": "Candidate background", "detail": "Telecom career experience"},
+        {"label": "JD", "source": "Job Description", "detail": "NLU/NLP, LLMs, dialog orchestration"},
+        {"label": "ILI", "source": "Candidate background", "detail": "AI product leadership focus"},
+        {"label": "ILI", "source": "Candidate background", "detail": "15+ years product leadership"},
+        {"label": "EXT", "source": "RNG Earnings", "detail": "AI products at $100M ARR"}
+      ],
+      "confidence": "High"
+    },
+    "screenOut": {
+      "content": "<p>No hard screen-outs identified. Potential yellow flags to address proactively:</p><ul><li><strong>Title calibration:</strong> GPM is typically one level below Sr. Director/VP. Given Ili's seniority (15+ years), confirm whether this represents a lateral move or step-down. If step-down, ensure scope and compensation justify it.</li><li><strong>Location:</strong> <span class=\"cite\">RingCentral's headquarters is in Belmont, CA <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. Confirm remote/hybrid policy for this specific role. <span class=\"cite\">The company has significant presence in Denver and internationally <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>.</li><li><strong>Ad tech → UCaaS transition:</strong> <span class=\"cite\">Ili's primary domain is ad tech and data products <span class=\"cite-label\" data-label=\"ILI\">ILI</span></span>. The telecom background bridges this gap, but expect interview questions about UCaaS/CCaaS-specific experience. Prepare concrete examples of platform extensibility, API strategy, and enterprise go-to-market.</li></ul><p><span class=\"cite\">RingCentral's Glassdoor rating is 3.5/5 with 57% recommending <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. <span class=\"cite\">Key concerns include organizational silos, frequent restructuring (layoffs every few months), and being \"an engineering company led by accountants\" <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. These are real cultural risks — probe during interviews for AI team stability and autonomy.</p>",
+      "citations": [
+        {"label": "EXT", "source": "RingCentral website", "detail": "HQ in Belmont, CA"},
+        {"label": "EXT", "source": "Glassdoor", "detail": "Denver and international presence"},
+        {"label": "ILI", "source": "Candidate background", "detail": "Ad tech and data products domain"},
+        {"label": "EXT", "source": "Glassdoor (1,975 reviews)", "detail": "3.5/5 rating, 57% recommend"},
+        {"label": "EXT", "source": "Glassdoor reviews", "detail": "Silos, layoffs, management concerns"}
+      ],
+      "confidence": "High"
+    },
+    "needs": {
+      "content": "<p>Reading between the JD lines, RingCentral needs someone who can:</p><ol><li><strong>Scale agentic AI from $100M to $250M+ ARR:</strong> <span class=\"cite\">AI products tripled YoY but are still only 10% of total revenue <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. The GPM must drive the next 2–3x. This requires product-market fit refinement, pricing strategy, and enterprise adoption playbooks.</li><li><strong>Build reusable agent frameworks:</strong> The JD explicitly calls for <span class=\"cite\">building scalable, reusable frameworks for agent development, configuration, and lifecycle management across diverse enterprise and consumer use cases <span class=\"cite-label\" data-label=\"JD\">JD</span></span>. This is a platform engineering + product hybrid challenge.</li><li><strong>Bridge telephony and AI:</strong> <span class=\"cite\">SIP/PSTN, call routing, IVR expertise is required <span class=\"cite-label\" data-label=\"JD\">JD</span></span> because the AI layer must integrate deeply with existing telephony infrastructure. Most AI-native companies can't do this; RingCentral's advantage depends on someone who understands both.</li><li><strong>Drive experimentation velocity:</strong> <span class=\"cite\">Partner with design and research teams to gather qualitative feedback and validate hypotheses through A/B testing <span class=\"cite-label\" data-label=\"JD\">JD</span></span> — they need a data-driven PM who ships and measures, not a roadmap politician.</li></ol>",
+      "citations": [
+        {"label": "EXT", "source": "RNG Earnings", "detail": "AI at 10% of revenue, tripled YoY"},
+        {"label": "JD", "source": "Job Description", "detail": "Reusable agent frameworks"},
+        {"label": "JD", "source": "Job Description", "detail": "SIP/PSTN, call routing, IVR"},
+        {"label": "JD", "source": "Job Description", "detail": "A/B testing, qualitative research"}
+      ],
+      "confidence": "High"
+    },
+    "fit": {
+      "content": "<p><strong>Strong fit areas:</strong></p><ul><li><strong>Telecom infrastructure:</strong> <span class=\"cite\">Ili's telecom background <span class=\"cite-label\" data-label=\"ILI\">ILI</span></span> directly addresses the highest-friction hiring requirement. This is the primary differentiator versus other PM candidates.</li><li><strong>Platform thinking:</strong> <span class=\"cite\">Ili's experience scaling data products and programmatic platforms <span class=\"cite-label\" data-label=\"ILI\">ILI</span></span> maps to the JD's emphasis on reusable frameworks and multi-vertical extensibility.</li><li><strong>AI product conviction:</strong> <span class=\"cite\">Ili's current AI product leadership focus <span class=\"cite-label\" data-label=\"ILI\">ILI</span></span> aligns with the organization's top strategic priority. Not a tourist.</li></ul><p><strong>Areas to prepare for:</strong></p><ul><li><strong>UCaaS/CCaaS domain depth:</strong> <span class=\"cite\">RingCentral targets a $93B+ TAM spanning UCaaS, CCaaS, and agentic AI <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. Ili should study RingCentral's product portfolio, pricing tiers, and competitive positioning against Microsoft Teams, Zoom, and Genesys.</li><li><strong>Voice AI specifics:</strong> Research <span class=\"cite\">the AIR product's technical architecture — Google ASR, OpenAI LLM integration, and Eleven Labs voice synthesis <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. Prepare to discuss latency tradeoffs, voice quality, and conversation state management.</li></ul>",
+      "citations": [
+        {"label": "ILI", "source": "Candidate background", "detail": "Telecom career"},
+        {"label": "ILI", "source": "Candidate background", "detail": "Data products and platform scaling"},
+        {"label": "ILI", "source": "Candidate background", "detail": "AI product leadership"},
+        {"label": "EXT", "source": "RNG investor presentation", "detail": "$93B TAM"},
+        {"label": "EXT", "source": "RNG AI product docs", "detail": "AIR architecture — ASR, LLM, voice synthesis"}
+      ],
+      "confidence": "High"
+    },
+    "gaps": {
+      "content": "<p><strong>Gap 1: No direct UCaaS/CCaaS product experience.</strong> Ili's domain is ad tech and data products — not cloud communications. Mitigation: Telecom background provides infrastructure understanding; emphasize that platform thinking and AI product skills transfer directly. The JD values AI/LLM depth over UCaaS history.</p><p><strong>Gap 2: Enterprise sales cycle experience.</strong> <span class=\"cite\">RingCentral sells to SMB through enterprise via both direct and channel partners like AT&T and TELUS <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. If Ili's prior PM work was primarily self-serve or mid-market, prepare examples of working with enterprise sales teams, managing feature requests from large accounts, and navigating procurement cycles.</p><p><strong>Gap 3: GPM title vs. seniority.</strong> With 15+ years, Ili may be overqualified for GPM at some companies. At RingCentral, GPM is a substantial role given the AI product line's growth trajectory, but clarify: does this GPM own people management, or is it a senior IC with \"group\" scope? The answer changes the fit equation.</p><p><strong>Gap 4: Public company product cadence.</strong> <span class=\"cite\">RingCentral targets quarterly earnings guidance and Wall Street expectations <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. Product decisions may face investor scrutiny. If Ili's experience is primarily at startups, prepare for the pace and constraints of public-company product management.</p>",
+      "citations": [
+        {"label": "EXT", "source": "RNG 10-K / earnings", "detail": "Channel partners: AT&T, TELUS"},
+        {"label": "EXT", "source": "RNG investor relations", "detail": "Quarterly earnings guidance"}
+      ],
+      "confidence": "Medium"
+    },
+    "network": {
+      "content": "<p>Network strategy should focus on three channels:</p><ol><li><strong>Internal contact leverage:</strong> If the existing RingCentral Sr. Director connection (from the other role pursuit) can provide intel on the AI product org, team dynamics, and the hiring manager for this GPM role, activate that first. Even if pursuing a different role, the organizational intelligence transfers.</li><li><strong>LinkedIn research targets:</strong> Search for current RingCentral AI product team members, particularly PMs reporting to the AI org under <span class=\"cite\">Antonio Nucci (Chief AI Officer, joined May 2025 from Aisera/Cisco) <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. Look for common connections via telecom or ad tech alumni networks.</li><li><strong>External intelligence:</strong> <span class=\"cite\">RingCentral has 1,975 Glassdoor reviews <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. Filter for product team reviews from the last 12 months to understand AI team culture, autonomy, and growth trajectory. Also check Blind for anonymous feedback on comp bands and organizational dynamics.</li></ol>",
+      "citations": [
+        {"label": "EXT", "source": "GovConWire", "detail": "Antonio Nucci — Chief AI Officer"},
+        {"label": "EXT", "source": "Glassdoor", "detail": "1,975 reviews available"}
+      ],
+      "confidence": "Medium"
+    },
+    "interview": {
+      "content": "<p>Prepare for these likely interview topics based on the JD and company context:</p><ol><li><strong>Agentic AI product vision:</strong> \"How would you evolve AIR from call routing to autonomous multi-turn conversations?\" Prepare a framework for conversation state management, fallback handling, and measuring agent quality.</li><li><strong>Platform extensibility:</strong> <span class=\"cite\">The JD emphasizes building reusable frameworks for agent lifecycle management across diverse use cases <span class=\"cite-label\" data-label=\"JD\">JD</span></span>. Prepare an example of building a platform product that serves multiple verticals without code duplication.</li><li><strong>Telephony + AI integration:</strong> <span class=\"cite\">SIP/PSTN, call routing, IVR knowledge is required <span class=\"cite-label\" data-label=\"JD\">JD</span></span>. Be ready to discuss latency requirements for real-time voice AI (sub-500ms response), ASR accuracy tradeoffs, and how to handle edge cases (background noise, accents, multi-party calls).</li><li><strong>Metrics and experimentation:</strong> <span class=\"cite\">A/B testing and continuous optimization of conversation quality, agent accuracy, and user satisfaction <span class=\"cite-label\" data-label=\"JD\">JD</span></span>. Prepare examples of running experiments on ML-powered products and defining success metrics for AI features.</li><li><strong>Enterprise vs. SMB product strategy:</strong> <span class=\"cite\">AIR sees good adoption among smaller customers due to ease of setup <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. How would you expand to enterprise? Discuss customization, compliance, integration complexity, and pricing strategy.</li></ol>",
+      "citations": [
+        {"label": "JD", "source": "Job Description", "detail": "Agent frameworks, lifecycle management"},
+        {"label": "JD", "source": "Job Description", "detail": "SIP/PSTN, IVR"},
+        {"label": "JD", "source": "Job Description", "detail": "A/B testing, optimization"},
+        {"label": "EXT", "source": "RNG Q4 Earnings Call", "detail": "AIR adoption among SMB"}
+      ],
+      "confidence": "High"
+    },
+    "proofPoints": {
+      "content": "<p>Prepare these specific proof points for interviews:</p><table><tr><th>JD Requirement</th><th>Proof Point to Prepare</th></tr><tr><td><span class=\"cite\">Define intelligent agent behaviors with NLU/NLP, LLMs <span class=\"cite-label\" data-label=\"JD\">JD</span></span></td><td>Example of shipping an AI-powered product feature with measurable user outcome improvement</td></tr><tr><td><span class=\"cite\">Build scalable, reusable frameworks <span class=\"cite-label\" data-label=\"JD\">JD</span></span></td><td>Example of platform architecture that served multiple verticals or use cases without forking</td></tr><tr><td><span class=\"cite\">SIP/PSTN, call routing, IVR expertise <span class=\"cite-label\" data-label=\"JD\">JD</span></span></td><td>Specific telecom infrastructure project or product involving voice/telephony systems</td></tr><tr><td><span class=\"cite\">A/B testing and experimentation <span class=\"cite-label\" data-label=\"JD\">JD</span></span></td><td>Example of running experiments that changed product direction, with specific metrics</td></tr><tr><td><span class=\"cite\">Balance power-user flexibility with no-code usability <span class=\"cite-label\" data-label=\"JD\">JD</span></span></td><td>Example of designing a product that served both technical and non-technical users</td></tr></table><p>Format each as: <em>\"At [Company], I [action] which resulted in [measurable outcome].\"</em> Aim for 2-minute stories with specific numbers.</p>",
+      "citations": [
+        {"label": "JD", "source": "Job Description", "detail": "NLU/NLP, LLMs"},
+        {"label": "JD", "source": "Job Description", "detail": "Reusable frameworks"},
+        {"label": "JD", "source": "Job Description", "detail": "SIP/PSTN, IVR"},
+        {"label": "JD", "source": "Job Description", "detail": "A/B testing"},
+        {"label": "JD", "source": "Job Description", "detail": "No-code usability"}
+      ],
+      "confidence": "High"
+    },
+    "dealBreaker": {
+      "content": "<p>Surface these in the first substantive conversation:</p><ol><li><strong>Compensation transparency:</strong> <span class=\"cite\">Posted range of $142,800–$204,000 base <span class=\"cite-label\" data-label=\"JD\">JD</span></span>. Request total comp breakdown: base + RSU grant + annual refresh + bonus. For GPM at a $2.5B revenue public company, target $300K–$400K total comp.</li><li><strong>Organizational stability:</strong> <span class=\"cite\">Glassdoor reviews cite layoffs every few months and frequent restructuring <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. Ask specifically: Has the AI product team been affected by layoffs? What is the headcount plan for this team in 2026?</li><li><strong>GPM scope clarity:</strong> Does this role manage people (other PMs), or is it senior IC with broad scope? Who is the hiring manager? What is the reporting structure under <span class=\"cite\">Chief AI Officer Antonio Nucci <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>?</li><li><strong>Location/hybrid policy:</strong> Confirm remote, hybrid, or in-office expectations. If Belmont 4-day/week is required, this is a geographic constraint.</li><li><strong>Product autonomy:</strong> <span class=\"cite\">Reviews describe organizational silos and top-down management <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. How much roadmap autonomy does the GPM have? What approval cycles exist for shipping?</li></ol>",
+      "citations": [
+        {"label": "JD", "source": "Job Description", "detail": "$142,800–$204,000 base"},
+        {"label": "EXT", "source": "Glassdoor", "detail": "Layoffs, restructuring concerns"},
+        {"label": "EXT", "source": "GovConWire", "detail": "Antonio Nucci, Chief AI Officer"},
+        {"label": "EXT", "source": "Glassdoor", "detail": "Silos, top-down management"}
+      ],
+      "confidence": "High"
+    },
+    "nextSteps": {
+      "content": "<ol><li><strong>Leverage existing RingCentral connection:</strong> If the Sr. Director of Product contact (Apoorv Chaudhary) can provide intel on the AI GPM role or introduce the hiring manager, activate this immediately.</li><li><strong>Tailor resume:</strong> Emphasize telecom background, AI product experience, and platform scaling. These are the three differentiators versus other candidates.</li><li><strong>Research AIR product deeply:</strong> Sign up for a free RingCentral trial if possible, or review <span class=\"cite\">AI Receptionist setup documentation and analytics capabilities <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span>. Understanding the current product state gives interview credibility.</li><li><strong>Prepare comp analysis:</strong> Research GPM total comp at comparable public SaaS companies (Zoom, Twilio, Salesforce) to anchor negotiation. <span class=\"cite\">RNG's strong free cash flow ($530M) and AI investment ($250M R&D) <span class=\"cite-label\" data-label=\"EXT\">EXT</span></span> suggest they can afford competitive packages for high-impact hires.</li><li><strong>Apply and track:</strong> Submit via Workday and simultaneously activate network channels. Target first conversation within 1–2 weeks.</li></ol>",
+      "citations": [
+        {"label": "EXT", "source": "RingCentral support docs", "detail": "AIR setup and analytics"},
+        {"label": "EXT", "source": "RNG financials", "detail": "$530M FCF, $250M R&D"}
+      ],
+      "confidence": "High"
+    }
+  }
+}

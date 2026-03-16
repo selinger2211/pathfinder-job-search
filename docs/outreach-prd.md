@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/outreach/`
-**Version:** v3.15
-**Last Updated:** 2026-03-13
-**Status:** Active — v3.15.0 features live
+**Version:** v3.29.0
+**Last Updated:** 2026-03-15
+**Status:** Active — v3.29.0 features live
 
 ---
 
@@ -324,7 +324,7 @@ Best,
 
 #### 3.3.5 InMail (3-5 sentences)
 
-> **Status: Implemented (v3.13.0)** — LinkedIn InMail with 200/1900 character limits, preview mode, and shared connections display.
+> **Status: Planned** — LinkedIn InMail message type not yet implemented.
 
 **Purpose:** LinkedIn InMail to someone you haven't reached out to yet.
 
@@ -734,11 +734,12 @@ What will be implemented:
 
 ### Phase 3: Intelligence & Optimization (v1.2+)
 
-> **Status: Implemented (v3.15.0)** — Response rate analytics, smart timing suggestions.
+> **Status: Planned** — Response rate analytics and smart timing suggestions not yet implemented.
 
-- [x] A/B insights after 10+ messages (response patterns by type/channel)
-- [x] Response rate analytics by message type / company tier / connection type
-- [x] Smart timing suggestions ("Send this message on Tuesday at 9am for higher response rates")
+- [ ] A/B insights after 10+ messages (response patterns by type/channel)
+- [ ] Response rate analytics by message type / company tier / connection type
+- [ ] Smart timing suggestions ("Send this message on Tuesday at 9am for higher response rates")
+- [ ] Scheduled sends capability (send message at optimal time)
 - [ ] Conversation threading (track entire email/LinkedIn thread in connection record)
 - [ ] Suggested follow-up timing based on response patterns
 - [ ] Integration with email/LinkedIn API for auto-logging sends (if user opts in)
