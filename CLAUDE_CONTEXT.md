@@ -141,6 +141,13 @@ If either exits non-zero, STOP. Fix all failures. Re-run until clean. Do not com
 
 **In Cowork VM:** The FUSE commit workaround bypasses hooks, so Claude MUST run `bash scripts/pre-commit-qa.sh` before creating any commit. No exceptions.
 
+**Real browser QA (when Chrome MCP is available):**
+If the user has `python3 -m http.server 8765` running in `~/Projects/job-search-agents-v2`, Claude can run full browser QA via the Chrome MCP tools:
+1. Navigate to `http://localhost:8765/modules/{module}/index.html` in Chrome
+2. Take screenshots, click buttons, check console errors, verify DOM state via JS
+3. Test the specific workflows that changed (tab switches, file uploads, form submits, modal open/close)
+4. This supplements headless QA — it catches visual/CSS bugs that jsdom cannot
+
 ### 9. safeJsonParse Pattern (MANDATORY)
 All localStorage reads MUST use the `safeJsonParse()` helper (defined in every module's script block). Never use bare `JSON.parse(localStorage.getItem(...))`. The pattern:
 ```javascript
