@@ -6598,40 +6598,61 @@
       const networkDim = networkScore * 0.15;
 
       // ===== BONUS: Leader vs IC fit (additive, not its own dimension) =====
-      // At smaller companies, favor people-leader roles (build a team, own a function).
-      // At larger companies, both leader and IC roles are fine — scope is big either way.
-      // Detection is JD-driven: scan for management vs IC signals in the text.
+      // v3.34.2: TIGHTENED DETECTION — previous signals were too loose, flagging
+      // normal PM "leadership" language as people-management. Now requires EXPLICIT
+      // people-management signals (direct reports, hire, manage people) not just
+      // "lead a team" (which every IC PM does cross-functionally).
       let leaderICBonus = 0;
       let leaderICNote = '';
-      const leaderSignals = [
-        'manage a team', 'direct reports', 'lead a team', 'people management',
-        'hire and develop', 'org building', 'team of', 'build the team',
-        'player-coach', 'people leader', 'manage engineers', 'manage designers',
-        'manage product managers', 'growing the team', 'staff management',
-        'mentor and coach', 'reporting to you', 'build and lead'
+
+      // Strong people-management signals (require 2+ for "Leader" label)
+      const strongLeaderSignals = [
+        'direct reports', 'people management', 'people manager',
+        'hire and develop', 'manage a team of', 'managing a team',
+        'manage engineers', 'manage designers', 'manage product managers',
+        'growing the team', 'staff management', 'reporting to you',
+        'player-coach', 'people leader', 'org building'
+      ];
+      // Weak signals — common in IC PM JDs too, don't count alone
+      const weakLeaderSignals = [
+        'lead a team', 'build the team', 'mentor and coach',
+        'build and lead', 'team of'
       ];
       const icSignals = [
         'individual contributor', ' ic role', ' ic position', 'no direct reports',
-        'hands-on ic', 'deep technical', 'principal ic', 'staff-level ic'
+        'hands-on ic', 'deep technical', 'principal ic', 'staff-level ic',
+        'without direct reports'
+      ];
+      // Title-based leader detection (strongest signal)
+      const leaderTitleSignals = [
+        'head of', 'director of', 'vp of', 'vice president',
+        'group product manager', 'gpm', 'senior director'
       ];
 
       const isSmallCompany = ['Seed', 'Series A', 'Series B'].includes(normalizedRoleStage);
-      const hasLeaderSignals = leaderSignals.some(s => searchText.includes(s) || titleLower.includes(s));
+      const strongLeaderCount = strongLeaderSignals.filter(s => searchText.includes(s)).length;
+      const weakLeaderCount = weakLeaderSignals.filter(s => searchText.includes(s)).length;
+      const hasLeaderTitle = leaderTitleSignals.some(s => titleLower.includes(s));
       const hasICSignals = icSignals.some(s => searchText.includes(s) || titleLower.includes(s));
 
-      if (isSmallCompany && hasLeaderSignals) {
-        leaderICBonus = 5;  // Ideal: leadership at a small company = build something
+      // Only label as "Leader" if: strong signals ≥ 2, OR leader title, OR 1 strong + 2 weak
+      const isLikelyLeader = hasLeaderTitle || strongLeaderCount >= 2 || (strongLeaderCount >= 1 && weakLeaderCount >= 2);
+      const isLikelyIC = hasICSignals && !isLikelyLeader;
+
+      if (isSmallCompany && isLikelyLeader) {
+        leaderICBonus = 5;
         leaderICNote = 'Leader@Small';
-      } else if (isSmallCompany && hasICSignals) {
-        leaderICBonus = 0;  // IC at small company — fine, but no boost
+      } else if (isSmallCompany && isLikelyIC) {
+        leaderICBonus = 0;
         leaderICNote = 'IC@Small';
-      } else if (hasLeaderSignals) {
-        leaderICBonus = 2;  // Leader at larger company — still good
+      } else if (isLikelyLeader) {
+        leaderICBonus = 2;
         leaderICNote = 'Leader';
-      } else if (hasICSignals) {
-        leaderICBonus = 0;  // IC at larger company — totally fine
+      } else if (isLikelyIC) {
+        leaderICBonus = 0;
         leaderICNote = 'IC';
       }
+      // If neither strong leader nor IC signals → don't label at all (was over-labeling before)
 
       // ===== FINAL SCORE (v3.34.0: ADAPTIVE WEIGHTING) =====
       // When dimensions have no data (sentinel -1), redistribute their
@@ -8233,7 +8254,12 @@
           domain: feedRole.domain || null,
           location: feedRole.location || null,
           remote: feedRole.remote || false,
-          positioning: feedRole.scoring?.leaderIC || null,
+          positioning: (() => {
+            const label = (feedRole.scoring?.leaderIC || '').toLowerCase();
+            if (label.startsWith('leader')) return 'management';
+            if (label.startsWith('ic')) return 'ic';
+            return 'ic'; // default to IC when no signal
+          })(),
           stageHistory: [{ stage: 'discovered', date: new Date().toISOString() }],
           feedMetadata: feedRole.feedMetadata || null,
           jdEnriched: feedRole.jdEnriched || false,

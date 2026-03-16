@@ -3678,7 +3678,25 @@
      */
     function getRoles() {
       const data = localStorage.getItem('pf_roles');
-      return data ? JSON.parse(data) : [];
+      if (!data) return [];
+      const roles = JSON.parse(data);
+      // v3.34.3 migration: normalize positioning values from feed import
+      // Feed used to pass raw leaderIC labels ('Leader', 'IC', 'Leader@Small', etc.)
+      // Pipeline expects exactly 'ic' or 'management'
+      let migrated = false;
+      roles.forEach(r => {
+        if (r.positioning && r.positioning !== 'ic' && r.positioning !== 'management') {
+          const lower = r.positioning.toLowerCase();
+          r.positioning = lower.startsWith('leader') ? 'management' : 'ic';
+          migrated = true;
+        }
+        if (!r.positioning) {
+          r.positioning = 'ic';
+          migrated = true;
+        }
+      });
+      if (migrated) localStorage.setItem('pf_roles', JSON.stringify(roles));
+      return roles;
     }
 
     /**
@@ -4441,7 +4459,7 @@
             </div>` : `<div style="font-size: var(--text-xs); color: var(--text-tertiary); margin: var(--space-2) 0;">Recruiter: ${role.contact?.name || 'Unknown'}</div>`}
           <div class="role-card-badges">
             <span class="badge badge-filled" style="background: ${getColorForTier(role.tier || 'watching')}; color: white; font-size: var(--text-xs);">${role.tier || 'watching'}</span>
-            ${isOpaque ? `<span class="badge badge-outlined" style="border-color: var(--text-tertiary); color: var(--text-tertiary);">Opaque</span>` : (role.title === 'Exploratory' ? '<span class="badge badge-outlined" style="border-color: var(--warning); color: var(--warning);">Inbound</span>' : `<span class="badge badge-outlined" style="border-color: ${role.positioning === 'ic' ? 'var(--info)' : 'var(--stage-screen)'}; color: ${role.positioning === 'ic' ? 'var(--info)' : 'var(--stage-screen)'};">${role.positioning === 'ic' ? 'IC' : 'Mgmt'}</span>`)}
+            ${isOpaque ? `<span class="badge badge-outlined" style="border-color: var(--text-tertiary); color: var(--text-tertiary);">Opaque</span>` : (role.title === 'Exploratory' ? '<span class="badge badge-outlined" style="border-color: var(--warning); color: var(--warning);">Inbound</span>' : `<span class="badge badge-outlined" style="border-color: ${role.positioning === 'management' ? 'var(--stage-screen)' : 'var(--info)'}; color: ${role.positioning === 'management' ? 'var(--stage-screen)' : 'var(--info)'};">${role.positioning === 'management' ? 'Mgmt' : 'IC'}</span>`)}
             ${staleBadgeHtml}
           </div>
           <div class="role-card-footer">
@@ -4738,7 +4756,7 @@
               </div>
             </td>
             <td class="table-role-title">${escapeHtml(role.title)}</td>
-            <td>${role.positioning === 'ic' ? 'IC' : 'Mgmt'}</td>
+            <td>${role.positioning === 'management' ? 'Mgmt' : 'IC'}</td>
             <td><span class="badge badge-filled" style="background: ${getColorForStage(role.stage)}; color: ${role.stage === 'researching' || role.stage === 'interviewing' ? '#000' : '#fff'};">${role.stage}</span></td>
             <td><span class="badge badge-filled" style="background: ${getColorForTier(role.tier)}; color: white;">${role.tier}</span></td>
             <td>

@@ -280,6 +280,56 @@
       max-height: 200px;
       overflow-y: auto;
       line-height: 1.5;
+      width: 100%;
+      box-sizing: border-box;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 80px;
+      white-space: pre-wrap;
+    }
+
+    /* v3.34.2: JD edit controls */
+    .jd-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .jd-edit-actions {
+      display: flex;
+      gap: var(--space-2);
+      align-items: center;
+    }
+
+    .jd-edit-btn {
+      font-size: 11px;
+      padding: 2px 8px;
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .jd-edit-btn:hover {
+      background: var(--accent-subtle);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .jd-edit-badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: var(--radius-pill);
+      font-weight: 600;
+      display: none;
+    }
+
+    .jd-edit-badge.active {
+      display: inline-flex;
+      background: var(--accent-subtle);
+      color: var(--accent);
     }
 
     /* ====== ADDITIONAL CONTEXT ====== */
@@ -1187,10 +1237,17 @@
           </div>
         </div>
 
-        <!-- Job Description -->
+        <!-- Job Description (v3.34.2: editable — paste/override supported) -->
         <div id="jdSection" style="display: none;" class="jd-section">
-          <label class="jd-label" for="jdText">Job Description</label>
-          <div class="jd-text" id="jdText" role="region" aria-label="Job description content"></div>
+          <div class="jd-header">
+            <label class="jd-label" for="jdText">Job Description</label>
+            <div class="jd-edit-actions">
+              <span class="jd-edit-badge" id="jdEditBadge">Edited</span>
+              <button class="jd-edit-btn" id="jdPasteBtn" onclick="pasteJD()" title="Paste a new JD from clipboard">📋 Paste</button>
+              <button class="jd-edit-btn" id="jdResetBtn" onclick="resetJD()" title="Reset to original JD from pipeline" style="display: none;">↩ Reset</button>
+            </div>
+          </div>
+          <textarea class="jd-text" id="jdText" role="textbox" aria-label="Job description — editable" placeholder="Paste or type a job description here..."></textarea>
         </div>
 
         <!-- Additional Context (NEW in V3) -->
@@ -1528,6 +1585,59 @@
       renderUploadedFiles();
     }
 
+    /* ====== JD EDIT/PASTE CONTROLS (v3.34.2) ====== */
+
+    /**
+     * v3.34.2: Handle JD being edited by the user.
+     * Shows "Edited" badge and Reset button when JD differs from original.
+     */
+    function onJDEdited() {
+      const current = document.getElementById('jdText').value;
+      const isEdited = current !== STATE._originalJD;
+      document.getElementById('jdEditBadge').classList.toggle('active', isEdited);
+      document.getElementById('jdResetBtn').style.display = isEdited ? 'inline-flex' : 'none';
+    }
+
+    /**
+     * v3.34.2: Paste JD from clipboard into the textarea.
+     * Replaces whatever is currently there.
+     */
+    async function pasteJD() {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text && text.trim()) {
+          document.getElementById('jdText').value = text.trim();
+          onJDEdited();
+          showToast('JD pasted from clipboard', 'success');
+        } else {
+          showToast('Clipboard is empty', 'error');
+        }
+      } catch (err) {
+        // Clipboard API not available — show manual paste hint
+        const textarea = document.getElementById('jdText');
+        textarea.focus();
+        textarea.select();
+        showToast('Use Ctrl+V / Cmd+V to paste into the JD field', 'success');
+      }
+    }
+
+    /**
+     * v3.34.2: Reset JD back to the original pipeline version.
+     */
+    function resetJD() {
+      document.getElementById('jdText').value = STATE._originalJD || '';
+      onJDEdited();
+      showToast('JD reset to original', 'success');
+    }
+
+    /**
+     * v3.34.2: Get the current JD text — uses textarea value (may be edited).
+     * This is the single source of truth for JD during brief generation.
+     */
+    function getCurrentJDText() {
+      return (document.getElementById('jdText')?.value || '').trim();
+    }
+
     /* ====== WEB SEARCH: Removed (v3.34.1) ======
        Tavily API integration removed per cost directive. Live web research
        is now handled by Cowork sessions using free WebSearch/WebFetch tools.
@@ -1689,11 +1799,18 @@
 
       document.getElementById('roleDetails').style.display = 'block';
 
-      /* Show JD */
+      /* Show JD (v3.34.2: editable textarea) */
+      const jdTextarea = document.getElementById('jdText');
       if (role.jdText) {
-        document.getElementById('jdText').textContent = role.jdText;
+        jdTextarea.value = role.jdText;
+        STATE._originalJD = role.jdText; // Store original for reset
         document.getElementById('jdSection').style.display = 'flex';
+      } else {
+        jdTextarea.value = '';
+        STATE._originalJD = '';
+        document.getElementById('jdSection').style.display = 'flex'; // Always show — user can paste
       }
+      jdTextarea.addEventListener('input', onJDEdited);
 
       /* Show Additional Context section */
       document.getElementById('additionalContextSection').style.display = 'flex';
@@ -1794,7 +1911,7 @@
      * @returns {object} Brief object with sections matching API-generated format
      */
     function generateOfflineBrief(role, company) {
-      const jd = role.jdText || role.jd || '';
+      const jd = getCurrentJDText() || role.jdText || role.jd || '';
       const jdLower = jd.toLowerCase();
       const title = role.title || 'Unknown Role';
       const companyName = company?.name || role.company || 'Unknown';
@@ -2803,8 +2920,8 @@ Remote Policy: ${company?.remotePolicy || 'Not specified'}
 Industry: ${company?.industryFocus || company?.industry || 'Not specified'}
 </company>\n\n`;
 
-      /* -- JD with mismatch guard -- */
-      let jdText = role.jdText || '';
+      /* -- JD with mismatch guard (v3.34.2: reads from editable textarea) -- */
+      let jdText = getCurrentJDText() || role.jdText || '';
       if (jdText && company?.name) {
         const compLower = company.name.toLowerCase();
         const jdLower = jdText.toLowerCase().slice(0, 500);
