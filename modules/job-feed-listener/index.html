@@ -3,12 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Pathfinder — Job Feed Listener</title>
   <meta name="description" content="Monitor job sources and score incoming roles against preferences">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>P</text></svg>">
 
   <link rel="stylesheet" href="../shared/pathfinder.css?v=3.5.1">
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@latest" onerror="console.warn('Failed to load Lucide icons library')"></script>
 
   <style>
     /* ================================================================
@@ -481,6 +484,87 @@
       min-height: 32px;
     }
     .feed-stats-bar:empty { display: none; }
+
+    /* ================================================================
+       SEARCH BAR — Pipeline search + external job discovery
+       v3.27.0: Unified search bar between header and tabs
+       ================================================================ */
+    .feed-search-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      margin-bottom: var(--space-3);
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-subtle);
+      border-radius: var(--radius-md);
+      transition: border-color var(--duration-fast) var(--ease-default);
+    }
+    .feed-search-bar:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.12);
+    }
+    .feed-search-icon {
+      flex-shrink: 0;
+      color: var(--text-tertiary);
+    }
+    .feed-search-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .feed-search-input::placeholder {
+      color: var(--text-tertiary);
+    }
+    .feed-search-clear {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      border: none;
+      background: var(--bg-subtle);
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1;
+      transition: background var(--duration-fast) var(--ease-default);
+    }
+    .feed-search-clear:hover {
+      background: var(--bg-elevated);
+    }
+    .feed-search-clear.visible {
+      display: flex;
+    }
+    .feed-search-count {
+      flex-shrink: 0;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+    }
+    .feed-search-explore-btn {
+      flex-shrink: 0;
+      padding: 4px 10px;
+      border: 1px solid var(--primary);
+      background: transparent;
+      border-radius: var(--radius-sm);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+    .feed-search-explore-btn:hover {
+      background: var(--primary);
+      color: #fff;
+    }
     .feed-stat-total {
       font-weight: 700;
       color: var(--text-primary);
@@ -1249,11 +1333,11 @@
     /* The detail panel itself — slides from right */
     .jd-detail-panel {
       position: fixed;
-      top: 0;
+      top: 56px; /* v3.31.3: Below navbar — was top:0, truncating header */
       right: 0;
       width: 480px;
       max-width: 95vw;
-      height: 100vh;
+      height: calc(100vh - 56px);
       background: var(--bg-elevated);
       box-shadow: var(--shadow-lg);
       z-index: 40;
@@ -1453,11 +1537,11 @@
     /* The panel itself — slides from right */
     .feed-detail-panel {
       position: fixed;
-      top: 0;
+      top: 56px; /* v3.31.3: Below navbar — was top:0, truncating header */
       right: 0;
       width: 520px;
       max-width: 95vw;
-      height: 100vh;
+      height: calc(100vh - 56px);
       background: var(--bg-elevated);
       box-shadow: var(--shadow-lg);
       z-index: 40;
@@ -2410,6 +2494,26 @@
           </div>
         </div>
 
+        <!-- Search Bar (v3.27.0) — pipeline filter + external discovery -->
+        <div class="feed-search-bar" id="feedSearchBar">
+          <svg class="feed-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" class="feed-search-input" id="feedSearchInput"
+            placeholder="Search jobs by company, title, domain, or keywords…"
+            aria-label="Search job feed"
+            autocomplete="off" spellcheck="false">
+          <span class="feed-search-count" id="feedSearchCount"></span>
+          <button class="feed-search-clear" id="feedSearchClear" aria-label="Clear search" title="Clear search">✕</button>
+          <button class="feed-search-explore-btn" id="feedSearchExplore" title="Discover new jobs matching this search">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 3px;">
+              <circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            Explore
+          </button>
+        </div>
+
         <!-- Tab Navigation -->
         <div class="tab-nav">
           <button class="tab-btn active" data-tab="feed">Feed</button>
@@ -2460,28 +2564,36 @@
                 <!-- Feed source status cards populated by JavaScript -->
               </div>
 
-              <!-- Feature 40: Gmail Integration Section -->
+              <!-- Gmail Scan Integration (powered by Cowork MCP) -->
               <div style="margin-top: var(--space-6); padding-top: var(--space-4); border-top: 1px solid var(--bg-subtle);">
-                <h4 style="font-size: var(--text-md); font-weight: 700; margin-bottom: var(--space-2);">Gmail Integration</h4>
-                <div id="gmailStatus" style="margin-bottom: var(--space-3); font-size: var(--text-sm);">
-                  <!-- Gmail connection status populated by JavaScript -->
+                <h4 style="font-size: var(--text-md); font-weight: 700; margin-bottom: var(--space-2);">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;">
+                    <rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                  </svg>
+                  Gmail Feed Scanner
+                </h4>
+                <div id="gmailScanStatus" style="margin-bottom: var(--space-3); font-size: var(--text-sm);">
+                  <!-- Scan status populated by JavaScript -->
+                </div>
+                <div id="gmailScanSources" style="margin-bottom: var(--space-3);">
+                  <!-- Source breakdown populated by JavaScript -->
                 </div>
                 <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-3);">
-                  <button class="btn btn-secondary btn-sm" id="connectGmailBtn" onclick="openGmailTokenModal()" aria-label="Connect Gmail account">
+                  <button class="btn btn-secondary btn-sm" onclick="loadGmailScanFile()" aria-label="Import Gmail scan results">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>
                     </svg>
-                    Connect Gmail
+                    Import Scan Results
                   </button>
-                  <button class="btn btn-ghost btn-sm" id="scanGmailBtn" onclick="triggerGmailScan()" style="display: none;" aria-label="Scan Gmail for new jobs">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36M20.49 15a9 9 0 0 1-14.85 3.36"></path>
-                    </svg>
-                    Scan Now
-                  </button>
+                  <!-- v3.31.2: Use opacity:0 instead of display:none — some browsers block .click() on hidden inputs -->
+                  <input type="file" id="gmailScanFileInput" accept=".json" style="position:absolute;width:0;height:0;opacity:0;overflow:hidden;pointer-events:none;" onchange="handleGmailScanFileSelect(event)">
                 </div>
-                <div style="font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.4;">
-                  Connect your Gmail account to automatically detect job opportunity emails from recruiters and job boards.
+                <div style="font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.5;">
+                  Gmail is scanned automatically by the Pathfinder Cowork agent. Results are loaded on page init.
+                  Use "Import Scan Results" to manually load a scan JSON file.
+                  <div style="margin-top: var(--space-1);">
+                    <strong>Sources parsed:</strong> LinkedIn Job Alerts, Built In digests, referrals (Workday, Amazon), recruiter outreach
+                  </div>
                 </div>
               </div>
 
@@ -2651,45 +2763,9 @@
     </div>
   </div>
 
-  <!-- MODAL: Connect Gmail Account (Feature 40) -->
-  <div class="modal-overlay" id="gmailTokenModal">
-    <div class="modal">
-      <div class="modal-header">
-        <h2 class="modal-title">Connect Gmail Account</h2>
-        <button class="modal-close" onclick="closeGmailTokenModal()">✕</button>
-      </div>
-
-      <div style="padding: var(--space-3); background: var(--bg-elevated); border-radius: var(--radius-sm); margin-bottom: var(--space-4);">
-        <div style="font-size: var(--text-sm); color: var(--text-primary); margin-bottom: var(--space-2);">
-          To scan Gmail for job opportunities, you'll need to provide a Gmail API access token.
-        </div>
-        <div style="font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.5;">
-          <div style="margin-bottom: var(--space-2);">
-            <strong>Steps:</strong>
-            <ol style="margin: var(--space-2) 0 0 var(--space-4); padding-left: var(--space-2);">
-              <li>Go to <a href="https://myaccount.google.com/permissions" target="_blank" style="color: var(--accent); text-decoration: underline;">Google Account Permissions</a></li>
-              <li>Create a project and enable Gmail API</li>
-              <li>Generate an OAuth 2.0 token</li>
-              <li>Paste the token below</li>
-            </ol>
-          </div>
-          Your token is stored locally in your browser — we never transmit it to external servers.
-        </div>
-      </div>
-
-      <form id="gmailTokenForm" onsubmit="handleGmailTokenSubmit(event)">
-        <div class="form-group">
-          <label class="form-label">Gmail API Token *</label>
-          <textarea class="form-textarea" id="gmailTokenInput" placeholder="Paste your Gmail OAuth token here" required style="font-family: var(--font-mono); font-size: var(--text-xs);"></textarea>
-        </div>
-      </form>
-
-      <div class="modal-actions">
-        <button class="btn btn-ghost" onclick="closeGmailTokenModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="submitGmailToken()">Connect</button>
-      </div>
-    </div>
-  </div>
+  <!-- MODAL: Gmail Scan Results Info (replaces legacy OAuth modal) -->
+  <!-- Gmail scanning is now handled by the Cowork scheduled task via Gmail MCP.
+       No manual OAuth token needed — the MCP connector handles authentication. -->
 
   <!-- MODAL: Add Career Page (Feature 41) -->
   <div class="modal-overlay" id="addCareerPageModal">
@@ -2814,6 +2890,7 @@
   </div>
 
   <script src="../shared/claude-api.js?v=3.5.1"></script>
+  <script src="../shared/logos.js?v=3.30.0"></script>
   <script>
     /** Safely parse JSON from localStorage with fallback */
     function safeJsonParse(key, fallback = null) {
@@ -2859,194 +2936,229 @@
     });
 
     // ================================================================
-    // FEATURE 40: GMAIL INTEGRATION — Job Feed
+    // GMAIL SCAN IMPORT — Cowork MCP-powered Gmail scanning
     // ================================================================
-    /**
-     * Gmail OAuth token management and email scanning
-     */
+    // Gmail scanning is handled by the Cowork scheduled task, which uses
+    // the Gmail MCP connector to search and parse job emails. Results are
+    // written to data/gmail-scan.json and loaded here on init.
+    //
+    // Supported email types:
+    //   - LinkedIn Job Alerts (jobalerts-noreply@linkedin.com)
+    //   - Built In digests (support@builtin.com)
+    //   - Referrals (*@myworkday.com, *@amazon.jobs)
+    //   - Recruiter outreach (direct emails with job keywords)
+    // ================================================================
 
     /**
-     * Save Gmail OAuth token to localStorage
+     * Load Gmail scan results from the JSON file written by Cowork task.
+     * Merges new items into pf_feed_queue with dedup.
+     * Returns { imported: number, total: number, scanDate: string }
      */
-    function saveGmailToken(token) {
+    async function loadGmailScanResults() {
       try {
-        localStorage.setItem('pf_gmail_token', token);
-        updateGmailStatus();
-        showToast('Gmail connected successfully', 'success');
-        return true;
-      } catch (e) {
-        console.error('Failed to save Gmail token:', e);
-        showToast('Failed to save Gmail token', 'error');
-        return false;
-      }
-    }
+        const resp = await fetch('./data/gmail-scan.json?t=' + Date.now());
+        if (!resp.ok) return { imported: 0, total: 0, scanDate: null };
 
-    /**
-     * Retrieve Gmail OAuth token from localStorage
-     */
-    function getGmailToken() {
-      try {
-        return localStorage.getItem('pf_gmail_token') || null;
-      } catch (e) {
-        console.warn('Failed to retrieve Gmail token:', e);
-        return null;
-      }
-    }
-
-    /**
-     * Check if Gmail is currently connected
-     */
-    function isGmailConnected() {
-      return getGmailToken() !== null;
-    }
-
-    /**
-     * Update Gmail connection status indicator
-     */
-    function updateGmailStatus() {
-      const gmailStatus = document.getElementById('gmailStatus');
-      if (!gmailStatus) return;
-
-      if (isGmailConnected()) {
-        gmailStatus.innerHTML = '<span style="color: var(--success); font-weight: 600;">✓ Gmail Connected</span>';
-      } else {
-        gmailStatus.innerHTML = '<span style="color: var(--text-tertiary); font-weight: 600;">○ Gmail Not Connected</span>';
-      }
-    }
-
-    /**
-     * Scan Gmail for job-related emails using Gmail API
-     * Returns array of parsed job emails: {company, title, salary?, source: 'gmail', emailId}
-     */
-    async function scanGmailForJobs(token) {
-      if (!token) {
-        showToast('Gmail token not available', 'error');
-        return [];
-      }
-
-      try {
-        showToast('Scanning Gmail for job emails...', 'info');
-
-        // Gmail API v1 endpoint for searching messages
-        const queries = [
-          'subject:(job opportunity OR interview OR application)',
-          'from:(linkedin.com OR indeed.com OR recruiter)',
-          'subject:(position OR role) AND (interested OR opportunity)'
-        ];
-
-        let allEmails = [];
-
-        for (const query of queries) {
-          try {
-            const response = await fetch(
-              `https://www.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=10`,
-              {
-                headers: { Authorization: `Bearer ${token}` }
-              }
-            );
-
-            if (!response.ok) {
-              console.warn(`Gmail API query failed: ${response.status}`, query);
-              continue;
-            }
-
-            const data = await response.json();
-            if (data.messages) {
-              allEmails = allEmails.concat(data.messages);
-            }
-          } catch (error) {
-            console.warn('Gmail API fetch error:', error);
-          }
+        const scanData = await resp.json();
+        if (!scanData || !Array.isArray(scanData.items) || scanData.items.length === 0) {
+          return { imported: 0, total: scanData?.items?.length || 0, scanDate: scanData?.scanDate || null };
         }
 
-        // Remove duplicates by messageId
-        allEmails = Array.from(new Map(allEmails.map(m => [m.id, m])).values());
-
-        // Parse each email to extract job details
-        const parsedJobs = [];
-        for (const message of allEmails.slice(0, 20)) {
-          const job = await parseJobEmail(message, token);
-          if (job) {
-            parsedJobs.push(job);
-          }
+        // Check if we already imported this scan (by scanDate)
+        const lastImport = safeJsonParse('pf_gmail_last_import', null);
+        if (lastImport && lastImport.scanDate === scanData.scanDate) {
+          // Already imported this scan — skip but report status
+          return { imported: 0, total: scanData.items.length, scanDate: scanData.scanDate, alreadyImported: true };
         }
 
-        if (parsedJobs.length > 0) {
-          showToast(`Found ${parsedJobs.length} job-related emails`, 'success');
+        // Load current feed queue for dedup
+        const currentQueue = loadFeedQueue();
+        const existingIds = new Set(currentQueue.map(item => item.id));
+        const existingKeys = new Set(currentQueue.map(item =>
+          `${(item.company || '').toLowerCase().trim()}::${(item.title || '').toLowerCase().trim()}`
+        ));
+
+        // Filter out items that are already in the queue (by ID or company+title)
+        let imported = 0;
+        for (const item of scanData.items) {
+          if (existingIds.has(item.id)) continue;
+          const key = `${(item.company || '').toLowerCase().trim()}::${(item.title || '').toLowerCase().trim()}`;
+          if (existingKeys.has(key)) continue;
+
+          // Add to queue
+          currentQueue.push(item);
+          existingIds.add(item.id);
+          existingKeys.add(key);
+          imported++;
+        }
+
+        if (imported > 0) {
+          saveFeedQueue(currentQueue);
+        }
+
+        // Record this import to prevent re-importing
+        try {
+          localStorage.setItem('pf_gmail_last_import', JSON.stringify({
+            scanDate: scanData.scanDate,
+            importedAt: new Date().toISOString(),
+            itemsImported: imported,
+            totalInScan: scanData.items.length
+          }));
+        } catch (e) { /* localStorage full — non-critical */ }
+
+        return { imported, total: scanData.items.length, scanDate: scanData.scanDate };
+      } catch (e) {
+        // fetch failed (file:// protocol, file not found, etc.) — this is expected
+        console.warn('[Feed] Gmail scan results not available:', e.message);
+        return { imported: 0, total: 0, scanDate: null };
+      }
+    }
+
+    /**
+     * Trigger file picker to manually load a gmail-scan.json file
+     */
+    function loadGmailScanFile() {
+      document.getElementById('gmailScanFileInput').click();
+    }
+
+    /**
+     * Handle file selection from the Gmail scan file picker
+     */
+    async function handleGmailScanFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const scanData = JSON.parse(text);
+
+        if (!scanData || !Array.isArray(scanData.items)) {
+          showToast('Invalid scan file format — expected { items: [...] }', 'error');
+          return;
+        }
+
+        // Load current feed queue for dedup
+        const currentQueue = loadFeedQueue();
+        const existingIds = new Set(currentQueue.map(item => item.id));
+        const existingKeys = new Set(currentQueue.map(item =>
+          `${(item.company || '').toLowerCase().trim()}::${(item.title || '').toLowerCase().trim()}`
+        ));
+
+        let imported = 0;
+        for (const item of scanData.items) {
+          if (existingIds.has(item.id)) continue;
+          const key = `${(item.company || '').toLowerCase().trim()}::${(item.title || '').toLowerCase().trim()}`;
+          if (existingKeys.has(key)) continue;
+          currentQueue.push(item);
+          existingIds.add(item.id);
+          existingKeys.add(key);
+          imported++;
+        }
+
+        if (imported > 0) {
+          saveFeedQueue(currentQueue);
+          showToast(`Imported ${imported} new role(s) from Gmail scan`, 'success');
+          // Re-init to score and render
+          await init();
         } else {
-          showToast('No job emails found in Gmail', 'info');
+          showToast('No new roles found — all items already in feed', 'info');
         }
 
-        return parsedJobs;
-      } catch (error) {
-        console.error('Gmail scan error:', error);
-        showToast('Failed to scan Gmail', 'error');
-        return [];
+        // Record import
+        try {
+          localStorage.setItem('pf_gmail_last_import', JSON.stringify({
+            scanDate: scanData.scanDate || new Date().toISOString(),
+            importedAt: new Date().toISOString(),
+            itemsImported: imported,
+            totalInScan: scanData.items.length,
+            source: 'manual-file'
+          }));
+        } catch (e) { /* non-critical */ }
+
+        updateGmailScanStatus();
+      } catch (e) {
+        console.error('Failed to parse scan file:', e);
+        showToast('Failed to read scan file: ' + e.message, 'error');
       }
+
+      // Reset file input so same file can be re-selected
+      event.target.value = '';
     }
 
     /**
-     * Parse a single email to extract job details
-     * Returns: {company, title, salary?, source: 'gmail', emailId}
+     * Update the Gmail scan status display in the Sources tab
      */
-    async function parseJobEmail(message, token) {
-      try {
-        const msgResponse = await fetch(
-          `https://www.googleapis.com/gmail/v1/users/me/messages/${message.id}?format=full`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+    function updateGmailScanStatus() {
+      const statusEl = document.getElementById('gmailScanStatus');
+      const sourcesEl = document.getElementById('gmailScanSources');
+      if (!statusEl) return;
 
-        if (!msgResponse.ok) return null;
+      const lastImport = safeJsonParse('pf_gmail_last_import', null);
 
-        const msgData = await msgResponse.json();
-        const headers = msgData.payload.headers || [];
-        const subject = headers.find(h => h.name === 'Subject')?.value || '';
-        const from = headers.find(h => h.name === 'From')?.value || '';
+      if (!lastImport) {
+        statusEl.innerHTML = '<span style="color: var(--text-tertiary);">No scan results loaded yet</span>';
+        if (sourcesEl) sourcesEl.innerHTML = '';
+        return;
+      }
 
-        // Extract body snippet
-        let bodyText = msgData.snippet || '';
-        if (msgData.payload.parts) {
-          const textPart = msgData.payload.parts.find(p => p.mimeType === 'text/plain');
-          if (textPart && textPart.body.data) {
-            bodyText = atob(textPart.body.data);
-          }
+      const scanDate = lastImport.scanDate ? new Date(lastImport.scanDate) : null;
+      const importDate = lastImport.importedAt ? new Date(lastImport.importedAt) : null;
+      const timeAgo = importDate ? formatRelativeTime(importDate) : 'unknown';
+
+      statusEl.innerHTML = `
+        <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--success); flex-shrink: 0;"></span>
+          <span style="font-weight: 600; color: var(--text-primary);">Last scan imported ${timeAgo}</span>
+        </div>
+        <div style="font-size: var(--text-xs); color: var(--text-secondary);">
+          ${lastImport.itemsImported} new role(s) imported from ${lastImport.totalInScan} found in scan
+          ${lastImport.source === 'manual-file' ? ' (manual import)' : ' (auto-loaded)'}
+        </div>
+      `;
+
+      // Show source breakdown from feed items
+      if (sourcesEl) {
+        const feedItems = loadFeedQueue();
+        const sourceCounts = {};
+        for (const item of feedItems) {
+          const src = item.source || 'unknown';
+          sourceCounts[src] = (sourceCounts[src] || 0) + 1;
         }
 
-        // Parse company name (from sender domain or subject)
-        let company = '';
-        const domainMatch = from.match(/@([^.]+)\./);
-        if (domainMatch) {
-          company = domainMatch[1].replace(/-/g, ' ').toUpperCase();
-        }
+        const sourceLabels = {
+          linkedin: 'LinkedIn Alerts',
+          builtin: 'Built In',
+          referral: 'Referrals',
+          recruiter: 'Recruiter Outreach',
+          manual: 'Manual Entry',
+          'career-pages': 'Career Pages',
+          unknown: 'Other'
+        };
 
-        // Parse role title from subject
-        let title = subject
-          .replace(/^(Job opportunity|Interview|Application):\s*/i, '')
-          .replace(/\s+\|.*/, '')
-          .substring(0, 80);
+        const chips = Object.entries(sourceCounts)
+          .sort((a, b) => b[1] - a[1])
+          .map(([src, count]) => {
+            const label = sourceLabels[src] || src;
+            const colors = {
+              linkedin: 'var(--accent)',
+              builtin: 'var(--success)',
+              referral: 'var(--warning)',
+              recruiter: '#e879f9',
+              manual: 'var(--text-tertiary)'
+            };
+            const color = colors[src] || 'var(--text-tertiary)';
+            return `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: color-mix(in srgb, ${color} 12%, transparent); color: ${color}; border: 1px solid color-mix(in srgb, ${color} 25%, transparent);">
+              ${label} <span style="opacity: 0.7;">${count}</span>
+            </span>`;
+          }).join('');
 
-        // Look for salary mentions in body
-        const salaryMatch = bodyText.match(/\$[\d,]+k?|\$\d+\s*-\s*\$[\d,]+/i);
-        const salary = salaryMatch ? salaryMatch[0] : null;
-
-        // Only return if we extracted at least company + title
-        if (company && title) {
-          return {
-            company,
-            title,
-            salary,
-            source: 'gmail',
-            emailId: message.id,
-            from,
-            received: new Date().toISOString()
-          };
-        }
-        return null;
-      } catch (error) {
-        console.warn('Error parsing email:', error);
-        return null;
+        sourcesEl.innerHTML = `<div style="display: flex; flex-wrap: wrap; gap: 6px;">${chips}</div>`;
       }
     }
+
+    /* Gmail OAuth functions (scanGmailForJobs, parseJobEmail, etc.) removed in v3.31.0.
+     * Gmail scanning is now handled by the Cowork scheduled task via Gmail MCP.
+     * See: loadGmailScanResults(), updateGmailScanStatus(), handleGmailScanFileSelect() */
 
     // ================================================================
     // FEATURE 41: CAREER PAGE MONITORING — Job Feed
@@ -3436,14 +3548,14 @@
       excludeKeywords: ['junior', 'associate', 'intern', 'contract']
     };
 
-    // Feed sources — Gmail is active (synced by Pathfinder agent via MCP)
+    // Feed sources — Gmail sources are scanned by Cowork MCP task
     const FEED_SOURCES = [
       { id: 'manual', name: 'Manual Entry', status: 'active', lastChecked: 'Always available' },
-      { id: 'gmail', name: 'Gmail', status: 'active', lastChecked: 'Synced via Pathfinder agent' },
-      { id: 'linkedin', name: 'LinkedIn Alerts', status: 'active', lastChecked: 'Synced via Pathfinder agent' },
-      { id: 'builtin', name: 'Built In', status: 'active', lastChecked: 'Synced via Pathfinder agent' },
-      { id: 'indeed', name: 'Indeed', status: 'inactive', lastChecked: 'Not connected' },
-      { id: 'career-pages', name: 'Career Pages', status: 'inactive', lastChecked: 'Not connected' }
+      { id: 'linkedin', name: 'LinkedIn Alerts', status: 'active', lastChecked: 'Via Gmail MCP scan' },
+      { id: 'builtin', name: 'Built In', status: 'active', lastChecked: 'Via Gmail MCP scan' },
+      { id: 'referral', name: 'Referrals', status: 'active', lastChecked: 'Via Gmail MCP scan' },
+      { id: 'recruiter', name: 'Recruiter Outreach', status: 'active', lastChecked: 'Via Gmail MCP scan' },
+      { id: 'career-pages', name: 'Career Pages', status: 'active', lastChecked: 'Manual check' }
     ];
 
     // v3.1.1: Demo data constants removed — Feed now shows only real data
@@ -4214,7 +4326,8 @@
       companies: [], // For dedup and tracking
       pendingRole: null, // Role awaiting pipeline confirmation
       pendingRoleScore: null,
-      activeFilter: null // v3.20.1: Active stat pill filter — {type: 'stage'|'companies', value: 'Public'} or null
+      activeFilter: null, // v3.20.1: Active stat pill filter — {type: 'stage'|'companies', value: 'Public'} or null
+      searchQuery: '' // v3.27.0: Search query text for pipeline filtering
     };
 
     // Load companies from localStorage
@@ -4350,14 +4463,15 @@
      * Matches on company name + similar title. Roles at these stages are filtered out:
      * - "applied", "screen", "interviewing", "offer" (actively in progress)
      *
-     * We keep "saved", "discovered", "rejected" — those are passive stages that
-     * shouldn't suppress the feed item.
+     * v3.29.1: Changed to filter all pipeline stages EXCEPT "rejected" — if a role
+     * is in Pipeline at any non-rejected stage, it should not appear in the feed.
+     * Rejected roles can resurface in the feed (in case of repost or reconsideration).
+     * Previously we only filtered "active" stages; user reported duplicates.
      *
      * INPUT: feedItem (object), pipelineRoles (array)
      * RETURNS: { inPipeline: boolean, stage: string|null, roleId: string|null }
      */
     function checkPipelineStatus(feedItem, pipelineRoles) {
-      const ACTIVE_STAGES = ['applied', 'screen', 'interviewing', 'offer', 'outreach'];
       const companyLower = (feedItem.company || '').toLowerCase().trim();
       const titleLower = (feedItem.title || '').toLowerCase().trim();
 
@@ -4385,8 +4499,8 @@
                            sharedRoleTerm;
         if (!titleMatch) continue;
 
-        // Found a match — check if it's at an active stage
-        if (ACTIVE_STAGES.includes(role.stage)) {
+        // Found a match — filter from feed unless it's rejected (so user can reconsider)
+        if (role.stage !== 'rejected') {
           return { inPipeline: true, stage: role.stage, roleId: role.id };
         }
       }
@@ -4547,6 +4661,7 @@
       const toast = document.createElement('div');
       toast.className = `toast ${type}`;
       toast.textContent = message;
+      toast.setAttribute('role', 'alert');
       document.body.appendChild(toast);
 
       setTimeout(() => {
@@ -5357,8 +5472,7 @@
 
       const companyDesc = getCompanyDescription(item.company);
       const domain = getCompanyDomain(item.company || '', item.url || item.feedMetadata?.linkedinJobUrl || '');
-      const logoUrl = `https://logo.clearbit.com/${domain}`;
-      const fallbackUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+      const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
       const safeName = (item.company || '').replace(/'/g, "\\'");
 
       // Score breakdown — full 7-dimension grid
@@ -5481,7 +5595,7 @@
         <div class="fd-header">
           <div class="fd-header-info">
             <div class="fd-header-logo">
-              <img src="${logoUrl}" alt="${item.company}" onerror="this.onerror=function(){handleLogoError(this,'${safeName}','');}; this.src='${fallbackUrl}';">
+              <img src="${logoUrl}" alt="${item.company}" onerror="handleLogoError(this,'${safeName}','');">
             </div>
             <div class="fd-header-text">
               <a href="../research-brief/index.html?company=${encodeURIComponent(item.company)}" class="fd-company" style="text-decoration: none;" onclick="event.stopPropagation();">${item.company}</a>
@@ -6083,6 +6197,322 @@
       `;
     }
 
+    // ============================================================
+    // FEATURE 40: PIPELINE SEARCH + EXTERNAL JOB DISCOVERY
+    // v3.27.0: Search bar for filtering feed and discovering new roles
+    // ============================================================
+
+    /**
+     * Initialize the search bar: wire up input events, clear button, and explore button.
+     * Called once during page init.
+     */
+    function initFeedSearch() {
+      const input = document.getElementById('feedSearchInput');
+      const clearBtn = document.getElementById('feedSearchClear');
+      const exploreBtn = document.getElementById('feedSearchExplore');
+      if (!input) return;
+
+      /* Live filtering as user types — debounced, re-renders active tab */
+      let searchTimer = null;
+      input.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+          state.searchQuery = input.value.trim();
+          updateSearchUI();
+          rerenderCurrentTab();
+        }, 150);
+      });
+
+      /* Keyboard: Enter triggers explore, Escape clears */
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          clearFeedSearch();
+          input.blur();
+        }
+        if (e.key === 'Enter' && state.searchQuery && state.currentTab === 'feed') {
+          triggerExploreSearch(state.searchQuery);
+        }
+      });
+
+      /* Clear button */
+      if (clearBtn) {
+        clearBtn.addEventListener('click', clearFeedSearch);
+      }
+
+      /* Explore button — opens external job discovery */
+      if (exploreBtn) {
+        exploreBtn.addEventListener('click', () => {
+          const query = state.searchQuery || input.value.trim();
+          if (query) {
+            triggerExploreSearch(query);
+          } else {
+            showToast('Type a search query first to explore external jobs', 'info');
+          }
+        });
+      }
+    }
+
+    /**
+     * Re-render the currently active tab. Called after search query changes
+     * to ensure the correct tab's content is filtered.
+     */
+    function rerenderCurrentTab() {
+      const tab = state.currentTab || 'feed';
+      if (tab === 'feed') {
+        renderFeedStats();
+        renderFeedCards();
+      } else if (tab === 'snoozed') {
+        renderSnoozedCards();
+      } else if (tab === 'log') {
+        renderFeedLog();
+      }
+    }
+
+    /**
+     * Clear the search bar and reset filter.
+     */
+    function clearFeedSearch() {
+      const input = document.getElementById('feedSearchInput');
+      if (input) input.value = '';
+      state.searchQuery = '';
+      updateSearchUI();
+      rerenderCurrentTab();
+    }
+
+    /**
+     * Update search UI elements — result count badge and clear button visibility.
+     */
+    function updateSearchUI() {
+      const clearBtn = document.getElementById('feedSearchClear');
+      const countEl = document.getElementById('feedSearchCount');
+      const hasQuery = state.searchQuery.length > 0;
+
+      if (clearBtn) {
+        clearBtn.classList.toggle('visible', hasQuery);
+      }
+
+      if (countEl) {
+        if (hasQuery) {
+          /* Show count based on current tab context */
+          const tab = state.currentTab || 'feed';
+          let total = 0, matched = 0;
+          if (tab === 'feed') {
+            total = (state.feedItems || []).length;
+            matched = searchFeedItems(state.feedItems, state.searchQuery).length;
+          } else if (tab === 'snoozed') {
+            total = (state.snoozedRoles || []).length;
+            matched = searchFeedItems(state.snoozedRoles, state.searchQuery).length;
+          } else if (tab === 'log') {
+            const runs = loadFeedRuns();
+            total = runs.length;
+            const terms = state.searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
+            matched = runs.filter(run => {
+              const blob = [run.source, Array.isArray(run.sources) ? run.sources.join(' ') : '', String(run.totalRoles || run.found || 0)].join(' ').toLowerCase();
+              return terms.every(t => blob.includes(t));
+            }).length;
+          }
+          countEl.textContent = `${matched} of ${total}`;
+        } else {
+          countEl.textContent = '';
+        }
+      }
+    }
+
+    /**
+     * Update search bar appearance based on the active tab.
+     * - Feed/Snoozed: full search with Explore button
+     * - Log: search with log-specific placeholder, no Explore
+     * - Sources/Analytics: hide search bar (not applicable)
+     *
+     * @param {string} tabId - The active tab ID
+     */
+    function updateSearchBarForTab(tabId) {
+      const searchBar = document.getElementById('feedSearchBar');
+      const input = document.getElementById('feedSearchInput');
+      const exploreBtn = document.getElementById('feedSearchExplore');
+      const statsBar = document.getElementById('feedStatsBar');
+      if (!searchBar) return;
+
+      const placeholders = {
+        feed: 'Search jobs by company, title, domain, or keywords\u2026',
+        snoozed: 'Search snoozed roles\u2026',
+        log: 'Search log entries by source or date\u2026',
+        sources: '',
+        analytics: ''
+      };
+
+      /* Show/hide search bar per tab */
+      const searchableTabs = ['feed', 'snoozed', 'log'];
+      searchBar.style.display = searchableTabs.includes(tabId) ? 'flex' : 'none';
+
+      /* Show/hide stats bar — only visible on feed tab */
+      if (statsBar) {
+        statsBar.style.display = tabId === 'feed' ? '' : 'none';
+      }
+
+      /* Update placeholder */
+      if (input && placeholders[tabId]) {
+        input.placeholder = placeholders[tabId];
+      }
+
+      /* Explore button only on feed tab */
+      if (exploreBtn) {
+        exploreBtn.style.display = tabId === 'feed' ? '' : 'none';
+      }
+
+      /* Update search count for current tab context */
+      updateSearchUI();
+    }
+
+    /**
+     * Filter feed items by a search query. Matches against company, title,
+     * domain, location, source, JD text, and scoring keywords.
+     *
+     * @param {Array} items - Feed items to search through
+     * @param {string} query - Search text (case-insensitive)
+     * @returns {Array} Matching feed items
+     */
+    function searchFeedItems(items, query) {
+      if (!query || !items) return items || [];
+
+      const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+      if (terms.length === 0) return items;
+
+      return items.filter(item => {
+        /* Build a searchable text blob from all relevant fields */
+        const blob = [
+          item.company,
+          item.title,
+          item.domain,
+          item.location,
+          item.source,
+          item.salary,
+          item.stage,
+          item.jd ? item.jd.substring(0, 2000) : '', /* First 2000 chars of JD */
+          item.scoring?.leaderIC,
+          ...(item.scoring?.matchedKeywords || []),
+        ].filter(Boolean).join(' ').toLowerCase();
+
+        /* All terms must match (AND logic) */
+        return terms.every(term => blob.includes(term));
+      });
+    }
+
+    /**
+     * Trigger external job discovery. Opens a search dialog with pre-filled query
+     * and links to popular job boards + option to import via URL.
+     *
+     * @param {string} query - Search terms the user entered
+     */
+    function triggerExploreSearch(query) {
+      const encoded = encodeURIComponent(query);
+
+      /* Build search URLs for popular job boards */
+      const boards = [
+        { name: 'LinkedIn Jobs', url: `https://www.linkedin.com/jobs/search/?keywords=${encoded}`, icon: '🔗' },
+        { name: 'Indeed', url: `https://www.indeed.com/jobs?q=${encoded}`, icon: '🔍' },
+        { name: 'Glassdoor', url: `https://www.glassdoor.com/Job/jobs.htm?sc.keyword=${encoded}`, icon: '🏢' },
+        { name: 'Wellfound', url: `https://wellfound.com/jobs?query=${encoded}`, icon: '🚀' },
+        { name: 'BuiltIn', url: `https://builtin.com/jobs?search=${encoded}`, icon: '🔧' },
+      ];
+
+      const boardLinks = boards.map(b =>
+        `<a href="${b.url}" target="_blank" rel="noopener" style="
+          display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+          background: var(--bg-elevated); border: 1px solid var(--bg-subtle);
+          border-radius: var(--radius-sm); text-decoration: none; color: var(--text-primary);
+          font-size: var(--text-sm); transition: all 0.15s ease;
+        " onmouseover="this.style.borderColor='var(--primary)';this.style.background='var(--bg-surface)'"
+           onmouseout="this.style.borderColor='var(--bg-subtle)';this.style.background='var(--bg-elevated)'"
+        >
+          <span style="font-size: 18px;">${b.icon}</span>
+          <span style="flex:1; font-weight: 600;">${b.name}</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary);">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+        </a>`
+      ).join('');
+
+      /* Show explore dialog */
+      const overlay = document.createElement('div');
+      overlay.id = 'exploreOverlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;';
+      overlay.innerHTML = `
+        <div style="background: var(--bg-base); border-radius: var(--radius-lg); padding: 24px; max-width: 480px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2 style="font-size: var(--text-lg); font-weight: 700; color: var(--text-primary); margin: 0;">
+              Explore: "${query.length > 40 ? query.substring(0, 40) + '…' : query}"
+            </h2>
+            <button onclick="document.getElementById('exploreOverlay').remove()" style="background:none;border:none;cursor:pointer;color:var(--text-secondary);font-size:20px;padding:4px;">✕</button>
+          </div>
+          <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: 16px;">
+            Search job boards for "${query}" — find a role, copy the URL, and import it back here.
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+            ${boardLinks}
+          </div>
+          <div style="border-top: 1px solid var(--bg-subtle); padding-top: 16px;">
+            <p style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px;">Found a role? Paste the job URL here to import it:</p>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="exploreImportUrl" placeholder="https://..." style="
+                flex:1; padding: 8px 12px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm);
+                font-size: var(--text-sm); background: var(--bg-base); color: var(--text-primary);
+              ">
+              <button onclick="handleExploreImport()" style="
+                padding: 8px 14px; background: var(--primary); color: #fff; border: none;
+                border-radius: var(--radius-sm); font-weight: 600; font-size: var(--text-sm); cursor: pointer;
+              ">Import</button>
+            </div>
+          </div>
+        </div>
+      `;
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
+      });
+      document.body.appendChild(overlay);
+
+      /* Focus the URL input for quick paste */
+      setTimeout(() => {
+        const urlInput = document.getElementById('exploreImportUrl');
+        if (urlInput) urlInput.focus();
+      }, 100);
+    }
+
+    /**
+     * Handle importing a job from the explore dialog URL input.
+     * Delegates to the existing URL import flow.
+     */
+    function handleExploreImport() {
+      const urlInput = document.getElementById('exploreImportUrl');
+      if (!urlInput || !urlInput.value.trim()) {
+        showToast('Paste a job URL first', 'error');
+        return;
+      }
+
+      const url = urlInput.value.trim();
+
+      /* Close the explore dialog */
+      const overlay = document.getElementById('exploreOverlay');
+      if (overlay) overlay.remove();
+
+      /* Trigger the existing URL import flow with this URL */
+      const importBtn = document.getElementById('importFromUrlBtn');
+      if (importBtn) {
+        importBtn.click();
+        /* Wait for the modal to appear, then populate the URL */
+        setTimeout(() => {
+          const urlFields = document.querySelectorAll('input[type="text"], input[type="url"]');
+          for (const field of urlFields) {
+            if (field.placeholder && (field.placeholder.includes('http') || field.placeholder.includes('URL') || field.placeholder.includes('url'))) {
+              field.value = url;
+              field.dispatchEvent(new Event('input', { bubbles: true }));
+              break;
+            }
+          }
+        }, 300);
+      }
+    }
+
     /**
      * Toggle a stat pill filter on/off. Clicking an active filter deactivates it.
      * v3.20.1: Makes stat bar pills act as card filters
@@ -6110,7 +6540,13 @@
      * @returns {Array} Filtered feed items
      */
     function getFilteredFeedItems() {
-      const items = state.feedItems;
+      let items = state.feedItems;
+
+      /* v3.27.0: Apply search filter first */
+      if (state.searchQuery) {
+        items = searchFeedItems(items, state.searchQuery);
+      }
+
       const af = state.activeFilter;
       if (!af) return items;
 
@@ -6366,22 +6802,45 @@
         return;
       }
 
-      // v3.20.1: Apply stat pill filter before rendering
+      // v3.20.1: Apply stat pill filter + search before rendering
       const visibleItems = getFilteredFeedItems();
 
-      // Show filter-active indicator if filtering
-      const filterNotice = state.activeFilter
-        ? `<div style="grid-column: 1 / -1; padding: 8px 12px; background: var(--primary); color: #fff; border-radius: var(--radius-sm); font-size: var(--text-sm); display: flex; justify-content: space-between; align-items: center;">
-            <span>Showing ${visibleItems.length} of ${state.feedItems.length} roles — filtered by <strong>${state.activeFilter.type === 'stage' ? state.activeFilter.value : 'unique companies'}</strong></span>
-            <span onclick="toggleStatFilter(null,null)" style="cursor:pointer; text-decoration: underline;">Clear filter</span>
-          </div>`
-        : '';
+      /* v3.27.0: Show search-specific empty state if no results */
+      if (visibleItems.length === 0 && (state.searchQuery || state.activeFilter)) {
+        const query = state.searchQuery ? ` for "${state.searchQuery.replace(/</g, '&lt;')}"` : '';
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <h3 class="empty-title">No matching roles${query}</h3>
+            <p class="empty-text">Try different keywords, clear filters, or use <strong>Explore</strong> to discover new jobs on external boards.</p>
+            <button onclick="clearFeedSearch(); toggleStatFilter(null,null);" class="btn btn-ghost btn-sm" style="margin-top: 8px;">Clear all filters</button>
+          </div>
+        `;
+        return;
+      }
+
+      // Show filter-active indicator if filtering (stat pills or search)
+      const isSearching = !!state.searchQuery;
+      const isFiltering = !!state.activeFilter;
+      let filterNotice = '';
+
+      if (isSearching || isFiltering) {
+        const parts = [];
+        if (isSearching) parts.push(`search: "<strong>${state.searchQuery.replace(/</g, '&lt;')}</strong>"`);
+        if (isFiltering) parts.push(`<strong>${state.activeFilter.type === 'stage' ? state.activeFilter.value : 'unique companies'}</strong>`);
+        filterNotice = `<div style="grid-column: 1 / -1; padding: 8px 12px; background: var(--primary); color: #fff; border-radius: var(--radius-sm); font-size: var(--text-sm); display: flex; justify-content: space-between; align-items: center;">
+            <span>Showing ${visibleItems.length} of ${state.feedItems.length} roles — ${parts.join(' + ')}</span>
+            <span onclick="clearFeedSearch(); toggleStatFilter(null,null);" style="cursor:pointer; text-decoration: underline;">Clear all</span>
+          </div>`;
+      }
 
       // Analyze and render tier suggestions
       const companies = loadCompanies();
       const roles = loadRoles();
       const suggestions = analyzeTierSuggestions(companies, roles);
-      const suggestionBanners = state.activeFilter ? '' : renderTierSuggestionBanners(suggestions);
+      const suggestionBanners = (state.activeFilter || state.searchQuery) ? '' : renderTierSuggestionBanners(suggestions);
 
       container.innerHTML = filterNotice + suggestionBanners + visibleItems.map(item => {
         const scoreClass = item.score >= 80 ? 'score-high' : item.score >= 60 ? 'score-medium' : 'score-low';
@@ -6757,7 +7216,32 @@
         return;
       }
 
-      container.innerHTML = runs.reverse().map(run => `
+      /* v3.27.0: Apply search filter to log entries */
+      let filteredRuns = runs.reverse();
+      if (state.searchQuery) {
+        const terms = state.searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
+        filteredRuns = filteredRuns.filter(run => {
+          const blob = [
+            run.source,
+            Array.isArray(run.sources) ? run.sources.join(' ') : '',
+            String(run.totalRoles || run.found || 0),
+            formatTimestamp(run.timestamp),
+          ].join(' ').toLowerCase();
+          return terms.every(t => blob.includes(t));
+        });
+      }
+
+      if (filteredRuns.length === 0 && state.searchQuery) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3 class="empty-title">No log entries matching "${state.searchQuery.replace(/</g, '&lt;')}"</h3>
+            <p class="empty-text">Try different keywords or clear the search.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filteredRuns.map(run => `
         <div class="log-entry">
           <div class="log-time">${formatTimestamp(run.timestamp)}</div>
           <div class="log-details">
@@ -6921,6 +7405,8 @@
       try {
         // --- Create the Pipeline role ---
         const roles = safeJsonParse('pf_roles', []);
+        /* v3.27.0: Carry over ALL useful feed fields so downstream modules
+           (Research Brief, Resume Tailor) have full context */
         const newRole = {
           id: 'role-' + Date.now(),
           company: feedRole.company || 'Unknown',
@@ -6931,10 +7417,13 @@
           source: (feedRole.source || 'feed').toLowerCase(),
           dateAdded: new Date().toISOString(),
           lastActivity: new Date().toISOString(),
-          salary: feedRole.salary ? { raw: feedRole.salary } : null,
+          salary: feedRole.salary || null,
+          domain: feedRole.domain || null,
+          location: feedRole.location || null,
+          remote: feedRole.remote || false,
+          positioning: feedRole.scoring?.leaderIC || null,
           stageHistory: [{ stage: 'discovered', date: new Date().toISOString() }],
           feedMetadata: feedRole.feedMetadata || null,
-          // Carry over enrichment data if available
           jdEnriched: feedRole.jdEnriched || false,
           jdEnrichedAt: feedRole.jdEnrichedAt || null,
           jdEnrichSource: feedRole.jdEnrichSource || null
@@ -6953,6 +7442,8 @@
             name: feedRole.company,
             domain: domain,
             tier: 'watching',
+            stage: normalizeStage(feedRole.stage) || null,
+            headcount: feedRole.headcount || null,
             dateAdded: new Date().toISOString(),
             logoUrl: domain
               ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128`
@@ -6968,133 +7459,10 @@
       }
     }
 
-    /* ====== COMPANY LOGO SYSTEM (v3.8.4) ======
-     * Ported from Pipeline module — ATS-aware domain extraction,
-     * Google Favicon API, and colorful letter-initial fallback.
-     * Shared pattern: any new module that needs logos should copy this block.
-     */
+    /* Company logos: uses shared ../shared/logos.js (v3.30.0) */
 
-    /** Known domain overrides for companies whose name doesn't map
-     *  cleanly to a domain (e.g., "Amazon Ads" → "amazon.com") */
-    const DOMAIN_OVERRIDES = {
-      'amazon ads': 'amazon.com',
-      'bounti.ai': 'bounti.ai',
-      'albertsons media': 'albertsons.com',
-      'activision blizzard': 'activisionblizzard.com',
-      'bc ventures': 'bcventures.com',
-      'enriches lab': 'enricheslab.com',
-      'notion': 'notion.so',
-      'google': 'google.com',
-      'meta': 'meta.com',
-      'apple': 'apple.com',
-      'sofi': 'sofi.com',
-      'blackrock': 'blackrock.com',
-      'netflix': 'netflix.com',
-      'stripe': 'stripe.com',
-      'directv': 'directv.com',
-      'uber': 'uber.com',
-      'geico': 'geico.com',
-    };
 
-    /**
-     * Derives a clean company domain for logo lookup.
-     * Handles ATS URLs (Workday, Greenhouse, Lever, Ashby) by extracting
-     * the company name from the URL structure.
-     * INPUT: company name (string), optional URL (string)
-     * OUTPUT: domain string (e.g., "stripe.com")
-     */
-    function getCompanyDomain(companyName, url) {
-      const override = DOMAIN_OVERRIDES[(companyName || '').toLowerCase()];
-      if (override) return override;
 
-      if (url) {
-        try {
-          const hostname = new URL(url).hostname.toLowerCase();
-          // Workday: ouryahoo.wd5.myworkdayjobs.com → yahoo.com
-          const wdMatch = hostname.match(/^(?:our)?([a-z]+)\.wd\d+\.myworkdayjobs\.com/);
-          if (wdMatch) return wdMatch[1] + '.com';
-          // Greenhouse: boards.greenhouse.io/stripe → stripe.com
-          if (hostname.includes('greenhouse.io')) {
-            const pathMatch = url.match(/greenhouse\.io\/([a-z0-9]+)/i);
-            if (pathMatch) return pathMatch[1] + '.com';
-          }
-          // Lever: jobs.lever.co/stripe → stripe.com
-          if (hostname.includes('lever.co')) {
-            const pathMatch = url.match(/lever\.co\/([a-z0-9]+)/i);
-            if (pathMatch) return pathMatch[1] + '.com';
-          }
-          // Ashby: jobs.ashbyhq.com/stripe → stripe.com
-          if (hostname.includes('ashbyhq.com')) {
-            const pathMatch = url.match(/ashbyhq\.com\/([a-z0-9]+)/i);
-            if (pathMatch) return pathMatch[1] + '.com';
-          }
-          // LinkedIn: linkedin.com/company/stripe → stripe.com
-          // Job URLs (/jobs/view/...) don't contain company info — skip to name fallback
-          if (hostname.includes('linkedin.com')) {
-            const pathMatch = url.match(/company\/([a-z0-9-]+)/i);
-            if (pathMatch) return pathMatch[1].replace(/-/g, '') + '.com';
-            // For non-company LinkedIn URLs (jobs, posts, etc.), skip URL extraction
-            // and fall through to the name-based fallback below
-          }
-          // Direct company site (e.g., stripe.com/jobs → stripe.com)
-          if (!hostname.includes('workday') && !hostname.includes('greenhouse') &&
-              !hostname.includes('lever') && !hostname.includes('ashby') &&
-              !hostname.includes('linkedin.com')) {
-            return hostname.replace(/^www\./, '');
-          }
-        } catch (e) { /* invalid URL, fall through */ }
-      }
-      // Fallback: derive from company name
-      return (companyName || '').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com';
-    }
-
-    /** Backward-compat alias — some older code calls guessDomain() */
-    function guessDomain(companyName) {
-      return getCompanyDomain(companyName);
-    }
-
-    /**
-     * Generates a consistent color for a company's letter-initial avatar.
-     * Uses a hash of the company name to pick from a curated palette.
-     * INPUT: company name string
-     * OUTPUT: hex color string
-     */
-    function getCompanyColor(name) {
-      const PALETTE = [
-        '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', // purples
-        '#ec4899', '#f43f5e', '#ef4444', '#f97316', // pinks/reds/orange
-        '#eab308', '#84cc16', '#22c55e', '#14b8a6', // greens
-        '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', // blues
-      ];
-      let hash = 0;
-      for (let i = 0; i < (name || '').length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
-      }
-      return PALETTE[Math.abs(hash) % PALETTE.length];
-    }
-
-    /**
-     * Global handler: replaces an <img> with a colored letter circle
-     * when the favicon fails to load (CORS, 404, etc.).
-     * Called from onerror on logo <img> tags.
-     */
-    function handleLogoError(img, companyName, cssClass) {
-      const letter = (companyName || '?').charAt(0).toUpperCase();
-      const color = getCompanyColor(companyName);
-      const span = document.createElement('span');
-      span.className = (cssClass || '') + ' card-logo-fallback';
-      span.style.background = color;
-      span.textContent = letter;
-      img.replaceWith(span);
-    }
-
-    /**
-     * Render a company logo for a feed card. Uses Google Favicon API
-     * with ATS-aware domain extraction. On error, falls back to a
-     * colorful letter-initial circle (via handleLogoError).
-     * INPUT: feed item object (needs .company, optionally .domain/.url)
-     * OUTPUT: HTML string — <img> tag with onerror fallback
-     */
 
     /**
      * Retrieves a company's mission statement from localStorage pf_companies.
@@ -7116,13 +7484,11 @@
       // NOTE: item.domain is the INDUSTRY category (e.g., "Enterprise SaaS / AI"),
       // NOT a web domain. Always use getCompanyDomain() which resolves actual domains.
       const domain = getCompanyDomain(item.company || '', item.url || item.feedMetadata?.linkedinJobUrl || '');
-      // v3.20.0: Use Clearbit Logo API as primary (returns real logos, not favicons).
-      // Fallback chain: Clearbit → Google Favicon → letter-initial avatar.
-      // This fixes LinkedIn icons appearing when Google Favicon can't find the real logo.
-      const logoUrl = `https://logo.clearbit.com/${domain}`;
-      const fallbackUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+      // v3.28.0: Google Favicon as primary (Clearbit shut down by HubSpot).
+      // Fallback: letter-initial avatar on error.
+      const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
       const safeName = (item.company || '').replace(/'/g, "\\'");
-      return `<img src="${logoUrl}" alt="${item.company || ''}" onerror="this.onerror=function(){handleLogoError(this,'${safeName}','card-logo-img');}; this.src='${fallbackUrl}';">`;
+      return `<img src="${logoUrl}" alt="${item.company || ''}" onerror="handleLogoError(this,'${safeName}','card-logo-img');">`;
     }
 
     /**
@@ -7262,7 +7628,25 @@
         return;
       }
 
-      container.innerHTML = state.snoozedRoles.map(item => {
+      /* v3.27.0: Apply search filter to snoozed roles */
+      const visibleSnoozed = state.searchQuery
+        ? searchFeedItems(state.snoozedRoles, state.searchQuery)
+        : state.snoozedRoles;
+
+      if (visibleSnoozed.length === 0 && state.searchQuery) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <h3 class="empty-title">No snoozed roles matching "${state.searchQuery.replace(/</g, '&lt;')}"</h3>
+            <p class="empty-text">Try different keywords or clear the search.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = visibleSnoozed.map(item => {
         const scoreClass = item.score >= 80 ? 'score-high' : item.score >= 60 ? 'score-medium' : 'score-low';
         const scorePercent = item.score;
         const snoozedUntil = new Date(item.snoozedUntil);
@@ -7359,78 +7743,12 @@
     /**
      * Open Gmail token modal (Feature 40)
      */
-    function openGmailTokenModal() {
-      const modal = document.getElementById('gmailTokenModal');
-      if (modal) {
-        modal.classList.add('active');
-        document.getElementById('gmailTokenForm').reset();
-      }
-    }
-
-    /**
-     * Close Gmail token modal (Feature 40)
+    /* Legacy Gmail OAuth modal handlers removed (v3.31.0)
+     * openGmailTokenModal, closeGmailTokenModal, submitGmailToken,
+     * handleGmailTokenSubmit, triggerGmailScan — all replaced by
+     * loadGmailScanResults() + handleGmailScanFileSelect().
+     * Gmail scanning is now powered by Cowork MCP scheduled task.
      */
-    function closeGmailTokenModal() {
-      const modal = document.getElementById('gmailTokenModal');
-      if (modal) {
-        modal.classList.remove('active');
-      }
-    }
-
-    /**
-     * Submit Gmail token (Feature 40)
-     */
-    function submitGmailToken() {
-      const token = document.getElementById('gmailTokenInput').value.trim();
-      if (!token) {
-        showToast('Please paste a valid Gmail API token', 'error');
-        return;
-      }
-      if (saveGmailToken(token)) {
-        closeGmailTokenModal();
-        updateGmailStatus();
-        renderCareerPagesList(); // Update UI
-      }
-    }
-
-    /**
-     * Handle Gmail token form submission
-     */
-    function handleGmailTokenSubmit(event) {
-      event.preventDefault();
-      submitGmailToken();
-    }
-
-    /**
-     * Trigger Gmail scan manually (Feature 40)
-     */
-    async function triggerGmailScan() {
-      const token = getGmailToken();
-      if (!token) {
-        showToast('Please connect Gmail first', 'error');
-        return;
-      }
-      const jobs = await scanGmailForJobs(token);
-      if (jobs.length > 0) {
-        // Add to feed
-        const queue = loadFeedQueue();
-        jobs.forEach(job => {
-          // v3.19.3: Case-insensitive dedup to match init-time dedup logic
-          if (!queue.some(q => (q.company || '').toLowerCase().trim() === (job.company || '').toLowerCase().trim()
-              && (q.title || '').toLowerCase().trim() === (job.title || '').toLowerCase().trim())) {
-            queue.push({
-              ...job,
-              id: `gmail-${Date.now()}-${Math.random()}`,
-              source: 'gmail'
-            });
-          }
-        });
-        saveFeedQueue(queue);
-        showToast(`Added ${jobs.length} emails to feed`, 'success');
-        // Reload feed
-        document.getElementById('checkNowBtn').click();
-      }
-    }
 
     /**
      * Open add career page modal (Feature 41)
@@ -8281,24 +8599,32 @@
         localStorage.setItem('pf_feed_queue', JSON.stringify(cleanedQueue));
       }
 
-      // v3.18.2: If queue is empty (including empty array), reload from Gmail seed data.
-      // This handles the case where localStorage pf_feed_queue exists but is empty ("[]"),
-      // which prevented the original v3.2.0 seed loader from re-populating the feed.
-      // The seed file contains real job emails extracted from Gmail by the Pathfinder agent.
+      // v3.31.0: Load Gmail scan results from Cowork MCP task (data/gmail-scan.json).
+      // This replaces the legacy gmail-seed.json approach with a live pipeline:
+      // Cowork scheduled task → Gmail MCP → parse emails → write JSON → load here.
       let rawFeedItems = cleanedQueue;
+      const scanResult = await loadGmailScanResults();
+      if (scanResult.imported > 0) {
+        console.log(`[Feed] Imported ${scanResult.imported} new role(s) from Gmail scan (${scanResult.total} total in scan)`);
+        rawFeedItems = loadFeedQueue(); // Reload after import
+      } else if (scanResult.alreadyImported) {
+        console.log(`[Feed] Gmail scan already imported (${scanResult.total} items, scanned ${scanResult.scanDate})`);
+      }
+
+      // Fallback: If still empty, try legacy gmail-seed.json
       if (rawFeedItems.length === 0) {
         try {
           const resp = await fetch('./gmail-seed.json');
           if (resp.ok) {
             const seedData = await resp.json();
             if (Array.isArray(seedData) && seedData.length > 0) {
-              console.log(`[Feed] Loaded ${seedData.length} items from Gmail seed data`);
+              console.log(`[Feed] Loaded ${seedData.length} items from legacy Gmail seed data`);
               localStorage.setItem('pf_feed_queue', JSON.stringify(seedData));
               rawFeedItems = seedData;
             }
           }
         } catch (e) {
-          console.log('[Feed] No Gmail seed data available — feed is empty until sources are connected');
+          console.log('[Feed] No seed data available — feed is empty until sources are connected');
         }
       }
 
@@ -8413,12 +8739,11 @@
       renderFeedLog();
       updateSnoozedBadge();
 
-      // Feature 40: Initialize Gmail status indicator
-      updateGmailStatus();
-      const scanGmailBtn = document.getElementById('scanGmailBtn');
-      if (scanGmailBtn) {
-        scanGmailBtn.style.display = isGmailConnected() ? 'inline-flex' : 'none';
-      }
+      // Feature 40: Initialize feed search bar
+      initFeedSearch();
+
+      // Gmail scan status display (replaces legacy Gmail OAuth status)
+      updateGmailScanStatus();
 
       // Feature 41: Initialize career pages list
       renderCareerPagesList();
@@ -8566,7 +8891,7 @@
       // URL input listener for real-time detection
       document.getElementById('importUrlInput').addEventListener('input', detectUrlMetadata);
 
-      // Tab navigation
+      // Tab navigation — v3.27.0: integrates search bar visibility per tab
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -8578,9 +8903,11 @@
           if (tabContent) {
             tabContent.classList.add('active');
             state.currentTab = tabId;
+            updateSearchBarForTab(tabId);
             if (tabId === 'analytics') renderAnalytics();
-            if (tabId === 'sources') renderSourceAnalytics();
+            if (tabId === 'sources') { renderSourceAnalytics(); updateGmailScanStatus(); }
             if (tabId === 'snoozed') renderSnoozedCards();
+            if (tabId === 'log') renderFeedLog();
           }
         });
       });
@@ -8629,12 +8956,7 @@
         }
       });
 
-      // Feature 40: Gmail modal overlay click handler
-      document.getElementById('gmailTokenModal').addEventListener('click', (e) => {
-        if (e.target.id === 'gmailTokenModal') {
-          closeGmailTokenModal();
-        }
-      });
+      // Legacy Gmail token modal removed (v3.31.0) — scanning now via Cowork MCP
 
       // Feature 41: Career page modal overlay click handler
       document.getElementById('addCareerPageModal').addEventListener('click', (e) => {
@@ -8660,9 +8982,24 @@
 
     function startAutoRefresh() {
       // Refresh every 15 minutes (900,000 ms)
+      // v3.29.1: Also re-runs pipeline dedup on each refresh so roles added
+      // to Pipeline between refreshes get filtered out of the feed.
       autoRefreshInterval = setInterval(() => {
         console.log('[Feed] Auto-refreshing from localStorage...');
-        const freshItems = loadFeedQueue();
+        let freshItems = loadFeedQueue();
+
+        // Re-run pipeline dedup so newly-pipelined roles disappear from feed
+        const pipelineRoles = loadRoles();
+        const beforeDedup = freshItems.length;
+        freshItems = freshItems.filter(item => {
+          const status = checkPipelineStatus(item, pipelineRoles);
+          return !status.inPipeline;
+        });
+        const dedupRemoved = beforeDedup - freshItems.length;
+        if (dedupRemoved > 0) {
+          console.log(`[Feed] Auto-refresh filtered ${dedupRemoved} pipeline duplicate(s)`);
+        }
+
         const scored = freshItems
           .map(role => {
             const scoring = scoreRole(role, state.preferences);
@@ -8684,6 +9021,52 @@
         }
       }, 15 * 60 * 1000);
     }
+
+    // ============================================================
+    // CROSS-TAB SYNC: Auto-refresh when another tab writes to pf_feed_queue
+    // v3.29.1: Detects when Sync Hub or other modules push new feed items
+    // ============================================================
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'pf_feed_queue' || event.key === 'pf_roles') {
+        console.log(`[Feed] Detected cross-tab change to ${event.key}, refreshing...`);
+        // Small delay to let the writing tab finish all its writes
+        setTimeout(() => {
+          let freshItems = loadFeedQueue();
+          const pipelineRoles = loadRoles();
+          freshItems = freshItems.filter(item => !checkPipelineStatus(item, pipelineRoles).inPipeline);
+          const scored = freshItems
+            .map(role => {
+              const scoring = scoreRole(role, state.preferences);
+              if (!scoring) return null;
+              return { ...role, score: scoring.score, scoring: scoring.breakdown };
+            })
+            .filter(item => item !== null)
+            .sort((a, b) => b.score - a.score);
+          state.feedItems = scored;
+          renderFeedCards();
+          const feedBanner = document.getElementById('feedBanner');
+          if (feedBanner) {
+            feedBanner.style.display = state.feedItems.length === 0 ? 'block' : 'none';
+          }
+        }, 500);
+      }
+    });
+
+    // Also refresh when tab regains focus (catches manual Pipeline edits in same tab group)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[Feed] Tab visible — checking for pipeline changes...');
+        const pipelineRoles = loadRoles();
+        const beforeCount = state.feedItems.length;
+        state.feedItems = state.feedItems.filter(item =>
+          !checkPipelineStatus(item, pipelineRoles).inPipeline
+        );
+        if (state.feedItems.length !== beforeCount) {
+          console.log(`[Feed] Removed ${beforeCount - state.feedItems.length} pipeline duplicate(s) on tab focus`);
+          renderFeedCards();
+        }
+      }
+    });
 
     // Start application when page loads (sync-on-open)
     document.addEventListener('DOMContentLoaded', () => {
