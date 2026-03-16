@@ -1314,12 +1314,14 @@
        Follows the same pattern as pipeline/index.html detail-panel.
        ================================================================ */
 
-    /* Overlay that darkens the background when panel is open */
+    /* Overlay that darkens the background when JD panel is open.
+       v3.31.6: z-index raised above feed-detail-panel (40) to properly
+       layer on top when JD is opened from the feed detail sidebar. */
     .jd-overlay {
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.4);
-      z-index: 35;
+      z-index: 45;
       opacity: 0;
       pointer-events: none;
       transition: opacity var(--duration-normal) var(--ease-default);
@@ -1330,17 +1332,19 @@
       pointer-events: auto;
     }
 
-    /* The detail panel itself — slides from right */
+    /* The JD detail panel — slides from right.
+       v3.31.6: z-index raised to 50 so it layers above the feed detail
+       panel when "View Full JD" is clicked from within the sidebar. */
     .jd-detail-panel {
       position: fixed;
-      top: 56px; /* v3.31.3: Below navbar — was top:0, truncating header */
+      top: 56px;
       right: 0;
       width: 480px;
       max-width: 95vw;
       height: calc(100vh - 56px);
       background: var(--bg-elevated);
       box-shadow: var(--shadow-lg);
-      z-index: 40;
+      z-index: 50;
       transform: translateX(100%);
       transition: transform var(--duration-enter) var(--ease-default);
       display: flex;
@@ -5383,6 +5387,10 @@
      * @param {string} roleId - The ID of the job role
      * @param {object} item - The job item with jdText, company, title data
      */
+    /** Track which role's feed detail was open before JD panel opened,
+     *  so we can restore it when the JD panel closes. */
+    let _jdPanelReturnToRoleId = null;
+
     function openJDPanel(roleId, item) {
       const overlay = document.querySelector('.jd-overlay');
       const panel = document.querySelector('.jd-detail-panel');
@@ -5390,6 +5398,14 @@
       if (!overlay || !panel) {
         console.warn('JD panel elements not found in DOM');
         return;
+      }
+
+      /* v3.31.6: Close the feed detail sidebar before opening JD panel
+         to prevent two panels stacking in the same visual space. */
+      const feedPanel = document.getElementById('feedDetailPanel');
+      if (feedPanel && feedPanel.classList.contains('open')) {
+        _jdPanelReturnToRoleId = roleId;
+        closeFeedDetail();
       }
 
       // Get company logo (fallback to first letter if no logo)
@@ -5447,6 +5463,15 @@
 
       if (overlay) overlay.classList.remove('open');
       if (panel) panel.classList.remove('open');
+
+      /* v3.31.6: Re-open the feed detail sidebar if it was open before
+         the JD panel was shown — user expects to return to the role card. */
+      if (_jdPanelReturnToRoleId) {
+        const returnId = _jdPanelReturnToRoleId;
+        _jdPanelReturnToRoleId = null;
+        // Small delay so close animation completes before re-open
+        setTimeout(() => openFeedDetail(returnId), 200);
+      }
     }
 
     // ============================================================
