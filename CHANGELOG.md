@@ -4,6 +4,142 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.31.0 — 2026-03-15
+
+### Job Feed Listener — Gmail Scan Pipeline & Sources Tab Rebuild + Pipeline File Upload Fix
+
+**Gmail scanning now powered by Cowork MCP (replaces broken OAuth flow):**
+- Removed legacy Gmail OAuth token modal and direct Gmail API calls (never worked: CORS + token expiry)
+- New architecture: Cowork scheduled task scans Gmail via MCP connector → writes `data/gmail-scan.json` → Feed loads on init
+- Scheduled task `pathfinder-gmail-feed-scan` runs daily at 8am, parses 4 email types:
+  - LinkedIn Job Alerts (jobalerts-noreply@linkedin.com) — extracts all jobs with titles, companies, locations, LinkedIn URLs
+  - Built In digests (support@builtin.com) — extracts companies, titles, locations, salary ranges
+  - Referrals (*@myworkday.com, *@amazon.jobs) — extracts referrer, company, role, application URL
+  - Recruiter outreach — extracts company, role title from subject/body
+
+**Initial feed populated with 22 real roles from Gmail:**
+- 11 LinkedIn roles (OpenAI, Chime, Cleo, Reducto, Capital Group, Microsoft, Zillow, Intuit, Dice)
+- 7 Built In roles (Toast, GEICO, Ethos, Amplitude, DIRECTV, SoFi, Zendesk)
+- 3 referrals (Amazon via Sam Blum, LiveRamp via Manoj Kumar, Yahoo via Giovanni Gardelli)
+- 1 recruiter (RingCentral — interview scheduled)
+
+**Sources tab rebuilt:**
+- Gmail section: scan status display with last-import timestamp, source breakdown chips, manual "Import Scan Results" file picker
+- Removed: Connect Gmail button, Gmail token modal, broken scan button
+- Updated FEED_SOURCES to include referral + recruiter as active sources
+- Career pages section retained (Greenhouse, Lever, Ashby monitoring still works)
+
+**Feed init enhanced:**
+- `loadGmailScanResults()` runs on every page load, merges new scan items with dedup
+- Tracks last import to prevent re-importing same scan
+- Falls back to legacy gmail-seed.json if scan file unavailable
+
+**Pipeline file upload fix:**
+- Fixed file upload zone not responding to clicks — `display: none` on file input prevented `.click()` in some browsers. Changed to `opacity: 0` + absolute positioning
+- Made entire drop zone clickable (was: only the tiny "browse" link triggered the file dialog)
+
+---
+
+## v3.30.1 — 2026-03-15
+
+### Critical Bug Fixes + Workflow Regression Test System
+
+**Pipeline fixes (3 bugs):**
+- Fixed `getCompanyLogoFallbackUrl` — function removed in v3.30.0 but still called in detail panel and companies view, causing JS ReferenceError that broke ALL card clicks and side panel opening. Replaced with shared `handleLogoError()` fallback
+- Fixed table view row onclick: `openRoleDetail(); closeRoleDetail()` called back-to-back — panel opened then immediately closed. Removed spurious `closeRoleDetail()` call
+- Fixed "Why the change?" modal Save button: `querySelector('button:last-child')` matched the "Withdrew" reason chip instead of the Save button. Changed to `.querySelector('.btn-primary')`
+
+**Research Brief fixes:**
+- Added `shared/logos.js` import — role pill logos now use shared logo system with DOMAIN_OVERRIDES and two-stage fallback instead of bare Google Favicon with hidden-on-error
+- Updated brief header and company card logos to use shared `getCompanyLogoUrl()` + `handleLogoError()`
+
+**Dashboard auto-trigger deep links:**
+- "Generate Brief", "Prepare", and "Prep" buttons now pass `?roleId=X&action=generate` to Research Brief
+- Research Brief `init()` reads URL params and auto-selects role + auto-starts generation
+- Pipeline `init()` now handles `?modal=add` (opens add-role dialog) and `?roleId=X` (opens detail panel)
+
+**Workflow regression test (`scripts/workflow-regression.js`):**
+- New Node.js static analysis engine — 79 checks across all 11 modules
+- Check 1: onclick handlers reference defined functions (catches broken event handlers)
+- Check 2: Contradictory sequential calls (catches open+close in same handler)
+- Check 3: getElementById references existing HTML elements
+- Check 4: Removed function blocklist (catches calls to deleted functions like `getCompanyLogoFallbackUrl`)
+- Check 5: Script load order (shared scripts must load before inline code)
+- Check 6: querySelector ambiguity (catches generic selectors that match wrong element)
+- Check 7: Cross-module URL param contracts (sender sends ?param, target handles it)
+- Added `getCompanyLogoFallbackUrl` to regression-check.sh removed-function detector
+
+---
+
+## v3.30.0 — 2026-03-15
+
+### Anti-Regression Architecture: Shared Logo System + Regression Check Script
+
+**Shared logo system (`modules/shared/logos.js`):**
+- Extracted DOMAIN_OVERRIDES, getCompanyDomain(), guessDomain(), getCompanyLogoUrl(), getCompanyColor(), handleLogoError(), companyLogoHtml() into a single shared file
+- Pipeline and Feed now import `logos.js` instead of maintaining inline copies
+- Adding a new domain override (like RingCentral) is now a one-line change in one file
+- This prevents the #1 recurring regression: logo fixes applied to one module but not the other
+
+**Regression check script (`scripts/regression-check.sh`):**
+- 8 automated checks run before every commit
+- Check 1: Dead API references (Clearbit, etc.) — excludes migration fixer and comments
+- Check 2: Logo system duplication — fails if any module has inline DOMAIN_OVERRIDES, getCompanyDomain, or handleLogoError
+- Check 3: Shared file imports — verifies pathfinder.css and data-layer.js in all modules
+- Check 4: Bare JSON.parse(localStorage) — must use safeJsonParse()
+- Check 5: console.log statements
+- Check 6: Version sync — PRD, CHANGELOG, CLAUDE_CONTEXT must match
+- Check 7: TODO/FIXME/HACK comments
+- Check 8: Script tag balance (smart counting, ignores regex strings in JS)
+
+---
+
+## v3.29.1 — 2026-03-15
+
+### QA Pass + Feed Bug Fixes
+
+**QA fixes (all 3 changed modules — pipeline, job-feed, research-brief):**
+- CDN script error handling: Lucide, html2pdf, mammoth all wrapped in `typeof` checks with `onerror` handlers on script tags
+- Pipeline: Added `escapeHtml()` helper, sanitized all `innerHTML` company name insertions (XSS prevention)
+- Pipeline: Added `role="alert"` + `aria-live="polite"` on toast container and import status
+- Job Feed: Added `role="alert"` on toast elements
+- Research Brief: Added `role="alert"` on generation progress, section status, error banners; wrapped mammoth/html2pdf calls in availability checks
+
+**Feed duplicate fix:**
+- Pipeline dedup now filters ALL stages except `rejected` (previously only filtered active stages like applied/interviewing). Rejected roles can still resurface in feed for reconsideration.
+- Auto-refresh now re-runs pipeline dedup on each 15-min cycle (previously skipped it, so roles added to Pipeline between refreshes stayed visible in feed)
+- Added `storage` event listener for real-time cross-tab sync when `pf_feed_queue` or `pf_roles` changes
+- Added `visibilitychange` listener to re-filter pipeline duplicates when tab regains focus
+
+**Logo fallback chain:**
+- Added RingCentral (+ variants) to DOMAIN_OVERRIDES in both Pipeline and Feed
+- Two-stage logo fallback: Google Favicon → DuckDuckGo Icons → letter avatar (previously went straight from Google to letter avatar)
+
+---
+
+## v3.29.0 — 2026-03-15
+
+### Full PRD Reconciliation + Bug Fixes
+
+Comprehensive audit of PRD vs. codebase. All documentation updated to match actual implementation state.
+
+**Bug fixes (code):**
+- **Clearbit Logo API → Google Favicon API:** Clearbit was acquired by HubSpot and shut down. Replaced all references across Pipeline Tracker (6 locations: `getCompanyLogoUrl`, `companyLogoHtml`, `enrichCompanyData` Sources 1+3, company creation, migration fixer) and Job Feed Listener (3 locations: detail panel, card logo, header logo). Primary source is now `https://www.google.com/s2/favicons?domain={domain}&sz=128`.
+- **Pipeline Analytics 300% conversion rate:** Fixed formula from broken `toCount / (previousCount + fromCount)` to correct `everReachedTo / everReachedFrom` via stageHistory, capped at 100%.
+- **Research Brief API error fallback:** Expanded `generateSection()` error re-throw from just 401/429 to ANY error with a `.status` property, so all API failures (400 credits, 503/529 overloaded) now trigger the offline fallback.
+- **Logo migration copy-paste bug:** Pipeline's one-time Clearbit→Favicon migration was replacing Clearbit URLs with the same Clearbit URLs. Fixed to actually write Google Favicon URLs.
+
+**Documentation reconciliation (14 files updated):**
+- **Main PRD (v3.29.0):** Bucket 1 — fixed logo API refs, 10→13 section count, generation architecture (MCP→browser-first), version sync. Bucket 2 — added 13 undocumented features (search bar, explore dialog, offline brief, cross-tab refresh, cache-busting, role strip pinning, feed→pipeline transfer, Tavily, Additional Context, evidence labels, PDF export, analytics formula, favicon migration). Bucket 3 — flagged 7 unimplemented features as "Status: Planned" (Calendar, Debrief conversational, Mock Interview, Command Palette, Source Ledger, Data Import, Metrics Page).
+- **Research Brief sub-PRD:** Complete rewrite to v3.29.0. Now documents V3 browser-first architecture, 13-section structure per Improvement Spec, Tavily integration, Additional Context system, 7 evidence labels, offline fallback, PDF export.
+- **Pipeline Tracker sub-PRD (v3.29.0):** Logo API, conversion analytics formula, cross-tab auto-refresh, cache-busting. Planned features flagged.
+- **Job Feed sub-PRD (v3.29.0):** Search bar, explore dialog, feed→pipeline data transfer, feed run logging. Scoring weights reconciled (network 15%, comp 5%). Planned features flagged.
+- **All other sub-PRDs (v3.29.0):** Dashboard, Outreach, Comp Intelligence, Resume Builder, Calendar, Debrief, Mock Interview, Artifacts MCP, Sync Hub — all updated with version sync and accurate implementation status flags.
+- **CLAUDE_CONTEXT.md:** Version, logo references, known issues (3 resolved).
+- **README.md:** 13-section brief description, Google Favicon in tech stack, Tavily added.
+
+---
+
 ## v3.22.0 — 2026-03-14
 
 ### Research Brief V3 — Pursuit Strategy Rewrite with Live Web Search

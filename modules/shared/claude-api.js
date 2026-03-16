@@ -459,3 +459,10 @@ CRITICAL OUTPUT FORMAT RULES:
     BRIDGE_URL,
   };
 })();
+
+/* ====== NODE.JS / JEST EXPORT ======
+ * Makes the PF.claude API available via require() for unit testing.
+ * In browser context, `module` is undefined — this block is harmless. */
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = window.PF.claude;
+}

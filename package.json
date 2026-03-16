@@ -1,0 +1,57 @@
+{
+  "name": "pathfinder",
+  "private": true,
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "qa:regression": "node scripts/workflow-regression.js",
+    "qa:interactive": "node scripts/interactive-qa.js",
+    "qa:all": "node scripts/workflow-regression.js && node scripts/interactive-qa.js"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "roots": [
+      "<rootDir>/modules/",
+      "<rootDir>/scripts/"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "modules/shared/**/*.js",
+      "!modules/shared/__tests__/**"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 65,
+        "functions": 70,
+        "lines": 75,
+        "statements": 75
+      },
+      "./modules/shared/logos.js": {
+        "branches": 85,
+        "functions": 100,
+        "lines": 95,
+        "statements": 95
+      },
+      "./modules/shared/claude-api.js": {
+        "branches": 78,
+        "functions": 80,
+        "lines": 88,
+        "statements": 88
+      },
+      "./modules/shared/data-layer.js": {
+        "branches": 60,
+        "functions": 55,
+        "lines": 65,
+        "statements": 65
+      }
+    }
+  },
+  "devDependencies": {
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
+    "jsdom": "^29.0.0"
+  }
+}

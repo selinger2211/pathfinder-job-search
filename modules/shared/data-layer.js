@@ -361,4 +361,23 @@
 
   startupRecovery();
 
+  /* ====== NODE.JS / JEST EXPORT ======
+   * Makes internal functions/constants available via require() for unit testing.
+   * In browser context, `module` is undefined — this block is harmless. */
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+      SYNC_KEYS: [...SYNC_KEYS],
+      CORE_KEYS,
+      MCP_BRIDGE_URL,
+      SYNC_DEBOUNCE_MS,
+      checkBridge,
+      syncToMCP,
+      deleteFromMCP,
+      recoverFromMCP,
+      startupRecovery,
+      initialSync,
+      PF_DATA_LAYER: window.PF_DATA_LAYER,
+    };
+  }
+
 })();
