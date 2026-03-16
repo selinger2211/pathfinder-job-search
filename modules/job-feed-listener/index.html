@@ -2585,7 +2585,8 @@
                     </svg>
                     Import Scan Results
                   </button>
-                  <input type="file" id="gmailScanFileInput" accept=".json" style="display: none;" onchange="handleGmailScanFileSelect(event)">
+                  <!-- v3.31.2: Use opacity:0 instead of display:none — some browsers block .click() on hidden inputs -->
+                  <input type="file" id="gmailScanFileInput" accept=".json" style="position:absolute;width:0;height:0;opacity:0;overflow:hidden;pointer-events:none;" onchange="handleGmailScanFileSelect(event)">
                 </div>
                 <div style="font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.5;">
                   Gmail is scanned automatically by the Pathfinder Cowork agent. Results are loaded on page init.
