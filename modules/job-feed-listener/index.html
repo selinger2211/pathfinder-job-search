@@ -1204,6 +1204,107 @@
       gap: var(--space-1);
     }
 
+    /* v3.34.0: Reason text below each breakdown row */
+    .breakdown-reason {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      padding: 0 0 var(--space-2) 0;
+      margin-top: -4px;
+      line-height: 1.3;
+      border-bottom: 1px solid var(--bg-subtle);
+    }
+
+    /* v3.34.0: No-data state for missing dimensions */
+    .breakdown-row.breakdown-no-data {
+      opacity: 0.5;
+    }
+
+    .breakdown-no-data-label {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      font-style: italic;
+    }
+
+    /* v3.34.0: Dismiss reason modal */
+    .dismiss-reason-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn var(--duration-fast) var(--ease-default);
+    }
+
+    .dismiss-reason-modal {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      max-width: 400px;
+      width: 90%;
+      border: 1px solid var(--bg-subtle);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .dismiss-reason-btn {
+      background: var(--bg-elevated);
+      border: 1px solid var(--bg-subtle);
+      color: var(--text-primary);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .dismiss-reason-btn:hover {
+      background: var(--accent-subtle);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* v3.34.0: Rejected roles panel */
+    .rejected-panel {
+      position: fixed;
+      right: -420px;
+      top: 0;
+      height: 100vh;
+      width: 400px;
+      background: var(--bg-surface);
+      border-left: 1px solid var(--bg-subtle);
+      z-index: 50;
+      transition: right var(--duration-default) var(--ease-default);
+      overflow-y: auto;
+      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .rejected-panel.open {
+      right: 0;
+    }
+
+    .rejected-panel-header {
+      padding: var(--space-4);
+      border-bottom: 1px solid var(--bg-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      background: var(--bg-surface);
+      z-index: 1;
+    }
+
+    .rejected-role-card {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--bg-subtle);
+      transition: background var(--duration-fast) var(--ease-default);
+    }
+
+    .rejected-role-card:hover {
+      background: var(--bg-elevated);
+    }
+
     /* v3.19.1: Score breakdown as a clean 7-column mini-grid instead of
        wrapping inline text. Each dimension gets a fixed column with the
        label on top and the color-coded value below. */
@@ -2662,6 +2763,7 @@
         <div class="tab-nav">
           <button class="tab-btn active" data-tab="feed">Feed</button>
           <button class="tab-btn" data-tab="snoozed">Snoozed <span id="snoozedBadge" class="tab-badge" style="display: none;">0</span></button>
+          <button class="tab-btn" data-tab="rejected">Rejected <span id="dismissedCountBadge" class="tab-badge" style="display: none;">0</span></button>
           <button class="tab-btn" data-tab="sources">Sources</button>
           <button class="tab-btn" data-tab="analytics">Analytics</button>
           <button class="tab-btn" data-tab="log">Log</button>
@@ -2686,6 +2788,19 @@
         <div class="tab-content" id="tab-snoozed">
           <div id="snoozedFeedCards" class="feed-cards" role="region" aria-label="Snoozed job roles" aria-live="polite">
             <!-- Snoozed roles populated by JavaScript -->
+          </div>
+        </div>
+
+        <!-- TAB: Rejected Roles (v3.34.0) -->
+        <div class="tab-content" id="tab-rejected">
+          <div style="padding: var(--space-4); overflow-y: auto; height: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+              <h3 style="font-size: var(--text-lg); font-weight: 700;">Rejected Roles</h3>
+              <span style="font-size: var(--text-xs); color: var(--text-tertiary);" id="rejectedCount">0 roles</span>
+            </div>
+            <div id="rejectedRolesList">
+              <!-- Populated by renderRejectedRoles() -->
+            </div>
           </div>
         </div>
 
@@ -4429,7 +4544,7 @@
       state.feedItems = state.feedItems.map(role => {
         const scoring = scoreRole(role, state.preferences);
         if (!scoring) return role;
-        return { ...role, score: scoring.score, scoring: scoring.breakdown };
+        return { ...role, score: scoring.score, scoring: scoring.breakdown, reasons: scoring.reasons };
       }).sort((a, b) => b.score - a.score);
       localStorage.setItem('pf_feed_queue', JSON.stringify(state.feedItems));
 
@@ -4755,7 +4870,7 @@
         .map(role => {
           const scoring = scoreRole(role, prefs);
           if (!scoring) return null;
-          return { ...role, score: scoring.score, scoring: scoring.breakdown, hasFullJD: scoring.hasFullJD };
+          return { ...role, score: scoring.score, scoring: scoring.breakdown, reasons: scoring.reasons, hasFullJD: scoring.hasFullJD };
         })
         .filter(item => item !== null)
         .sort((a, b) => b.score - a.score);
@@ -5044,7 +5159,398 @@
     }
 
     // ============================================================
-    // SCORING ENGINE: Real weighted matching algorithm
+    // COMPANY KNOWLEDGE BASE (v3.34.0)
+    // Lightweight lookup table for ~200 well-known tech companies.
+    // Used to auto-classify domain (industry) and stage when the
+    // feed data doesn't include this info (e.g., LinkedIn email alerts).
+    // Falls back to JD heuristic classification if company not found.
+    // ============================================================
+
+    /**
+     * Lookup table: company name → { domain (industry category), stage }
+     * Covers the most common companies seen in PM job feeds.
+     * INPUT: none (static data)
+     * OUTPUT: COMPANY_KNOWLEDGE_BASE object, keyed by lowercase company name
+     */
+    const COMPANY_KNOWLEDGE_BASE = {
+      // === FAANG / Big Tech ===
+      'google': { domain: 'Big Tech / Search & Cloud', stage: 'Public' },
+      'alphabet': { domain: 'Big Tech / Search & Cloud', stage: 'Public' },
+      'meta': { domain: 'Big Tech / Social & Metaverse', stage: 'Public' },
+      'facebook': { domain: 'Big Tech / Social & Metaverse', stage: 'Public' },
+      'apple': { domain: 'Big Tech / Consumer Hardware & Services', stage: 'Public' },
+      'amazon': { domain: 'Big Tech / E-Commerce & Cloud', stage: 'Public' },
+      'microsoft': { domain: 'Big Tech / Enterprise & Cloud', stage: 'Public' },
+      'netflix': { domain: 'Media & Entertainment / Streaming', stage: 'Public' },
+
+      // === Enterprise SaaS ===
+      'salesforce': { domain: 'Enterprise SaaS / CRM', stage: 'Public' },
+      'servicenow': { domain: 'Enterprise SaaS / IT Workflows', stage: 'Public' },
+      'workday': { domain: 'Enterprise SaaS / HR & Finance', stage: 'Public' },
+      'zendesk': { domain: 'Enterprise SaaS / Customer Support', stage: 'Public' },
+      'hubspot': { domain: 'Enterprise SaaS / Marketing & CRM', stage: 'Public' },
+      'atlassian': { domain: 'Enterprise SaaS / Dev Tools', stage: 'Public' },
+      'datadog': { domain: 'Enterprise SaaS / Observability', stage: 'Public' },
+      'snowflake': { domain: 'Enterprise SaaS / Data Cloud', stage: 'Public' },
+      'splunk': { domain: 'Enterprise SaaS / Data Analytics', stage: 'Public' },
+      'pagerduty': { domain: 'Enterprise SaaS / Incident Management', stage: 'Public' },
+      'okta': { domain: 'Enterprise SaaS / Identity & Security', stage: 'Public' },
+      'twilio': { domain: 'Enterprise SaaS / Communications API', stage: 'Public' },
+      'elastic': { domain: 'Enterprise SaaS / Search & Observability', stage: 'Public' },
+      'confluent': { domain: 'Enterprise SaaS / Data Streaming', stage: 'Public' },
+      'mongodb': { domain: 'Enterprise SaaS / Database', stage: 'Public' },
+      'cloudflare': { domain: 'Enterprise SaaS / Edge & Security', stage: 'Public' },
+      'zscaler': { domain: 'Enterprise SaaS / Security', stage: 'Public' },
+      'crowdstrike': { domain: 'Enterprise SaaS / Cybersecurity', stage: 'Public' },
+      'palo alto networks': { domain: 'Enterprise SaaS / Cybersecurity', stage: 'Public' },
+      'dynatrace': { domain: 'Enterprise SaaS / Observability', stage: 'Public' },
+      'freshworks': { domain: 'Enterprise SaaS / Customer Service', stage: 'Public' },
+      'braze': { domain: 'Enterprise SaaS / Customer Engagement', stage: 'Public' },
+      'amplitude': { domain: 'Enterprise SaaS / Product Analytics', stage: 'Public' },
+      'contentful': { domain: 'Enterprise SaaS / Content Platform', stage: 'Late-stage / Pre-IPO' },
+      'airtable': { domain: 'Enterprise SaaS / Collaboration', stage: 'Late-stage / Pre-IPO' },
+      'notion': { domain: 'Enterprise SaaS / Productivity', stage: 'Late-stage / Pre-IPO' },
+      'figma': { domain: 'Enterprise SaaS / Design Tools', stage: 'Late-stage / Pre-IPO' },
+      'retool': { domain: 'Enterprise SaaS / Internal Tools', stage: 'Series C' },
+      'linear': { domain: 'Enterprise SaaS / Dev Tools', stage: 'Series B' },
+      'vercel': { domain: 'Enterprise SaaS / Developer Platform', stage: 'Series D' },
+      'postman': { domain: 'Enterprise SaaS / API Platform', stage: 'Late-stage / Pre-IPO' },
+
+      // === AI / ML ===
+      'openai': { domain: 'AI / Foundation Models', stage: 'Late-stage / Pre-IPO' },
+      'anthropic': { domain: 'AI / Foundation Models', stage: 'Late-stage / Pre-IPO' },
+      'cohere': { domain: 'AI / Enterprise AI', stage: 'Series D' },
+      'hugging face': { domain: 'AI / ML Platform', stage: 'Series D' },
+      'scale ai': { domain: 'AI / Data Labeling & LLM', stage: 'Late-stage / Pre-IPO' },
+      'scale': { domain: 'AI / Data Labeling & LLM', stage: 'Late-stage / Pre-IPO' },
+      'databricks': { domain: 'AI / Data & ML Platform', stage: 'Late-stage / Pre-IPO' },
+      'anyscale': { domain: 'AI / ML Infrastructure', stage: 'Series C' },
+      'weights & biases': { domain: 'AI / ML Ops', stage: 'Series C' },
+      'wandb': { domain: 'AI / ML Ops', stage: 'Series C' },
+      'stability ai': { domain: 'AI / Generative AI', stage: 'Series B' },
+      'midjourney': { domain: 'AI / Generative AI', stage: 'Bootstrapped' },
+      'perplexity': { domain: 'AI / Search', stage: 'Series B' },
+      'cursor': { domain: 'AI / Developer Tools', stage: 'Series B' },
+      'jasper': { domain: 'AI / Content Generation', stage: 'Series C' },
+      'glean': { domain: 'AI / Enterprise Search', stage: 'Series D' },
+      'harvey': { domain: 'AI / Legal Tech', stage: 'Series C' },
+      'adept': { domain: 'AI / Foundation Models', stage: 'Series B' },
+      'character.ai': { domain: 'AI / Consumer AI', stage: 'Series A' },
+
+      // === Fintech ===
+      'stripe': { domain: 'Fintech / Payments', stage: 'Late-stage / Pre-IPO' },
+      'square': { domain: 'Fintech / Payments', stage: 'Public' },
+      'block': { domain: 'Fintech / Payments', stage: 'Public' },
+      'plaid': { domain: 'Fintech / Banking Infrastructure', stage: 'Late-stage / Pre-IPO' },
+      'robinhood': { domain: 'Fintech / Trading', stage: 'Public' },
+      'coinbase': { domain: 'Fintech / Crypto', stage: 'Public' },
+      'rippling': { domain: 'Fintech / HR & Payroll', stage: 'Late-stage / Pre-IPO' },
+      'brex': { domain: 'Fintech / Corporate Cards', stage: 'Late-stage / Pre-IPO' },
+      'ramp': { domain: 'Fintech / Corporate Cards', stage: 'Series D' },
+      'mercury': { domain: 'Fintech / Business Banking', stage: 'Series C' },
+      'chime': { domain: 'Fintech / Consumer Banking', stage: 'Late-stage / Pre-IPO' },
+      'affirm': { domain: 'Fintech / BNPL', stage: 'Public' },
+      'klarna': { domain: 'Fintech / BNPL', stage: 'Late-stage / Pre-IPO' },
+      'sofi': { domain: 'Fintech / Personal Finance', stage: 'Public' },
+      'marqeta': { domain: 'Fintech / Card Issuing', stage: 'Public' },
+      'toast': { domain: 'Fintech / Restaurant Tech', stage: 'Public' },
+      'bill.com': { domain: 'Fintech / AP/AR Automation', stage: 'Public' },
+      'bill': { domain: 'Fintech / AP/AR Automation', stage: 'Public' },
+      'paypal': { domain: 'Fintech / Payments', stage: 'Public' },
+      'adyen': { domain: 'Fintech / Payments', stage: 'Public' },
+
+      // === Health Tech ===
+      'veeva': { domain: 'Health Tech / Life Sciences SaaS', stage: 'Public' },
+      'tempus': { domain: 'Health Tech / Precision Medicine', stage: 'Public' },
+      'oscar health': { domain: 'Health Tech / Insurance', stage: 'Public' },
+      'ro': { domain: 'Health Tech / Telehealth', stage: 'Series D' },
+      'hims & hers': { domain: 'Health Tech / Telehealth', stage: 'Public' },
+      'noom': { domain: 'Health Tech / Wellness', stage: 'Late-stage / Pre-IPO' },
+      'city of hope': { domain: 'Health Tech / Healthcare', stage: 'Non-Profit' },
+      'color health': { domain: 'Health Tech / Genomics', stage: 'Series D' },
+      'sword health': { domain: 'Health Tech / Digital Therapy', stage: 'Series D' },
+
+      // === E-Commerce / Marketplace ===
+      'shopify': { domain: 'E-Commerce / Merchant Platform', stage: 'Public' },
+      'instacart': { domain: 'E-Commerce / Grocery Delivery', stage: 'Public' },
+      'doordash': { domain: 'E-Commerce / Food Delivery', stage: 'Public' },
+      'uber': { domain: 'E-Commerce / Mobility & Delivery', stage: 'Public' },
+      'lyft': { domain: 'E-Commerce / Mobility', stage: 'Public' },
+      'airbnb': { domain: 'E-Commerce / Travel Marketplace', stage: 'Public' },
+      'etsy': { domain: 'E-Commerce / Handmade Marketplace', stage: 'Public' },
+      'ebay': { domain: 'E-Commerce / Online Marketplace', stage: 'Public' },
+      'wayfair': { domain: 'E-Commerce / Home & Furniture', stage: 'Public' },
+      'chewy': { domain: 'E-Commerce / Pet Supplies', stage: 'Public' },
+      'faire': { domain: 'E-Commerce / Wholesale Marketplace', stage: 'Late-stage / Pre-IPO' },
+      'fanatics': { domain: 'E-Commerce / Sports Merchandise', stage: 'Late-stage / Pre-IPO' },
+      'poshmark': { domain: 'E-Commerce / Resale Marketplace', stage: 'Public' },
+      'mercari': { domain: 'E-Commerce / Resale Marketplace', stage: 'Public' },
+
+      // === Communications & Collaboration ===
+      'slack': { domain: 'Collaboration / Messaging', stage: 'Public' },
+      'zoom': { domain: 'Collaboration / Video', stage: 'Public' },
+      'ringcentral': { domain: 'Communications / UCaaS', stage: 'Public' },
+      'calendly': { domain: 'Collaboration / Scheduling', stage: 'Late-stage / Pre-IPO' },
+      'loom': { domain: 'Collaboration / Video Messaging', stage: 'Late-stage / Pre-IPO' },
+      'miro': { domain: 'Collaboration / Whiteboarding', stage: 'Late-stage / Pre-IPO' },
+      'asana': { domain: 'Collaboration / Project Management', stage: 'Public' },
+      'monday.com': { domain: 'Collaboration / Work OS', stage: 'Public' },
+      'clickup': { domain: 'Collaboration / Project Management', stage: 'Series C' },
+      'webex': { domain: 'Collaboration / Video', stage: 'Public' },
+
+      // === Security ===
+      'snyk': { domain: 'Security / Developer Security', stage: 'Late-stage / Pre-IPO' },
+      '1password': { domain: 'Security / Identity', stage: 'Series C' },
+      'wiz': { domain: 'Security / Cloud Security', stage: 'Late-stage / Pre-IPO' },
+      'lacework': { domain: 'Security / Cloud Security', stage: 'Late-stage / Pre-IPO' },
+      'abnormal security': { domain: 'Security / Email Security', stage: 'Series D' },
+      'sentinelone': { domain: 'Security / Endpoint Protection', stage: 'Public' },
+
+      // === Developer Tools & Infra ===
+      'github': { domain: 'Developer Tools / Code Hosting', stage: 'Public' },
+      'gitlab': { domain: 'Developer Tools / DevOps Platform', stage: 'Public' },
+      'hashicorp': { domain: 'Developer Tools / Infrastructure', stage: 'Public' },
+      'docker': { domain: 'Developer Tools / Containers', stage: 'Late-stage / Pre-IPO' },
+      'supabase': { domain: 'Developer Tools / Backend Platform', stage: 'Series C' },
+      'planetscale': { domain: 'Developer Tools / Database', stage: 'Series C' },
+      'neon': { domain: 'Developer Tools / Serverless Postgres', stage: 'Series B' },
+      'fly.io': { domain: 'Developer Tools / App Hosting', stage: 'Series C' },
+      'render': { domain: 'Developer Tools / Cloud Hosting', stage: 'Series C' },
+      'railway': { domain: 'Developer Tools / App Hosting', stage: 'Series B' },
+      'launchdarkly': { domain: 'Developer Tools / Feature Flags', stage: 'Late-stage / Pre-IPO' },
+
+      // === Consumer / Social ===
+      'snap': { domain: 'Consumer / Social Media', stage: 'Public' },
+      'snapchat': { domain: 'Consumer / Social Media', stage: 'Public' },
+      'pinterest': { domain: 'Consumer / Visual Discovery', stage: 'Public' },
+      'reddit': { domain: 'Consumer / Social Platform', stage: 'Public' },
+      'discord': { domain: 'Consumer / Social Platform', stage: 'Late-stage / Pre-IPO' },
+      'spotify': { domain: 'Consumer / Music Streaming', stage: 'Public' },
+      'tiktok': { domain: 'Consumer / Short-form Video', stage: 'Late-stage / Pre-IPO' },
+      'bytedance': { domain: 'Consumer / Short-form Video', stage: 'Late-stage / Pre-IPO' },
+      'bumble': { domain: 'Consumer / Dating', stage: 'Public' },
+      'duolingo': { domain: 'Consumer / EdTech', stage: 'Public' },
+      'calm': { domain: 'Consumer / Wellness', stage: 'Late-stage / Pre-IPO' },
+      'strava': { domain: 'Consumer / Fitness', stage: 'Late-stage / Pre-IPO' },
+
+      // === Gaming ===
+      'roblox': { domain: 'Gaming / Metaverse Platform', stage: 'Public' },
+      'epic games': { domain: 'Gaming / Game Engine & Store', stage: 'Late-stage / Pre-IPO' },
+      'riot games': { domain: 'Gaming / Game Studio', stage: 'Late-stage / Pre-IPO' },
+      'unity': { domain: 'Gaming / Game Engine', stage: 'Public' },
+      'zynga': { domain: 'Gaming / Mobile Games', stage: 'Public' },
+      'activision': { domain: 'Gaming / Game Studio', stage: 'Public' },
+      'electronic arts': { domain: 'Gaming / Game Studio', stage: 'Public' },
+      'ea': { domain: 'Gaming / Game Studio', stage: 'Public' },
+      'niantic': { domain: 'Gaming / AR Games', stage: 'Late-stage / Pre-IPO' },
+
+      // === Real Estate / PropTech ===
+      'zillow': { domain: 'PropTech / Real Estate Marketplace', stage: 'Public' },
+      'redfin': { domain: 'PropTech / Real Estate Brokerage', stage: 'Public' },
+      'opendoor': { domain: 'PropTech / iBuying', stage: 'Public' },
+      'compass': { domain: 'PropTech / Real Estate Brokerage', stage: 'Public' },
+      'loft orbital': { domain: 'Space Tech / Satellite Services', stage: 'Series C' },
+
+      // === Logistics / Supply Chain ===
+      'flexport': { domain: 'Logistics / Freight Forwarding', stage: 'Late-stage / Pre-IPO' },
+      'project44': { domain: 'Logistics / Supply Chain Visibility', stage: 'Late-stage / Pre-IPO' },
+      'shippo': { domain: 'Logistics / Shipping API', stage: 'Series D' },
+      'convoy': { domain: 'Logistics / Freight Marketplace', stage: 'Late-stage / Pre-IPO' },
+
+      // === EdTech ===
+      'coursera': { domain: 'EdTech / Online Learning', stage: 'Public' },
+      'khan academy': { domain: 'EdTech / Online Learning', stage: 'Non-Profit' },
+      'quizlet': { domain: 'EdTech / Study Tools', stage: 'Late-stage / Pre-IPO' },
+      'chegg': { domain: 'EdTech / Student Services', stage: 'Public' },
+      'instructure': { domain: 'EdTech / LMS', stage: 'Public' },
+
+      // === Media & Content ===
+      'the new york times': { domain: 'Media / News & Publishing', stage: 'Public' },
+      'nyt': { domain: 'Media / News & Publishing', stage: 'Public' },
+      'medium': { domain: 'Media / Publishing Platform', stage: 'Late-stage / Pre-IPO' },
+      'substack': { domain: 'Media / Newsletter Platform', stage: 'Series B' },
+      'canva': { domain: 'Media / Design Platform', stage: 'Late-stage / Pre-IPO' },
+
+      // === Enterprise / B2B ===
+      'docusign': { domain: 'Enterprise SaaS / Digital Agreements', stage: 'Public' },
+      'intuit': { domain: 'Enterprise SaaS / Financial Software', stage: 'Public' },
+      'adobe': { domain: 'Enterprise SaaS / Creative & Document', stage: 'Public' },
+      'sap': { domain: 'Enterprise SaaS / ERP', stage: 'Public' },
+      'oracle': { domain: 'Enterprise SaaS / Database & Cloud', stage: 'Public' },
+      'ibm': { domain: 'Enterprise / IT Services & Cloud', stage: 'Public' },
+      'cisco': { domain: 'Enterprise / Networking', stage: 'Public' },
+      'vmware': { domain: 'Enterprise / Virtualization', stage: 'Public' },
+      'palantir': { domain: 'Enterprise / Data Analytics & Defense', stage: 'Public' },
+      'c3.ai': { domain: 'Enterprise / AI Platform', stage: 'Public' },
+      'uipath': { domain: 'Enterprise SaaS / Automation', stage: 'Public' },
+      'celonis': { domain: 'Enterprise SaaS / Process Mining', stage: 'Late-stage / Pre-IPO' },
+      'gong': { domain: 'Enterprise SaaS / Revenue Intelligence', stage: 'Late-stage / Pre-IPO' },
+      'clari': { domain: 'Enterprise SaaS / Revenue Operations', stage: 'Late-stage / Pre-IPO' },
+      'outreach': { domain: 'Enterprise SaaS / Sales Engagement', stage: 'Late-stage / Pre-IPO' },
+      'iterable': { domain: 'Enterprise SaaS / Marketing Automation', stage: 'Series E' },
+
+      // === Hardware / Chips / Robotics ===
+      'nvidia': { domain: 'Hardware / GPU & AI Chips', stage: 'Public' },
+      'amd': { domain: 'Hardware / Semiconductors', stage: 'Public' },
+      'intel': { domain: 'Hardware / Semiconductors', stage: 'Public' },
+      'qualcomm': { domain: 'Hardware / Mobile Chips', stage: 'Public' },
+      'tesla': { domain: 'Hardware / EV & Energy', stage: 'Public' },
+      'rivian': { domain: 'Hardware / EV', stage: 'Public' },
+      'waymo': { domain: 'Hardware / Autonomous Vehicles', stage: 'Late-stage / Pre-IPO' },
+      'cruise': { domain: 'Hardware / Autonomous Vehicles', stage: 'Late-stage / Pre-IPO' },
+      'anduril': { domain: 'Defense Tech / Autonomous Systems', stage: 'Late-stage / Pre-IPO' },
+
+      // === Consulting / Services ===
+      'mckinsey': { domain: 'Consulting / Strategy', stage: 'Private' },
+      'bain': { domain: 'Consulting / Strategy', stage: 'Private' },
+      'bcg': { domain: 'Consulting / Strategy', stage: 'Private' },
+      'deloitte': { domain: 'Consulting / Professional Services', stage: 'Private' },
+      'accenture': { domain: 'Consulting / IT Services', stage: 'Public' },
+
+      // === Other notable companies ===
+      'giga': { domain: 'Startup / Early Stage', stage: 'Seed' },
+      'deel': { domain: 'HR Tech / Global Payroll', stage: 'Late-stage / Pre-IPO' },
+      'gusto': { domain: 'HR Tech / Payroll & Benefits', stage: 'Late-stage / Pre-IPO' },
+      'lattice': { domain: 'HR Tech / People Management', stage: 'Series F' },
+      'lever': { domain: 'HR Tech / ATS', stage: 'Late-stage / Pre-IPO' },
+      'greenhouse': { domain: 'HR Tech / ATS', stage: 'Late-stage / Pre-IPO' },
+      'carta': { domain: 'Fintech / Equity Management', stage: 'Late-stage / Pre-IPO' },
+      'vanta': { domain: 'Security / Compliance Automation', stage: 'Series C' },
+      'drata': { domain: 'Security / Compliance Automation', stage: 'Series C' },
+    };
+
+    /**
+     * v3.34.0: JD-based industry heuristic classification.
+     * When a company isn't in the lookup table, scan the JD and title
+     * for industry signal keywords to infer a domain category.
+     *
+     * INPUT: jdText (string, lowercase), titleLower (string, lowercase), companyLower (string)
+     * OUTPUT: { domain: string, stage: string } or null if no strong signal
+     */
+    function classifyFromJDHeuristics(jdText, titleLower, companyLower) {
+      const text = (jdText + ' ' + titleLower + ' ' + companyLower).toLowerCase();
+
+      // Each rule: [keywords array, domain, min matches required]
+      const rules = [
+        [['fintech', 'financial services', 'banking', 'payments', 'lending', 'credit', 'debit', 'neobank'], 'Fintech', 1],
+        [['healthcare', 'health tech', 'clinical', 'patient', 'hipaa', 'ehr', 'telehealth', 'biotech', 'pharma', 'medical device'], 'Health Tech', 1],
+        [['artificial intelligence', 'machine learning', 'llm', 'large language model', 'generative ai', 'foundation model', 'deep learning', 'neural network', 'nlp', 'computer vision'], 'AI / ML', 1],
+        [['cybersecurity', 'infosec', 'threat detection', 'vulnerability', 'zero trust', 'siem', 'endpoint protection', 'penetration testing'], 'Security / Cybersecurity', 1],
+        [['e-commerce', 'ecommerce', 'marketplace', 'shopping cart', 'merchant', 'storefront', 'online retail', 'direct-to-consumer', 'dtc'], 'E-Commerce / Marketplace', 1],
+        [['saas', 'b2b saas', 'enterprise software', 'cloud platform', 'multi-tenant'], 'Enterprise SaaS', 1],
+        [['edtech', 'education technology', 'learning management', 'lms', 'online learning', 'courseware', 'student'], 'EdTech', 1],
+        [['gaming', 'game engine', 'game studio', 'esports', 'metaverse', 'virtual world', 'game development'], 'Gaming', 1],
+        [['autonomous vehicle', 'self-driving', 'robotics', 'drone', 'lidar', 'computer vision', 'autonomous'], 'Robotics / Autonomous', 1],
+        [['real estate', 'proptech', 'property management', 'mls', 'mortgage', 'housing'], 'PropTech / Real Estate', 1],
+        [['logistics', 'supply chain', 'freight', 'shipping', 'warehouse', 'fulfillment', 'last-mile'], 'Logistics / Supply Chain', 1],
+        [['crypto', 'blockchain', 'web3', 'defi', 'nft', 'smart contract', 'token', 'decentralized'], 'Crypto / Web3', 1],
+        [['developer tools', 'devops', 'ci/cd', 'infrastructure as code', 'api platform', 'sdk'], 'Developer Tools', 1],
+        [['hr tech', 'human resources', 'talent acquisition', 'recruiting', 'payroll', 'benefits administration', 'hris'], 'HR Tech', 1],
+        [['media', 'publishing', 'content platform', 'streaming', 'digital media', 'video platform', 'podcast'], 'Media & Content', 1],
+        [['climate', 'cleantech', 'renewable', 'sustainability', 'carbon', 'solar', 'energy transition'], 'Climate Tech', 1],
+      ];
+
+      for (const [keywords, domain, minMatches] of rules) {
+        const matches = keywords.filter(k => text.includes(k)).length;
+        if (matches >= minMatches) return { domain, stage: '' };
+      }
+
+      return null;
+    }
+
+    /**
+     * v3.34.0: Stage inference from JD text and company signals.
+     * Looks for funding/stage indicators in JD, company description, etc.
+     *
+     * INPUT: jdText (string, lowercase), companyLower (string)
+     * OUTPUT: stage string or '' if unknown
+     */
+    function inferStageFromJD(jdText, companyLower) {
+      const text = (jdText + ' ' + companyLower).toLowerCase();
+
+      // Public company signals
+      if (/\b(publicly traded|nasdaq|nyse|ipo|public company|ticker:?)\b/.test(text)) return 'Public';
+      if (/\b(series [e-z]|growth stage|growth-stage|unicorn)\b/.test(text)) return 'Late-stage / Pre-IPO';
+      if (/\b(series d)\b/.test(text)) return 'Series D';
+      if (/\b(series c)\b/.test(text)) return 'Series C';
+      if (/\b(series b)\b/.test(text)) return 'Series B';
+      if (/\b(series a)\b/.test(text)) return 'Series A';
+      if (/\b(seed round|seed stage|pre-seed|angel funded)\b/.test(text)) return 'Seed';
+      if (/\b(bootstrapped|self-funded|profitable since day)\b/.test(text)) return 'Bootstrapped';
+
+      // Employee count heuristics (rough proxy)
+      const empMatch = text.match(/(\d[\d,]*)\+?\s*employees/);
+      if (empMatch) {
+        const count = parseInt(empMatch[1].replace(/,/g, ''));
+        if (count > 5000) return 'Public';
+        if (count > 500) return 'Late-stage / Pre-IPO';
+        if (count > 100) return 'Series C';
+        if (count > 20) return 'Series A';
+      }
+
+      return '';
+    }
+
+    /**
+     * v3.34.0: Enrich a feed item's domain and stage from the knowledge base,
+     * falling back to JD heuristics if company isn't found.
+     * This is called during scoring — it mutates the role object in-place
+     * to cache the result for future re-renders.
+     *
+     * INPUT: role object (may have .domain, .stage, .company, .jd)
+     * OUTPUT: { domain: string|null, stage: string|null, source: 'lookup'|'jd-heuristic'|null }
+     */
+    function enrichCompanyData(role) {
+      const companyLower = (role.company || '').toLowerCase().trim();
+      const jdText = (role.jd || '').toLowerCase();
+      const titleLower = (role.title || '').toLowerCase();
+
+      // Already has domain? Skip enrichment.
+      if (role.domain && role.domain !== 'Unknown' && role.domain !== 'undefined') {
+        return { domain: role.domain, stage: role.stage || '', source: null };
+      }
+
+      // Step 1: Check knowledge base (exact match first, then partial)
+      let lookup = COMPANY_KNOWLEDGE_BASE[companyLower];
+      if (!lookup) {
+        // Try partial match: "Stripe, Inc." → "stripe"
+        for (const [key, val] of Object.entries(COMPANY_KNOWLEDGE_BASE)) {
+          if (companyLower.includes(key) || key.includes(companyLower)) {
+            lookup = val;
+            break;
+          }
+        }
+      }
+
+      if (lookup) {
+        role.domain = lookup.domain;
+        if (!role.stage) role.stage = lookup.stage;
+        role._enrichSource = 'lookup';
+        return { domain: lookup.domain, stage: lookup.stage, source: 'lookup' };
+      }
+
+      // Step 2: JD heuristic classification
+      const jdClass = classifyFromJDHeuristics(jdText, titleLower, companyLower);
+      const jdStage = inferStageFromJD(jdText, companyLower);
+
+      if (jdClass) {
+        role.domain = jdClass.domain;
+        if (!role.stage && jdStage) role.stage = jdStage;
+        role._enrichSource = 'jd-heuristic';
+        return { domain: jdClass.domain, stage: jdStage, source: 'jd-heuristic' };
+      }
+
+      // Step 3: No classification found — mark for Cowork enrichment
+      role._enrichSource = 'none';
+      return { domain: null, stage: jdStage || null, source: null };
+    }
+
+    // ============================================================
+    // SCORING ENGINE: Real weighted matching algorithm (v3.34.0)
+    // v3.34.0: Adaptive weighting — when data is missing (no domain,
+    // no stage, no comp), redistribute weight proportionally to
+    // dimensions that DO have data. This prevents artificial score
+    // depression from unknown fields.
     // ============================================================
 
     /**
@@ -5054,21 +5560,23 @@
      * and title matching scans the JD text for richer signal. When only a
      * stub JD is available, falls back to title-only matching.
      *
-     * Also activates mustHaveKeywords (previously defined but unused in scoring).
+     * v3.34.0 — ADAPTIVE WEIGHTING: When domain/stage/comp data is missing,
+     * weight is redistributed proportionally to dimensions with signal.
+     * COMPANY ENRICHMENT: Auto-classifies unknown companies from lookup
+     * table or JD heuristics before scoring.
      *
-     * Scoring breakdown (v3.5.0):
+     * Scoring breakdown (base weights):
      * - Role Fit (20%): Title keywords scanned against JD (or title-only if stub)
      * - Domain Match (20%): Primary = 100, secondary = 50, excluded = 0 (hard cap 39)
      * - Keyword Relevance (15%): Must-haves + boost keywords scanned against JD
      * - Location Match (15%): Matches preference = 100, remote if preferred = 100
      * - Network Signal (15%): Tracked connection = 100, 3+ LinkedIn = 80, 1-2 = 50
      * - Company Stage (10%): Matches preferred stages = 100, else = 30
-     * - Comp Signal (5%): Estimated total comp vs user targets. Uses base-to-total
-     *   ratio by company archetype (public FAANG ~55% base, startup ~70%, etc.)
+     * - Comp Signal (5%): Estimated total comp vs user targets
      *
      * @param {Object} role - Role to score (must have .networkInfo if available)
      * @param {Object} prefs - User preferences
-     * @returns {Object} { score: 0-100, breakdown: {...scores}, hasFullJD: bool }
+     * @returns {Object} { score: 0-100, breakdown: {...scores}, hasFullJD: bool, reasons: {...} }
      */
 
     /* ====== STAGE NORMALIZATION (v3.7.0) ======
@@ -5818,6 +6326,10 @@
     }
 
         function scoreRole(role, prefs) {
+      // ===== v3.34.0: AUTO-ENRICH before scoring =====
+      // Fill in missing domain/stage from knowledge base or JD heuristics
+      enrichCompanyData(role);
+
       // ===== JD-FIRST TEXT SELECTION =====
       // When we have a full JD, scan it for all keyword/title matching.
       // When we only have a stub (email snippet), fall back to title+company.
@@ -5825,6 +6337,9 @@
       const jdText = (role.jd || '').toLowerCase();
       const titleLower = (role.title || '').toLowerCase();
       const domainLower = (role.domain || '').toLowerCase();
+
+      // v3.34.0: Reason tracking — explains each dimension's score
+      const reasons = {};
 
       // "searchText" is the primary text body we scan for keywords.
       // Full JD = rich JD text. Stub = title + company + domain (minimal).
@@ -5840,28 +6355,32 @@
       const seniorityWords = ['senior', 'staff', 'principal', 'director', 'vp', 'head'];
 
       if (hasFullJD) {
-        // JD-first: check if target title terms appear in the JD body
         const titleInTitle = targetTitlesLower.some(t => titleLower.includes(t));
         const titleInJD = targetTitlesLower.some(t => searchText.includes(t));
         const hasSeniority = seniorityWords.some(w => titleLower.includes(w) || searchText.includes(w));
+        const matchedTitle = targetTitlesLower.find(t => titleLower.includes(t) || searchText.includes(t));
 
         if (titleInTitle) {
-          titleScore = 100; // Exact title match is strongest
+          titleScore = 100;
+          reasons.title = `"${matchedTitle}" matches your title in job name`;
         } else if (titleInJD) {
-          titleScore = 75;  // JD mentions target role terms (e.g., "product manager" in JD body)
+          titleScore = 75;
+          reasons.title = `"${matchedTitle}" found in JD text (not job name)`;
         } else if (hasSeniority) {
-          titleScore = 50;  // Seniority signal but no exact title match
+          titleScore = 50;
+          reasons.title = 'Seniority-level match but no exact title match';
         } else {
           titleScore = 0;
+          reasons.title = 'No target title keywords found';
         }
       } else {
-        // Stub JD — fall back to title-only matching (v3.3 behavior)
         const exactTitleMatch = targetTitlesLower.some(t => titleLower.includes(t));
         const hasTargetSeniority = seniorityWords.some(word => titleLower.includes(word));
+        const matchedTitle = targetTitlesLower.find(t => titleLower.includes(t));
 
-        if (exactTitleMatch) titleScore = 100;
-        else if (hasTargetSeniority) titleScore = 50;
-        else titleScore = 0;
+        if (exactTitleMatch) { titleScore = 100; reasons.title = `"${matchedTitle}" matches title`; }
+        else if (hasTargetSeniority) { titleScore = 50; reasons.title = 'Seniority match, no exact title'; }
+        else { titleScore = 0; reasons.title = 'No target title keywords found'; }
       }
       const titleDim = titleScore * 0.20;
 
@@ -5876,8 +6395,16 @@
       const hasExcludedDomain = excludedDomainsLower.some(d =>
         domainLower.includes(d) || searchText.includes(d)
       );
+      // v3.34.0: Track whether domain data is actually available
+      const hasDomainData = !!(role.domain && role.domain !== 'Unknown' && role.domain !== 'undefined');
+
       if (hasExcludedDomain) {
         domainScore = 0;
+        const matched = excludedDomainsLower.find(d => domainLower.includes(d) || searchText.includes(d));
+        reasons.domain = `⛔ Excluded domain: "${matched}"`;
+      } else if (!hasDomainData) {
+        domainScore = -1; // sentinel: "no data" — handled by adaptive weighting
+        reasons.domain = `Industry unknown — ${role._enrichSource === 'none' ? 'not in lookup, no JD signal' : 'pending enrichment'}`;
       } else {
         const hasPrimaryDomain = primaryDomainsLower.some(d =>
           domainLower.includes(d) || searchText.includes(d)
@@ -5886,9 +6413,18 @@
           domainLower.includes(d) || searchText.includes(d)
         );
 
-        if (hasPrimaryDomain) domainScore = 100;
-        else if (hasSecondaryDomain) domainScore = 50;
-        else domainScore = 0;
+        if (hasPrimaryDomain) {
+          domainScore = 100;
+          const matched = primaryDomainsLower.find(d => domainLower.includes(d) || searchText.includes(d));
+          reasons.domain = `Primary domain match: "${matched}" (${role.domain})`;
+        } else if (hasSecondaryDomain) {
+          domainScore = 50;
+          const matched = secondaryDomainsLower.find(d => domainLower.includes(d) || searchText.includes(d));
+          reasons.domain = `Secondary domain: "${matched}" (${role.domain})`;
+        } else {
+          domainScore = 0;
+          reasons.domain = `"${role.domain}" doesn't match your preferred domains`;
+        }
       }
       const domainDim = domainScore * 0.20;
 
@@ -5906,31 +6442,34 @@
       );
 
       if (hasExcludeKeyword) {
-        keywordScore = 0; // Will be capped at 39 later
+        keywordScore = 0;
         keywordNote = 'EXCLUDE_KEYWORD';
+        const matched = excludeKeywordsLower.find(k => searchText.includes(k) || titleLower.includes(k));
+        reasons.keywords = `⛔ Exclude keyword found: "${matched}"`;
       } else {
-        // Must-have keywords: all must be present for full marks
-        // These are the non-negotiable terms (e.g., "product manager", "strategy")
         const mustHaveKWLower = (prefs.mustHaveKeywords || []).map(k => k.toLowerCase());
-        const mustHaveMatches = mustHaveKWLower.filter(k =>
-          searchText.includes(k) || titleLower.includes(k)
-        ).length;
+        const mustHaveMatched = mustHaveKWLower.filter(k => searchText.includes(k) || titleLower.includes(k));
+        const mustHaveMissing = mustHaveKWLower.filter(k => !searchText.includes(k) && !titleLower.includes(k));
         const mustHaveTotal = mustHaveKWLower.length;
-        // Ratio: 1.0 = all found, 0.5 = half found, 0 = none found
-        const mustHaveRatio = mustHaveTotal > 0 ? mustHaveMatches / mustHaveTotal : 1;
+        const mustHaveRatio = mustHaveTotal > 0 ? mustHaveMatched.length / mustHaveTotal : 1;
 
-        // Boost keywords: more matches = better fit
         const boostKeywordsLower = (prefs.boostKeywords || []).map(k => k.toLowerCase());
-        const boostCount = boostKeywordsLower.filter(k =>
-          searchText.includes(k) || titleLower.includes(k)
-        ).length;
-        const boostScore = boostCount === 0 ? 0 : Math.min(boostCount * 20, 100);
+        const boostMatched = boostKeywordsLower.filter(k => searchText.includes(k) || titleLower.includes(k));
+        const boostScore = boostMatched.length === 0 ? 0 : Math.min(boostMatched.length * 20, 100);
 
-        // Composite: 60% must-have fulfillment + 40% boost keyword density
         keywordScore = Math.round((mustHaveRatio * 100 * 0.6) + (boostScore * 0.4));
 
-        // If missing ANY must-have keyword, flag it (but don't hard-cap — JD might use synonyms)
-        if (mustHaveTotal > 0 && mustHaveMatches < mustHaveTotal) {
+        // Build reason string
+        const parts = [];
+        if (mustHaveTotal > 0) {
+          parts.push(`Must-haves: ${mustHaveMatched.length}/${mustHaveTotal}`);
+          if (mustHaveMissing.length > 0) parts.push(`missing: ${mustHaveMissing.map(k => `"${k}"`).join(', ')}`);
+        }
+        if (boostMatched.length > 0) parts.push(`Boost: ${boostMatched.length} found (${boostMatched.map(k => `"${k}"`).join(', ')})`);
+        if (parts.length === 0) parts.push('No keywords configured');
+        reasons.keywords = parts.join(' · ');
+
+        if (mustHaveTotal > 0 && mustHaveMatched.length < mustHaveTotal) {
           keywordNote = 'MISSING_MUST_HAVE';
         }
       }
@@ -5955,19 +6494,39 @@
         roleLocation.includes('remote') ||
         (hasFullJD && /\b(remote|work from home|wfh|fully remote|remote-first)\b/i.test(jdText));
 
+      // v3.34.0: Detect hybrid/on-prem roles outside SF Bay Area
+      const sfBayKeywords = ['san francisco', 'sf', 'bay area', 'palo alto', 'mountain view',
+        'sunnyvale', 'menlo park', 'redwood city', 'san mateo', 'san jose', 'cupertino',
+        'oakland', 'berkeley', 'fremont', 'santa clara', 'south san francisco', 'foster city',
+        'san carlos', 'belmont', 'millbrae', 'burlingame', 'daly city', 'emeryville'];
+      const isInSFBay = sfBayKeywords.some(k => roleLocation.includes(k));
+      const isHybridOrOnsite = !isRemoteRole && roleLocation.length > 0;
+      const isNonLocalHybrid = isHybridOrOnsite && !isInSFBay;
+
       if (inExcludedLocation) {
         locationScore = 0;
+        const matched = excludedLocations.find(loc => roleLocation.includes(loc.toLowerCase()));
+        reasons.location = `⛔ Excluded location: "${matched}"`;
       } else if (prefsLocations.includes('Remote') && isRemoteRole) {
         locationScore = 100;
+        reasons.location = 'Remote role — matches your preference';
       } else if (roleLocation && prefsLocations.some(loc =>
         roleLocation.includes(loc.toLowerCase())
       )) {
         locationScore = 100;
+        reasons.location = `Location "${role.location}" matches your preference`;
       } else if (isRemoteRole) {
-        // Role is remote but user didn't list Remote as a preference — partial credit
         locationScore = 50;
+        reasons.location = 'Remote role (you didn\'t list Remote as preference)';
+      } else if (isNonLocalHybrid) {
+        locationScore = 0;
+        reasons.location = `⚠️ On-site/hybrid in ${role.location || 'unknown'} — not SF Bay Area`;
+      } else if (isInSFBay && !isRemoteRole) {
+        locationScore = 75;
+        reasons.location = `Local: ${role.location} (on-site/hybrid in SF Bay)`;
       } else {
         locationScore = 0;
+        reasons.location = roleLocation ? `"${role.location}" not in your preferred locations` : 'Location not specified';
       }
       const locationDim = locationScore * 0.15;
 
@@ -5975,13 +6534,20 @@
       let stageScore = 0;
       const preferredStages = prefs.companyStage || [];
       const normalizedRoleStage = normalizeStage(role.stage);
+      const hasStageData = !!normalizedRoleStage;
 
-      if (preferredStages.includes(normalizedRoleStage)) {
+      if (!hasStageData) {
+        stageScore = -1; // sentinel: no data → adaptive weighting
+        reasons.stage = 'Company stage unknown';
+      } else if (preferredStages.includes(normalizedRoleStage)) {
         stageScore = 100;
+        reasons.stage = `"${normalizedRoleStage}" matches your preference`;
       } else if (preferredStages.length === 0) {
-        stageScore = 100; // No preference = all stages OK
+        stageScore = 100;
+        reasons.stage = `${normalizedRoleStage} (no stage preference set)`;
       } else {
-        stageScore = 30; // Doesn't match but not disqualified
+        stageScore = 30;
+        reasons.stage = `"${normalizedRoleStage}" — not in your preferred stages`;
       }
       const stageDim = stageScore * 0.10;
 
@@ -5995,31 +6561,39 @@
       const compEstimate = parseSalaryAndEstimate(role.salary, normalizedRoleStage, role.title, role.jd);
 
       if (!compEstimate) {
-        compScore = 50; // No salary data or can't parse = neutral
+        compScore = -1; // sentinel: no comp data → adaptive weighting
+        reasons.comp = 'Salary not listed';
       } else {
-        // Use estimated TC high-end for scoring (classification-aware)
         const estimatedMaxTotal = compEstimate.estHigh;
-
-        // Score against user's targets using estimated total comp
-        // No max cap — there's no reason to penalize high comp
-        if (estimatedMaxTotal >= targetTotal) compScore = 100;    // Estimated total meets/exceeds target
-        else if (estimatedMaxTotal >= minBase) compScore = 70;    // Above min but below target
-        else compScore = 0;                                        // Below minimum even with equity
+        if (estimatedMaxTotal >= targetTotal) {
+          compScore = 100;
+          reasons.comp = `Est. TC ~$${Math.round(estimatedMaxTotal / 1000)}K meets target`;
+        } else if (estimatedMaxTotal >= minBase) {
+          compScore = 70;
+          reasons.comp = `Est. TC ~$${Math.round(estimatedMaxTotal / 1000)}K above min but below target`;
+        } else {
+          compScore = 0;
+          reasons.comp = `Est. TC ~$${Math.round(estimatedMaxTotal / 1000)}K below your minimum`;
+        }
       }
       const compDim = compScore * 0.05;
 
       // ===== DIMENSION 7: Network Signal (15% weight) =====
-      // Uses pre-computed networkInfo from init() — LinkedIn + tracked connections
       let networkScore = 0;
       const networkInfo = role.networkInfo;
       if (networkInfo && networkInfo.total > 0) {
         if (networkInfo.tracked.length > 0) {
-          networkScore = 100; // Actively tracked connections — strongest signal
+          networkScore = 100;
+          reasons.network = `${networkInfo.tracked.length} tracked connection${networkInfo.tracked.length > 1 ? 's' : ''} at ${role.company}`;
         } else if (networkInfo.linkedin.length >= 3) {
-          networkScore = 80;  // 3+ LinkedIn connections — strong passive signal
+          networkScore = 80;
+          reasons.network = `${networkInfo.linkedin.length} LinkedIn connections`;
         } else {
-          networkScore = 50;  // 1-2 LinkedIn connections — moderate signal
+          networkScore = 50;
+          reasons.network = `${networkInfo.total} connection${networkInfo.total > 1 ? 's' : ''} (limited signal)`;
         }
+      } else {
+        reasons.network = 'No connections found at this company';
       }
       const networkDim = networkScore * 0.15;
 
@@ -6059,30 +6633,72 @@
         leaderICNote = 'IC';
       }
 
-      // ===== FINAL SCORE =====
-      let finalScore = titleDim + domainDim + keywordDim + locationDim + networkDim + stageDim + compDim + leaderICBonus;
-      finalScore = Math.round(finalScore);
+      // ===== FINAL SCORE (v3.34.0: ADAPTIVE WEIGHTING) =====
+      // When dimensions have no data (sentinel -1), redistribute their
+      // weight proportionally across dimensions that DO have data.
+      // This prevents artificial score depression from missing fields.
+      const baseDims = [
+        { key: 'title', score: titleScore, weight: 0.20 },
+        { key: 'domain', score: domainScore, weight: 0.20 },
+        { key: 'keywords', score: keywordScore, weight: 0.15 },
+        { key: 'location', score: locationScore, weight: 0.15 },
+        { key: 'network', score: networkScore, weight: 0.15 },
+        { key: 'stage', score: stageScore, weight: 0.10 },
+        { key: 'comp', score: compScore, weight: 0.05 },
+      ];
+
+      // Separate: dims with data vs dims without data (sentinel -1)
+      const activeDims = baseDims.filter(d => d.score >= 0);
+      const missingDims = baseDims.filter(d => d.score < 0);
+      const missingWeight = missingDims.reduce((sum, d) => sum + d.weight, 0);
+      const activeWeight = activeDims.reduce((sum, d) => sum + d.weight, 0);
+
+      // Redistribute missing weight proportionally
+      let finalScore = 0;
+      const effectiveWeights = {};
+      for (const d of activeDims) {
+        const adjustedWeight = activeWeight > 0 ? d.weight + (d.weight / activeWeight) * missingWeight : d.weight;
+        effectiveWeights[d.key] = Math.round(adjustedWeight * 100);
+        finalScore += d.score * adjustedWeight;
+      }
+      // Missing dims get 0 contribution but track their effective weight as 0
+      for (const d of missingDims) {
+        effectiveWeights[d.key] = 0;
+      }
+
+      finalScore = Math.round(finalScore) + leaderICBonus;
+
+      // v3.34.0: Non-local hybrid/on-prem penalty — flag for quick rejection
+      let locationFlag = '';
+      if (isNonLocalHybrid) {
+        locationFlag = 'NON_LOCAL';
+        // Apply a modest penalty (additional -10 on top of the 0 location score)
+        finalScore = Math.max(0, finalScore - 10);
+        reasons.locationFlag = `⚠️ On-site/hybrid outside SF Bay Area (${role.location})`;
+      }
 
       // Hard caps: excluded domain or exclude keyword → max 39
       if (hasExcludedDomain || keywordNote === 'EXCLUDE_KEYWORD') {
         finalScore = Math.min(finalScore, 39);
       }
 
-      // Run quick-check filter
       const quickCheck = runQuickCheckFilter(role, prefs);
 
       return {
         score: Math.max(0, Math.min(100, finalScore)),
         breakdown: {
-          title: Math.round(titleScore),
-          domain: Math.round(domainScore),
+          title: Math.round(Math.max(0, titleScore)),
+          domain: Math.round(Math.max(0, domainScore)),
           keywords: Math.round(keywordScore),
           location: Math.round(locationScore),
           network: Math.round(networkScore),
-          stage: Math.round(stageScore),
-          comp: Math.round(compScore),
-          leaderIC: leaderICNote
+          stage: Math.round(Math.max(0, stageScore)),
+          comp: Math.round(Math.max(0, compScore)),
+          leaderIC: leaderICNote,
+          effectiveWeights: effectiveWeights,
+          locationFlag: locationFlag
         },
+        reasons: reasons,
         hasFullJD: hasFullJD,
         keywordNote: keywordNote,
         quickCheck: quickCheck
@@ -7051,6 +7667,27 @@
           ? `<span style="font-size: 10px; color: var(--success); font-weight: 600;">✓ Pipeline (${pStatus.stage})</span>`
           : '';
 
+        // v3.34.0: Smart date display — fallback chain: posted → emailDate → addedAt → dateAdded
+        const dateDisplay = (() => {
+          const raw = item.posted || item.emailDate || item.addedAt || item.dateAdded;
+          if (!raw) return 'Date unknown';
+          const d = new Date(raw);
+          if (isNaN(d.getTime())) return 'Date unknown';
+          return formatRelativeTime(d);
+        })();
+
+        // v3.34.0: Location flag for non-local on-prem/hybrid roles
+        const locFlag = item.scoring?.locationFlag === 'NON_LOCAL'
+          ? '<span style="background: var(--warning); color: #000; padding: 1px 6px; border-radius: var(--radius-pill); font-size: 10px; font-weight: 600;">⚠ Not Local</span>'
+          : '';
+
+        // v3.34.0: Enrichment source badge
+        const enrichBadge = item._enrichSource === 'lookup'
+          ? '<span style="font-size: 9px; color: var(--success);" title="Industry identified from company knowledge base">✓ ID\'d</span>'
+          : item._enrichSource === 'jd-heuristic'
+          ? '<span style="font-size: 9px; color: var(--warning);" title="Industry inferred from JD text">~ inferred</span>'
+          : '';
+
         return `
           <div class="feed-card" data-role-id="${item.id}" onclick="openFeedDetail('${item.id}')">
             <div class="card-header">
@@ -7060,8 +7697,9 @@
                 <div class="card-title">${item.title}</div>
                 <div class="card-meta">
                   <span class="card-badge">${item.source}</span>
-                  <span>${item.posted}</span>
+                  <span>${dateDisplay}</span>
                   ${item.scoring.leaderIC ? `<span style="color: var(--primary); font-weight: 600;">${item.scoring.leaderIC}</span>` : ''}
+                  ${locFlag}
                 </div>
               </div>
             </div>
@@ -7084,7 +7722,7 @@
               <div class="feed-card-breakdown-panel" data-role-id="${item.id}"></div>
             </div>
 
-            <div class="card-domain-line">${item.domain || 'Unknown'} · ${item.location || 'Not listed'}${item.remote ? ' (Remote)' : ''}</div>
+            <div class="card-domain-line">${item.domain || 'Unknown'} ${enrichBadge} · ${item.location || 'Not listed'}${item.remote ? ' (Remote)' : ''}</div>
             <div class="card-comp-line">${compLine}</div>
             ${netLine}
             ${pipelineBadge}
@@ -7662,40 +8300,60 @@
      */
     function generateScoreBreakdownHTML(item) {
       if (!item.scoring) return '';
+      const reasons = item.reasons || {};
+      const ew = item.scoring.effectiveWeights || {};
 
-      // Dimensions with labels, values, and weights
+      // Dimensions with labels, values, effective weights, and reason explanations
       const dims = [
-        { label: 'Title Match', val: item.scoring.title, weight: 20 },
-        { label: 'Domain', val: item.scoring.domain, weight: 20 },
-        { label: 'Keywords', val: item.scoring.keywords, weight: 15 },
-        { label: 'Location', val: item.scoring.location, weight: 15 },
-        { label: 'Network', val: item.scoring.network || 0, weight: 15 },
-        { label: 'Stage', val: item.scoring.stage, weight: 10 },
-        { label: 'Comp Signal', val: item.scoring.comp || 0, weight: 5 },
+        { key: 'title', label: 'Title Match', val: item.scoring.title, baseWeight: 20 },
+        { key: 'domain', label: 'Domain', val: item.scoring.domain, baseWeight: 20 },
+        { key: 'keywords', label: 'Keywords', val: item.scoring.keywords, baseWeight: 15 },
+        { key: 'location', label: 'Location', val: item.scoring.location, baseWeight: 15 },
+        { key: 'network', label: 'Network', val: item.scoring.network || 0, baseWeight: 15 },
+        { key: 'stage', label: 'Stage', val: item.scoring.stage, baseWeight: 10 },
+        { key: 'comp', label: 'Comp Signal', val: item.scoring.comp || 0, baseWeight: 5 },
       ];
 
-      // Generate rows
+      // Generate rows with reason tooltips
       const rows = dims.map(d => {
         const tier = d.val >= 70 ? 'high' : d.val >= 40 ? 'medium' : 'low';
         const pct = Math.round((d.val / 100) * 100);
+        const effectiveW = ew[d.key] !== undefined ? ew[d.key] : d.baseWeight;
+        const weightLabel = effectiveW !== d.baseWeight
+          ? `<span style="color: var(--warning);">${effectiveW}%</span>`
+          : `${d.baseWeight}%`;
+        const reason = reasons[d.key] || '';
+        const noData = (effectiveW === 0);
+
         return `
-          <div class="breakdown-row">
+          <div class="breakdown-row${noData ? ' breakdown-no-data' : ''}">
             <div class="breakdown-label">${d.label}</div>
             <div class="breakdown-bar">
-              <div class="breakdown-bar-fill ${tier}" style="width: ${pct}%;"></div>
+              ${noData
+                ? '<div class="breakdown-no-data-label">No data</div>'
+                : `<div class="breakdown-bar-fill ${tier}" style="width: ${pct}%;"></div>`
+              }
             </div>
-            <div class="breakdown-value">${d.val}</div>
-            <div class="breakdown-weight">(${d.weight}%)</div>
+            <div class="breakdown-value">${noData ? '—' : d.val}</div>
+            <div class="breakdown-weight">(${weightLabel})</div>
           </div>
+          ${reason ? `<div class="breakdown-reason">${reason}</div>` : ''}
         `;
       }).join('');
 
-      // Meta info: JD status, leader/IC, etc
-      const jdStatus = isStubJD(item) ? '📄 Stub JD' : '✅ Full JD available';
+      // Meta info
+      const jdStatus = isStubJD(item) ? '📄 Stub JD — scores may be less accurate' : '✅ Full JD available';
       const leaderIC = item.scoring.leaderIC ? `🏷 ${item.scoring.leaderIC}` : '';
+      const enrichSrc = item._enrichSource === 'lookup' ? '🏢 Company identified from knowledge base'
+        : item._enrichSource === 'jd-heuristic' ? '🔍 Industry inferred from JD text'
+        : item._enrichSource === 'none' ? '❓ Company not in database — consider enriching' : '';
+      const locFlag = item.scoring.locationFlag === 'NON_LOCAL'
+        ? `<div class="breakdown-meta-item" style="color: var(--warning);">⚠️ On-site/hybrid outside SF Bay — relocation required</div>` : '';
 
       let metaHTML = `<div class="breakdown-meta-item">${jdStatus}</div>`;
       if (leaderIC) metaHTML += `<div class="breakdown-meta-item">${leaderIC}</div>`;
+      if (enrichSrc) metaHTML += `<div class="breakdown-meta-item">${enrichSrc}</div>`;
+      metaHTML += locFlag;
 
       return `
         <div class="breakdown-content">
@@ -7744,21 +8402,192 @@
      * Dismiss a role: archive it, remove from feed.
      * @param {string} roleId - Role ID to dismiss
      */
+    /**
+     * v3.34.0: Dismiss with reason — shows a quick-pick reason selector
+     * before removing the role from the feed. Persists to localStorage.
+     */
     function dismissRole(roleId) {
       const role = state.feedItems.find(r => r.id === roleId);
       if (!role) return;
 
+      // Show reason picker
+      const reasons = [
+        'Wrong role/title',
+        'Wrong industry/domain',
+        'Wrong location',
+        'Comp too low',
+        'Company not interesting',
+        'Already applied elsewhere',
+        'Bad culture fit',
+        'Other'
+      ];
+
+      const overlay = document.createElement('div');
+      overlay.className = 'dismiss-reason-overlay';
+      overlay.innerHTML = `
+        <div class="dismiss-reason-modal">
+          <h4 style="margin: 0 0 var(--space-3) 0; font-size: var(--text-sm); color: var(--text-primary);">
+            Why are you passing on this role?
+          </h4>
+          <div style="display: flex; flex-wrap: wrap; gap: var(--space-2);">
+            ${reasons.map(r => `<button class="dismiss-reason-btn" onclick="completeDismiss('${roleId}', '${r}')">${r}</button>`).join('')}
+          </div>
+          <button onclick="this.closest('.dismiss-reason-overlay').remove()" style="margin-top: var(--space-3); background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: var(--text-xs);">Cancel</button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+    }
+
+    /**
+     * v3.34.0: Complete the dismiss action after reason is selected.
+     */
+    function completeDismiss(roleId, reason) {
+      // Remove the modal
+      const modal = document.querySelector('.dismiss-reason-overlay');
+      if (modal) modal.remove();
+
+      const role = state.feedItems.find(r => r.id === roleId);
+      if (!role) return;
+
       const card = document.querySelector(`[data-role-id="${roleId}"]`);
-      if (card) {
-        card.classList.add('dismissed');
-        setTimeout(() => {
-          state.feedItems = state.feedItems.filter(r => r.id !== roleId);
-          state.dismissedRoles.push(role);
-          saveFeedQueue(state.feedItems);  // v3.5.1: persist removal
-          renderFeedCards();
-          showToast(`Dismissed: ${role.title}`, 'success');
-        }, 300);
+      if (card) card.classList.add('dismissed');
+
+      setTimeout(() => {
+        state.feedItems = state.feedItems.filter(r => r.id !== roleId);
+        const dismissedRole = {
+          ...role,
+          dismissedAt: new Date().toISOString(),
+          dismissReason: reason
+        };
+        state.dismissedRoles.push(dismissedRole);
+        saveFeedQueue(state.feedItems);
+        saveDismissedRoles();
+        renderFeedCards();
+        updateDismissedBadge();
+        showToast(`Dismissed: ${role.title} — ${reason}`, 'success');
+      }, 300);
+    }
+
+    /**
+     * v3.34.0: Save dismissed roles to localStorage
+     */
+    function saveDismissedRoles() {
+      try {
+        localStorage.setItem('pf_dismissed_roles', JSON.stringify(state.dismissedRoles));
+      } catch (e) {
+        console.warn('Failed to save dismissed roles:', e);
       }
+    }
+
+    /**
+     * v3.34.0: Load dismissed roles from localStorage
+     */
+    function loadDismissedRoles() {
+      try {
+        const stored = localStorage.getItem('pf_dismissed_roles');
+        if (stored) {
+          state.dismissedRoles = JSON.parse(stored);
+        }
+      } catch (e) {
+        console.warn('Failed to load dismissed roles:', e);
+      }
+    }
+
+    /**
+     * v3.34.0: Update the dismissed count badge
+     */
+    function updateDismissedBadge() {
+      const badge = document.getElementById('dismissedCountBadge');
+      if (badge) {
+        badge.textContent = state.dismissedRoles.length;
+        badge.style.display = state.dismissedRoles.length > 0 ? 'inline-flex' : 'none';
+      }
+    }
+
+    /**
+     * v3.34.0: Toggle the rejected roles panel visibility
+     */
+    function toggleRejectedPanel() {
+      const panel = document.getElementById('rejectedPanel');
+      if (!panel) return;
+
+      const isOpen = panel.classList.toggle('open');
+      if (isOpen) renderRejectedRoles();
+    }
+
+    /**
+     * v3.34.0: Render the rejected/dismissed roles list
+     */
+    function renderRejectedRoles() {
+      const container = document.getElementById('rejectedRolesList');
+      if (!container) return;
+
+      if (state.dismissedRoles.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: var(--space-6); color: var(--text-tertiary);">
+            <p>No rejected roles yet.</p>
+            <p style="font-size: var(--text-xs);">Roles you dismiss will appear here with your reasons.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Sort by dismissedAt descending (most recent first)
+      const sorted = [...state.dismissedRoles].sort((a, b) =>
+        new Date(b.dismissedAt || 0) - new Date(a.dismissedAt || 0)
+      );
+
+      container.innerHTML = sorted.map(role => {
+        const dismissDate = role.dismissedAt ? formatRelativeTime(new Date(role.dismissedAt)) : 'Unknown';
+        const reasonBadge = role.dismissReason
+          ? `<span style="background: var(--danger-subtle, rgba(239,68,68,0.1)); color: var(--danger); padding: 1px 6px; border-radius: var(--radius-pill); font-size: 10px; font-weight: 600;">${role.dismissReason}</span>`
+          : '';
+
+        return `
+          <div class="rejected-role-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <div style="font-weight: 600; color: var(--text-primary); font-size: var(--text-sm);">${role.title}</div>
+                <div style="color: var(--accent); font-size: var(--text-xs);">${role.company}</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: var(--text-xs); color: var(--text-tertiary);">${dismissDate}</div>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary); font-weight: 600;">Score: ${role.score || '—'}/100</div>
+              </div>
+            </div>
+            <div style="margin-top: var(--space-2); display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;">
+              ${reasonBadge}
+              <span style="font-size: 10px; color: var(--text-tertiary);">${role.domain || 'Unknown'} · ${role.location || 'Not listed'}</span>
+            </div>
+            <div style="margin-top: var(--space-2);">
+              <button class="btn btn-ghost btn-sm" onclick="restoreDismissedRole('${role.id}')" style="font-size: 10px; padding: 2px 8px;">
+                ↩ Restore to feed
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /**
+     * v3.34.0: Restore a dismissed role back to the feed
+     */
+    function restoreDismissedRole(roleId) {
+      const role = state.dismissedRoles.find(r => r.id === roleId);
+      if (!role) return;
+
+      // Remove dismiss metadata
+      const { dismissedAt, dismissReason, ...cleanRole } = role;
+      state.dismissedRoles = state.dismissedRoles.filter(r => r.id !== roleId);
+      state.feedItems.push(cleanRole);
+      state.feedItems.sort((a, b) => b.score - a.score);
+
+      saveFeedQueue(state.feedItems);
+      saveDismissedRoles();
+      renderFeedCards();
+      renderRejectedRoles();
+      updateDismissedBadge();
+      showToast(`Restored: ${cleanRole.title}`, 'success');
     }
 
     /**
@@ -8846,6 +9675,9 @@
 
       // Load snoozed roles and auto-resurface expired ones
       loadSnoozedRoles();
+      // v3.34.0: Load dismissed roles from localStorage
+      loadDismissedRoles();
+      updateDismissedBadge();
 
       // v3.1.1: Clear any stale demo data from pre-v2.6.0
       // Demo items had IDs like 'feed-1', 'feed-2', etc.
@@ -8963,7 +9795,8 @@
             ...role,
             score: scoring.score,
             scoring: scoring.breakdown,
-            hasFullJD: scoring.hasFullJD  // v3.19.1: Track JD quality for UI display
+            reasons: scoring.reasons,
+            hasFullJD: scoring.hasFullJD
           };
         })
         .filter(item => item !== null)
@@ -9164,6 +9997,7 @@
             if (tabId === 'analytics') renderAnalytics();
             if (tabId === 'sources') { renderSourceAnalytics(); updateGmailScanStatus(); }
             if (tabId === 'snoozed') renderSnoozedCards();
+            if (tabId === 'rejected') { renderRejectedRoles(); document.getElementById('rejectedCount').textContent = `${state.dismissedRoles.length} role${state.dismissedRoles.length !== 1 ? 's' : ''}`; }
             if (tabId === 'log') renderFeedLog();
           }
         });
@@ -9261,7 +10095,7 @@
           .map(role => {
             const scoring = scoreRole(role, state.preferences);
             if (!scoring) return null;
-            return { ...role, score: scoring.score, scoring: scoring.breakdown };
+            return { ...role, score: scoring.score, scoring: scoring.breakdown, reasons: scoring.reasons };
           })
           .filter(item => item !== null)
           .sort((a, b) => b.score - a.score);
@@ -9295,7 +10129,7 @@
             .map(role => {
               const scoring = scoreRole(role, state.preferences);
               if (!scoring) return null;
-              return { ...role, score: scoring.score, scoring: scoring.breakdown };
+              return { ...role, score: scoring.score, scoring: scoring.breakdown, reasons: scoring.reasons };
             })
             .filter(item => item !== null)
             .sort((a, b) => b.score - a.score);
