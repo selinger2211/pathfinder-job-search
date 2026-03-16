@@ -11,7 +11,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>P</text></svg>">
 
   <link rel="stylesheet" href="../shared/pathfinder.css?v=3.5.1">
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@latest" onerror="console.warn('Failed to load Lucide icons library')"></script>
 
   <style>
     /* ================================================================
@@ -4455,14 +4455,15 @@
      * Matches on company name + similar title. Roles at these stages are filtered out:
      * - "applied", "screen", "interviewing", "offer" (actively in progress)
      *
-     * We keep "saved", "discovered", "rejected" — those are passive stages that
-     * shouldn't suppress the feed item.
+     * v3.29.1: Changed to filter all pipeline stages EXCEPT "rejected" — if a role
+     * is in Pipeline at any non-rejected stage, it should not appear in the feed.
+     * Rejected roles can resurface in the feed (in case of repost or reconsideration).
+     * Previously we only filtered "active" stages; user reported duplicates.
      *
      * INPUT: feedItem (object), pipelineRoles (array)
      * RETURNS: { inPipeline: boolean, stage: string|null, roleId: string|null }
      */
     function checkPipelineStatus(feedItem, pipelineRoles) {
-      const ACTIVE_STAGES = ['applied', 'screen', 'interviewing', 'offer', 'outreach'];
       const companyLower = (feedItem.company || '').toLowerCase().trim();
       const titleLower = (feedItem.title || '').toLowerCase().trim();
 
@@ -4490,8 +4491,8 @@
                            sharedRoleTerm;
         if (!titleMatch) continue;
 
-        // Found a match — check if it's at an active stage
-        if (ACTIVE_STAGES.includes(role.stage)) {
+        // Found a match — filter from feed unless it's rejected (so user can reconsider)
+        if (role.stage !== 'rejected') {
           return { inPipeline: true, stage: role.stage, roleId: role.id };
         }
       }
@@ -4652,6 +4653,7 @@
       const toast = document.createElement('div');
       toast.className = `toast ${type}`;
       toast.textContent = message;
+      toast.setAttribute('role', 'alert');
       document.body.appendChild(toast);
 
       setTimeout(() => {
@@ -7475,6 +7477,9 @@
       'directv': 'directv.com',
       'uber': 'uber.com',
       'geico': 'geico.com',
+      'ringcentral': 'ringcentral.com',
+      'ringcentral inc': 'ringcentral.com',
+      'ringcentral inc.': 'ringcentral.com',
     };
 
     /**
@@ -7560,6 +7565,16 @@
      * Called from onerror on logo <img> tags.
      */
     function handleLogoError(img, companyName, cssClass) {
+      // v3.29.1: Two-stage fallback. First try DuckDuckGo icons (better coverage
+      // for some companies). If that also fails, show a letter-initial avatar.
+      const domain = getCompanyDomain(companyName, '');
+      const ddgUrl = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+      if (!img.dataset.triedDdg) {
+        img.dataset.triedDdg = 'true';
+        img.src = ddgUrl;
+        return;
+      }
+      // Both APIs failed — show letter avatar
       const letter = (companyName || '?').charAt(0).toUpperCase();
       const color = getCompanyColor(companyName);
       const span = document.createElement('span');
@@ -9162,9 +9177,24 @@
 
     function startAutoRefresh() {
       // Refresh every 15 minutes (900,000 ms)
+      // v3.29.1: Also re-runs pipeline dedup on each refresh so roles added
+      // to Pipeline between refreshes get filtered out of the feed.
       autoRefreshInterval = setInterval(() => {
         console.log('[Feed] Auto-refreshing from localStorage...');
-        const freshItems = loadFeedQueue();
+        let freshItems = loadFeedQueue();
+
+        // Re-run pipeline dedup so newly-pipelined roles disappear from feed
+        const pipelineRoles = loadRoles();
+        const beforeDedup = freshItems.length;
+        freshItems = freshItems.filter(item => {
+          const status = checkPipelineStatus(item, pipelineRoles);
+          return !status.inPipeline;
+        });
+        const dedupRemoved = beforeDedup - freshItems.length;
+        if (dedupRemoved > 0) {
+          console.log(`[Feed] Auto-refresh filtered ${dedupRemoved} pipeline duplicate(s)`);
+        }
+
         const scored = freshItems
           .map(role => {
             const scoring = scoreRole(role, state.preferences);
@@ -9186,6 +9216,52 @@
         }
       }, 15 * 60 * 1000);
     }
+
+    // ============================================================
+    // CROSS-TAB SYNC: Auto-refresh when another tab writes to pf_feed_queue
+    // v3.29.1: Detects when Sync Hub or other modules push new feed items
+    // ============================================================
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'pf_feed_queue' || event.key === 'pf_roles') {
+        console.log(`[Feed] Detected cross-tab change to ${event.key}, refreshing...`);
+        // Small delay to let the writing tab finish all its writes
+        setTimeout(() => {
+          let freshItems = loadFeedQueue();
+          const pipelineRoles = loadRoles();
+          freshItems = freshItems.filter(item => !checkPipelineStatus(item, pipelineRoles).inPipeline);
+          const scored = freshItems
+            .map(role => {
+              const scoring = scoreRole(role, state.preferences);
+              if (!scoring) return null;
+              return { ...role, score: scoring.score, scoring: scoring.breakdown };
+            })
+            .filter(item => item !== null)
+            .sort((a, b) => b.score - a.score);
+          state.feedItems = scored;
+          renderFeedCards();
+          const feedBanner = document.getElementById('feedBanner');
+          if (feedBanner) {
+            feedBanner.style.display = state.feedItems.length === 0 ? 'block' : 'none';
+          }
+        }, 500);
+      }
+    });
+
+    // Also refresh when tab regains focus (catches manual Pipeline edits in same tab group)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[Feed] Tab visible — checking for pipeline changes...');
+        const pipelineRoles = loadRoles();
+        const beforeCount = state.feedItems.length;
+        state.feedItems = state.feedItems.filter(item =>
+          !checkPipelineStatus(item, pipelineRoles).inPipeline
+        );
+        if (state.feedItems.length !== beforeCount) {
+          console.log(`[Feed] Removed ${beforeCount - state.feedItems.length} pipeline duplicate(s) on tab focus`);
+          renderFeedCards();
+        }
+      }
+    });
 
     // Start application when page loads (sync-on-open)
     document.addEventListener('DOMContentLoaded', () => {

@@ -36,9 +36,9 @@
   </script>
 
   <link rel="stylesheet" href="../shared/pathfinder.css?v=3.23.2">
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest" onerror="window._lucideLoaded = false;"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js" onerror="window._html2pdfLoaded = false;"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js" onerror="window._mammothLoaded = false;"></script>
   <script src="../shared/claude-api.js?v=3.23.2"></script>
 
   <style>
@@ -1005,7 +1005,7 @@
   <div class="generation-progress-container" id="generationProgressContainer">
     <div class="generation-progress-bar" id="generationProgressBar"></div>
   </div>
-  <div class="generation-progress-text" id="generationProgressText">
+  <div class="generation-progress-text" id="generationProgressText" role="alert" aria-live="polite">
     <div>Generating section <span id="generationProgressCurrent">0</span> of <span id="generationProgressTotal">0</span>...</div>
   </div>
 
@@ -1334,6 +1334,9 @@
           const arrayBuffer = await file.arrayBuffer();
           try {
             /* mammoth handles .docx natively; may also work on some .doc files */
+            if (typeof mammoth === 'undefined') {
+              throw new Error('Mammoth library failed to load. Document parsing unavailable.');
+            }
             const result = await mammoth.extractRawText({ arrayBuffer });
             content = result.value;
           } catch (mammothErr) {
@@ -1398,7 +1401,7 @@
         zone.classList.remove('has-file');
       }
 
-      lucide.createIcons();
+      if (typeof lucide !== 'undefined') { lucide.createIcons(); }
     }
 
     /**
@@ -2144,7 +2147,7 @@
                 <div class="section-badge">${section.letter}</div>
                 <div>
                   <div class="section-title">${section.title}</div>
-                  <div class="section-status">
+                  <div class="section-status" role="status" aria-live="polite">
                     <span class="status-icon"><i data-lucide="clock" style="width: 14px; height: 14px;"></i></span>
                     <span>Generating...</span>
                   </div>
@@ -2157,7 +2160,7 @@
           sectionsArea.appendChild(sectionEl);
         });
 
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') { lucide.createIcons(); }
 
         /* Generate each section sequentially */
         for (let idx = 0; idx < STATE.sections.length; idx++) {
@@ -2248,6 +2251,7 @@
 
       const banner = document.createElement('div');
       banner.className = 'error-banner';
+      banner.setAttribute('role', 'alert');
       banner.innerHTML = `
         <div class="error-banner-icon">!</div>
         <div class="error-banner-content">
@@ -2304,7 +2308,7 @@
             <span class="status-icon" style="color: rgb(34, 197, 94);"><i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i></span>
             <span>Complete</span>
           `;
-          lucide.createIcons();
+          if (typeof lucide !== 'undefined') { lucide.createIcons(); }
         }
 
         /* Show section metadata */
@@ -2335,7 +2339,7 @@
             <span class="status-icon" style="color: #ef4444;"><i data-lucide="alert-circle" style="width: 14px; height: 14px;"></i></span>
             <span style="color: #ef4444;">Failed</span>
           `;
-          lucide.createIcons();
+          if (typeof lucide !== 'undefined') { lucide.createIcons(); }
         }
 
         /* If it's any API error (has status code), stop generating remaining sections
@@ -3005,7 +3009,7 @@ ${doc.content.slice(0, 8000)}
         `;
       });
 
-      lucide.createIcons();
+      if (typeof lucide !== 'undefined') { lucide.createIcons(); }
     }
 
     /**
@@ -3182,6 +3186,9 @@ ${doc.content.slice(0, 8000)}
       };
 
       try {
+        if (typeof html2pdf === 'undefined') {
+          throw new Error('HTML2PDF library failed to load. PDF export unavailable.');
+        }
         await html2pdf().set(opt).from(printDiv).save();
       } catch (error) {
         console.error('PDF export failed:', error);
@@ -3282,7 +3289,7 @@ ${doc.content.slice(0, 8000)}
         }
       });
 
-      lucide.createIcons();
+      if (typeof lucide !== 'undefined') { lucide.createIcons(); }
 
       /* v3.27.0: Auto-refresh when pipeline data changes.
          - 'storage' event fires when ANOTHER tab writes to localStorage

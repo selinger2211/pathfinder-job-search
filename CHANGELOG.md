@@ -4,6 +4,29 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.29.1 — 2026-03-15
+
+### QA Pass + Feed Bug Fixes
+
+**QA fixes (all 3 changed modules — pipeline, job-feed, research-brief):**
+- CDN script error handling: Lucide, html2pdf, mammoth all wrapped in `typeof` checks with `onerror` handlers on script tags
+- Pipeline: Added `escapeHtml()` helper, sanitized all `innerHTML` company name insertions (XSS prevention)
+- Pipeline: Added `role="alert"` + `aria-live="polite"` on toast container and import status
+- Job Feed: Added `role="alert"` on toast elements
+- Research Brief: Added `role="alert"` on generation progress, section status, error banners; wrapped mammoth/html2pdf calls in availability checks
+
+**Feed duplicate fix:**
+- Pipeline dedup now filters ALL stages except `rejected` (previously only filtered active stages like applied/interviewing). Rejected roles can still resurface in feed for reconsideration.
+- Auto-refresh now re-runs pipeline dedup on each 15-min cycle (previously skipped it, so roles added to Pipeline between refreshes stayed visible in feed)
+- Added `storage` event listener for real-time cross-tab sync when `pf_feed_queue` or `pf_roles` changes
+- Added `visibilitychange` listener to re-filter pipeline duplicates when tab regains focus
+
+**Logo fallback chain:**
+- Added RingCentral (+ variants) to DOMAIN_OVERRIDES in both Pipeline and Feed
+- Two-stage logo fallback: Google Favicon → DuckDuckGo Icons → letter avatar (previously went straight from Google to letter avatar)
+
+---
+
 ## v3.29.0 — 2026-03-15
 
 ### Full PRD Reconciliation + Bug Fixes

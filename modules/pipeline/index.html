@@ -8,7 +8,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>P</text></svg>">
 
   <link rel="stylesheet" href="../shared/pathfinder.css?v=3.5.1">
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@latest" onerror="console.warn('Lucide icon library failed to load');"></script>
 
   <style>
     /* ================================================================
@@ -2287,7 +2287,7 @@
             <input type="url" id="form-url" class="form-input" placeholder="Paste job posting URL (Workday, Greenhouse, Lever, LinkedIn...)" aria-label="Paste a job posting URL to auto-extract details" style="flex: 1;">
             <button id="import-btn" class="btn btn-primary" style="white-space: nowrap; padding: var(--space-2) var(--space-4);" aria-label="Import job details from the URL">Import</button>
           </div>
-          <div id="import-status" style="display: none; font-size: var(--text-xs); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); margin-top: var(--space-1);"></div>
+          <div id="import-status" role="alert" aria-live="polite" aria-atomic="true" style="display: none; font-size: var(--text-xs); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); margin-top: var(--space-1);"></div>
         </div>
 
         <div style="display: flex; align-items: center; gap: var(--space-3); color: var(--text-tertiary); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.05em;">
@@ -2480,7 +2480,7 @@
   </div>
 
   <!-- Section: Toast Notifications -->
-  <div class="toast-container" id="toast-container"></div>
+  <div class="toast-container" id="toast-container" role="alert" aria-live="polite" aria-atomic="true"></div>
 
   <!-- Section: Role Detail Slide-Out Panel -->
   <div class="detail-overlay" id="detail-overlay"></div>
@@ -2569,6 +2569,14 @@
         console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
         return fallback;
       }
+    }
+
+    /** Helper function to escape HTML special characters and prevent XSS */
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
 
     /* Application state variables that track what the user is doing */
@@ -2910,6 +2918,9 @@
       'yahoo': 'yahoo.com',
       'uber': 'uber.com',
       'geico': 'geico.com',
+      'ringcentral': 'ringcentral.com',
+      'ringcentral inc': 'ringcentral.com',
+      'ringcentral inc.': 'ringcentral.com',
     };
 
     function getCompanyDomain(companyName, url) {
@@ -3374,6 +3385,16 @@
      * when the Clearbit logo fails to load (CORS, 404, etc.).
      */
     function handleLogoError(img, companyName, cssClass) {
+      // v3.29.1: Two-stage fallback. First try DuckDuckGo icons (better coverage
+      // for some companies like RingCentral). If that also fails, show letter avatar.
+      var domain = getCompanyDomain(companyName, '');
+      var ddgUrl = 'https://icons.duckduckgo.com/ip3/' + domain + '.ico';
+      if (!img.dataset.triedDdg) {
+        img.dataset.triedDdg = 'true';
+        img.src = ddgUrl;
+        return;
+      }
+      // Both APIs failed — show letter avatar
       var letter = companyName.charAt(0);
       var color = getCompanyColor(companyName);
       var span = document.createElement('span');
@@ -4194,22 +4215,22 @@
 
             <div class="form-group">
               <label class="form-label">Company Name *</label>
-              <input type="text" id="reveal-company" class="form-input" placeholder="e.g., Stripe" value="${role.company}" required>
+              <input type="text" id="reveal-company" class="form-input" placeholder="e.g., Stripe" value="${escapeHtml(role.company)}" required>
             </div>
 
             <div class="form-group">
               <label class="form-label">Role Title *</label>
-              <input type="text" id="reveal-title" class="form-input" placeholder="e.g., Senior Product Manager" value="${role.title === 'TBD' ? '' : role.title}" required>
+              <input type="text" id="reveal-title" class="form-input" placeholder="e.g., Senior Product Manager" value="${role.title === 'TBD' ? '' : escapeHtml(role.title)}" required>
             </div>
 
             <div class="form-group">
               <label class="form-label">Location <span style="color: var(--text-tertiary); font-weight: 400;">(optional)</span></label>
-              <input type="text" id="reveal-location" class="form-input" placeholder="e.g., San Francisco, CA" value="${role.location || ''}">
+              <input type="text" id="reveal-location" class="form-input" placeholder="e.g., San Francisco, CA" value="${escapeHtml(role.location || '')}">
             </div>
 
             <div class="form-group">
               <label class="form-label">Job Description <span style="color: var(--text-tertiary); font-weight: 400;">(optional)</span></label>
-              <textarea id="reveal-jd" class="form-textarea" placeholder="Paste the job description..." style="min-height: 100px;">${role.jd || ''}</textarea>
+              <textarea id="reveal-jd" class="form-textarea" placeholder="Paste the job description..." style="min-height: 100px;">${escapeHtml(role.jd || '')}</textarea>
             </div>
           </div>
           <div class="modal-footer">
@@ -4544,11 +4565,11 @@
           <div class="role-card-company">
             ${companyLogoHtml(role.company, 'role-card-logo', role.url)}
             <div style="flex: 1; min-width: 0;">
-              <a href="${isOpaque ? '#' : '../research-brief/index.html?company=' + encodeURIComponent(role.company)}" class="role-card-company-name" style="cursor: ${isOpaque ? 'default' : 'pointer'}; color: ${isOpaque ? 'var(--text-secondary)' : 'var(--accent)'}; transition: opacity var(--duration-fast) var(--ease-default);" title="${isOpaque ? 'Opaque recruiter outreach' : companyDesc}" ${!isOpaque ? 'onmouseover="this.style.opacity=\'0.7\'" onmouseout="this.style.opacity=\'1\'"' : ''}>${role.company}${opaqueIcon}</a>
-              ${companyDesc && !isOpaque ? `<div style="font-size: var(--text-xs); color: var(--text-tertiary); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px;">${companyDesc}</div>` : ''}
+              <a href="${isOpaque ? '#' : '../research-brief/index.html?company=' + encodeURIComponent(role.company)}" class="role-card-company-name" style="cursor: ${isOpaque ? 'default' : 'pointer'}; color: ${isOpaque ? 'var(--text-secondary)' : 'var(--accent)'}; transition: opacity var(--duration-fast) var(--ease-default);" title="${isOpaque ? 'Opaque recruiter outreach' : escapeHtml(companyDesc)}" ${!isOpaque ? 'onmouseover="this.style.opacity=\'0.7\'" onmouseout="this.style.opacity=\'1\'"' : ''}>${escapeHtml(role.company)}${opaqueIcon}</a>
+              ${companyDesc && !isOpaque ? `<div style="font-size: var(--text-xs); color: var(--text-tertiary); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px;">${escapeHtml(companyDesc)}</div>` : ''}
             </div>
           </div>
-          <div class="role-card-title">${role.title}${role.title === 'Exploratory' ? ' <span style="font-size: 10px; opacity: 0.6;">🔍</span>' : ''}${role.title === 'TBD' && isOpaque ? ' <span style="font-size: 10px; opacity: 0.6; margin-left: 4px;">pending</span>' : ''}</div>
+          <div class="role-card-title">${escapeHtml(role.title)}${role.title === 'Exploratory' ? ' <span style="font-size: 10px; opacity: 0.6;">🔍</span>' : ''}${role.title === 'TBD' && isOpaque ? ' <span style="font-size: 10px; opacity: 0.6; margin-left: 4px;">pending</span>' : ''}</div>
           ${!isOpaque ? `
             <div class="role-card-salary ${salaryEval}" title="${salaryTitle}" style="line-height: 1.5;">
               ${salaryEval === 'below' ? '⚠️ ' : ''}${salaryDisplay}
@@ -4851,12 +4872,12 @@
               <div class="table-company">
                 ${companyLogoHtml(role.company, 'table-company-logo', role.url)}
                 <div class="table-company-info">
-                  <a href="../research-brief/index.html?company=${encodeURIComponent(role.company)}" class="table-company-name" style="cursor: pointer; color: var(--accent); transition: opacity var(--duration-fast) var(--ease-default);" title="${companyDesc}" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">${role.company}</a>
-                  ${companyDesc ? `<div style="font-size: var(--text-xs); color: var(--text-tertiary); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${companyDesc}</div>` : ''}
+                  <a href="../research-brief/index.html?company=${encodeURIComponent(role.company)}" class="table-company-name" style="cursor: pointer; color: var(--accent); transition: opacity var(--duration-fast) var(--ease-default);" title="${escapeHtml(companyDesc)}" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">${escapeHtml(role.company)}</a>
+                  ${companyDesc ? `<div style="font-size: var(--text-xs); color: var(--text-tertiary); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(companyDesc)}</div>` : ''}
                 </div>
               </div>
             </td>
-            <td class="table-role-title">${role.title}</td>
+            <td class="table-role-title">${escapeHtml(role.title)}</td>
             <td>${role.positioning === 'ic' ? 'IC' : 'Mgmt'}</td>
             <td><span class="badge badge-filled" style="background: ${getColorForStage(role.stage)}; color: ${role.stage === 'researching' || role.stage === 'interviewing' ? '#000' : '#fff'};">${role.stage}</span></td>
             <td><span class="badge badge-filled" style="background: ${getColorForTier(role.tier)}; color: white;">${role.tier}</span></td>
@@ -5773,6 +5794,7 @@
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
       toast.className = `toast toast-${type}`;
+      toast.setAttribute('role', 'status');
       toast.innerHTML = `
         <div>${message}</div>
         <button style="background: none; border: none; color: inherit; cursor: pointer; padding: 0;" aria-label="Close notification">×</button>
@@ -6989,17 +7011,6 @@
       showToast('General note logged', 'success');
     }
 
-    /**
-     * Utility: escape HTML entities to prevent XSS
-     * INPUT: raw string
-     * RETURNS: escaped string safe for insertion into HTML
-     */
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
-    }
-
     /* ====== COMPANY WEB SEARCH SUGGESTIONS ====== */
     /**
      * Searches for company suggestions using DuckDuckGo instant answer API.
@@ -7324,12 +7335,12 @@
         const hasClayData = !!(company.funding || company.headcount || company.techStack || company.investors || company.recentNews);
 
         return `
-          <div class="company-card" onclick="openCompanyView('${company.name.replace(/'/g, "\\'")}')">
+          <div class="company-card" onclick="openCompanyView('${escapeHtml(company.name).replace(/'/g, "\\'")}')">
             <div class="company-card-header">
               ${companyLogoHtml(company.name, 'company-card-logo', company.url)}
             </div>
             <div style="margin-bottom: var(--space-2);">
-              <div class="company-card-name">${company.name}</div>
+              <div class="company-card-name">${escapeHtml(company.name)}</div>
               <span class="company-card-tier ${company.tier}">${company.tier}</span>
               <div class="enrichment-badge ${hasClayData ? 'enriched' : 'pending'}">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0;">
@@ -7430,23 +7441,23 @@
         <div class="modal-overlay open" style="display: flex;" id="company-detail-modal">
           <div class="modal" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
             <div class="modal-header">
-              <h2 class="modal-title">${company.name}</h2>
+              <h2 class="modal-title">${escapeHtml(company.name)}</h2>
               <button class="modal-close" onclick="document.getElementById('company-detail-modal').remove();" aria-label="Close dialog">&times;</button>
             </div>
             <div class="modal-body">
               <div style="display: flex; gap: var(--space-4); margin-bottom: var(--space-4);">
                 <img src="${company.logoUrl || getCompanyLogoUrl(company.name, company.url)}"
-                     alt="${company.name}" style="width: 64px; height: 64px; border-radius: var(--radius-md); object-fit: contain; background: var(--bg-elevated);" onerror="this.onerror=function(){this.style.display='none';}; this.src=getCompanyLogoFallbackUrl('${company.name.replace(/'/g, "\\'")}');">
+                     alt="${escapeHtml(company.name)}" style="width: 64px; height: 64px; border-radius: var(--radius-md); object-fit: contain; background: var(--bg-elevated);" onerror="this.onerror=function(){this.style.display='none';}; this.src=getCompanyLogoFallbackUrl('${escapeHtml(company.name).replace(/'/g, "\\'")}');">
                 <div>
                   <div style="display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2);">
                     <span class="company-card-tier ${company.tier}">${company.tier}</span>
                     <span style="font-size: var(--text-xs); color: var(--text-tertiary);">${roles.length} role${roles.length !== 1 ? 's' : ''}</span>
                   </div>
                   <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-2);">
-                    ${company.domain ? `Domain: <strong>${company.domain}</strong>` : 'Domain: Not available'}
+                    ${company.domain ? `Domain: <strong>${escapeHtml(company.domain)}</strong>` : 'Domain: Not available'}
                   </div>
                   <div style="font-size: var(--text-sm); color: var(--text-secondary);">
-                    ${company.missionStatement || 'No mission statement available'}
+                    ${escapeHtml(company.missionStatement) || 'No mission statement available'}
                   </div>
                 </div>
               </div>
@@ -7459,7 +7470,7 @@
                   Enrichment: <strong>${company.completeness || 0}/5</strong> fields
                   ${company.enrichedAt ? `<div style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-1);">Updated: ${new Date(company.enrichedAt).toLocaleDateString()}</div>` : ''}
                 </div>
-                <button onclick="enrichCompanyData('${company.name.replace(/'/g, "\\'")}', '${(company.domain || '').replace(/'/g, "\\'")}').then(e => updateCompanyEnrichment('${company.name.replace(/'/g, "\\'")}', e)).then(() => { showToast('Company enriched successfully', 'success'); document.getElementById('company-detail-modal').remove(); openCompanyView('${company.name.replace(/'/g, "\\'")}'); }).catch(err => showToast('Enrichment failed', 'error'));" class="btn btn-secondary" style="white-space: nowrap; padding: var(--space-2) var(--space-3); font-size: var(--text-xs);" title="Refresh company data from public sources">
+                <button onclick="enrichCompanyData('${escapeHtml(company.name).replace(/'/g, "\\'")}', '${escapeHtml(company.domain || '').replace(/'/g, "\\'")}').then(e => updateCompanyEnrichment('${escapeHtml(company.name).replace(/'/g, "\\'")}', e)).then(() => { showToast('Company enriched successfully', 'success'); document.getElementById('company-detail-modal').remove(); openCompanyView('${escapeHtml(company.name).replace(/'/g, "\\'")}'); }).catch(err => showToast('Enrichment failed', 'error'));" class="btn btn-secondary" style="white-space: nowrap; padding: var(--space-2) var(--space-3); font-size: var(--text-xs);" title="Refresh company data from public sources">
                   Re-enrich
                 </button>
               </div>
@@ -7470,7 +7481,7 @@
                   <div style="display: flex; flex-direction: column; gap: var(--space-2);">
                     ${roles.map(role => `
                       <div style="padding: var(--space-3); background: var(--bg-elevated); border-radius: var(--radius-md); border: 1px solid var(--bg-subtle); cursor: pointer;" onclick="openRoleDetail('${role.id}'); document.getElementById('company-detail-modal').remove();">
-                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-1);">${role.title}</div>
+                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-1);">${escapeHtml(role.title)}</div>
                         <div style="font-size: var(--text-xs); color: var(--text-tertiary); display: flex; gap: var(--space-2);">
                           <span>Stage: ${role.stage}</span>
                           <span>Tier: ${role.tier}</span>
@@ -7626,12 +7637,12 @@
               <div class="table-company">
                 ${companyLogoHtml(role.company, 'table-company-logo', role.url)}
                 <div class="table-company-info">
-                  <div class="table-company-name">${role.company}</div>
-                  <div class="table-role-title">${role.title}</div>
+                  <div class="table-company-name">${escapeHtml(role.company)}</div>
+                  <div class="table-role-title">${escapeHtml(role.title)}</div>
                 </div>
               </div>
             </td>
-            <td>${role.title}</td>
+            <td>${escapeHtml(role.title)}</td>
             <td>${role.positioning === 'management' ? '👔 Mgmt' : '💻 IC'}</td>
             <td><span style="text-transform: capitalize;">${role.stage}</span></td>
             <td><span style="text-transform: capitalize; font-weight: 600; color: ${TIER_COLORS[role.tier]};">${role.tier}</span></td>
@@ -7728,7 +7739,7 @@
     switchView(currentViewMode);
 
     // Render icons from Lucide icon library
-    lucide.createIcons();
+    if (typeof lucide !== 'undefined') { lucide.createIcons(); }
   </script>
   <script src="../shared/data-layer.js?v=3.5.1"></script> <!-- v3.0.0: MCP-backed data persistence -->
 </body>
