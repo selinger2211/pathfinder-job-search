@@ -1299,6 +1299,8 @@
       transition: border-color var(--duration-fast) var(--ease-default);
     }
     .connection-card:hover { border-color: var(--accent-muted, rgba(99, 102, 241, 0.3)); }
+    .connection-card:hover .conn-remove-btn { opacity: 1 !important; }
+    .conn-remove-btn:hover { color: var(--status-rejected, #ef4444) !important; opacity: 1 !important; }
     .connection-card.expanded { border-color: var(--accent); cursor: default; }
     /* Inline comms history panel — slides open inside the card */
     .conn-comms-panel {
@@ -1582,16 +1584,10 @@
       background: var(--accent-subtle);
     }
 
-    .resume-upload-zone input[type="file"] {
-      /* v3.31.0: Use opacity+position instead of display:none.
-         Some browsers block .click() on display:none file inputs. */
-      position: absolute;
-      width: 0;
-      height: 0;
-      opacity: 0;
-      overflow: hidden;
-      pointer-events: none;
-    }
+    /* v3.34.8: Upload zone is now a <label> wrapping the file input.
+       Clicking anywhere in the label natively triggers the input — no JS .click() needed.
+       This is more reliable across browsers (especially Safari). */
+    .resume-upload-zone { display: block; }
 
     .resume-upload-zone-text {
       font-size: var(--text-sm);
@@ -2596,6 +2592,7 @@
     let sortColumn = 'score';
     let sortAsc = false;
     let draggedCard = null;
+    let isDragging = false; // v3.34.8: prevents click from firing after drag
 
     /* ================================================================
        SAMPLE DATA (Demo Companies and Jobs)
@@ -4643,21 +4640,28 @@
 
       /* Attach event listeners to job cards */
       document.querySelectorAll('.role-card').forEach(card => {
-        // Click to open detail panel for this role
+        // Click to open detail panel — but NOT after a drag operation
         card.addEventListener('click', (e) => {
+          if (isDragging) { isDragging = false; return; }
           openRoleDetail(card.dataset.roleId);
         });
 
         // Drag start: mark this card as being dragged
+        // v3.34.8: setData() is required for drag-and-drop to work in Firefox/Safari
         card.addEventListener('dragstart', (e) => {
+          isDragging = true;
           draggedCard = card.dataset.roleId;
           card.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', card.dataset.roleId);
         });
 
         // Drag end: stop dragging
         card.addEventListener('dragend', () => {
           draggedCard = null;
           card.classList.remove('dragging');
+          // Reset isDragging after a tick so the click handler can check it
+          setTimeout(() => { isDragging = false; }, 50);
         });
       });
 
@@ -4666,6 +4670,7 @@
         // Drag over: highlight the drop zone
         container.addEventListener('dragover', (e) => {
           e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
           container.style.backgroundColor = 'rgba(99, 102, 241, 0.05)';
         });
 
@@ -6001,17 +6006,16 @@
             Draft Outreach
           </button>
           <!-- Resume upload drop zone (always available) -->
-          <div class="resume-upload-zone" id="resume-upload-zone"
-               onclick="document.getElementById('resume-file-input').click();"
+          <label class="resume-upload-zone" id="resume-upload-zone" for="resume-file-input-${role.id}"
                ondragover="event.preventDefault(); this.classList.add('dragover');"
                ondragleave="this.classList.remove('dragover');"
                ondrop="event.preventDefault(); this.classList.remove('dragover'); handleResumeDrop(event, '${role.id}');">
-            <input type="file" id="resume-file-input" accept=".pdf,.docx,.doc" onchange="handleResumeSelect(event, '${role.id}')">
+            <input type="file" id="resume-file-input-${role.id}" accept=".pdf,.docx,.doc,.txt,.rtf" onchange="handleResumeSelect(event, '${role.id}')" style="position:absolute;width:0;height:0;opacity:0;overflow:hidden;pointer-events:none;">
             <div class="resume-upload-zone-text">
               <strong>Drop a file here</strong> or browse
-              <div style="font-size: var(--text-xs); margin-top: var(--space-1);">PDF or DOCX — resumes, cover letters, or other role documents</div>
+              <div style="font-size: var(--text-xs); margin-top: var(--space-1);">PDF, DOCX, or other role documents</div>
             </div>
-          </div>
+          </label>
           <div id="resume-notes-form" style="display: none; margin-top: var(--space-2);">
             <input type="text" class="form-input" id="resume-notes-input" placeholder="Notes (e.g., tailored for data product focus)" style="font-size: var(--text-xs);">
             <div style="display: flex; gap: var(--space-2); justify-content: flex-end; margin-top: var(--space-1);">
@@ -6387,6 +6391,9 @@
             </div>
             ${lastDate ? `<span class="conn-last-activity">${lastDate}</span>` : ''}
             ${relLabel ? `<span class="connection-relationship">${relLabel}</span>` : ''}
+            <button class="conn-remove-btn" onclick="event.stopPropagation(); removeConnection('${escapeHtml(conn.name)}', '${escapeHtml(companyName)}');" title="Remove connection" style="background: none; border: none; cursor: pointer; padding: 2px 4px; color: var(--text-tertiary); opacity: 0.5; transition: opacity 0.15s, color 0.15s; flex-shrink: 0; margin-left: auto;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
             ${linkedinUrl ? `
               <a href="${escapeHtml(linkedinUrl)}" target="_blank" class="connection-linkedin" title="LinkedIn Profile" onclick="event.stopPropagation();">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
@@ -6412,6 +6419,30 @@
           </div>
         `;
       }).join('');
+    }
+
+    /**
+     * v3.34.8: Removes a tracked connection from pf_connections.
+     * Asks for confirmation before removing.
+     * INPUT: connName (string) — the connection's name, companyName (string)
+     */
+    function removeConnection(connName, companyName) {
+      if (!confirm(`Remove ${connName} from your tracked connections at ${companyName}?`)) return;
+      const connections = getConnections();
+      const idx = connections.findIndex(c =>
+        c.name === connName && c.company && c.company.toLowerCase() === companyName.toLowerCase()
+      );
+      if (idx === -1) {
+        showToast('Connection not found', 'error');
+        return;
+      }
+      connections.splice(idx, 1);
+      saveConnections(connections);
+      // Refresh detail panel if open
+      if (activeDetailRoleId) {
+        openRoleDetail(activeDetailRoleId);
+      }
+      showToast(`Removed ${connName}`, 'success');
     }
 
     /**
@@ -6637,15 +6668,24 @@
      * Shows the notes form for user to add context before confirming.
      */
     function handleResumeSelect(event, roleId) {
-      const file = event.target.files[0];
-      if (!file) return;
-      pendingResumeFile = file;
-      pendingResumeRoleId = roleId;
-      // Show notes form
-      document.getElementById('resume-notes-form').style.display = 'block';
-      document.getElementById('resume-upload-zone').style.display = 'none';
-      // Wire up confirm button
-      document.getElementById('resume-confirm-btn').onclick = () => confirmResumeUpload();
+      try {
+        const file = event.target.files[0];
+        if (!file) { console.warn('[Pipeline] No file selected'); return; }
+        console.log(`[Pipeline] File selected: ${file.name} (${file.size} bytes) for role ${roleId}`);
+        pendingResumeFile = file;
+        pendingResumeRoleId = roleId;
+        // Show notes form
+        const notesForm = document.getElementById('resume-notes-form');
+        const uploadZone = document.getElementById('resume-upload-zone');
+        if (notesForm) notesForm.style.display = 'block';
+        if (uploadZone) uploadZone.style.display = 'none';
+        // Wire up confirm button
+        const confirmBtn = document.getElementById('resume-confirm-btn');
+        if (confirmBtn) confirmBtn.onclick = () => confirmResumeUpload();
+      } catch (err) {
+        console.error('[Pipeline] handleResumeSelect error:', err);
+        showToast('Error selecting file: ' + err.message, 'error');
+      }
     }
 
     /**
@@ -6671,12 +6711,21 @@
      * Confirms the resume upload: saves to IndexedDB and updates role metadata.
      */
     async function confirmResumeUpload() {
-      if (!pendingResumeFile || !pendingResumeRoleId) return;
+      if (!pendingResumeFile || !pendingResumeRoleId) {
+        console.warn('[Pipeline] confirmResumeUpload called with no pending file/role', { file: !!pendingResumeFile, roleId: pendingResumeRoleId });
+        showToast('No file selected — please try again', 'error');
+        return;
+      }
 
+      console.log(`[Pipeline] Confirming upload: ${pendingResumeFile.name} → role ${pendingResumeRoleId}`);
       const notes = document.getElementById('resume-notes-input').value.trim();
       const roles = getRoles();
       const role = roles.find(r => r.id === pendingResumeRoleId);
-      if (!role) return;
+      if (!role) {
+        console.error(`[Pipeline] Role ${pendingResumeRoleId} not found in pf_roles`);
+        showToast('Role not found — it may have been deleted', 'error');
+        return;
+      }
 
       // Initialize resumesSent array if it doesn't exist
       if (!role.resumesSent) role.resumesSent = [];
@@ -6715,12 +6764,20 @@
      * Cancels a pending resume upload.
      */
     function cancelResumeUpload() {
+      const roleId = pendingResumeRoleId;
       pendingResumeFile = null;
       pendingResumeRoleId = null;
-      document.getElementById('resume-notes-form').style.display = 'none';
-      document.getElementById('resume-upload-zone').style.display = '';
-      document.getElementById('resume-notes-input').value = '';
-      document.getElementById('resume-file-input').value = '';
+      const notesForm = document.getElementById('resume-notes-form');
+      const uploadZone = document.getElementById('resume-upload-zone');
+      const notesInput = document.getElementById('resume-notes-input');
+      if (notesForm) notesForm.style.display = 'none';
+      if (uploadZone) uploadZone.style.display = '';
+      if (notesInput) notesInput.value = '';
+      // Reset the file input (ID is dynamic per role)
+      if (roleId) {
+        const fileInput = document.getElementById(`resume-file-input-${roleId}`);
+        if (fileInput) fileInput.value = '';
+      }
     }
 
     /**
