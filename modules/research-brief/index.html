@@ -13,7 +13,7 @@
   <!-- Self-healing: purge stale caches before anything else loads -->
   <script>
     (function() {
-      var APP_VERSION = '3.23.2';
+      var APP_VERSION = '3.33.0';
       var storedVersion = localStorage.getItem('pf_brief_app_version');
 
       /* If version changed or first load, purge all V2/stale brief caches */
@@ -36,9 +36,10 @@
   </script>
 
   <link rel="stylesheet" href="../shared/pathfinder.css?v=3.23.2">
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest" onerror="window._lucideLoaded = false;"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js" onerror="window._html2pdfLoaded = false;"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js" onerror="window._mammothLoaded = false;"></script>
+  <script src="../shared/logos.js?v=3.30.0"></script>
   <script src="../shared/claude-api.js?v=3.23.2"></script>
 
   <style>
@@ -116,36 +117,87 @@
       gap: var(--space-4);
     }
 
-    .role-selector {
+    /* ── Role Card Strip ─────────────────────────────────────── */
+    /* v3.27.0: Pinned between sidebar-header and sidebar-content so it's
+       always visible regardless of scroll position */
+    .role-strip {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      padding: 8px 12px;
+      scrollbar-width: none;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--bg-subtle);
+      background: var(--bg-surface);
+    }
+    .role-strip::-webkit-scrollbar { display: none; }
+
+    .role-chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px 4px 5px;
+      background: var(--bg-base);
+      border: 1.5px solid var(--bg-subtle);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .role-chip:hover {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.04);
+    }
+
+    .role-chip.active {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.1);
+      box-shadow: 0 0 0 2px var(--accent-subtle);
+    }
+
+    .role-chip-logo {
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .role-chip-text {
       display: flex;
       flex-direction: column;
-      gap: var(--space-2);
+      gap: 0;
+      min-width: 0;
     }
 
-    .role-selector label {
-      font-size: var(--text-xs);
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .role-selector select {
-      padding: var(--space-2) var(--space-3);
-      border: 1px solid var(--bg-subtle);
-      border-radius: var(--radius-md);
-      background: var(--bg-elevated);
+    .role-chip-company {
+      font-size: 11px;
+      font-weight: 700;
       color: var(--text-primary);
-      font-size: var(--text-sm);
-      cursor: pointer;
-      transition: border-color var(--duration-fast) var(--ease-default);
+      line-height: 1.2;
     }
 
-    .role-selector select:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-subtle);
+    .role-chip-title {
+      font-size: 9px;
+      color: var(--text-tertiary);
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 140px;
     }
+
+    .role-chip-tier {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    .role-chip-tier.hot { background: #ef4444; }
+    .role-chip-tier.active { background: #3b82f6; }
 
     .company-card {
       padding: var(--space-3);
@@ -904,6 +956,126 @@
       border-color: var(--accent);
     }
 
+    .handoff-btn.sent {
+      background: rgba(34, 197, 94, 0.1);
+      color: rgb(34, 197, 94);
+      border-color: rgb(34, 197, 94);
+      cursor: default;
+    }
+
+    .handoff-actions-bar {
+      display: flex;
+      gap: var(--space-2);
+      flex-wrap: wrap;
+      margin-top: var(--space-4);
+      padding-top: var(--space-3);
+      border-top: 1px solid var(--bg-subtle);
+    }
+
+    /* ====== TWO-TIER EXPANDABLE SECTIONS ====== */
+    .section-content.collapsed {
+      max-height: 180px;
+      overflow: hidden;
+      position: relative;
+      mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+    }
+
+    .section-expand-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-1);
+      width: 100%;
+      padding: var(--space-2) 0;
+      margin-top: var(--space-2);
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+      font-family: inherit;
+    }
+
+    .section-expand-toggle:hover {
+      color: rgb(79, 70, 229);
+    }
+
+    .section-expand-toggle .toggle-chevron {
+      transition: transform var(--duration-fast) var(--ease-default);
+      display: inline-block;
+    }
+
+    .section-expand-toggle.expanded .toggle-chevron {
+      transform: rotate(180deg);
+    }
+
+    /* ====== NEWS VISIBILITY BANNER ====== */
+    .news-banner {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      font-weight: 500;
+      margin-bottom: var(--space-3);
+    }
+
+    .news-banner.has-news {
+      background: rgba(59, 130, 246, 0.08);
+      color: rgb(59, 130, 246);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .news-banner.no-news {
+      background: rgba(245, 158, 11, 0.08);
+      color: rgb(217, 119, 6);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .news-banner .news-icon {
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+    }
+
+    /* ====== CONTEXT EVIDENCE INDICATOR ====== */
+    .context-indicator {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      font-weight: 500;
+      margin-bottom: var(--space-3);
+      background: rgba(14, 165, 233, 0.08);
+      color: rgb(14, 165, 233);
+      border: 1px solid rgba(14, 165, 233, 0.2);
+    }
+
+    .context-indicator .ctx-badge,
+    .context-indicator .doc-badge {
+      display: inline-block;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .context-indicator .ctx-badge {
+      background: rgba(14, 165, 233, 0.15);
+      color: rgb(14, 165, 233);
+    }
+
+    .context-indicator .doc-badge {
+      background: rgba(20, 184, 166, 0.15);
+      color: rgb(20, 184, 166);
+    }
+
     /* ====== RESPONSIVE ====== */
     @media (max-width: 1200px) {
       /* Safety net: force-hide any leftover V2 TOC sidebar elements */
@@ -954,7 +1126,7 @@
   <div class="generation-progress-container" id="generationProgressContainer">
     <div class="generation-progress-bar" id="generationProgressBar"></div>
   </div>
-  <div class="generation-progress-text" id="generationProgressText">
+  <div class="generation-progress-text" id="generationProgressText" role="alert" aria-live="polite">
     <div>Generating section <span id="generationProgressCurrent">0</span> of <span id="generationProgressTotal">0</span>...</div>
   </div>
 
@@ -968,15 +1140,12 @@
         </button>
       </div>
 
-      <div class="sidebar-content">
-        <!-- Role Selector -->
-        <div class="role-selector">
-          <label for="roleSelect">Select Role</label>
-          <select id="roleSelect">
-            <option value="">-- Choose a role --</option>
-          </select>
-        </div>
+      <!-- Role Selector — pinned outside scrollable content (v3.27.0) -->
+      <div class="role-strip" id="roleStrip">
+        <!-- Populated by JS -->
+      </div>
 
+      <div class="sidebar-content">
         <!-- Company Card -->
         <div id="companyCard" class="company-card" style="display: none;">
           <div class="company-card-logo">
@@ -995,12 +1164,26 @@
           <div style="padding: var(--space-3); background: var(--bg-elevated); border: 1px solid var(--bg-subtle); border-radius: var(--radius-md);">
             <div style="font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2);">Title</div>
             <div id="roleTitle" style="font-size: var(--text-sm); color: var(--text-primary); margin-bottom: var(--space-3);"></div>
-            <div style="font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2);">Level</div>
-            <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-3);">
-              <span class="badge" id="roleLevelBadge" style="font-size: 11px;"></span>
+            <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-3);">
+              <div style="flex: 1; min-width: 80px;">
+                <div style="font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Level</div>
+                <span class="badge" id="roleLevelBadge" style="font-size: 11px;"></span>
+              </div>
+              <div style="flex: 1; min-width: 80px;">
+                <div style="font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Added</div>
+                <div id="roleAdded" style="font-size: var(--text-sm); color: var(--text-primary);"></div>
+              </div>
             </div>
-            <div style="font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2);">Added</div>
-            <div id="roleAdded" style="font-size: var(--text-sm); color: var(--text-primary);"></div>
+            <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-3);">
+              <div style="flex: 1; min-width: 80px;">
+                <div style="font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Salary</div>
+                <div id="roleSalary" style="font-size: var(--text-sm); color: var(--text-primary);">Not listed</div>
+              </div>
+              <div style="flex: 1; min-width: 80px;">
+                <div style="font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Location</div>
+                <div id="roleLocation" style="font-size: var(--text-sm); color: var(--text-primary);">Not listed</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1027,7 +1210,7 @@
         </div>
 
         <!-- API Keys -->
-        <div id="apiKeySection" style="padding: var(--space-3); background: var(--bg-elevated); border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); display: flex; flex-direction: column; gap: var(--space-3);">
+        <div id="apiKeySection" style="padding: var(--space-3); background: var(--bg-elevated); border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); display: none; flex-direction: column; gap: var(--space-3);">
           <!-- Anthropic API Key -->
           <div>
             <label class="jd-label" for="apiKeyInput" style="display: flex; align-items: center; gap: 6px;">
@@ -1124,6 +1307,7 @@
       additionalContext: '',
       uploadedDocuments: [],
       companyNewsResults: null,
+      expandedSections: new Set(), /* Track which sections user has expanded */
       sections: [
         { id: 'pursuitEconomics', letter: '1', title: 'Pursuit Economics' },
         { id: 'existence', letter: '2', title: 'Why This Role Exists' },
@@ -1272,6 +1456,9 @@
           const arrayBuffer = await file.arrayBuffer();
           try {
             /* mammoth handles .docx natively; may also work on some .doc files */
+            if (typeof mammoth === 'undefined') {
+              throw new Error('Mammoth library failed to load. Document parsing unavailable.');
+            }
             const result = await mammoth.extractRawText({ arrayBuffer });
             content = result.value;
           } catch (mammothErr) {
@@ -1336,7 +1523,7 @@
         zone.classList.remove('has-file');
       }
 
-      lucide.createIcons();
+      if (typeof lucide !== 'undefined') { lucide.createIcons(); }
     }
 
     /**
@@ -1456,25 +1643,83 @@
 
     /* ====== UI: Populate Role Selector ====== */
     /** Populate the role selector dropdown */
+    /**
+     * Escape HTML special characters to prevent XSS.
+     */
+    function escapeHTML(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
     function populateRoleSelector() {
-      const roles = getRoles();
-      const select = document.getElementById('roleSelect');
+      const rolesRaw = localStorage.getItem('pf_roles');
+      if (!rolesRaw) return;
 
-      roles.forEach(role => {
-        const option = document.createElement('option');
-        option.value = role.id;
-        option.textContent = `${role.title} @ ${role.company || 'Unknown'}`;
-        select.appendChild(option);
-      });
+      let roles;
+      try { roles = JSON.parse(rolesRaw); } catch { return; }
 
-      select.addEventListener('change', (e) => {
-        const roleId = e.target.value;
-        if (roleId) {
-          loadRole(roleId);
-        } else {
-          clearBriefUI();
-        }
-      });
+      roles = roles
+        .filter(r => r.status !== 'rejected' && r.status !== 'passed')
+        .sort((a, b) => {
+          const tierOrder = { hot: 0, active: 1, passive: 2 };
+          const ta = tierOrder[a.tier] ?? 2;
+          const tb = tierOrder[b.tier] ?? 2;
+          if (ta !== tb) return ta - tb;
+          const dateA = typeof a.lastActivity === 'number' ? a.lastActivity : new Date(a.lastActivity || 0).getTime();
+          const dateB = typeof b.lastActivity === 'number' ? b.lastActivity : new Date(b.lastActivity || 0).getTime();
+          return dateB - dateA;
+        });
+
+      /**
+       * Get company logo URL — delegates to shared/logos.js for domain overrides
+       * and ATS-aware domain extraction.  Falls back to pf_companies logoUrl first.
+       */
+      function getLogoUrl(role) {
+        const companyLower = (role.company || '').toLowerCase().trim();
+
+        /* Check pf_companies in localStorage for authoritative logoUrl */
+        try {
+          const companies = JSON.parse(localStorage.getItem('pf_companies') || '[]');
+          const match = companies.find(c =>
+            (c.name || '').toLowerCase() === companyLower
+          );
+          if (match && match.logoUrl) return match.logoUrl;
+        } catch {}
+
+        /* Use shared logo system (domain overrides + ATS-aware extraction) */
+        return getCompanyLogoUrl(role.company, role.url || '');
+      }
+
+      const container = document.getElementById('roleStrip');
+      function shortTitle(title) {
+        if (!title) return '';
+        return title
+          .replace(/^(Sr\.\s*|Senior\s*|Principal\s*|Head of\s*)/i, '')
+          .replace(/\s*[-–—]\s*.*$/, '')
+          .substring(0, 28);
+      }
+
+      container.innerHTML = roles.map(role => `
+        <div class="role-chip" data-role-id="${role.id}" onclick="selectRoleCard('${role.id}')" title="${escapeHTML(role.title || '')}">
+          <img class="role-chip-logo" src="${getLogoUrl(role)}" alt="" onerror="handleLogoError(this,'${escapeHTML((role.company||'').replace(/'/g,"\\'"))}','role-chip-logo')">
+          <div class="role-chip-text">
+            <span class="role-chip-company">${escapeHTML(role.company || 'Unknown')}</span>
+            <span class="role-chip-title">${escapeHTML(shortTitle(role.title))}</span>
+          </div>
+          <span class="role-chip-tier ${role.tier || ''}"></span>
+        </div>
+      `).join('');
+    }
+
+    function selectRoleCard(roleId) {
+      document.querySelectorAll('.role-chip').forEach(c => c.classList.remove('active'));
+      const chip = document.querySelector(`.role-chip[data-role-id="${roleId}"]`);
+      if (chip) {
+        chip.classList.add('active');
+        chip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+      loadRole(roleId);
     }
 
     /* ====== UI: Load Role ====== */
@@ -1495,42 +1740,55 @@
       document.getElementById('briefTitle').textContent = `${role.title} @ ${role.company || 'Unknown'}`;
       document.getElementById('briefSubtitle').textContent = `Pursuit Strategy Brief — ${new Date().toLocaleDateString()}`;
 
-      /* Show company logo in brief header */
+      /* Show company logo in brief header — v3.30.1: uses shared logo system */
       const briefLogo = document.getElementById('briefCompanyLogo');
-      if (company?.logoUrl) {
-        briefLogo.src = company.logoUrl;
-        briefLogo.alt = `${company.name} logo`;
-        briefLogo.style.display = 'block';
-      } else {
-        /* Try Clearbit logo API as fallback */
-        const domain = company?.domain || '';
-        if (domain) {
-          briefLogo.src = `https://logo.clearbit.com/${domain}`;
-          briefLogo.alt = `${company?.name || role.company} logo`;
-          briefLogo.style.display = 'block';
-          briefLogo.onerror = () => { briefLogo.style.display = 'none'; };
-        } else {
-          briefLogo.style.display = 'none';
-        }
-      }
+      briefLogo.src = getCompanyLogoUrl(role.company, role.url || '');
+      briefLogo.alt = `${role.company || 'Company'} logo`;
+      briefLogo.style.display = 'block';
+      briefLogo.onerror = function() { handleLogoError(this, role.company || '', ''); };
 
-      /* Show company card */
+      /* Show company card — v3.27.0: fill from role data when company data is sparse */
       const companyCard = document.getElementById('companyCard');
-      if (company) {
-        document.getElementById('companyName').textContent = company.name;
-        document.getElementById('companyDomain').textContent = company.domain || 'N/A';
-        document.getElementById('companyStage').textContent = company.stage || 'N/A';
-        document.getElementById('companyHeadcount').textContent = company.headcount || 'N/A';
-        if (company.logoUrl) {
-          document.getElementById('companyLogo').src = company.logoUrl;
-        }
-        companyCard.style.display = 'flex';
+      const companyName = company?.name || role.company || 'Unknown';
+      document.getElementById('companyName').textContent = companyName;
+      document.getElementById('companyDomain').textContent = company?.domain || role.domain || 'N/A';
+      document.getElementById('companyStage').textContent = company?.stage || 'N/A';
+      document.getElementById('companyHeadcount').textContent = company?.headcount || 'N/A';
+
+      /* Logo: uses shared logo system — v3.30.1 */
+      const companyLogoEl = document.getElementById('companyLogo');
+      companyLogoEl.src = getCompanyLogoUrl(role.company, role.url || '');
+      companyLogoEl.onerror = function() { handleLogoError(this, role.company || '', ''); };
+      companyCard.style.display = 'flex';
+
+      /* Show role details — v3.27.0: handle all field formats from feed and pipeline */
+      document.getElementById('roleTitle').textContent = role.title;
+      document.getElementById('roleLevelBadge').textContent = role.positioning || role.level || 'N/A';
+
+      /* Date added: handle both ISO string and epoch ms */
+      const addedDate = role.dateAdded || role.addedDate;
+      if (addedDate) {
+        const d = typeof addedDate === 'number' ? new Date(addedDate) : new Date(addedDate);
+        document.getElementById('roleAdded').textContent = isNaN(d.getTime()) ? 'N/A' : d.toLocaleDateString();
+      } else {
+        document.getElementById('roleAdded').textContent = 'N/A';
       }
 
-      /* Show role details */
-      document.getElementById('roleTitle').textContent = role.title;
-      document.getElementById('roleLevelBadge').textContent = role.level || 'N/A';
-      document.getElementById('roleAdded').textContent = role.addedDate ? new Date(role.addedDate).toLocaleDateString() : 'N/A';
+      /* Salary: handle string, {raw: string}, or null */
+      const salaryEl = document.getElementById('roleSalary');
+      if (salaryEl) {
+        const salaryVal = typeof role.salary === 'object' && role.salary?.raw
+          ? role.salary.raw
+          : (typeof role.salary === 'string' ? role.salary : null);
+        salaryEl.textContent = salaryVal || 'Not listed';
+      }
+
+      /* Location */
+      const locationEl = document.getElementById('roleLocation');
+      if (locationEl) {
+        locationEl.textContent = role.location || 'Not listed';
+      }
+
       document.getElementById('roleDetails').style.display = 'block';
 
       /* Show JD */
@@ -1627,10 +1885,290 @@
       `;
     }
 
+    /* ====== OFFLINE BRIEF GENERATOR (v3.27.0) ====== */
+    /**
+     * Generate a structured research brief locally from JD text without any API calls.
+     * Parses the JD to extract requirements, keywords, salary, and context,
+     * then builds each section as structured HTML.
+     *
+     * @param {object} role - Role data from pf_roles
+     * @param {object} company - Company data from pf_companies
+     * @returns {object} Brief object with sections matching API-generated format
+     */
+    function generateOfflineBrief(role, company) {
+      const jd = role.jdText || role.jd || '';
+      const jdLower = jd.toLowerCase();
+      const title = role.title || 'Unknown Role';
+      const companyName = company?.name || role.company || 'Unknown';
+      const stage = company?.stage || role.stage || '';
+      const domain = company?.domain || role.domain || '';
+      /* Handle salary: string, {raw: string}, or null */
+      const rawSalary = typeof role.salary === 'object' && role.salary?.raw
+        ? role.salary.raw
+        : (typeof role.salary === 'string' ? role.salary : null);
+      const salary = rawSalary || extractSalaryFromText(jd);
+      const location = role.location || extractLocationFromText(jd);
+
+      /* Extract key requirements */
+      const yearsMatch = jd.match(/(\d+)\+?\s*years?\s*(of\s+)?experience/i);
+      const yearsReq = yearsMatch ? yearsMatch[1] + '+' : '';
+
+      /* Extract skills/keywords */
+      const techKeywords = extractKeywordsFromJD(jdLower);
+      const isLeadership = /director|vp|head of|lead.*team|manage.*team|people management/i.test(jd);
+      const isIC = /individual contributor|hands-on|ic\b/i.test(jd) || !isLeadership;
+
+      /* Extract responsibilities (lines starting with action verbs or bullets) */
+      const responsibilities = jd.split(/\n/)
+        .map(l => l.trim())
+        .filter(l => /^[-•·]\s|^(Lead|Define|Drive|Own|Build|Create|Manage|Develop|Partner|Collaborate|Work)/i.test(l))
+        .slice(0, 8)
+        .map(l => l.replace(/^[-•·]\s*/, ''));
+
+      /* Extract required qualifications */
+      const qualifications = jd.split(/\n/)
+        .map(l => l.trim())
+        .filter(l => /years|experience|degree|proficiency|fluent|demonstrated|proven|track record/i.test(l))
+        .slice(0, 8);
+
+      /* LinkedIn network connections at this company */
+      let networkCount = 0;
+      try {
+        const network = JSON.parse(localStorage.getItem('pf_linkedin_network') || '[]');
+        networkCount = network.filter(c => (c.company || '').toLowerCase() === companyName.toLowerCase()).length;
+      } catch (e) {}
+
+      /* Build sections */
+      const sections = {};
+
+      /* 1. Pursuit Economics */
+      sections.pursuitEconomics = {
+        content: `<h3>Pursuit Economics Assessment</h3>
+          <p><strong>${title}</strong> at <strong>${companyName}</strong> ${salary ? `with compensation range of <span class="cite">${salary} <span class="cite-label" data-label="JD">JD</span></span>` : '(compensation not listed)'}. ${stage ? `${companyName} is a ${stage} company` : ''} ${domain ? `in the ${domain} space` : ''}.</p>
+          <p>${yearsReq ? `The role requires <span class="cite">${yearsReq} years of experience <span class="cite-label" data-label="JD">JD</span></span>. ` : ''}${isLeadership ? 'This is a leadership position involving team management and cross-functional coordination.' : 'This appears to be an individual contributor role with high scope.'}</p>
+          <p><strong>Note:</strong> This brief was generated offline from the JD text. For deeper analysis including competitive intelligence, market context, and personalized fit assessment, connect an API key in the sidebar.</p>`,
+        citations: [{ label: 'JD' }],
+        confidence: 'Medium'
+      };
+
+      /* 2. Why This Role Exists */
+      sections.existence = {
+        content: `<h3>Why This Role Exists</h3>
+          <p>The <strong>${title}</strong> position at ${companyName} ${responsibilities.length > 0 ? 'focuses on:' : 'exists to drive product strategy and execution.'}</p>
+          ${responsibilities.length > 0 ? '<ul>' + responsibilities.map(r => `<li><span class="cite">${escapeHTML(r)} <span class="cite-label" data-label="JD">JD</span></span></li>`).join('') + '</ul>' : ''}
+          <p>${isLeadership ? 'The leadership scope suggests this team is established and the company is investing in scaling this function.' : 'The role appears to be a key IC position driving core product outcomes.'}${location ? ` Based in <span class="cite">${escapeHTML(location)} <span class="cite-label" data-label="JD">JD</span></span>.` : ''}</p>`,
+        citations: [{ label: 'JD' }],
+        confidence: 'Medium'
+      };
+
+      /* 3. Company and Market Context */
+      sections.companyMarket = {
+        content: `<h3>Company & Market Context</h3>
+          <p><strong>${companyName}</strong>${stage ? ` is a ${stage} company` : ''}${domain ? ` operating in the ${domain} vertical` : ''}. ${company?.headcount ? `The company has approximately ${company.headcount} employees.` : ''}</p>
+          <p><strong>Key domains referenced in the JD:</strong> ${techKeywords.slice(0, 10).join(', ') || 'See JD for details'}.</p>
+          <p><em>For deeper market analysis including competitive landscape, recent news, and industry trends, connect an API key.</em></p>`,
+        citations: [{ label: 'JD' }, { label: 'EXT' }],
+        confidence: 'Low'
+      };
+
+      /* 4. Why You Are Plausible */
+      sections.plausible = {
+        content: `<h3>Plausibility Assessment</h3>
+          <p>Based on the JD requirements:</p>
+          <ul>
+            ${yearsReq ? `<li><strong>Experience:</strong> <span class="cite">${yearsReq} years required <span class="cite-label" data-label="JD">JD</span></span> — Ili has 15+ years of senior product leadership experience in ad tech and data products.</li>` : ''}
+            ${isLeadership ? '<li><strong>Leadership:</strong> The role requires team management — Ili has extensive experience leading PM teams and cross-functional organizations.</li>' : ''}
+            <li><strong>Domain:</strong> ${techKeywords.slice(0, 5).join(', ')} — review against your specific experience to identify strongest overlaps.</li>
+          </ul>
+          <p><em>For personalized fit scoring, connect an API key.</em></p>`,
+        citations: [{ label: 'JD' }, { label: 'ILI' }],
+        confidence: 'Low'
+      };
+
+      /* 5. Screen-Out Risks */
+      sections.screenOut = {
+        content: `<h3>Potential Screen-Out Risks</h3>
+          <p>Review these JD requirements carefully for potential gaps:</p>
+          <ul>
+            ${qualifications.slice(0, 5).map(q => `<li><span class="cite">${escapeHTML(q)} <span class="cite-label" data-label="JD">JD</span></span></li>`).join('')}
+          </ul>
+          <p>Cross-reference each requirement against your resume. Any requirement you cannot address with a concrete example is a potential screen-out risk.</p>`,
+        citations: [{ label: 'JD' }],
+        confidence: 'Medium'
+      };
+
+      /* 6. What They Actually Need */
+      sections.needs = {
+        content: `<h3>What They Actually Need</h3>
+          <p>Reading between the lines of the JD, ${companyName} likely needs someone who can:</p>
+          <ul>
+            ${responsibilities.slice(0, 4).map(r => `<li>${escapeHTML(r)}</li>`).join('')}
+            ${responsibilities.length === 0 ? '<li>Drive product strategy aligned with company goals</li><li>Build and scale the product function</li>' : ''}
+          </ul>
+          <p><strong>Keywords emphasized:</strong> ${techKeywords.slice(0, 8).join(', ')}.</p>`,
+        citations: [{ label: 'JD' }],
+        confidence: 'Medium'
+      };
+
+      /* 7. Your Fit */
+      sections.fit = {
+        content: `<h3>Fit Assessment</h3>
+          <p>Map your experience to these key areas from the JD:</p>
+          <ul>
+            <li><strong>Domain expertise:</strong> ${techKeywords.slice(0, 4).join(', ')}</li>
+            <li><strong>Role type:</strong> ${isLeadership ? 'Leadership / People Management' : 'Individual Contributor / Hands-on'}</li>
+            <li><strong>Level match:</strong> ${yearsReq ? `${yearsReq} years required` : 'Senior level'}</li>
+          </ul>
+          <p><em>For a detailed fit analysis with specific talking points, connect an API key.</em></p>`,
+        citations: [{ label: 'JD' }, { label: 'ILI' }],
+        confidence: 'Low'
+      };
+
+      /* 8. Gaps and Mitigation */
+      sections.gaps = {
+        content: `<h3>Gaps & Mitigation Strategies</h3>
+          <p>Review the "Nice to Have" or "Preferred" qualifications in the JD for potential gaps. Common mitigation strategies:</p>
+          <ul>
+            <li><strong>Missing specific technology:</strong> Emphasize adjacent experience and fast learning track record</li>
+            <li><strong>Industry vertical gap:</strong> Highlight transferable domain expertise and framework-level thinking</li>
+            <li><strong>Team size mismatch:</strong> Focus on impact and outcomes rather than headcount</li>
+          </ul>
+          <p><em>For personalized gap analysis, connect an API key.</em></p>`,
+        citations: [{ label: 'JD' }],
+        confidence: 'Low'
+      };
+
+      /* 9. Network Strategy */
+      sections.network = {
+        content: `<h3>Network Strategy</h3>
+          <p>${networkCount > 0
+            ? `You have <strong>${networkCount} LinkedIn connection${networkCount > 1 ? 's' : ''}</strong> at ${companyName}. Prioritize reaching out for insider context on the team, hiring manager, and role expectations.`
+            : `No direct LinkedIn connections found at ${companyName}. Consider searching for 2nd-degree connections or alumni networks.`}</p>
+          <p><strong>Recommended outreach:</strong></p>
+          <ul>
+            <li>Identify the hiring manager and their background</li>
+            <li>Find current team members to understand culture and priorities</li>
+            <li>Check for alumni connections from your previous companies</li>
+          </ul>`,
+        citations: [{ label: 'NET' }],
+        confidence: networkCount > 0 ? 'Medium' : 'Low'
+      };
+
+      /* 10. Interview Prep */
+      sections.interview = {
+        content: `<h3>Interview Preparation</h3>
+          <p>Based on the JD, prepare for these likely interview topics:</p>
+          <ul>
+            ${responsibilities.slice(0, 3).map(r => `<li><strong>${escapeHTML(r.split(/[.,:]/)[0])}:</strong> Prepare a specific STAR example</li>`).join('')}
+            ${isLeadership ? '<li><strong>Team leadership:</strong> Prepare examples of building/scaling teams, resolving conflicts, driving alignment</li>' : ''}
+            <li><strong>Technical depth:</strong> Be ready to discuss ${techKeywords.slice(0, 3).join(', ')} with concrete examples</li>
+          </ul>`,
+        citations: [{ label: 'JD' }],
+        confidence: 'Medium'
+      };
+
+      /* 11. Proof Points to Add */
+      sections.proofPoints = {
+        content: `<h3>Proof Points to Prepare</h3>
+          <p>For each of these JD requirements, prepare a concrete metric-backed example:</p>
+          <ul>
+            ${techKeywords.slice(0, 6).map(k => `<li><strong>${k}:</strong> [Your specific example with metrics]</li>`).join('')}
+          </ul>
+          <p>Format: <em>"At [Company], I [action] which resulted in [measurable outcome]."</em></p>`,
+        citations: [{ label: 'JD' }],
+        confidence: 'Medium'
+      };
+
+      /* 12. Deal-Breaker Test */
+      sections.dealBreaker = {
+        content: `<h3>Deal-Breaker Checklist</h3>
+          <ul>
+            <li><strong>Location:</strong> ${location || 'Check with recruiter'} — does this work for you?</li>
+            <li><strong>Compensation:</strong> ${salary || 'Not listed'} — within your range?</li>
+            <li><strong>Level:</strong> ${title} — is this the right career trajectory?</li>
+            <li><strong>Company stage:</strong> ${stage || 'Unknown'} — does this match your preference?</li>
+            ${isLeadership ? '<li><strong>Management scope:</strong> Confirm team size and budget authority</li>' : ''}
+          </ul>
+          <p>If any of these are deal-breakers, address them early in the process to avoid wasting time.</p>`,
+        citations: [{ label: 'JD' }],
+        confidence: 'Medium'
+      };
+
+      /* 13. Next Steps */
+      sections.nextSteps = {
+        content: `<h3>Recommended Next Steps</h3>
+          <ol>
+            <li><strong>Tailor resume:</strong> Use the Resume Tailor module to optimize for this specific JD</li>
+            ${networkCount > 0 ? `<li><strong>Activate network:</strong> Reach out to your ${networkCount} connection${networkCount > 1 ? 's' : ''} at ${companyName}</li>` : '<li><strong>Build network:</strong> Find connections at ' + companyName + ' through LinkedIn</li>'}
+            <li><strong>Research:</strong> Read recent ${companyName} news, earnings calls, and product announcements</li>
+            <li><strong>Prepare stories:</strong> Draft 5-7 STAR examples covering key JD requirements</li>
+            <li><strong>Apply:</strong> Submit tailored resume and track in Pathfinder pipeline</li>
+          </ol>`,
+        citations: [],
+        confidence: 'High'
+      };
+
+      return {
+        role: { title: role.title, company: role.company },
+        company: company || { name: companyName },
+        sections,
+        generatedAt: new Date().toISOString(),
+        offlineGenerated: true
+      };
+    }
+
+    /**
+     * Extract salary text from JD content.
+     * @param {string} text - JD text
+     * @returns {string|null} Salary range or null
+     */
+    function extractSalaryFromText(text) {
+      const match = text.match(/\$[\d,]+[\s\S]{0,20}\$[\d,]+/);
+      return match ? match[0].replace(/\s+/g, ' ') : null;
+    }
+
+    /**
+     * Extract location from JD content.
+     * @param {string} text - JD text
+     * @returns {string|null} Location or null
+     */
+    function extractLocationFromText(text) {
+      const match = text.match(/(San Francisco|New York|Seattle|Austin|Boston|Chicago|Los Angeles|Remote|Hybrid)[,\s]*(CA|NY|WA|TX|MA|IL)?/i);
+      return match ? match[0] : null;
+    }
+
+    /**
+     * Extract domain keywords from JD text.
+     * @param {string} jdLower - Lowercased JD text
+     * @returns {string[]} Array of matched keywords
+     */
+    function extractKeywordsFromJD(jdLower) {
+      const keywordList = [
+        'AI', 'ML', 'machine learning', 'deep learning', 'NLP', 'GenAI', 'LLM',
+        'ad tech', 'programmatic', 'RTB', 'DSP', 'SSP', 'DMP',
+        'data product', 'analytics', 'data science', 'data engineering',
+        'product management', 'product strategy', 'roadmap', 'A/B testing',
+        'SaaS', 'B2B', 'B2C', 'enterprise', 'marketplace',
+        'fintech', 'healthtech', 'edtech', 'martech',
+        'cloud', 'AWS', 'GCP', 'Azure', 'Kubernetes',
+        'Python', 'SQL', 'Java', 'TypeScript', 'React',
+        'agile', 'scrum', 'OKR', 'KPI',
+        'privacy', 'GDPR', 'CCPA', 'identity', 'consent',
+        'API', 'microservices', 'distributed systems',
+        'customer success', 'retention', 'engagement', 'monetization',
+        'cross-functional', 'stakeholder management', 'executive communication',
+        'mobile', 'web', 'platform', 'infrastructure',
+        'personalization', 'recommendation', 'segmentation', 'targeting',
+        'experimentation', 'growth', 'activation', 'onboarding'
+      ];
+
+      return keywordList.filter(kw => jdLower.includes(kw.toLowerCase()));
+    }
+
     /* ====== GENERATION: Main Generate Function ====== */
     /**
      * Generate a complete research brief for the current role.
-     * Streams each section sequentially, rendering in real time.
+     * v3.27.0: Falls back to offline generation if API is unavailable.
      */
     async function generateBrief() {
       if (!STATE.currentRoleId || STATE.isGenerating) return;
@@ -1644,6 +2182,35 @@
       const roles = getRoles();
       const role = roles.find(r => r.id === STATE.currentRoleId);
       const company = getCompanies().find(c => c.name === role.company);
+
+      /* v3.27.0: Check if API is available — if not, use offline generator.
+         Also catches cases where PF object is missing or API key is saved but invalid. */
+      let hasApiKey = false;
+      try {
+        hasApiKey = typeof PF !== 'undefined' && PF.claude && PF.claude.hasApiKey && PF.claude.hasApiKey();
+      } catch (e) {
+        console.warn('[ResearchBrief] PF.claude check failed:', e);
+      }
+      if (!hasApiKey) {
+        console.info('[ResearchBrief] No API key — using offline brief generator');
+        try {
+          const brief = generateOfflineBrief(role, company);
+          STATE.currentBrief = brief;
+          const cacheKey = `pf_brief_${STATE.currentRoleId}`;
+          localStorage.setItem(cacheKey, JSON.stringify(brief));
+          renderBrief(brief);
+          document.getElementById('exportBtn').style.display = 'flex';
+          document.getElementById('printBtn').style.display = 'flex';
+          showCoworkToast('Brief generated (offline mode — connect API key for deeper analysis)');
+        } catch (err) {
+          console.error('[ResearchBrief] Offline generation failed:', err);
+          showErrorBanner(err);
+        } finally {
+          STATE.isGenerating = false;
+          document.getElementById('generateBtn').disabled = false;
+        }
+        return;
+      }
 
       try {
         /* Initialize sections */
@@ -1685,7 +2252,7 @@
                 <div class="section-badge">${section.letter}</div>
                 <div>
                   <div class="section-title">${section.title}</div>
-                  <div class="section-status">
+                  <div class="section-status" role="status" aria-live="polite">
                     <span class="status-icon"><i data-lucide="clock" style="width: 14px; height: 14px;"></i></span>
                     <span>Generating...</span>
                   </div>
@@ -1698,7 +2265,7 @@
           sectionsArea.appendChild(sectionEl);
         });
 
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') { lucide.createIcons(); }
 
         /* Generate each section sequentially */
         for (let idx = 0; idx < STATE.sections.length; idx++) {
@@ -1710,8 +2277,8 @@
           await generateSection(section, role, company, sections);
         }
 
-        /* Cache and render final */
-        STATE.currentBrief = { role, company, sections, generatedAt: new Date().toISOString() };
+        /* Cache and render final — include news results for banner display */
+        STATE.currentBrief = { role, company, sections, generatedAt: new Date().toISOString(), newsResults: STATE.companyNewsResults };
         const cacheKey = `pf_brief_${STATE.currentRoleId}`;
         localStorage.setItem(cacheKey, JSON.stringify(STATE.currentBrief));
 
@@ -1724,8 +2291,30 @@
         document.getElementById('generationProgressBar').style.width = '0%';
 
       } catch (error) {
-        console.error('Failed to generate brief:', error);
-        showErrorBanner(error);
+        console.error('Failed to generate brief via API:', error);
+
+        /* v3.27.0: Fall back to offline generation on API error.
+           Clear any partial progress UI first, then render offline brief. */
+        console.info('[ResearchBrief] API failed — falling back to offline brief generator');
+        try {
+          /* Clean up progress UI */
+          const pt = document.getElementById('generationProgressText');
+          if (pt) pt.classList.remove('active');
+          const pb = document.getElementById('generationProgressBar');
+          if (pb) pb.style.width = '0%';
+
+          const brief = generateOfflineBrief(role, company);
+          STATE.currentBrief = brief;
+          const cacheKey = `pf_brief_${STATE.currentRoleId}`;
+          localStorage.setItem(cacheKey, JSON.stringify(brief));
+          renderBrief(brief);
+          document.getElementById('exportBtn').style.display = 'flex';
+          document.getElementById('printBtn').style.display = 'flex';
+          showCoworkToast('Brief generated (offline mode — API was unavailable)');
+        } catch (offlineErr) {
+          console.error('[ResearchBrief] Offline fallback also failed:', offlineErr);
+          showErrorBanner(error);
+        }
       } finally {
         STATE.isGenerating = false;
         document.getElementById('generateBtn').disabled = false;
@@ -1767,6 +2356,7 @@
 
       const banner = document.createElement('div');
       banner.className = 'error-banner';
+      banner.setAttribute('role', 'alert');
       banner.innerHTML = `
         <div class="error-banner-icon">!</div>
         <div class="error-banner-content">
@@ -1823,7 +2413,7 @@
             <span class="status-icon" style="color: rgb(34, 197, 94);"><i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i></span>
             <span>Complete</span>
           `;
-          lucide.createIcons();
+          if (typeof lucide !== 'undefined') { lucide.createIcons(); }
         }
 
         /* Show section metadata */
@@ -1854,11 +2444,13 @@
             <span class="status-icon" style="color: #ef4444;"><i data-lucide="alert-circle" style="width: 14px; height: 14px;"></i></span>
             <span style="color: #ef4444;">Failed</span>
           `;
-          lucide.createIcons();
+          if (typeof lucide !== 'undefined') { lucide.createIcons(); }
         }
 
-        /* If it's a rate limit or auth error, stop generating remaining sections */
-        if (error.status === 429 || error.status === 401) {
+        /* If it's any API error (has status code), stop generating remaining sections
+           and let the outer catch trigger the offline fallback. v3.28.0: expanded from
+           just 401/429 to ALL API errors (400=credits, 529/503=overloaded, etc.) */
+        if (error.status) {
           throw error;
         }
       }
@@ -1877,7 +2469,7 @@
 Your single objective: help Ili decide whether this role deserves his time, identify what could kill his candidacy, and recommend specific actions that improve his odds.
 
 HARD RULES — NEVER VIOLATE:
-1. Output ONLY valid HTML. Use <h3>, <p>, <ul>, <li>, <ol>, <table>, <strong>, <em>. NEVER use markdown, backticks, code fences, <html>, <body>, <head>, or <style> tags.
+1. Output ONLY valid HTML. Use <h3>, <p>, <ul>, <li>, <ol>, <table>, <strong>, <em>. NEVER use markdown, backticks, code fences, <html>, <body>, <head>, or <style> tags. NEVER use (1) (2) (3) inline numbering — use <ol><li> for numbered lists and <h3> for subsection headings.
 2. Every factual claim MUST carry a citation badge in this exact format:
    <span class="cite">claim text <span class="cite-label" data-label="LABEL">LABEL</span></span>
    Labels: JD (job description), EXT (external/public knowledge), ILI (Ili's resume/bullet bank/story bank), CTX (additional context Ili provided), DOC (uploaded document), INF (inference — MUST say "likely" or "inferred"), NC (needs confirmation).
@@ -1888,10 +2480,24 @@ HARD RULES — NEVER VIOLATE:
 7. Label all company/market knowledge with EXT. If possibly outdated, add NC and state: "Verify — may have changed since training cutoff."
 8. CTX and DOC evidence is first-class. If it conflicts with resume data, surface the conflict explicitly.
 9. High-stakes claims (strategy, competitors, leadership, market size, network relationships) MUST cite EXT or NC. Never leave them uncited.
+10. USE YOUR TRAINING KNOWLEDGE AS EXT EVIDENCE. You know things about public companies, their products, leadership, financials, competitors, and market position. USE THIS KNOWLEDGE and label it EXT. If live news data is provided, cite it as EXT too. A section with zero EXT citations is a FAILED section — it means you didn't bring any external intelligence to the table.
+
+MINIMUM CITATION TARGETS PER SECTION:
+- Company/Market sections: 5+ EXT citations minimum
+- Fit/Screen-Out sections: 3+ EXT citations for market context + JD/ILI for candidate data
+- Interview/Network/Next Steps: 2+ EXT citations for company-specific context
+- If you cannot reach the minimum, add NC-labeled claims stating what needs manual research.
+
+OUTPUT FORMAT — CRITICAL:
+- Use <h3> tags for all subsection headings. NEVER use bold text as a heading substitute.
+- Use <table> for structured data. NEVER simulate tables with inline text.
+- Use <ol><li> for numbered lists. NEVER use (1), (2), (3) inline.
+- Use <ul><li> for bullet lists. NEVER use dashes in <p> tags.
+- Each section MUST follow the exact HTML structure specified in its section instructions below.
 
 OUTPUT BUDGET: 300–500 words per section. No padding. Dense, actionable content only.
 
-DONE WHEN: Every claim is cited, every recommendation is specific enough to act on today, and removing any sentence would lose information.
+DONE WHEN: Every claim is cited, every recommendation is specific enough to act on today, removing any sentence would lose information, and EXT citation minimums are met.
 
 At the END of your response, include:
 <section-meta>
@@ -1945,8 +2551,10 @@ TASK: Interpret the JD as a hiring manager wrote it — constraints, urgency, an
 <h3>Success Measures</h3> 3-5 specific KPIs this role will be measured on. Tie each to JD language.
 <h3>Hidden Tensions</h3> Red flags ONLY — unrealistic scope, conflicting requirements, buzzword density, missing info. If none found, write "No significant red flags identified." Do NOT fabricate concerns.
 
-BAD OUTPUT: A summary of the company's history. A restatement of the JD.
-GOOD OUTPUT: An interpretation that reveals what the JD doesn't say explicitly.`,
+EXTERNAL RESEARCH REQUIRED: Use your training knowledge about this company to label claims EXT. Include: company's recent trajectory, public announcements, strategic priorities. If you know the company, cite what you know. If you don't, use NC labels.
+
+BAD OUTPUT: A summary of the company's history. A restatement of the JD. A section with only JD and CTX citations.
+GOOD OUTPUT: An interpretation that reveals what the JD doesn't say explicitly, backed by company knowledge labeled EXT.`,
 
         /* ====== SECTION 3: COMPANY AND MARKET CONTEXT ====== */
         companyMarket: `\n\nSECTION: Company and Market Context — due diligence Ili needs before any interview.
@@ -1993,8 +2601,10 @@ The meta-case: what about Ili's overall profile pattern makes him worth intervie
 <h3>Strongest Evidence</h3>
 The 3-5 most compelling bullets or stories from Ili's data for THIS specific role. For each: quote the evidence and explain in one sentence why it matters here.
 
-BAD OUTPUT: A sales pitch. "Ili would be a great fit because..."
-GOOD OUTPUT: An honest analytical argument with cited evidence and acknowledged limits.
+EXTERNAL RESEARCH REQUIRED: Use training knowledge about this company's products, team structure, hiring patterns, and market position to inform plausibility. Label company knowledge as EXT. This section needs both ILI evidence AND EXT company context.
+
+BAD OUTPUT: A sales pitch. "Ili would be a great fit because..." Or a section with only ILI/CTX citations and no company knowledge.
+GOOD OUTPUT: An honest analytical argument with cited evidence and acknowledged limits, including company context labeled EXT.
 
 If CTX or DOC evidence strengthens the case beyond the base resume, highlight what changed and why.`,
 
@@ -2021,7 +2631,9 @@ Domain experience, technical depth, management scope, industry credibility, titl
 
 CRITICAL ROW FIRST: If there is a likely fatal risk, put it in row 1 with Sev. = Crit. A brief that buries or minimizes real gaps is a failed output.
 
-After the table: one paragraph summarizing the overall screen-out risk level (Low / Medium / High / Critical) and the single most important thing Ili can do to reduce it.`,
+After the table: one paragraph summarizing the overall screen-out risk level (Low / Medium / High / Critical) and the single most important thing Ili can do to reduce it.
+
+EXTERNAL RESEARCH REQUIRED: Use training knowledge about this company's hiring bar, industry norms for similar roles, and typical screening patterns. For example, if a public company typically requires specific domain experience, cite that as EXT. Screen-out analysis without EXT context about company hiring standards is incomplete.`,
 
         /* ====== SECTION 6: WHAT THEY ACTUALLY NEED ====== */
         needs: `\n\nSECTION: What They Actually Need — decode the real requirements from the JD.
@@ -2126,25 +2738,43 @@ DATA-DRIVEN ONLY: Every contact mentioned must come from the connections data. N
         /* ====== SECTION 10: INTERVIEW PREP (COMPRESSED) ====== */
         interview: `\n\nSECTION: Interview Prep — role-specific questions, stories, and objection handling.
 
-TASK: Every question MUST be specific to THIS role at THIS company. NEVER output generic interview advice ("tell me about yourself"). Produce exactly 4 subsections:
+TASK: Every question MUST be specific to THIS role at THIS company. NEVER output generic interview advice ("tell me about yourself"). Produce exactly 4 subsections using the EXACT HTML structure below.
+
+MANDATORY OUTPUT STRUCTURE — follow this exactly:
 
 <h3>Most Likely Questions</h3>
-Top 5 only. For each:
-- The question (specific to role requirements and company context)
-- Why they'd ask it (which concern or requirement it probes)
-- Best answer source: specific story from Ili's data with ILI label, OR "Prepare a story about [exact topic]" if none exists
+<table>
+<thead><tr><th>Question</th><th>Why They Ask</th><th>Best Answer Source</th></tr></thead>
+<tbody>
+[5 rows — one per question. Question column: the specific question. Why column: which concern or requirement it probes. Source column: specific story from Ili's data with ILI label, OR "Prepare story about [exact topic]" if none exists.]
+</tbody>
+</table>
 
 <h3>Highest-Risk Questions</h3>
-Top 3 questions most likely to expose Ili's gaps. For each:
-- The question
-- Which gap it targets
-- Prepared response: exact language that is honest but well-positioned. Not "emphasize transferable skills" — the actual words to say.
+<table>
+<thead><tr><th>Question</th><th>Gap Targeted</th><th>Prepared Response</th></tr></thead>
+<tbody>
+[3 rows. Prepared Response: exact language that is honest but well-positioned. Not "emphasize transferable skills" — the actual words to say. Use ILI/CTX labels for evidence.]
+</tbody>
+</table>
 
 <h3>Best Stories to Deploy</h3>
-3-5 stories from Ili's story bank or resume mapped to questions they answer. If no story bank exists: "No story bank data — recommend building stories about: [3 specific topics]."
+<table>
+<thead><tr><th>Story</th><th>Maps To</th><th>Key Proof Point</th></tr></thead>
+<tbody>
+[3-5 rows. Stories from Ili's story bank or resume mapped to questions they answer. If no story bank exists, write: "No story bank data — recommend building stories about: [3 specific topics]."]
+</tbody>
+</table>
 
 <h3>Objection Handling</h3>
-1-2 sentence framings ONLY for gaps relevant to THIS role. Skip irrelevant categories. Format: "If they say [objection], respond: '[exact framing]'"`,
+<ul>
+[1-4 items. Each <li>: "<strong>If they say:</strong> [objection] → <strong>Respond:</strong> '[exact framing]'". ONLY for gaps relevant to THIS role. Skip irrelevant categories.]
+</ul>
+
+Include EXT citations for company-specific context (interviewer priorities, company culture, known interview style). Use training knowledge about the company's interview process if available.
+
+BAD OUTPUT: A wall of numbered paragraphs like "(1) Vision clarity — ..." or "(2) Team structure — ...". This is WRONG formatting.
+GOOD OUTPUT: Clean HTML tables with <h3> headings per subsection.`,
 
         /* ====== SECTION 11: PROOF POINTS TO ADD ====== */
         proofPoints: `\n\nSECTION: Proof Points to Add — convert gaps into actionable tasks.
@@ -2175,23 +2805,38 @@ SUCCESS CRITERIA: Every action item is specific enough that Ili can execute it i
 
 TASK: Identify 3-5 facts that, if confirmed, mean Ili should stop investing time. This section is a FILTER.
 
+MANDATORY OUTPUT STRUCTURE — follow this exactly:
+
 <h3>Deal-Breaker Test</h3>
 <p>If any of the following are confirmed, stop pursuing this role:</p>
-<ol>[3-5 items as <li> elements]</ol>
+<table>
+<thead><tr><th>#</th><th>Deal-Breaker</th><th>How to Test</th><th>Current Assessment</th></tr></thead>
+<tbody>
+[3-5 rows. Each row:
+- #: row number (1, 2, 3...)
+- Deal-Breaker: the specific condition (e.g., "15+ years of ad tech PM experience is non-negotiable")
+- How to Test: specific action ("Ask [name] directly" or "Check if JD says required vs preferred")
+- Current Assessment: Likely / Unlikely / Unknown — with one-sentence reasoning. Use EXT for company/market knowledge, JD for JD-based assessment.]
+</tbody>
+</table>
 
-For EACH deal-breaker, output:
-<p><strong>Fact:</strong> [the specific condition, e.g., "15+ years of ad tech PM experience is non-negotiable"]</p>
-<p><strong>How to test:</strong> [specific action — "Ask [name] directly" or "Check if JD says 'required' vs 'preferred'"]</p>
-<p><strong>Current assessment:</strong> [Likely / Unlikely / Unknown] with one-sentence reasoning</p>
+<p>[1-2 sentence summary: overall deal-breaker risk level and the single highest-priority item to resolve first.]</p>
 
-MUST be specific to THIS role. NEVER output generic deal-breakers that apply to all jobs. The goal: help Ili abandon low-value roles in under 60 seconds of reading this section.
+MUST be specific to THIS role. NEVER output generic deal-breakers that apply to all jobs. The goal: Ili can scan this table in under 60 seconds and know whether to keep investing.
 
-Categories to consider (use only if relevant): mandatory domain experience, mandatory technical stack, mandatory management scale, inflexible location, internal-promote role, compensation mismatch, reporting-line red flags.`,
+Categories to consider (use only if relevant): mandatory domain experience, mandatory technical stack, mandatory management scale, inflexible location, internal-promote role, compensation mismatch, reporting-line red flags.
+
+Include EXT citations for any company-specific knowledge that informs deal-breaker assessment (e.g., known company culture, public compensation data, hiring patterns).
+
+BAD OUTPUT: Numbered paragraphs like "(1) **Compensation misalignment** — If the...". This is WRONG formatting.
+GOOD OUTPUT: A clean HTML table with columns.`,
 
         /* ====== SECTION 13: NEXT-STEP PLAN ====== */
         nextSteps: `\n\nSECTION: Next-Step Plan — exactly what to do, in what order, starting today.
 
 TASK: Produce a decision table + 5 prioritized actions + a timeline. Every action must reference specific people, content, or preparation from earlier sections.
+
+MANDATORY OUTPUT STRUCTURE — follow this exactly:
 
 <h3>Time Investment</h3>
 <table>
@@ -2202,22 +2847,29 @@ TASK: Produce a decision table + 5 prioritized actions + a timeline. Every actio
 </table>
 
 <h3>Priority Actions</h3>
-<ol>
-<li>[Action — WHO to contact, WHAT to say/send, or WHAT to prepare. NEVER "network more" or "do research."]</li>
-<li>[Action 2]</li>
-<li>[Action 3]</li>
-<li>[Action 4]</li>
-<li>[Action 5]</li>
-</ol>
+<table>
+<thead><tr><th>#</th><th>Action</th><th>Target</th><th>Deliverable</th></tr></thead>
+<tbody>
+[5 rows. Each action: WHO to contact, WHAT to say/send, or WHAT to prepare. Target: person name or module. Deliverable: concrete output. NEVER "network more" or "do research."]
+</tbody>
+</table>
 
 <h3>Timeline</h3>
-- <strong>This week:</strong> [specific actions with names/deliverables]
-- <strong>Next week:</strong> [specific actions]
-- <strong>Before first interview:</strong> [specific preparation tied to Section 10 stories and Section 11 proof points]
+<table>
+<thead><tr><th>When</th><th>Actions</th></tr></thead>
+<tbody>
+<tr><td><strong>This week</strong></td><td>[specific actions with names/deliverables]</td></tr>
+<tr><td><strong>Next week</strong></td><td>[specific actions]</td></tr>
+<tr><td><strong>Before first interview</strong></td><td>[specific preparation tied to Section 10 stories and Section 11 proof points]</td></tr>
+</tbody>
+</table>
 
 PIPELINE CHECK: Read Stage and CommsLog. If actions are already done, skip them and recommend the NEXT step. NEVER suggest actions Ili has already completed.
 
-SUCCESS CRITERIA: Ili can execute action #1 within 10 minutes of reading this section.`
+SUCCESS CRITERIA: Ili can execute action #1 within 10 minutes of reading this section.
+
+BAD OUTPUT: Numbered paragraphs like "(1) **Leverage internal contact** — Schedule 30-minute...". This is WRONG formatting.
+GOOD OUTPUT: Clean HTML tables with <h3> headings per subsection.`
       };
 
       return base + (sectionInstructions[sectionId] || '\n\nGenerate comprehensive content for this section.');
@@ -2451,14 +3103,141 @@ ${doc.content.slice(0, 8000)}
       return content.replace(/<section-meta>[\s\S]*?<\/section-meta>/, '').trim();
     }
 
+    /* ====== HANDOFF: Send proof points to other modules ====== */
+    /**
+     * Send proof point data to another module via localStorage.
+     * Creates a handoff payload that Resume, Outreach, or Mock can pick up.
+     * @param {string} targetModule - 'resume' | 'outreach' | 'mock'
+     */
+    function sendHandoff(targetModule) {
+      if (!STATE.currentBrief) return;
+
+      const proofPointsData = STATE.currentBrief.sections.proofPoints;
+      const gapsData = STATE.currentBrief.sections.gaps;
+      const role = STATE.currentBrief.role;
+
+      const handoff = {
+        fromModule: 'research-brief',
+        targetModule: targetModule,
+        roleId: STATE.currentRoleId,
+        roleTitle: role?.title || '',
+        company: role?.company || '',
+        timestamp: new Date().toISOString(),
+        proofPoints: proofPointsData?.content || '',
+        gaps: gapsData?.content || '',
+        interviewPrep: targetModule === 'mock' ? (STATE.currentBrief.sections.interview?.content || '') : ''
+      };
+
+      /* Store as a handoff queue the target module can read */
+      const key = `pf_handoff_${targetModule}`;
+      const existing = safeJsonParse(key, []);
+      /* Avoid duplicates for same role */
+      const filtered = existing.filter(h => h.roleId !== STATE.currentRoleId);
+      filtered.push(handoff);
+      try {
+        localStorage.setItem(key, JSON.stringify(filtered));
+      } catch (e) {
+        console.error(`[ResearchBrief] Failed to save handoff to ${targetModule}:`, e);
+        return;
+      }
+
+      /* Update button state */
+      const btn = document.querySelector(`.handoff-btn[data-target="${targetModule}"]`);
+      if (btn) {
+        btn.classList.add('sent');
+        btn.innerHTML = `<i data-lucide="check" style="width: 12px; height: 12px;"></i> Sent to ${targetModule.charAt(0).toUpperCase() + targetModule.slice(1)}`;
+        if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+      }
+
+      showCoworkToast(`Proof points sent to ${targetModule.charAt(0).toUpperCase() + targetModule.slice(1)} module`);
+    }
+
+    /* ====== EXPANDABLE SECTIONS: Toggle between summary and full ====== */
+    /**
+     * Toggle a section between collapsed (summary) and expanded (full) state.
+     * @param {string} sectionId - Section ID to toggle
+     */
+    function toggleSectionExpand(sectionId) {
+      const contentEl = document.getElementById(`content-${sectionId}`);
+      const toggleBtn = document.getElementById(`toggle-${sectionId}`);
+      if (!contentEl || !toggleBtn) return;
+
+      if (contentEl.classList.contains('collapsed')) {
+        contentEl.classList.remove('collapsed');
+        toggleBtn.classList.add('expanded');
+        toggleBtn.innerHTML = '<span>Show less</span> <span class="toggle-chevron">▼</span>';
+        STATE.expandedSections.add(sectionId);
+      } else {
+        contentEl.classList.add('collapsed');
+        toggleBtn.classList.remove('expanded');
+        toggleBtn.innerHTML = '<span>Show full analysis</span> <span class="toggle-chevron">▼</span>';
+        STATE.expandedSections.delete(sectionId);
+      }
+    }
+
+    /* ====== NEWS BANNER: Show whether live news was used ====== */
+    /**
+     * Build HTML for the news visibility banner.
+     * @param {object} newsResults - STATE.companyNewsResults
+     * @returns {string} HTML string for the banner
+     */
+    function buildNewsBannerHTML(newsResults) {
+      if (newsResults && newsResults.newsItems && newsResults.newsItems.length > 0) {
+        const timestamp = newsResults.searchTimestamp
+          ? new Date(newsResults.searchTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          : 'recently';
+        return `<div class="news-banner has-news" role="status">
+          <svg class="news-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/></svg>
+          <span>${newsResults.newsItems.length} live news source${newsResults.newsItems.length > 1 ? 's' : ''} retrieved (${timestamp}) — labeled <span style="font-weight:600;">EXT</span></span>
+        </div>`;
+      } else {
+        return `<div class="news-banner no-news" role="status">
+          <svg class="news-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>No live news search — company claims use training knowledge only. Consider adding a Tavily key for live research.</span>
+        </div>`;
+      }
+    }
+
+    /* ====== CONTEXT INDICATOR: Show when CTX/DOC evidence was used ====== */
+    /**
+     * Build HTML for the context evidence indicator shown on sections that used CTX/DOC.
+     * @param {string} content - Section HTML content
+     * @param {boolean} hasAdditionalContext - Whether user provided additional context
+     * @param {boolean} hasUploadedDocs - Whether user uploaded documents
+     * @returns {string} HTML string for the indicator, or empty string if no CTX/DOC used
+     */
+    function buildContextIndicatorHTML(content, hasAdditionalContext, hasUploadedDocs) {
+      if (!hasAdditionalContext && !hasUploadedDocs) return '';
+
+      /* Count CTX and DOC citations in this section's content */
+      const ctxCount = (content.match(/data-label="CTX"/g) || []).length;
+      const docCount = (content.match(/data-label="DOC"/g) || []).length;
+
+      if (ctxCount === 0 && docCount === 0) return '';
+
+      let parts = [];
+      if (ctxCount > 0) parts.push(`<span class="ctx-badge">CTX</span> ${ctxCount} additional context citation${ctxCount > 1 ? 's' : ''}`);
+      if (docCount > 0) parts.push(`<span class="doc-badge">DOC</span> ${docCount} uploaded document citation${docCount > 1 ? 's' : ''}`);
+
+      return `<div class="context-indicator" role="status">
+        <svg style="width:14px;height:14px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>This section incorporates user-provided evidence: ${parts.join(' + ')}</span>
+      </div>`;
+    }
+
     /**
      * Render the complete brief to the UI.
      * Special handling: Section 1 (Pursuit Economics) is rendered as a pinned decision box.
+     * v3.33.0: Adds expandable sections, news banner, context indicators, and handoff buttons.
      * @param {object} brief - Brief object with sections data
      */
     function renderBrief(brief) {
       const sectionsArea = document.getElementById('sectionsArea');
       sectionsArea.innerHTML = '';
+
+      /* Determine if user provided additional context or uploaded docs */
+      const hasAdditionalContext = !!(STATE.additionalContext && STATE.additionalContext.trim());
+      const hasUploadedDocs = STATE.uploadedDocuments.length > 0;
 
       STATE.sections.forEach((section) => {
         const sectionData = brief.sections[section.id];
@@ -2467,7 +3246,7 @@ ${doc.content.slice(0, 8000)}
         const sectionEl = document.createElement('div');
         sectionEl.id = `section-${section.id}`;
 
-        /* Pursuit Economics gets special styling */
+        /* Pursuit Economics gets special styling — always fully visible */
         if (section.id === 'pursuitEconomics') {
           sectionEl.className = 'pursuit-economics-box';
           sectionEl.innerHTML = `
@@ -2479,6 +3258,8 @@ ${doc.content.slice(0, 8000)}
             <div class="section-meta" id="meta-${section.id}"></div>
           `;
         } else {
+          /* Determine if section should start collapsed (default = collapsed for sections 2+) */
+          const startExpanded = STATE.expandedSections.has(section.id);
           sectionEl.className = 'section';
           sectionEl.innerHTML = `
             <div class="section-header">
@@ -2487,15 +3268,69 @@ ${doc.content.slice(0, 8000)}
                 <div class="section-title">${section.title}</div>
               </div>
             </div>
-            <div class="section-content" id="content-${section.id}"></div>
+            <div id="indicators-${section.id}"></div>
+            <div class="section-content ${startExpanded ? '' : 'collapsed'}" id="content-${section.id}"></div>
+            <button class="section-expand-toggle ${startExpanded ? 'expanded' : ''}" id="toggle-${section.id}" onclick="toggleSectionExpand('${section.id}')" aria-label="Toggle section detail">
+              <span>${startExpanded ? 'Show less' : 'Show full analysis'}</span>
+              <span class="toggle-chevron">▼</span>
+            </button>
             <div class="section-meta" id="meta-${section.id}"></div>
           `;
         }
         sectionsArea.appendChild(sectionEl);
 
+        /* Insert indicators (news banner for Company section, context indicator for all) */
+        const indicatorsEl = document.getElementById(`indicators-${section.id}`);
+        if (indicatorsEl) {
+          let indicatorHTML = '';
+
+          /* News banner — show on Company & Market Context section */
+          if (section.id === 'companyMarket') {
+            indicatorHTML += buildNewsBannerHTML(brief.newsResults || STATE.companyNewsResults);
+          }
+
+          /* Context evidence indicator — show on any section that uses CTX/DOC */
+          indicatorHTML += buildContextIndicatorHTML(sectionData.content, hasAdditionalContext, hasUploadedDocs);
+
+          indicatorsEl.innerHTML = indicatorHTML;
+        }
+
         /* Render content */
         const contentEl = document.getElementById(`content-${section.id}`);
         contentEl.innerHTML = sanitizeHtml(sectionData.content);
+
+        /* Add handoff buttons to Proof Points section */
+        if (section.id === 'proofPoints') {
+          const handoffBar = document.createElement('div');
+          handoffBar.className = 'handoff-actions-bar';
+          handoffBar.innerHTML = `
+            <button class="handoff-btn" data-target="resume" onclick="sendHandoff('resume')" aria-label="Send proof points to Resume module">
+              <i data-lucide="file-text" style="width: 12px; height: 12px;"></i>
+              Send to Resume
+            </button>
+            <button class="handoff-btn" data-target="outreach" onclick="sendHandoff('outreach')" aria-label="Send proof points to Outreach module">
+              <i data-lucide="mail" style="width: 12px; height: 12px;"></i>
+              Send to Outreach
+            </button>
+            <button class="handoff-btn" data-target="mock" onclick="sendHandoff('mock')" aria-label="Send proof points to Mock Interview module">
+              <i data-lucide="mic" style="width: 12px; height: 12px;"></i>
+              Send to Mock
+            </button>
+          `;
+          contentEl.appendChild(handoffBar);
+
+          /* Check if handoffs already sent for this role */
+          ['resume', 'outreach', 'mock'].forEach(target => {
+            const existing = safeJsonParse(`pf_handoff_${target}`, []);
+            if (existing.some(h => h.roleId === STATE.currentRoleId)) {
+              const btn = handoffBar.querySelector(`[data-target="${target}"]`);
+              if (btn) {
+                btn.classList.add('sent');
+                btn.innerHTML = `<i data-lucide="check" style="width: 12px; height: 12px;"></i> Sent to ${target.charAt(0).toUpperCase() + target.slice(1)}`;
+              }
+            }
+          });
+        }
 
         /* Attach citation listeners */
         contentEl.querySelectorAll('.cite-label').forEach(label => {
@@ -2520,9 +3355,20 @@ ${doc.content.slice(0, 8000)}
             <span style="font-size: 0.85em;">Last updated: ${new Date(brief.generatedAt).toLocaleDateString()}</span>
           </div>
         `;
+
+        /* Auto-expand section if content is short enough (< 200 chars = no need for collapse) */
+        if (section.id !== 'pursuitEconomics') {
+          const textLength = sectionData.content.replace(/<[^>]*>/g, '').length;
+          if (textLength < 200) {
+            const ce = document.getElementById(`content-${section.id}`);
+            const tb = document.getElementById(`toggle-${section.id}`);
+            if (ce) ce.classList.remove('collapsed');
+            if (tb) tb.style.display = 'none';
+          }
+        }
       });
 
-      lucide.createIcons();
+      if (typeof lucide !== 'undefined') { lucide.createIcons(); }
     }
 
     /**
@@ -2699,6 +3545,9 @@ ${doc.content.slice(0, 8000)}
       };
 
       try {
+        if (typeof html2pdf === 'undefined') {
+          throw new Error('HTML2PDF library failed to load. PDF export unavailable.');
+        }
         await html2pdf().set(opt).from(printDiv).save();
       } catch (error) {
         console.error('PDF export failed:', error);
@@ -2799,7 +3648,56 @@ ${doc.content.slice(0, 8000)}
         }
       });
 
-      lucide.createIcons();
+      if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+
+      /* v3.30.1: Auto-trigger from URL params (Dashboard deep links).
+         ?roleId=X        → select that role
+         ?action=generate → auto-start brief generation
+         Both together = one-click "Generate Brief" from Dashboard */
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramRoleId = urlParams.get('roleId');
+      const paramAction = urlParams.get('action');
+      if (paramRoleId) {
+        selectRoleCard(paramRoleId);
+        /* Small delay so DOM updates before generation starts */
+        if (paramAction === 'generate') {
+          setTimeout(() => { generateBrief(); }, 400);
+        }
+        /* Clean URL so refresh doesn't re-trigger */
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+
+      /* v3.27.0: Auto-refresh when pipeline data changes.
+         - 'storage' event fires when ANOTHER tab writes to localStorage
+         - 'visibilitychange' fires when user switches back to this tab
+         Both re-read pf_roles so edits in Pipeline are reflected here. */
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'pf_roles' || e.key === 'pf_companies') {
+          console.info('[ResearchBrief] Pipeline data changed in another tab — refreshing');
+          populateRoleSelector();
+          if (STATE.currentRoleId) {
+            loadRole(STATE.currentRoleId);
+          }
+        }
+      });
+
+      /* When user tabs back, re-read roles in case Pipeline was edited in same tab */
+      let lastRolesSnapshot = localStorage.getItem('pf_roles') || '';
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          const current = localStorage.getItem('pf_roles') || '';
+          if (current !== lastRolesSnapshot) {
+            console.info('[ResearchBrief] Pipeline data changed — refreshing on tab focus');
+            lastRolesSnapshot = current;
+            populateRoleSelector();
+            if (STATE.currentRoleId) {
+              /* Clear cached brief so regeneration picks up new JD */
+              localStorage.removeItem(`pf_brief_${STATE.currentRoleId}`);
+              loadRole(STATE.currentRoleId);
+            }
+          }
+        }
+      });
     }
 
     /* Initialize when DOM is ready */

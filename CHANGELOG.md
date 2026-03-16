@@ -4,6 +4,35 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.33.0 — 2026-03-16
+
+### Research Brief: Spec-Aligned UX Upgrades
+
+**1. Cross-Module Handoff Buttons (Spec §4.11)**
+- "Send to Resume", "Send to Outreach", "Send to Mock" buttons on Section 11 (Proof Points)
+- Writes `pf_handoff_{module}` to localStorage with proof points, gaps, and interview prep data
+- Buttons show "Sent" state with checkmark when handoff already delivered for current role
+- Toast notification confirms delivery
+
+**2. Two-Tier Expandable Sections (Spec §8.4)**
+- Sections 2-13 default to collapsed (concise summary visible, ~180px)
+- "Show full analysis" toggle expands to full content; "Show less" collapses
+- CSS gradient mask for smooth fade on collapsed content
+- Auto-expand for very short sections (<200 chars)
+- Section 1 (Pursuit Economics) always fully visible — decision box
+
+**3. News Visibility Banner (Spec §8.3)**
+- Blue banner on Section 3 (Company & Market Context) when live news was retrieved: shows count + date
+- Amber warning banner when no Tavily key configured — prompts user to add one
+- News results now persisted in brief cache for display on reload
+
+**4. Context Evidence Indicators (Spec §8.0)**
+- Per-section indicator showing CTX/DOC citation counts when user-provided evidence was used
+- Color-coded badges: CTX (cyan) and DOC (teal) matching the citation label palette
+- Only appears on sections that actually incorporated the additional context
+
+---
+
 ## v3.32.0 — 2026-03-16
 
 ### Three Architecture Improvements: Data Resilience, Score Transparency, Module Wiring

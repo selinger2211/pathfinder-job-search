@@ -8,9 +8,9 @@
 
 Pathfinder is an agentic job search system with 11 standalone HTML modules sharing data via localStorage + IndexedDB. Each module is a single `index.html` file in `modules/`. There is no backend server required for core functionality — Claude API calls happen directly from the browser via `modules/shared/claude-api.js`.
 
-**Current Version:** v3.32.0 (as of 2026-03-16)
-**Last Major Features:** Data export/import (backup-utils.js + Sync Hub UI + Dashboard nudge), score transparency UI (expandable breakdown on feed cards), shared module wiring (58 inline functions replaced with `<script>` imports). 781 unit tests, 97.5% statement coverage across 11 shared modules.
-**Status:** All 11 modules pass HTML integrity + brace balance + safeJsonParse coverage. Shared modules (feed-logic, pipeline-logic, dashboard-logic, state-utils, date-utils, text-utils, comp-utils, backup-utils) are now loaded via `<script>` tags instead of inline duplication in the 3 main modules.
+**Current Version:** v3.33.0 (as of 2026-03-16)
+**Last Major Features:** Research Brief spec alignment (expandable sections, handoff buttons, news banner, context indicators), data export/import, score transparency UI. 781 unit tests, 97.5% statement coverage across 11 shared modules.
+**Status:** All 11 modules pass HTML integrity + brace balance + safeJsonParse coverage. Research Brief now fully aligned with Improvement Spec (all 4 UX gaps closed: handoff buttons, expandable detail, news visibility, context evidence indicators).
 
 **Owner:** Ili Selinger (ilan.selinger@gmail.com)
 **Repo:** github.com/selinger2211/pathfinder-job-search
