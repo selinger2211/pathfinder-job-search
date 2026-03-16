@@ -8207,24 +8207,30 @@
         }
       }
 
+      // v3.34.7: PERSIST TO PIPELINE FIRST — before removing from feed.
+      // If pipeline add fails, the role stays in the feed so nothing is lost.
+      const pipelineSuccess = addRoleToPipeline(role);
+      if (!pipelineSuccess) {
+        showToast(`Failed to add ${role.title} to pipeline — role kept in feed`, 'error');
+        return;
+      }
+
+      // Pipeline add succeeded — now safe to remove from feed
       const card = document.querySelector(`[data-role-id="${roleId}"]`);
+      const finalize = () => {
+        state.feedItems = state.feedItems.filter(r => r.id !== roleId);
+        state.acceptedRoles.push(role);
+        saveFeedQueue(state.feedItems);
+        renderFeedCards();
+        showToast(`✅ ${role.title} at ${role.company} → Pipeline (Discovered)`, 'success');
+      };
+
       if (card) {
         card.classList.add('accepted');
-        setTimeout(() => {
-          // Remove from feed
-          state.feedItems = state.feedItems.filter(r => r.id !== roleId);
-          state.acceptedRoles.push(role);
-
-          // ====== PERSIST TO PIPELINE (v3.5.1) ======
-          // Create a new role in pf_roles so the role shows up in Pipeline
-          addRoleToPipeline(role);
-
-          // Save updated feed queue so removal persists across reloads
-          saveFeedQueue(state.feedItems);
-
-          renderFeedCards();
-          showToast(`✅ ${role.title} at ${role.company} → Pipeline (Discovered)`, 'success');
-        }, 300);
+        setTimeout(finalize, 300);
+      } else {
+        // No card in DOM (e.g., called from detail panel) — still finalize
+        finalize();
       }
     }
 
@@ -8269,6 +8275,14 @@
         roles.push(newRole);
         localStorage.setItem('pf_roles', JSON.stringify(roles));
 
+        // v3.34.7: Verify the write actually persisted (catches localStorage quota errors)
+        const verify = localStorage.getItem('pf_roles');
+        if (!verify || !verify.includes(newRole.id)) {
+          console.error('[Feed] Pipeline role write failed verification — localStorage may be full');
+          showToast('Storage may be full — role not saved. Clear old data and retry.', 'error');
+          return false;
+        }
+
         // --- Ensure the company exists in pf_companies ---
         const companies = safeJsonParse('pf_companies', []);
         const companyExists = companies.some(c =>
@@ -8291,9 +8305,11 @@
         }
 
         console.log(`[Feed] Added "${feedRole.title}" at ${feedRole.company} to Pipeline as "discovered"`);
+        return true;
       } catch (e) {
         console.error('[Feed] Failed to add role to pipeline:', e);
         showToast('Error adding to pipeline — check console', 'error');
+        return false;
       }
     }
 
