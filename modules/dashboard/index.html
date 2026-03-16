@@ -646,6 +646,91 @@
       display: inline;
     }
 
+    /* Backup reminder nudge (non-intrusive, subtle) */
+    .backup-nudge-card {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-4) var(--space-5);
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.04) 100%);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-4);
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .backup-nudge-card:hover {
+      border-color: rgba(34, 197, 94, 0.4);
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.06) 100%);
+    }
+
+    .backup-nudge-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .backup-nudge-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    .backup-nudge-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .backup-nudge-desc {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+    }
+
+    .backup-nudge-action {
+      display: flex;
+      gap: var(--space-2);
+      align-items: center;
+    }
+
+    .backup-nudge-link {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-2) var(--space-3);
+      background: var(--success);
+      color: white;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .backup-nudge-link:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+
+    .backup-nudge-close {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 16px;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .backup-nudge-close:hover {
+      color: var(--text-primary);
+    }
+
     /* Empty state when no nudges */
     .empty-state {
       display: flex;
@@ -1913,6 +1998,21 @@
         <!-- Content populated by JavaScript -->
       </div>
 
+      <!-- BACKUP REMINDER NUDGE -->
+      <div class="backup-nudge-card" id="backupNudgeCard" style="display: none;">
+        <div class="backup-nudge-icon">💾</div>
+        <div class="backup-nudge-content">
+          <div class="backup-nudge-title">Protect Your Data</div>
+          <div class="backup-nudge-desc">You haven't backed up your Pathfinder data yet. Create a backup to safeguard your pipeline, roles, and preferences.</div>
+        </div>
+        <div class="backup-nudge-action">
+          <a href="../sync/index.html#backup" class="backup-nudge-link">
+            Back Up Now →
+          </a>
+          <button class="backup-nudge-close" onclick="dismissBackupNudge()" title="Dismiss">×</button>
+        </div>
+      </div>
+
       <!-- UPCOMING CALENDAR EVENTS CARD -->
       <div class="dashboard-card">
         <div class="card-header">
@@ -2024,8 +2124,13 @@
     </div>
   </div>
 
+  <!-- Shared modules v3.32.0 - Extracted business logic for testing -->
+  <script src="../shared/state-utils.js?v=3.32.0"></script>
+  <script src="../shared/date-utils.js?v=3.32.0"></script>
+  <script src="../shared/dashboard-logic.js?v=3.32.0"></script>
   <script>
     /** Safely parse JSON from localStorage with fallback */
+    /* === MOVED TO ../shared/MODULE.js === safeJsonParse ===
     function safeJsonParse(key, fallback = null) {
       try {
         const raw = localStorage.getItem(key);
@@ -2035,6 +2140,7 @@
         return fallback;
       }
     }
+    === END safeJsonParse === */
 
     /* ================================================================
        DASHBOARD ARCHITECTURE OVERVIEW
@@ -2065,14 +2171,17 @@
      * Generate a stable unique ID for a nudge based on trigger type and entity
      * This ensures dismissed nudges stay dismissed even if data changes
      */
+    /* === MOVED TO ../shared/MODULE.js === generateNudgeId ===
     function generateNudgeId(trigger, entityId) {
       return `nudge_${trigger}_${entityId}`;
     }
+    === END generateNudgeId === */
 
     /**
      * Calculate days between two dates
      * Returns negative number if date2 is in future, positive if in past
      */
+    /* === MOVED TO ../shared/MODULE.js === daysSince ===
     function daysSince(date) {
       if (!date) return 0;
       const dateObj = new Date(date);
@@ -2080,20 +2189,24 @@
       const diffMs = now - dateObj;
       return Math.floor(diffMs / (1000 * 60 * 60 * 24));
     }
+    === END daysSince === */
 
     /**
      * Get time of day for greeting (morning, afternoon, evening)
      */
+    /* === MOVED TO ../shared/MODULE.js === getTimeOfDay ===
     function getTimeOfDay() {
       const hour = new Date().getHours();
       if (hour < 12) return 'morning';
       if (hour < 17) return 'afternoon';
       return 'evening';
     }
+    === END getTimeOfDay === */
 
     /**
      * Format a date as a readable string (e.g., "3 days ago")
      */
+    /* === MOVED TO ../shared/MODULE.js === formatRelativeDate ===
     function formatRelativeDate(date) {
       const days = daysSince(date);
       if (days === 0) return 'today';
@@ -2101,10 +2214,12 @@
       if (days < 7) return `${days} days ago`;
       return new Date(date).toLocaleDateString();
     }
+    === END formatRelativeDate === */
 
     /**
      * Get today's date as YYYY-MM-DD string
      */
+    /* === MOVED TO ../shared/MODULE.js === getTodayDateString ===
     function getTodayDateString() {
       const now = new Date();
       const year = now.getFullYear();
@@ -2112,6 +2227,7 @@
       const day = String(now.getDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
     }
+    === END getTodayDateString === */
 
     // ================================================================
     // DATA LAYER
@@ -2138,6 +2254,7 @@
      * RETURNS: latest comms entry object or null if no comms found
      * STRUCTURE: { date, type, direction, subject, snippet, channel }
      */
+    /* === MOVED TO ../shared/MODULE.js === getLatestCommsForRole ===
     function getLatestCommsForRole(roleId, roles) {
       const role = roles.find(r => r.id === roleId);
       if (!role || !role.commsLog || role.commsLog.length === 0) return null;
@@ -2146,6 +2263,7 @@
       const sorted = [...role.commsLog].sort((a, b) => new Date(b.date) - new Date(a.date));
       return sorted[0];
     }
+    === END getLatestCommsForRole === */
 
     /**
      * Find mutual connections at a specific company
@@ -2153,6 +2271,7 @@
      * INPUT: companyName = string, connections = array, linkedinNetwork = array
      * RETURNS: array of connection objects sorted by seniority, limited to top 2
      */
+    /* === MOVED TO ../shared/MODULE.js === getMutualConnections ===
     function getMutualConnections(companyName, connections, linkedinNetwork) {
       if (!companyName) return [];
 
@@ -2211,6 +2330,7 @@
       // Return top 2
       return topConnections.slice(0, 2);
     }
+    === END getMutualConnections === */
 
     /**
      * Save streak data to localStorage
@@ -2247,6 +2367,7 @@
      * Check if a role represents a meaningful action for streak counting
      * Meaningful actions: added today, advanced today, interview completed, offer received
      */
+    /* === MOVED TO ../shared/MODULE.js === isActionToday ===
     function isActionToday(role) {
       const today = getTodayDateString();
       const dateAdded = role.dateAdded ? new Date(role.dateAdded).toISOString().split('T')[0] : null;
@@ -2254,6 +2375,7 @@
 
       return dateAdded === today || stageChanged === today;
     }
+    === END isActionToday === */
 
     /**
      * Update streak based on today's actions
@@ -2586,7 +2708,7 @@
               roleId: role.id,
               company: role.company || 'Unknown',
               text: `Prep for your <span class="nudge-highlight">${role.title}</span> screen at <span class="nudge-highlight">${role.company}</span>`,
-              action: { label: 'Generate Brief', href: `../research-brief/index.html?roleId=${role.id}` },
+              action: { label: 'Generate Brief', href: `../research-brief/index.html?roleId=${role.id}&action=generate` },
             });
           }
         }
@@ -2607,7 +2729,7 @@
                 roleId: role.id,
                 company: role.company || 'Unknown',
                 text: `<span class="nudge-highlight">${role.title}</span> interview at <span class="nudge-highlight">${role.company}</span> in ${daysUntil} day${daysUntil !== 1 ? 's' : ''}!`,
-                action: { label: 'Prepare', href: `../research-brief/index.html?roleId=${role.id}` },
+                action: { label: 'Prepare', href: `../research-brief/index.html?roleId=${role.id}&action=generate` },
               });
             }
           }
@@ -2906,12 +3028,14 @@
      * INPUT: company (object from pf_companies)
      * OUTPUT: percentage (0-100) of fields populated
      */
+    /* === MOVED TO ../shared/MODULE.js === getCompanyProfileCompletion ===
     function getCompanyProfileCompletion(company) {
       if (!company) return 0;
       const fields = ['domain', 'missionStatement', 'headcount', 'fundingStage', 'remotePolicy', 'url'];
       const populated = fields.filter(f => company[f] && company[f].toString().trim().length > 0).length;
       return Math.round((populated / fields.length) * 100);
     }
+    === END getCompanyProfileCompletion === */
 
     // ================================================================
     // PIPELINE STATS ENGINE
@@ -2920,6 +3044,7 @@
     /**
      * Compute pipeline statistics: stage counts, conversions, activity
      */
+    /* === MOVED TO ../shared/MODULE.js === computePipelineStats ===
     function computePipelineStats() {
       const { roles } = loadData();
       const now = new Date();
@@ -2968,6 +3093,7 @@
         },
       };
     }
+    === END computePipelineStats === */
 
     // ================================================================
     // FEATURE 37: INTERVIEW INTELLIGENCE CARD
@@ -2985,6 +3111,7 @@
      * INPUT: debriefs array, roles array
      * OUTPUT: intelligence object with patterns or unlock progress
      */
+    /* === MOVED TO ../shared/MODULE.js === computeInterviewIntelligence ===
     function computeInterviewIntelligence(debriefs, roles) {
       if (!debriefs || debriefs.length < 5) {
         return {
@@ -3091,6 +3218,7 @@
         strongestAreas: strongestAreas
       };
     }
+    === END computeInterviewIntelligence === */
 
     /**
      * Render interview intelligence card (Feature 37)
@@ -4555,7 +4683,7 @@
               <div class="interview-company">${event.summary || 'Calendar Event'}</div>
               <span class="interview-type">${type}</span>
               <div class="interview-actions">
-                ${matchedRole ? `<a href="../research-brief/index.html?roleId=${matchedRole.id}" class="btn-sm">Prep</a>` : ''}
+                ${matchedRole ? `<a href="../research-brief/index.html?roleId=${matchedRole.id}&action=generate" class="btn-sm">Prep</a>` : ''}
                 <a href="../mock-interview/index.html" class="btn-sm">Practice</a>
               </div>
             </div>
@@ -4842,9 +4970,38 @@
      * Initialize the entire dashboard on page load
      * Renders all sections and sets up event listeners and refresh intervals
      */
+    /**
+     * Check if user has backed up their data and show nudge if not
+     */
+    function initBackupNudge() {
+      // Check if backup has been created
+      const lastBackup = localStorage.getItem('pf_last_backup');
+      const backupNudgeCard = document.getElementById('backupNudgeCard');
+
+      // Also check if user has dismissed the nudge
+      const dismissedBackupNudge = localStorage.getItem('pf_dismissed_backup_nudge');
+
+      if (!lastBackup && !dismissedBackupNudge) {
+        backupNudgeCard.style.display = 'flex';
+      } else {
+        backupNudgeCard.style.display = 'none';
+      }
+    }
+
+    /**
+     * Dismiss the backup nudge (don't show again)
+     */
+    function dismissBackupNudge() {
+      localStorage.setItem('pf_dismissed_backup_nudge', 'true');
+      document.getElementById('backupNudgeCard').style.display = 'none';
+    }
+
     function init() {
       // Load theme first
       initTheme();
+
+      // Show backup nudge if needed
+      initBackupNudge();
 
       // Render all UI elements (reads from real localStorage)
       renderGreeting();
@@ -4930,6 +5087,9 @@
       init();
     }
   </script>
+  <!-- Backup utilities (loaded before data-layer) -->
+  <script src="../shared/backup-utils.js?v=3.32.0"></script>
+  <!-- Data mode toggle (Demo / Personal) -->
   <script src="../shared/data-layer.js?v=3.5.1"></script> <!-- v3.0.0: MCP-backed data persistence -->
 </body>
 </html>

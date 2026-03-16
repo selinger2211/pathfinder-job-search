@@ -307,6 +307,240 @@
     .freshness-badge.stale { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
     .freshness-badge.expired { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
 
+    /* ====== DATA BACKUP CARD ====== */
+    .backup-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--bg-subtle);
+        border-radius: var(--radius-lg);
+        padding: var(--space-5);
+        margin-bottom: var(--space-6);
+        transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .backup-card:hover {
+        border-color: var(--text-tertiary);
+        box-shadow: var(--shadow-md);
+    }
+
+    .backup-card-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        margin-bottom: var(--space-4);
+    }
+
+    .backup-card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--success);
+    }
+
+    .backup-card-title {
+        font-size: var(--text-lg);
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .backup-card-subtitle {
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+    }
+
+    .backup-stats {
+        background: var(--bg-base);
+        border: 1px solid var(--bg-subtle);
+        border-radius: var(--radius-md);
+        padding: var(--space-3);
+        margin-bottom: var(--space-4);
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: var(--space-3);
+    }
+
+    .backup-stat {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+    }
+
+    .backup-stat-value {
+        font-size: var(--text-lg);
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .backup-stat-label {
+        font-size: var(--text-xs);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .backup-actions {
+        display: flex;
+        gap: var(--space-3);
+        flex-wrap: wrap;
+    }
+
+    .backup-btn {
+        padding: var(--space-3) var(--space-4);
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: var(--text-sm);
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-2);
+        transition: all var(--duration-fast) var(--ease-default);
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .backup-btn.primary {
+        background: var(--success);
+        color: white;
+    }
+
+    .backup-btn.primary:hover {
+        opacity: 0.9;
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+    }
+
+    .backup-btn.secondary {
+        background: var(--bg-subtle);
+        color: var(--text-primary);
+        border: 1px solid var(--bg-subtle);
+    }
+
+    .backup-btn.secondary:hover {
+        border-color: var(--text-tertiary);
+        background: var(--bg-elevated);
+    }
+
+    .backup-message {
+        padding: var(--space-3);
+        border-radius: var(--radius-md);
+        font-size: var(--text-sm);
+        margin-top: var(--space-3);
+        display: none;
+    }
+
+    .backup-message.success {
+        display: block;
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--success);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .backup-message.error {
+        display: block;
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .backup-message.info {
+        display: block;
+        background: rgba(59, 130, 246, 0.15);
+        color: var(--info);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .backup-last-sync {
+        font-size: var(--text-xs);
+        color: var(--text-secondary);
+        margin-top: var(--space-2);
+        font-style: italic;
+    }
+
+    /* File input for import */
+    #backupFileInput {
+        display: none;
+    }
+
+    .backup-confirm-dialog {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .backup-confirm-dialog.show {
+        display: flex;
+    }
+
+    .backup-confirm-content {
+        background: var(--bg-surface);
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        max-width: 400px;
+        box-shadow: 0 20px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .backup-confirm-content h3 {
+        font-size: var(--text-lg);
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--space-3);
+    }
+
+    .backup-confirm-content p {
+        color: var(--text-secondary);
+        font-size: var(--text-sm);
+        margin-bottom: var(--space-4);
+        line-height: 1.6;
+    }
+
+    .backup-confirm-actions {
+        display: flex;
+        gap: var(--space-3);
+        justify-content: flex-end;
+    }
+
+    .backup-confirm-btn {
+        padding: var(--space-2) var(--space-4);
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: var(--text-sm);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all var(--duration-fast) var(--ease-default);
+    }
+
+    .backup-confirm-btn.cancel {
+        background: var(--bg-subtle);
+        color: var(--text-primary);
+    }
+
+    .backup-confirm-btn.cancel:hover {
+        background: var(--bg-elevated);
+    }
+
+    .backup-confirm-btn.confirm {
+        background: var(--danger);
+        color: white;
+    }
+
+    .backup-confirm-btn.confirm:hover {
+        opacity: 0.9;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
     /* ====== SYNC STATISTICS DASHBOARD ====== */
     .sync-stats-row {
         background: var(--bg-surface);
@@ -887,6 +1121,68 @@
             </div>
         </div>
 
+        <!-- Data Backup & Restore Card -->
+        <div class="backup-card">
+            <div class="backup-card-header">
+                <div class="backup-card-icon">💾</div>
+                <div>
+                    <div class="backup-card-title">Data Backup & Restore</div>
+                    <div class="backup-card-subtitle">Export and import your entire Pathfinder data</div>
+                </div>
+            </div>
+
+            <div class="backup-stats">
+                <div class="backup-stat">
+                    <div class="backup-stat-value" id="backupKeyCount">0</div>
+                    <div class="backup-stat-label">Keys Stored</div>
+                </div>
+                <div class="backup-stat">
+                    <div class="backup-stat-value" id="backupDataSize">0 KB</div>
+                    <div class="backup-stat-label">Data Size</div>
+                </div>
+            </div>
+
+            <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-4);">
+                Back up all your Pathfinder data to a JSON file for safekeeping, or restore from a previous backup.
+            </p>
+
+            <div class="backup-actions">
+                <button class="backup-btn primary" onclick="handleExportBackup()">
+                    <i data-lucide="download" style="width:16px; height:16px;"></i>
+                    Export Backup
+                </button>
+                <button class="backup-btn secondary" onclick="handleImportBackup()">
+                    <i data-lucide="upload" style="width:16px; height:16px;"></i>
+                    Import Backup
+                </button>
+            </div>
+
+            <div class="backup-message" id="backupMessage"></div>
+            <div class="backup-last-sync" id="backupLastSync"></div>
+        </div>
+
+        <!-- Hidden file input for import -->
+        <input type="file" id="backupFileInput" accept=".json" onchange="processBackupFile(event)">
+
+        <!-- Confirmation dialog for import -->
+        <div class="backup-confirm-dialog" id="backupConfirmDialog">
+            <div class="backup-confirm-content">
+                <h3>Restore from Backup?</h3>
+                <p>
+                    This will overwrite your current Pathfinder data with the backup file contents.
+                    This action cannot be undone. Make sure you're restoring the correct file.
+                </p>
+                <div class="backup-confirm-actions">
+                    <button class="backup-confirm-btn cancel" onclick="cancelBackupImport()">
+                        Cancel
+                    </button>
+                    <button class="backup-confirm-btn confirm" onclick="confirmBackupImport()">
+                        Restore
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Sync Log -->
         <div class="sync-summary">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-3);">
@@ -903,6 +1199,9 @@
 
     </main>
 
+
+    <!-- Backup utilities (must be loaded before main script) -->
+    <script src="../shared/backup-utils.js?v=3.32.0"></script>
 
     <!-- ================================================================
          EMBEDDED SYNC DATA
@@ -2066,5 +2365,160 @@
 
     <!-- Data mode toggle (Demo / Personal) -->
     <script src="../shared/data-layer.js?v=3.5.1"></script> <!-- v3.0.0: MCP-backed data persistence -->
+
+    <!-- Backup and restore functionality -->
+    <script>
+    /**
+     * Initialize backup UI on page load
+     */
+    function initBackupUI() {
+        updateBackupStats();
+        updateBackupLastSync();
+    }
+
+    /**
+     * Update backup statistics display
+     */
+    function updateBackupStats() {
+        const stats = getBackupStats();
+        document.getElementById('backupKeyCount').textContent = stats.keyCount;
+
+        // Convert bytes to KB
+        const sizeKB = (stats.totalSizeBytes / 1024).toFixed(1);
+        document.getElementById('backupDataSize').textContent = sizeKB + ' KB';
+    }
+
+    /**
+     * Update "last backup" timestamp display
+     */
+    function updateBackupLastSync() {
+        const lastBackup = getLastBackupTime();
+        const lastSyncEl = document.getElementById('backupLastSync');
+
+        if (lastBackup) {
+            const formatted = lastBackup.toLocaleString();
+            lastSyncEl.textContent = 'Last backup: ' + formatted;
+        } else {
+            lastSyncEl.textContent = 'No backup created yet';
+        }
+    }
+
+    /**
+     * Handle export backup button click
+     */
+    function handleExportBackup() {
+        try {
+            const backup = exportBackup();
+            showBackupMessage('Backup downloaded successfully! ' + backup.keys + ' keys exported.', 'success');
+            updateBackupStats();
+            updateBackupLastSync();
+
+            // Clear message after 5 seconds
+            setTimeout(() => {
+                hideBackupMessage();
+            }, 5000);
+        } catch (e) {
+            showBackupMessage('Error creating backup: ' + e.message, 'error');
+        }
+    }
+
+    /**
+     * Handle import backup button click - open file picker
+     */
+    function handleImportBackup() {
+        document.getElementById('backupFileInput').click();
+    }
+
+    /**
+     * Process the selected backup file
+     */
+    function processBackupFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = e.target.result;
+            // Store for confirmation dialog
+            window.pendingBackupContent = content;
+            window.pendingBackupFileName = file.name;
+
+            // Show confirmation dialog
+            document.getElementById('backupConfirmDialog').classList.add('show');
+        };
+        reader.onerror = () => {
+            showBackupMessage('Error reading file: ' + reader.error, 'error');
+        };
+        reader.readAsText(file);
+
+        // Reset file input so same file can be selected again
+        event.target.value = '';
+    }
+
+    /**
+     * Cancel import and close confirmation dialog
+     */
+    function cancelBackupImport() {
+        document.getElementById('backupConfirmDialog').classList.remove('show');
+        window.pendingBackupContent = null;
+        window.pendingBackupFileName = null;
+    }
+
+    /**
+     * Confirm and execute backup import
+     */
+    function confirmBackupImport() {
+        if (!window.pendingBackupContent) {
+            showBackupMessage('No backup file selected', 'error');
+            return;
+        }
+
+        const result = importBackup(window.pendingBackupContent);
+
+        if (result.success) {
+            showBackupMessage(
+                'Backup restored successfully! ' + result.keysRestored + ' keys imported. Reloading page...',
+                'success'
+            );
+            updateBackupStats();
+            updateBackupLastSync();
+
+            // Reload after a brief delay to show success message
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showBackupMessage('Error restoring backup: ' + result.error, 'error');
+        }
+
+        // Close dialog and clear pending data
+        document.getElementById('backupConfirmDialog').classList.remove('show');
+        window.pendingBackupContent = null;
+        window.pendingBackupFileName = null;
+    }
+
+    /**
+     * Show backup message (success, error, info)
+     */
+    function showBackupMessage(text, type) {
+        const messageEl = document.getElementById('backupMessage');
+        messageEl.textContent = text;
+        messageEl.className = 'backup-message ' + type;
+    }
+
+    /**
+     * Hide backup message
+     */
+    function hideBackupMessage() {
+        const messageEl = document.getElementById('backupMessage');
+        messageEl.className = 'backup-message';
+        messageEl.textContent = '';
+    }
+
+    // Initialize backup UI when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+        initBackupUI();
+    });
+    </script>
 </body>
 </html>

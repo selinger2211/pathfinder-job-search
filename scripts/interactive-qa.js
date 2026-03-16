@@ -68,8 +68,16 @@ function createDom(moduleName) {
 
   /* Strip external script tags (CDN libs like Lucide, Chart.js) to avoid fetch errors */
   html = html.replace(/<script\s+src\s*=\s*"https?:\/\/[^"]*"[^>]*><\/script>/gi, '');
-  /* Strip shared script imports too — we're testing module logic, not shared infra */
-  html = html.replace(/<script\s+src\s*=\s*"\.\.\/shared\/[^"]*"[^>]*><\/script>/gi, '');
+  /* Inline shared script imports — replace script tags with actual file contents
+   * so that functions from shared modules are available to the inline code */
+  html = html.replace(/<script\s+src\s*=\s*"\.\.\/shared\/([^"?]+)(?:\?[^"]*)?"[^>]*><\/script>/gi, (match, filename) => {
+    const sharedPath = path.join(MODULES_DIR, 'shared', filename);
+    if (fs.existsSync(sharedPath)) {
+      const code = fs.readFileSync(sharedPath, 'utf8');
+      return `<script>/* Inlined: ${filename} */\n${code}\n</script>`;
+    }
+    return ''; // File doesn't exist, strip it
+  });
 
   const dom = new JSDOM(html, {
     url: `http://localhost:8765/modules/${moduleName}/index.html`,

@@ -8,9 +8,9 @@
 
 Pathfinder is an agentic job search system with 11 standalone HTML modules sharing data via localStorage + IndexedDB. Each module is a single `index.html` file in `modules/`. There is no backend server required for core functionality — Claude API calls happen directly from the browser via `modules/shared/claude-api.js`.
 
-**Current Version:** v3.31.0 (as of 2026-03-15)
-**Last Major Features:** Research Brief V3 — pursuit strategy rewrite with 13 sections, Tavily web search for live company news, Additional Context input (text + file upload via mammoth.js), 7 evidence labels (JD/EXT/ILI/CTX/DOC/INF/NC), upgraded fit model, Pursuit Economics decision box, screen-out risk analysis, deal-breaker test, proof-point handoff. Previous: V2 (v3.21.0), safeJsonParse hardening (v3.20.5).
-**Status:** All 11 modules pass HTML integrity + brace balance + safeJsonParse coverage. Research Brief V3: 2518 lines, 356/356 braces balanced, temperature 0.3, maxTokens 4096. Tavily API key optional — degrades gracefully. Zero bare JSON.parse(localStorage) calls remaining.
+**Current Version:** v3.32.0 (as of 2026-03-16)
+**Last Major Features:** Data export/import (backup-utils.js + Sync Hub UI + Dashboard nudge), score transparency UI (expandable breakdown on feed cards), shared module wiring (58 inline functions replaced with `<script>` imports). 781 unit tests, 97.5% statement coverage across 11 shared modules.
+**Status:** All 11 modules pass HTML integrity + brace balance + safeJsonParse coverage. Shared modules (feed-logic, pipeline-logic, dashboard-logic, state-utils, date-utils, text-utils, comp-utils, backup-utils) are now loaded via `<script>` tags instead of inline duplication in the 3 main modules.
 
 **Owner:** Ili Selinger (ilan.selinger@gmail.com)
 **Repo:** github.com/selinger2211/pathfinder-job-search
@@ -32,7 +32,7 @@ Pathfinder is an agentic job search system with 11 standalone HTML modules shari
 | Debrief | `modules/debrief/` | 8-section post-interview capture + Claude synthesis | `pf_debriefs` |
 | Comp Intelligence | `modules/comp-intel/` | Compensation data entry, comparison, negotiation strategy | `pf_comp_data` |
 | Calendar | `modules/calendar/` | Manual event tracking, pre/post-interview nudges | `pf_calendar_events`, `pf_calendar_nudges` |
-| Sync Hub | `modules/sync/` | Bridge external APIs (GCal, Indeed, Gmail, Clay) into Pathfinder | `pf_sync_log` (writes to other module keys) |
+| Sync Hub | `modules/sync/` | Bridge external APIs (GCal, Indeed, Gmail, Clay) into Pathfinder + Data Backup/Restore | `pf_sync_log`, `pf_last_backup` (writes to other module keys) |
 | Artifacts MCP | `mcp-servers/pathfinder-artifacts-mcp/` | File storage layer — research briefs, resumes, JDs | Filesystem (not localStorage) |
 
 ---

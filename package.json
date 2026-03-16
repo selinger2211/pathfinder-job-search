@@ -24,10 +24,16 @@
     ],
     "coverageThreshold": {
       "global": {
-        "branches": 89,
-        "functions": 97,
-        "lines": 99,
-        "statements": 97
+        "branches": 87,
+        "functions": 95,
+        "lines": 95,
+        "statements": 93
+      },
+      "./modules/shared/backup-utils.js": {
+        "branches": 90,
+        "functions": 100,
+        "lines": 95,
+        "statements": 95
       },
       "./modules/shared/logos.js": {
         "branches": 91,

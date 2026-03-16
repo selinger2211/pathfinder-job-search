@@ -4,6 +4,59 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.32.0 — 2026-03-16
+
+### Three Architecture Improvements: Data Resilience, Score Transparency, Module Wiring
+
+**1. Data Export/Import (Data Resilience)**
+- New shared module: `modules/shared/backup-utils.js` — exportBackup(), importBackup(), getBackupStats(), hasBackupBeenCreated(), getLastBackupTime()
+- Sync Hub: new "Data Backup & Restore" card with one-click Export, file-picker Import, confirmation dialog, and live stats (key count + KB)
+- Dashboard: subtle backup nudge card appears if user has never exported (dismissible, links to Sync Hub)
+- Backup file format: `{ version, exportedAt, appVersion, keys: { pf_*: "..." } }` — portable JSON, timestamped filename
+- 18 new tests for backup-utils.js (100% statement/function/line coverage)
+
+**2. Score Transparency UI (Feed Cards)**
+- Clicking the score badge on any feed card now expands an inline breakdown panel
+- 7-dimension breakdown: Title Match, Domain, Keywords, Location, Network, Stage, Comp Signal — each with color-coded mini progress bar (green/yellow/red) and weight percentage
+- Metadata row shows JD status (Full JD / Stub JD) and Leader/IC indicator
+- Smooth expand/collapse animation (300ms) with rotating chevron
+- Lazy content population — breakdown HTML only generates on first click
+
+**3. Shared Module Wiring (Architecture)**
+- job-feed-listener now loads: state-utils.js, date-utils.js, text-utils.js, comp-utils.js, feed-logic.js via `<script>` tags (30 inline functions commented out)
+- pipeline now loads: state-utils.js, date-utils.js, text-utils.js, pipeline-logic.js (16 inline functions commented out)
+- dashboard now loads: state-utils.js, date-utils.js, dashboard-logic.js (12 inline functions commented out)
+- Eliminates inline duplication drift — shared modules are now the single source of truth
+- All shared modules expose functions as globals in browser (Node.js export guard for Jest)
+
+**Unit Test Suite: 781 tests across 11 modules, 97.5% statement coverage**
+
+---
+
+## v3.31.9 — 2026-03-16
+
+### Push Test Coverage to 97%+ (763 tests across 10 modules)
+
+Close coverage gaps in all shared modules: data-layer (68→96%), feed-logic (88→95%), claude-api (90→98%), dashboard-logic (94→96%), plus smaller gains in date-utils, logos, comp-utils, text-utils, pipeline-logic. Raise all coverage thresholds to match.
+
+---
+
+## v3.31.8 — 2026-03-16
+
+### Phase 4 — DOM/Handler Logic Extraction + 313 Tests
+
+Extract pure business logic from 5 HTML modules into 3 new shared modules (feed-logic.js, pipeline-logic.js, dashboard-logic.js). 701 total tests passing, 92.65% statement coverage.
+
+---
+
+## v3.31.7 — 2026-03-16
+
+### Phase 3 — localStorage CRUD Layer Tests (state-utils.js)
+
+76 tests covering all 26 state management functions. 100% statements/functions/lines, 90.47% branches.
+
+---
+
 ## v3.31.0 — 2026-03-15
 
 ### Job Feed Listener — Gmail Scan Pipeline & Sources Tab Rebuild + Pipeline File Upload Fix
