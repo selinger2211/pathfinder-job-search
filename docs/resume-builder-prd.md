@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/resume-tailor/`
-**Version:** v3.29.0
-**Last Updated:** 2026-03-15
-**Status:** Active — v3.29.0 features live
+**Version:** v3.16
+**Last Updated:** 2026-03-13
+**Status:** Active — v3.16.0 features live
 
 ---
 
@@ -473,14 +473,14 @@ What exists today:
 
 ### Phase 2: MCP-Powered Generation (Complete — v3.16.0)
 
-> **Status: Partially Implemented** — MCP integration with Claude API generation in progress. DOCX export implemented; PDF export marked as planned.
+> **Status: Implemented (v3.16.0)** — Full MCP integration with Claude API generation (#49).
 
 - [x] `pf_generate_bullets` MCP tool with Claude API integration (#49)
-- [x] `pf_export_resume` MCP tool for export (#49)
+- [x] `pf_export_resume` MCP tool for DOCX/PDF export (#49)
 - [x] Server-side generation of summary, skills bar, subtitles, bullet selection
 - [x] New bullet proposal flow (agent proposes → user approves → bank grows)
 - [x] DOCX export via `docx` npm library
-- [ ] PDF export (Status: Planned) — Currently does HTML export only
+- [x] PDF export (DOCX → PDF conversion)
 - [x] Research Brief data feed (fit assessment, Section 5 content)
 - [x] MCP Generate toggle in UI (#49)
 - [x] "Export via MCP" button in resume builder (#49)

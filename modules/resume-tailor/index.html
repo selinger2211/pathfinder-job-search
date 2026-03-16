@@ -3,9 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <title>Pathfinder – Resume Builder</title>
 
   <!-- ── External Libraries ─────────────────────────────────── -->
@@ -69,84 +66,16 @@
       gap: var(--space-2);
     }
 
-    /* ── Role Card Strip ─────────────────────────────────────── */
-    .role-strip {
-      display: flex;
-      gap: 4px;
+    .role-selector {
+      width: 100%;
       padding: 8px 12px;
-      overflow-x: auto;
-      border-bottom: 1px solid var(--border-default);
-      flex-shrink: 0;
-      scrollbar-width: none;
-      flex-wrap: wrap;
-    }
-    .role-strip::-webkit-scrollbar { display: none; }
-
-    .role-chip {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 4px 10px 4px 5px;
-      background: var(--bg-base, #fff);
-      border: 1.5px solid var(--border-default, #e5e7eb);
-      border-radius: 8px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
       cursor: pointer;
-      transition: all 0.15s ease;
-      flex-shrink: 0;
-      white-space: nowrap;
     }
-
-    .role-chip:hover {
-      border-color: var(--accent, #6366f1);
-      background: rgba(99, 102, 241, 0.04);
-    }
-
-    .role-chip.active {
-      border-color: var(--accent, #6366f1);
-      background: rgba(99, 102, 241, 0.1);
-      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.12);
-    }
-
-    .role-chip-logo {
-      width: 18px;
-      height: 18px;
-      border-radius: 3px;
-      object-fit: contain;
-      flex-shrink: 0;
-    }
-
-    .role-chip-text {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      min-width: 0;
-    }
-
-    .role-chip-company {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-primary, #111);
-      line-height: 1.2;
-    }
-
-    .role-chip-title {
-      font-size: 9px;
-      color: var(--text-tertiary, #999);
-      line-height: 1.2;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 140px;
-    }
-
-    .role-chip-tier {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      margin-left: auto;
-    }
-    .role-chip-tier.hot { background: #ef4444; }
-    .role-chip-tier.active { background: #3b82f6; }
 
     /* ── Phase Navigation Tabs ────────────────────────────────── */
     .phase-tabs {
@@ -634,8 +563,7 @@
       overflow-y: auto;
       padding: var(--space-6);
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      justify-content: center;
     }
 
     /* ── Resume Paper Preview ─────────────────────────────────── */
@@ -653,48 +581,6 @@
       color: #333;
       line-height: 1.35;
       flex-shrink: 0;
-      position: relative;
-    }
-
-    /* Page fit indicator — shown above the resume preview */
-    .page-fit-bar {
-      width: 680px;
-      margin: 0 auto var(--space-2);
-      padding: 6px 12px;
-      border-radius: var(--radius-sm);
-      font-size: 12px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all var(--duration-fast) var(--ease-default);
-    }
-    .page-fit-bar.ok {
-      background: #f0fdf4;
-      border: 1px solid #86efac;
-      color: #166534;
-    }
-    .page-fit-bar.tight {
-      background: #fffbeb;
-      border: 1px solid #fcd34d;
-      color: #92400e;
-    }
-    .page-fit-bar.over {
-      background: #fef2f2;
-      border: 1px solid #fca5a5;
-      color: #991b1b;
-    }
-    .page-fit-fill {
-      flex: 1;
-      height: 6px;
-      background: var(--bg-subtle);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-    .page-fit-fill-inner {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.3s ease, background 0.3s ease;
     }
 
     .resume-paper .name {
@@ -864,8 +750,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      flex: 1;
-      min-height: 300px;
+      height: 100%;
       color: var(--text-tertiary);
       text-align: center;
       padding: var(--space-8);
@@ -1034,10 +919,9 @@
     <div class="controls-panel">
       <div class="controls-header">
         <h1><i data-lucide="file-text"></i> Resume Builder</h1>
-      </div>
-
-      <div class="role-strip" id="role-strip">
-        <!-- Populated by JS -->
+        <select class="role-selector" id="role-selector" onchange="handleRoleChange(this.value)">
+          <option value="">Select a role from pipeline...</option>
+        </select>
       </div>
 
       <div class="phase-tabs" id="phase-tabs">
@@ -2394,13 +2278,8 @@ function renderResumePreview() {
   `;
   lucide.createIcons();
 
-  /* Page fit indicator + resume HTML */
+  /* Build the resume HTML */
   preview.innerHTML = `
-    <div class="page-fit-bar" id="page-fit-bar">
-      <span id="page-fit-label">Checking fit...</span>
-      <div class="page-fit-fill"><div class="page-fit-fill-inner" id="page-fit-fill"></div></div>
-      <span id="page-fit-pct"></span>
-    </div>
     <div class="resume-paper" id="resume-paper">
       <!-- Name -->
       <div class="name" contenteditable="true"
@@ -2449,9 +2328,6 @@ function renderResumePreview() {
       </div>
     </div>
   `;
-
-  /* Measure page fit after DOM renders */
-  requestAnimationFrame(() => measurePageFit());
 }
 
 /**
@@ -2461,45 +2337,6 @@ function updateSubtitleFromPreview(companyKey, value) {
   if (!state.resumeData) return;
   const role = state.resumeData.roles.find(r => r.key === companyKey);
   if (role) role.subtitle = value;
-}
-
-/**
- * Measure the resume content against the one-page limit.
- * A US Letter page at this preview scale = 880px total height
- * (680px width is proportional to 8.5" with 52px padding each side).
- * Content area = 880px - 80px padding (top+bottom) = 800px usable.
- * We measure the actual content children height vs. 800px.
- */
-function measurePageFit() {
-  const paper = document.getElementById('resume-paper');
-  const bar = document.getElementById('page-fit-bar');
-  const label = document.getElementById('page-fit-label');
-  const pct = document.getElementById('page-fit-pct');
-  const fillInner = document.querySelector('.page-fit-fill-inner');
-  if (!paper || !bar) return;
-
-  /* Measure content height (scrollHeight includes padding) */
-  const contentHeight = paper.scrollHeight;
-  const pageHeight = 880; /* total page height at preview scale */
-  const ratio = contentHeight / pageHeight;
-  const pctVal = Math.round(ratio * 100);
-
-  /* Update indicator */
-  bar.className = 'page-fit-bar';
-  if (ratio <= 0.93) {
-    bar.classList.add('ok');
-    label.textContent = 'Fits on one page';
-    if (fillInner) fillInner.style.cssText = `width:${pctVal}%;background:#22c55e;`;
-  } else if (ratio <= 1.02) {
-    bar.classList.add('tight');
-    label.textContent = 'Tight fit \u2014 near the limit';
-    if (fillInner) fillInner.style.cssText = `width:${Math.min(pctVal, 100)}%;background:#f59e0b;`;
-  } else {
-    bar.classList.add('over');
-    label.textContent = 'Over one page \u2014 remove bullets';
-    if (fillInner) fillInner.style.cssText = `width:100%;background:#ef4444;`;
-  }
-  pct.textContent = `${pctVal}%`;
 }
 
 
@@ -3059,19 +2896,6 @@ function handleRoleChange(roleId) {
   switchPhase('context');
 }
 
-/**
- * Handle role chip selection — highlight chip and load role data.
- */
-function selectRoleCard(roleId) {
-  document.querySelectorAll('.role-chip').forEach(c => c.classList.remove('active'));
-  const chip = document.querySelector(`.role-chip[data-role-id="${roleId}"]`);
-  if (chip) {
-    chip.classList.add('active');
-    chip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-  }
-  handleRoleChange(roleId);
-}
-
 
 /* ================================================================
    SECTION 18: INITIALIZATION
@@ -3082,61 +2906,16 @@ function selectRoleCard(roleId) {
  * Loads pipeline roles into the dropdown and sets up the UI.
  */
 function initializeApp() {
-  const container = document.getElementById('role-strip');
+  /* Populate role selector */
+  const selector = document.getElementById('role-selector');
   const roles = loadPipelineRoles();
 
-  /* Sort: hot first, then active, then by lastActivity */
-  roles.sort((a, b) => {
-    const tierOrder = { hot: 0, active: 1, passive: 2 };
-    const ta = tierOrder[a.tier] ?? 2;
-    const tb = tierOrder[b.tier] ?? 2;
-    if (ta !== tb) return ta - tb;
-    const dateA = typeof a.lastActivity === 'number' ? a.lastActivity : new Date(a.lastActivity || 0).getTime();
-    const dateB = typeof b.lastActivity === 'number' ? b.lastActivity : new Date(b.lastActivity || 0).getTime();
-    return dateB - dateA;
+  roles.forEach(role => {
+    const opt = document.createElement('option');
+    opt.value = role.id;
+    opt.textContent = `${role.company || 'Unknown'} – ${role.title || 'Untitled'}`;
+    selector.appendChild(opt);
   });
-
-  /**
-   * Get company logo URL from role data.
-   * Uses pf_companies logoUrl first, then derives from company name.
-   */
-  function getLogoUrl(role) {
-    const companyLower = (role.company || '').toLowerCase().trim();
-
-    /* Check pf_companies in localStorage for an authoritative logoUrl */
-    try {
-      const companies = JSON.parse(localStorage.getItem('pf_companies') || '[]');
-      const match = companies.find(c =>
-        (c.name || '').toLowerCase() === companyLower
-      );
-      if (match && match.logoUrl) return match.logoUrl;
-      if (match && match.domain) return `https://www.google.com/s2/favicons?domain=${match.domain}&sz=64`;
-    } catch {}
-
-    /* Use the company's own website domain, not job board URLs */
-    const slug = companyLower.replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
-    return `https://www.google.com/s2/favicons?domain=${slug}.com&sz=64`;
-  }
-
-  function shortTitle(title) {
-    if (!title) return '';
-    /* Remove common prefixes and truncate */
-    return title
-      .replace(/^(Sr\.\s*|Senior\s*|Principal\s*|Head of\s*)/i, '')
-      .replace(/\s*[-–—]\s*.*$/, '')  /* remove suffixes after dash */
-      .substring(0, 28);
-  }
-
-  container.innerHTML = roles.map(role => `
-    <div class="role-chip" data-role-id="${role.id}" onclick="selectRoleCard('${role.id}')" title="${escapeHtml(role.title || '')}">
-      <img class="role-chip-logo" src="${getLogoUrl(role)}" alt="" onerror="this.style.display='none'">
-      <div class="role-chip-text">
-        <span class="role-chip-company">${escapeHtml(role.company || 'Unknown')}</span>
-        <span class="role-chip-title">${escapeHtml(shortTitle(role.title))}</span>
-      </div>
-      <span class="role-chip-tier ${role.tier || ''}"></span>
-    </div>
-  `).join('');
 
   /* Set pdf.js worker path */
   if (typeof pdfjsLib !== 'undefined') {

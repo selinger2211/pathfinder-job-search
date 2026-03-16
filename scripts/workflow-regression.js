@@ -39,6 +39,18 @@ const REMOVED_FUNCTIONS = [
   { name: 'getCompanyLogoFallbackUrl', removed: 'v3.30.0', replacement: 'handleLogoError()' },
   { name: 'getClearbitLogoUrl',        removed: 'v3.29.0', replacement: 'getCompanyLogoUrl()' },
   { name: 'clearbitLogoUrl',           removed: 'v3.29.0', replacement: 'getCompanyLogoUrl()' },
+  /* v3.31.0: Gmail OAuth flow removed — replaced by Cowork MCP scan pipeline */
+  { name: 'saveGmailToken',           removed: 'v3.31.0', replacement: 'loadGmailScanResults()' },
+  { name: 'getGmailToken',            removed: 'v3.31.0', replacement: 'loadGmailScanResults()' },
+  { name: 'isGmailConnected',         removed: 'v3.31.0', replacement: 'updateGmailScanStatus()' },
+  { name: 'updateGmailStatus',        removed: 'v3.31.0', replacement: 'updateGmailScanStatus()' },
+  { name: 'scanGmailForJobs',         removed: 'v3.31.0', replacement: 'loadGmailScanResults()' },
+  { name: 'parseJobEmail',            removed: 'v3.31.0', replacement: 'Cowork scheduled task handles parsing' },
+  { name: 'openGmailTokenModal',      removed: 'v3.31.0', replacement: 'Gmail token modal deleted' },
+  { name: 'closeGmailTokenModal',     removed: 'v3.31.0', replacement: 'Gmail token modal deleted' },
+  { name: 'submitGmailToken',         removed: 'v3.31.0', replacement: 'Gmail token modal deleted' },
+  { name: 'handleGmailTokenSubmit',   removed: 'v3.31.0', replacement: 'Gmail token modal deleted' },
+  { name: 'triggerGmailScan',         removed: 'v3.31.0', replacement: 'loadGmailScanResults()' },
 ];
 
 /* ====== KNOWN SHARED FUNCTIONS ======

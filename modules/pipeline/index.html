@@ -8,7 +8,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%236366f1' width='32' height='32'/><text x='50%' y='50%' font-size='20' font-weight='700' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='system-ui'>P</text></svg>">
 
   <link rel="stylesheet" href="../shared/pathfinder.css?v=3.5.1">
-  <script src="https://unpkg.com/lucide@latest" onerror="console.warn('Lucide icon library failed to load');"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 
   <style>
     /* ================================================================
@@ -1583,14 +1583,7 @@
     }
 
     .resume-upload-zone input[type="file"] {
-      /* v3.31.0: Use opacity+position instead of display:none.
-         Some browsers block .click() on display:none file inputs. */
-      position: absolute;
-      width: 0;
-      height: 0;
-      opacity: 0;
-      overflow: hidden;
-      pointer-events: none;
+      display: none;
     }
 
     .resume-upload-zone-text {
@@ -2118,7 +2111,6 @@
       display: none;
     }
   </style>
-  <script src="../shared/logos.js?v=3.30.0"></script>
 </head>
 <body>
   <!-- Section: Navigation -->
@@ -2295,7 +2287,7 @@
             <input type="url" id="form-url" class="form-input" placeholder="Paste job posting URL (Workday, Greenhouse, Lever, LinkedIn...)" aria-label="Paste a job posting URL to auto-extract details" style="flex: 1;">
             <button id="import-btn" class="btn btn-primary" style="white-space: nowrap; padding: var(--space-2) var(--space-4);" aria-label="Import job details from the URL">Import</button>
           </div>
-          <div id="import-status" role="alert" aria-live="polite" aria-atomic="true" style="display: none; font-size: var(--text-xs); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); margin-top: var(--space-1);"></div>
+          <div id="import-status" style="display: none; font-size: var(--text-xs); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); margin-top: var(--space-1);"></div>
         </div>
 
         <div style="display: flex; align-items: center; gap: var(--space-3); color: var(--text-tertiary); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.05em;">
@@ -2488,7 +2480,7 @@
   </div>
 
   <!-- Section: Toast Notifications -->
-  <div class="toast-container" id="toast-container" role="alert" aria-live="polite" aria-atomic="true"></div>
+  <div class="toast-container" id="toast-container"></div>
 
   <!-- Section: Role Detail Slide-Out Panel -->
   <div class="detail-overlay" id="detail-overlay"></div>
@@ -2577,14 +2569,6 @@
         console.warn(`[Pathfinder] Corrupt localStorage key "${key}", using fallback`, e);
         return fallback;
       }
-    }
-
-    /** Helper function to escape HTML special characters and prevent XSS */
-    function escapeHtml(text) {
-      if (!text) return '';
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
     }
 
     /* Application state variables that track what the user is doing */
@@ -2904,10 +2888,116 @@
      * INPUT: company name (string), optional URL (string)
      * RETURNS: domain string suitable for Clearbit logo API
      */
+    /** Known domain overrides for companies whose name doesn't map
+     *  cleanly to a domain (e.g., "Amazon Ads" → "amazon.com") */
+    const DOMAIN_OVERRIDES = {
+      'amazon ads': 'amazon.com',
+      'bounti.ai': 'bounti.ai',
+      'albertsons media': 'albertsons.com',
+      'activision blizzard': 'activisionblizzard.com',
+      'bc ventures': 'bcventures.com',
+      'enriches lab': 'enricheslab.com',
+      'notion': 'notion.so',
+      // v3.20.2: Sync overrides from Feed — companies whose names don't map cleanly to domains
+      'google': 'google.com',
+      'meta': 'meta.com',
+      'apple': 'apple.com',
+      'sofi': 'sofi.com',
+      'blackrock': 'blackrock.com',
+      'netflix': 'netflix.com',
+      'stripe': 'stripe.com',
+      'directv': 'directv.com',
+      'yahoo': 'yahoo.com',
+      'uber': 'uber.com',
+      'geico': 'geico.com',
+    };
 
+    function getCompanyDomain(companyName, url) {
+      // Check overrides first
+      const override = DOMAIN_OVERRIDES[companyName.toLowerCase()];
+      if (override) return override;
 
+      if (url) {
+        try {
+          const hostname = new URL(url).hostname.toLowerCase();
+          // Workday: ouryahoo.wd5.myworkdayjobs.com → yahoo.com
+          const wdMatch = hostname.match(/^(?:our)?([a-z]+)\.wd\d+\.myworkdayjobs\.com/);
+          if (wdMatch) return wdMatch[1] + '.com';
+          // Greenhouse: boards.greenhouse.io/stripe → stripe.com
+          if (hostname.includes('greenhouse.io')) {
+            const pathMatch = url.match(/greenhouse\.io\/([a-z0-9]+)/i);
+            if (pathMatch) return pathMatch[1] + '.com';
+          }
+          // Lever: jobs.lever.co/stripe → stripe.com
+          if (hostname.includes('lever.co')) {
+            const pathMatch = url.match(/lever\.co\/([a-z0-9]+)/i);
+            if (pathMatch) return pathMatch[1] + '.com';
+          }
+          // Ashby: jobs.ashbyhq.com/stripe → stripe.com
+          if (hostname.includes('ashbyhq.com')) {
+            const pathMatch = url.match(/ashbyhq\.com\/([a-z0-9]+)/i);
+            if (pathMatch) return pathMatch[1] + '.com';
+          }
+          // LinkedIn: linkedin.com/company/stripe → stripe.com
+          // v3.20.2: If it's a LinkedIn job URL (/jobs/view/...) with no /company/ match,
+          // fall through to company-name fallback — don't return linkedin.com as domain
+          if (hostname.includes('linkedin.com')) {
+            const pathMatch = url.match(/company\/([a-z0-9-]+)/i);
+            if (pathMatch) return pathMatch[1].replace(/-/g, '') + '.com';
+            // No /company/ in URL — skip to name-based fallback below
+          }
+          // If not an ATS or LinkedIn, use the hostname directly (e.g., stripe.com/jobs → stripe.com)
+          else if (!hostname.includes('workday') && !hostname.includes('greenhouse') &&
+              !hostname.includes('lever') && !hostname.includes('ashby')) {
+            return hostname.replace(/^www\./, '');
+          }
+        } catch (e) { /* invalid URL, fall through */ }
+      }
+      // Fallback: derive from company name
+      return companyName.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com';
+    }
 
+    /**
+     * Gets the logo URL for a company.
+     * v3.20.0: Uses Clearbit Logo API as primary (real logos, not favicons),
+     * with Google Favicon as fallback in the img onerror handler.
+     * This fixes LinkedIn icons appearing when Google can't find the real logo.
+     * INPUT: company name, optional URL
+     * RETURNS: URL string for the company logo
+     */
+    function getCompanyLogoUrl(companyName, url) {
+      const domain = getCompanyDomain(companyName, url);
+      return `https://logo.clearbit.com/${domain}`;
+    }
 
+    /**
+     * Google Favicon fallback URL for when Clearbit fails.
+     */
+    function getCompanyLogoFallbackUrl(companyName, url) {
+      const domain = getCompanyDomain(companyName, url);
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+    }
+
+    /**
+     * Generates a consistent color for a company's letter-initial avatar.
+     * Uses a hash of the company name to pick from a curated palette
+     * that looks good on dark backgrounds.
+     * INPUT: company name string
+     * RETURNS: hex color string
+     */
+    function getCompanyColor(name) {
+      const PALETTE = [
+        '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', // purples
+        '#ec4899', '#f43f5e', '#ef4444', '#f97316', // pinks/reds/orange
+        '#eab308', '#84cc16', '#22c55e', '#14b8a6', // greens
+        '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', // blues
+      ];
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return PALETTE[Math.abs(hash) % PALETTE.length];
+    }
 
     // ================================================================
     // SALARY EXTRACTION ENGINE
@@ -3278,6 +3368,26 @@
       };
     }
 
+    /**
+     * Global handler: replaces an <img> with a colored letter circle
+     * when the Clearbit logo fails to load (CORS, 404, etc.).
+     */
+    function handleLogoError(img, companyName, cssClass) {
+      var letter = companyName.charAt(0);
+      var color = getCompanyColor(companyName);
+      var span = document.createElement('span');
+      span.className = cssClass + ' role-card-logo-fallback';
+      span.style.background = color;
+      span.textContent = letter;
+      img.replaceWith(span);
+    }
+
+    /**
+     * Returns HTML for a company logo. Uses Google Favicon API (128px)
+     * with a colored letter-initial circle as fallback on error.
+     * INPUT: company name, CSS class, optional URL
+     * RETURNS: HTML string (<img> tag with onerror fallback)
+     */
 
     /**
      * Retrieves a company's mission statement from localStorage pf_companies.
@@ -3293,6 +3403,16 @@
       } catch {
         return '';
       }
+    }
+
+    function companyLogoHtml(companyName, cssClass, url) {
+      // v3.20.0: Clearbit as primary → Google Favicon fallback → letter avatar
+      var domain = getCompanyDomain(companyName, url);
+      var logoUrl = 'https://logo.clearbit.com/' + domain;
+      var fallbackUrl = 'https://www.google.com/s2/favicons?domain=' + domain + '&sz=128';
+      var safeName = companyName.replace(/'/g, "\\'");
+      return '<img src="' + logoUrl + '" alt="' + companyName + '" class="' + cssClass + '"'
+        + " onerror=\"this.onerror=function(){handleLogoError(this,'" + safeName + "','" + cssClass + "');}; this.src='" + fallbackUrl + "';\">";
     }
 
     /**
@@ -3766,10 +3886,10 @@
       };
 
       try {
-        // Source 1: Google Favicon API (v3.28.0 — Clearbit shut down by HubSpot)
+        // Source 1: Clearbit Logo API (v3.20.0 — higher quality than favicons)
         if (domain) {
-          enrichment.logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-          enrichment.enrichmentSource.push('Google Favicon API');
+          enrichment.logoUrl = `https://logo.clearbit.com/${domain}`;
+          enrichment.enrichmentSource.push('Clearbit Logo API');
         }
 
         // Source 2: DuckDuckGo Instant Answer API
@@ -3795,10 +3915,18 @@
           // DuckDuckGo failed silently, continue to next source
         }
 
-        // Source 3: Google Favicon fallback (if Source 1 didn't set it)
+        // Source 3: Clearbit Logo API (high-res logo fallback)
         if (domain && !enrichment.logoUrl) {
-          enrichment.logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-          enrichment.enrichmentSource.push('Google Favicon API');
+          try {
+            const clearbitUrl = `https://logo.clearbit.com/${domain}`;
+            const testResponse = await fetch(clearbitUrl, { method: 'HEAD' });
+            if (testResponse.ok) {
+              enrichment.logoUrl = clearbitUrl;
+              enrichment.enrichmentSource.push('Clearbit Logo API');
+            }
+          } catch (e) {
+            // Clearbit unavailable, continue
+          }
         }
 
         // Source 4: Company website meta tags via CORS proxy
@@ -4074,22 +4202,22 @@
 
             <div class="form-group">
               <label class="form-label">Company Name *</label>
-              <input type="text" id="reveal-company" class="form-input" placeholder="e.g., Stripe" value="${escapeHtml(role.company)}" required>
+              <input type="text" id="reveal-company" class="form-input" placeholder="e.g., Stripe" value="${role.company}" required>
             </div>
 
             <div class="form-group">
               <label class="form-label">Role Title *</label>
-              <input type="text" id="reveal-title" class="form-input" placeholder="e.g., Senior Product Manager" value="${role.title === 'TBD' ? '' : escapeHtml(role.title)}" required>
+              <input type="text" id="reveal-title" class="form-input" placeholder="e.g., Senior Product Manager" value="${role.title === 'TBD' ? '' : role.title}" required>
             </div>
 
             <div class="form-group">
               <label class="form-label">Location <span style="color: var(--text-tertiary); font-weight: 400;">(optional)</span></label>
-              <input type="text" id="reveal-location" class="form-input" placeholder="e.g., San Francisco, CA" value="${escapeHtml(role.location || '')}">
+              <input type="text" id="reveal-location" class="form-input" placeholder="e.g., San Francisco, CA" value="${role.location || ''}">
             </div>
 
             <div class="form-group">
               <label class="form-label">Job Description <span style="color: var(--text-tertiary); font-weight: 400;">(optional)</span></label>
-              <textarea id="reveal-jd" class="form-textarea" placeholder="Paste the job description..." style="min-height: 100px;">${escapeHtml(role.jd || '')}</textarea>
+              <textarea id="reveal-jd" class="form-textarea" placeholder="Paste the job description..." style="min-height: 100px;">${role.jd || ''}</textarea>
             </div>
           </div>
           <div class="modal-footer">
@@ -4173,7 +4301,7 @@
           name: role.company,
           url: companyUrl,
           domain: domain,
-          logoUrl: `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+          logoUrl: `https://logo.clearbit.com/${domain}`,
           tier: role.tier || 'active',
           enrichmentStatus: 'pending',
           missionStatement: '',
@@ -4285,8 +4413,8 @@
         `;
 
         const textarea = modal.querySelector('textarea');
-        const saveBtn = modal.querySelector('.btn-primary');
-        const skipBtn = modal.querySelector('.btn-ghost');
+        const saveBtn = modal.querySelector('button:last-child');
+        const skipBtn = modal.querySelector('button:last-child').previousElementSibling;
 
         // Wire up chip selection
         modal.querySelectorAll('.stage-reason-chip').forEach(chip => {
@@ -4424,11 +4552,11 @@
           <div class="role-card-company">
             ${companyLogoHtml(role.company, 'role-card-logo', role.url)}
             <div style="flex: 1; min-width: 0;">
-              <a href="${isOpaque ? '#' : '../research-brief/index.html?company=' + encodeURIComponent(role.company)}" class="role-card-company-name" style="cursor: ${isOpaque ? 'default' : 'pointer'}; color: ${isOpaque ? 'var(--text-secondary)' : 'var(--accent)'}; transition: opacity var(--duration-fast) var(--ease-default);" title="${isOpaque ? 'Opaque recruiter outreach' : escapeHtml(companyDesc)}" ${!isOpaque ? 'onmouseover="this.style.opacity=\'0.7\'" onmouseout="this.style.opacity=\'1\'"' : ''}>${escapeHtml(role.company)}${opaqueIcon}</a>
-              ${companyDesc && !isOpaque ? `<div style="font-size: var(--text-xs); color: var(--text-tertiary); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px;">${escapeHtml(companyDesc)}</div>` : ''}
+              <a href="${isOpaque ? '#' : '../research-brief/index.html?company=' + encodeURIComponent(role.company)}" class="role-card-company-name" style="cursor: ${isOpaque ? 'default' : 'pointer'}; color: ${isOpaque ? 'var(--text-secondary)' : 'var(--accent)'}; transition: opacity var(--duration-fast) var(--ease-default);" title="${isOpaque ? 'Opaque recruiter outreach' : companyDesc}" ${!isOpaque ? 'onmouseover="this.style.opacity=\'0.7\'" onmouseout="this.style.opacity=\'1\'"' : ''}>${role.company}${opaqueIcon}</a>
+              ${companyDesc && !isOpaque ? `<div style="font-size: var(--text-xs); color: var(--text-tertiary); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px;">${companyDesc}</div>` : ''}
             </div>
           </div>
-          <div class="role-card-title">${escapeHtml(role.title)}${role.title === 'Exploratory' ? ' <span style="font-size: 10px; opacity: 0.6;">🔍</span>' : ''}${role.title === 'TBD' && isOpaque ? ' <span style="font-size: 10px; opacity: 0.6; margin-left: 4px;">pending</span>' : ''}</div>
+          <div class="role-card-title">${role.title}${role.title === 'Exploratory' ? ' <span style="font-size: 10px; opacity: 0.6;">🔍</span>' : ''}${role.title === 'TBD' && isOpaque ? ' <span style="font-size: 10px; opacity: 0.6; margin-left: 4px;">pending</span>' : ''}</div>
           ${!isOpaque ? `
             <div class="role-card-salary ${salaryEval}" title="${salaryTitle}" style="line-height: 1.5;">
               ${salaryEval === 'below' ? '⚠️ ' : ''}${salaryDisplay}
@@ -4498,29 +4626,23 @@
       ];
 
       transitions.forEach(t => {
-        /* v3.28.0: Fixed conversion rate formula.
-         * Denominator = roles that EVER reached the FROM stage (via stageHistory).
-         * Numerator   = roles that EVER reached the TO stage (via stageHistory).
-         * This avoids double-counting and caps at 100%.
-         */
-        const everInFrom = roles.filter(r => {
+        const fromCount = analytics.stageCounts[t.from] || 0;
+        const toCount = analytics.stageCounts[t.to] || 0;
+        const previousCount = roles.filter(r => {
           const history = r.stageHistory || [];
           return history.some(h => h.stage === t.from);
         }).length;
 
-        const everInTo = roles.filter(r => {
-          const history = r.stageHistory || [];
-          return history.some(h => h.stage === t.to);
-        }).length;
-
-        const rate = everInFrom > 0
-          ? Math.min(100, Math.round((everInTo / everInFrom) * 100))
+        // Conversion rate: roles that moved to next stage / roles that were in current stage
+        const totalTouchedByStage = (previousCount > 0 ? previousCount : 0) + fromCount;
+        const rate = totalTouchedByStage > 0
+          ? Math.round((toCount / totalTouchedByStage) * 100)
           : 0;
 
         analytics.conversions[`${t.from} → ${t.to}`] = {
           rate: rate,
-          from: analytics.stageCounts[t.from] || 0,
-          to: analytics.stageCounts[t.to] || 0
+          from: fromCount,
+          to: toCount
         };
       });
 
@@ -4731,12 +4853,12 @@
               <div class="table-company">
                 ${companyLogoHtml(role.company, 'table-company-logo', role.url)}
                 <div class="table-company-info">
-                  <a href="../research-brief/index.html?company=${encodeURIComponent(role.company)}" class="table-company-name" style="cursor: pointer; color: var(--accent); transition: opacity var(--duration-fast) var(--ease-default);" title="${escapeHtml(companyDesc)}" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">${escapeHtml(role.company)}</a>
-                  ${companyDesc ? `<div style="font-size: var(--text-xs); color: var(--text-tertiary); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(companyDesc)}</div>` : ''}
+                  <a href="../research-brief/index.html?company=${encodeURIComponent(role.company)}" class="table-company-name" style="cursor: pointer; color: var(--accent); transition: opacity var(--duration-fast) var(--ease-default);" title="${companyDesc}" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">${role.company}</a>
+                  ${companyDesc ? `<div style="font-size: var(--text-xs); color: var(--text-tertiary); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${companyDesc}</div>` : ''}
                 </div>
               </div>
             </td>
-            <td class="table-role-title">${escapeHtml(role.title)}</td>
+            <td class="table-role-title">${role.title}</td>
             <td>${role.positioning === 'ic' ? 'IC' : 'Mgmt'}</td>
             <td><span class="badge badge-filled" style="background: ${getColorForStage(role.stage)}; color: ${role.stage === 'researching' || role.stage === 'interviewing' ? '#000' : '#fff'};">${role.stage}</span></td>
             <td><span class="badge badge-filled" style="background: ${getColorForTier(role.tier)}; color: white;">${role.tier}</span></td>
@@ -5653,7 +5775,6 @@
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
       toast.className = `toast toast-${type}`;
-      toast.setAttribute('role', 'status');
       toast.innerHTML = `
         <div>${message}</div>
         <button style="background: none; border: none; color: inherit; cursor: pointer; padding: 0;" aria-label="Close notification">×</button>
@@ -5704,11 +5825,15 @@
       selectedCardId = roleId;
       renderKanban();
 
-      // Populate header with logo — v3.30.1: uses shared handleLogoError fallback
+      // Populate header with logo — v3.20.0: Clearbit → Google Favicon → letter fallback
       const company = getCompanies().find(c => c.name === role.company);
       const logoUrl = getCompanyLogoUrl(role.company, role.url);
+      const fallbackLogoUrl = getCompanyLogoFallbackUrl(role.company, role.url);
       const headerLogo = document.getElementById('detail-header-logo');
-      headerLogo.onerror = function() { handleLogoError(this, role.company || '', 'detail-header-logo'); };
+      headerLogo.onerror = function() {
+        this.onerror = function() { this.style.display = 'none'; };
+        this.src = fallbackLogoUrl;
+      };
       headerLogo.src = logoUrl;
       headerLogo.style.display = '';
       const companyDesc = getCompanyDescription(role.company);
@@ -5977,13 +6102,12 @@
           `}
           <!-- Resume upload drop zone (always available) -->
           <div class="resume-upload-zone" id="resume-upload-zone"
-               onclick="document.getElementById('resume-file-input').click();"
                ondragover="event.preventDefault(); this.classList.add('dragover');"
                ondragleave="this.classList.remove('dragover');"
                ondrop="event.preventDefault(); this.classList.remove('dragover'); handleResumeDrop(event, '${role.id}');">
             <input type="file" id="resume-file-input" accept=".pdf,.docx,.doc" onchange="handleResumeSelect(event, '${role.id}')">
             <div class="resume-upload-zone-text">
-              <strong>Drop a file here</strong> or browse
+              <strong>Drop a file here</strong> or <a href="#" onclick="event.preventDefault(); document.getElementById('resume-file-input').click();">browse</a>
               <div style="font-size: var(--text-xs); margin-top: var(--space-1);">PDF or DOCX — resumes, cover letters, or other role documents</div>
             </div>
           </div>
@@ -6867,6 +6991,17 @@
       showToast('General note logged', 'success');
     }
 
+    /**
+     * Utility: escape HTML entities to prevent XSS
+     * INPUT: raw string
+     * RETURNS: escaped string safe for insertion into HTML
+     */
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
     /* ====== COMPANY WEB SEARCH SUGGESTIONS ====== */
     /**
      * Searches for company suggestions using DuckDuckGo instant answer API.
@@ -7191,12 +7326,12 @@
         const hasClayData = !!(company.funding || company.headcount || company.techStack || company.investors || company.recentNews);
 
         return `
-          <div class="company-card" onclick="openCompanyView('${escapeHtml(company.name).replace(/'/g, "\\'")}')">
+          <div class="company-card" onclick="openCompanyView('${company.name.replace(/'/g, "\\'")}')">
             <div class="company-card-header">
               ${companyLogoHtml(company.name, 'company-card-logo', company.url)}
             </div>
             <div style="margin-bottom: var(--space-2);">
-              <div class="company-card-name">${escapeHtml(company.name)}</div>
+              <div class="company-card-name">${company.name}</div>
               <span class="company-card-tier ${company.tier}">${company.tier}</span>
               <div class="enrichment-badge ${hasClayData ? 'enriched' : 'pending'}">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0;">
@@ -7297,23 +7432,23 @@
         <div class="modal-overlay open" style="display: flex;" id="company-detail-modal">
           <div class="modal" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
             <div class="modal-header">
-              <h2 class="modal-title">${escapeHtml(company.name)}</h2>
+              <h2 class="modal-title">${company.name}</h2>
               <button class="modal-close" onclick="document.getElementById('company-detail-modal').remove();" aria-label="Close dialog">&times;</button>
             </div>
             <div class="modal-body">
               <div style="display: flex; gap: var(--space-4); margin-bottom: var(--space-4);">
                 <img src="${company.logoUrl || getCompanyLogoUrl(company.name, company.url)}"
-                     alt="${escapeHtml(company.name)}" style="width: 64px; height: 64px; border-radius: var(--radius-md); object-fit: contain; background: var(--bg-elevated);" onerror="handleLogoError(this,'${escapeHtml(company.name).replace(/'/g, "\\'")}','');">
+                     alt="${company.name}" style="width: 64px; height: 64px; border-radius: var(--radius-md); object-fit: contain; background: var(--bg-elevated);" onerror="this.onerror=function(){this.style.display='none';}; this.src=getCompanyLogoFallbackUrl('${company.name.replace(/'/g, "\\'")}');">
                 <div>
                   <div style="display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2);">
                     <span class="company-card-tier ${company.tier}">${company.tier}</span>
                     <span style="font-size: var(--text-xs); color: var(--text-tertiary);">${roles.length} role${roles.length !== 1 ? 's' : ''}</span>
                   </div>
                   <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-2);">
-                    ${company.domain ? `Domain: <strong>${escapeHtml(company.domain)}</strong>` : 'Domain: Not available'}
+                    ${company.domain ? `Domain: <strong>${company.domain}</strong>` : 'Domain: Not available'}
                   </div>
                   <div style="font-size: var(--text-sm); color: var(--text-secondary);">
-                    ${escapeHtml(company.missionStatement) || 'No mission statement available'}
+                    ${company.missionStatement || 'No mission statement available'}
                   </div>
                 </div>
               </div>
@@ -7326,7 +7461,7 @@
                   Enrichment: <strong>${company.completeness || 0}/5</strong> fields
                   ${company.enrichedAt ? `<div style="font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-1);">Updated: ${new Date(company.enrichedAt).toLocaleDateString()}</div>` : ''}
                 </div>
-                <button onclick="enrichCompanyData('${escapeHtml(company.name).replace(/'/g, "\\'")}', '${escapeHtml(company.domain || '').replace(/'/g, "\\'")}').then(e => updateCompanyEnrichment('${escapeHtml(company.name).replace(/'/g, "\\'")}', e)).then(() => { showToast('Company enriched successfully', 'success'); document.getElementById('company-detail-modal').remove(); openCompanyView('${escapeHtml(company.name).replace(/'/g, "\\'")}'); }).catch(err => showToast('Enrichment failed', 'error'));" class="btn btn-secondary" style="white-space: nowrap; padding: var(--space-2) var(--space-3); font-size: var(--text-xs);" title="Refresh company data from public sources">
+                <button onclick="enrichCompanyData('${company.name.replace(/'/g, "\\'")}', '${(company.domain || '').replace(/'/g, "\\'")}').then(e => updateCompanyEnrichment('${company.name.replace(/'/g, "\\'")}', e)).then(() => { showToast('Company enriched successfully', 'success'); document.getElementById('company-detail-modal').remove(); openCompanyView('${company.name.replace(/'/g, "\\'")}'); }).catch(err => showToast('Enrichment failed', 'error'));" class="btn btn-secondary" style="white-space: nowrap; padding: var(--space-2) var(--space-3); font-size: var(--text-xs);" title="Refresh company data from public sources">
                   Re-enrich
                 </button>
               </div>
@@ -7337,7 +7472,7 @@
                   <div style="display: flex; flex-direction: column; gap: var(--space-2);">
                     ${roles.map(role => `
                       <div style="padding: var(--space-3); background: var(--bg-elevated); border-radius: var(--radius-md); border: 1px solid var(--bg-subtle); cursor: pointer;" onclick="openRoleDetail('${role.id}'); document.getElementById('company-detail-modal').remove();">
-                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-1);">${escapeHtml(role.title)}</div>
+                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-1);">${role.title}</div>
                         <div style="font-size: var(--text-xs); color: var(--text-tertiary); display: flex; gap: var(--space-2);">
                           <span>Stage: ${role.stage}</span>
                           <span>Tier: ${role.tier}</span>
@@ -7488,17 +7623,17 @@
         const rawDate = role.lastActivity || role.dateAdded;
         const days = Math.floor((Date.now() - (typeof rawDate === 'string' ? new Date(rawDate).getTime() : rawDate)) / (1000 * 60 * 60 * 24));
         return `
-          <tr onclick="openRoleDetail('${role.id}')">
+          <tr onclick="openRoleDetail('${role.id}'); closeRoleDetail();">
             <td>
               <div class="table-company">
                 ${companyLogoHtml(role.company, 'table-company-logo', role.url)}
                 <div class="table-company-info">
-                  <div class="table-company-name">${escapeHtml(role.company)}</div>
-                  <div class="table-role-title">${escapeHtml(role.title)}</div>
+                  <div class="table-company-name">${role.company}</div>
+                  <div class="table-role-title">${role.title}</div>
                 </div>
               </div>
             </td>
-            <td>${escapeHtml(role.title)}</td>
+            <td>${role.title}</td>
             <td>${role.positioning === 'management' ? '👔 Mgmt' : '💻 IC'}</td>
             <td><span style="text-transform: capitalize;">${role.stage}</span></td>
             <td><span style="text-transform: capitalize; font-weight: 600; color: ${TIER_COLORS[role.tier]};">${role.tier}</span></td>
@@ -7575,7 +7710,7 @@
       existingCompanies.forEach(c => {
         if (c.logoUrl && c.logoUrl.includes('logo.clearbit.com')) {
           const domain = c.domain || c.logoUrl.replace('https://logo.clearbit.com/', '');
-          c.logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+          c.logoUrl = `https://logo.clearbit.com/${domain}`;
           migrated = true;
         }
       });
@@ -7595,28 +7730,7 @@
     switchView(currentViewMode);
 
     // Render icons from Lucide icon library
-    if (typeof lucide !== 'undefined') { lucide.createIcons(); }
-
-    /* v3.30.1: Handle URL params from Dashboard deep links.
-       ?modal=add  → open the Add Role modal
-       ?roleId=X   → select and open detail panel for that role */
-    (function handleUrlParams() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const paramModal = urlParams.get('modal');
-      const paramRoleId = urlParams.get('roleId');
-
-      if (paramRoleId) {
-        setTimeout(() => { openRoleDetail(paramRoleId); }, 300);
-      }
-      if (paramModal === 'add') {
-        const addBtn = document.getElementById('add-role-btn');
-        if (addBtn) setTimeout(() => { addBtn.click(); }, 300);
-      }
-      /* Clean URL so refresh doesn't re-trigger */
-      if (paramModal || paramRoleId) {
-        window.history.replaceState({}, '', window.location.pathname);
-      }
-    })();
+    lucide.createIcons();
   </script>
   <script src="../shared/data-layer.js?v=3.5.1"></script> <!-- v3.0.0: MCP-backed data persistence -->
 </body>

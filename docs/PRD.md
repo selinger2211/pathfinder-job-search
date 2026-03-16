@@ -3,7 +3,7 @@
 
 **Author:** Ili Selinger
 **Date:** March 2026
-**Status:** v3.31.0
+**Status:** v3.20.4
 
 ---
 
@@ -17,7 +17,7 @@ The system is built on an **agentic decomposition** pattern: 11 independent modu
 
 - **Pipeline Tracker** — the data backbone. Companies with rich profiles (20+ metadata fields), roles with 8-stage lifecycle tracking, IC/management positioning per role, and a connections log for networking.
 - **Job Feed Listener** — monitors Gmail alerts, Indeed, Dice, and career pages on a scheduled cadence. Scores roles against a preference profile (0-100 weighted match), auto-creates pipeline entries, and suggests tier promotions.
-- **Research Brief Agent** — streams a 13-section company/role prep brief from Claude with per-section caching and smart invalidation.
+- **Research Brief Agent** — streams a 10-section company/role prep brief from Claude with per-section caching and smart invalidation.
 - **Resume Tailor Agent** — analyzes JD fit, generates positioning-aware resumes (IC vs. management framing), and maintains a reusable bullet bank.
 - **Calendar Integration Agent** — links Google Calendar events to pipeline roles, triggers stage transitions, and powers pre-interview nudge sequences.
 - **Outreach Message Generator** — drafts 8 message types (LinkedIn requests, cold emails, thank-you notes, recruiter responses) with personalization that requires specific signals, not generic templates.
@@ -100,7 +100,7 @@ Pathfinder turns a 10-15 hour/week manual process into focused 2-3 hour/week dec
 |------------|--------------------|-----------------------|----------------|
 | Pipeline tracking + kanban | 1-2 hrs | Teal / Huntr | $29-40/mo |
 | Resume tailoring (positioning-aware) | 2-3 hrs | Jobscan + Rezi | $50-80/mo |
-| Research briefs (13-section, company-specific) | 3-4 hrs | Manual research | — |
+| Research briefs (10-section, company-specific) | 3-4 hrs | Manual research | — |
 | Outreach message generation | 1-2 hrs | Apollo.io + manual | $49/mo |
 | Mock interviews (company-calibrated) | 1-2 hrs | Final Round AI | $8-24/mo |
 | Comp benchmarking | 30 min | Levels.fyi manual lookup | Free-paid |
@@ -158,7 +158,7 @@ The system is organized into three layers:
 **Agent Layer** — specialized modules, each independently deployable:
 
 - **Pipeline Tracker** (with Connections) — kanban board, role lifecycle management, contact logging, LinkedIn connection mapping. This is the data backbone that other agents read from.
-- **Research Brief Agent** — streams a 13-section interview prep brief from Claude, section-by-section. Caches results. Saves output via Artifacts MCP.
+- **Research Brief Agent** — streams a 10-section interview prep brief from Claude, section-by-section. Caches results. Saves output via Artifacts MCP.
 - **Resume Tailor Agent** — generates role-targeted resumes from Claude. Renders preview, exports DOCX/PDF. Saves output via Artifacts MCP.
 - **Job Feed Listener** — monitors email and job boards, scores against preferences, auto-creates pipeline entries.
 - **Calendar Integration Agent** — links Google Calendar events to pipeline roles, triggers stage transitions, powers time-aware nudges.
@@ -420,7 +420,7 @@ These are the moments people remember after a demo:
 
 **Score reveal.** When the Job Feed calculates a match score, the number counts up from 0 to the final value over 400ms with `--ease-bounce`. The bar fills in sync. A score above 80 gets a brief emerald glow; below 40 gets a subtle red flash. This makes feed review feel dynamic, not like reading a spreadsheet.
 
-**Command palette (Status: Planned).** `Cmd+K` (or `/` from anywhere) opens a centered command palette — Linear's signature interaction. Fade-in at 150ms with a 4px upward slide. Type to search across companies, roles, agents, and actions. Results filter in real-time. This is the single most demo-impressive feature: it signals "this is a real application, not a collection of HTML pages."
+**Command palette.** `Cmd+K` (or `/` from anywhere) opens a centered command palette — Linear's signature interaction. Fade-in at 150ms with a 4px upward slide. Type to search across companies, roles, agents, and actions. Results filter in real-time. This is the single most demo-impressive feature: it signals "this is a real application, not a collection of HTML pages."
 
 **Card hover.** Pipeline cards lift on hover: `translateY(-2px)` + `var(--shadow-md)` at 150ms. Subtle but visceral — it communicates interactivity without being distracting. The current card has a faint accent left-border that appears on hover.
 
@@ -566,7 +566,7 @@ A company record serves two purposes: it's the **early-funnel intelligence profi
 |-------|------|-------------|
 | `name` | string | Company name (canonical, used as key across agents) |
 | `url` | string | Company website URL (e.g., `https://stripe.com`) — used for logo fetching and research |
-| `logoUrl` | string | Company logo URL, auto-fetched from Google Favicon API (`https://www.google.com/s2/favicons?domain={domain}&sz=128`). Clearbit was shut down by HubSpot. |
+| `logoUrl` | string | Company logo URL, auto-fetched from `{url}/favicon.ico` or Clearbit Logo API (`https://logo.clearbit.com/{domain}`) |
 | `tier` | enum | Priority tier (see 7.1.2) |
 | `dateAdded` | date | When the company entered the system |
 | `connections` | array | Linked contacts at this company (see 7.1.5) |
@@ -603,12 +603,12 @@ The company list is **not capped**. It grows continuously as the Job Feed Listen
 
 The moment a company enters the system — whether through manual add, Job Feed Listener, or as a side effect of adding a role — Pathfinder kicks off automatic data capture. This is not a background process that runs later; it fires immediately on creation:
 
-1. **Logo fetch:** Query Google Favicon API (`https://www.google.com/s2/favicons?domain={domain}&sz=128`). Clearbit Logo API was shut down by HubSpot; Google Favicon is now the primary source. Cache locally via Artifacts MCP. Display on all pipeline cards and company profiles.
+1. **Logo fetch:** Query `https://logo.clearbit.com/{domain}` (free, no API key) or fall back to `{url}/favicon.ico`. Cache locally via Artifacts MCP. Display on all pipeline cards and company profiles.
 2. **Basic profile enrichment:** Use the company URL to extract: mission statement, domain, headcount range, HQ location, funding stage (from Crunchbase/PitchBook data if available). Auto-populate the Company Overview fields.
 3. **News scan:** Search for recent news (last 6 months) — funding rounds, product launches, layoffs, leadership changes. Populate the `recentNews` array.
 4. **Glassdoor/culture signal:** Search for Glassdoor rating and top culture tags. Populate `glassdoorRating` and `culture`.
 
-This enrichment runs in `discovered` stage. The full Research Brief (13-section deep dive) is reserved for when the role moves to `researching` — that's the trigger for the deeper analysis. But the job seeker should never see a blank company card; the auto-enrichment ensures there's always something useful from the moment a company enters the funnel.
+This enrichment runs in `discovered` stage. The full Research Brief (10-section deep dive) is reserved for when the role moves to `researching` — that's the trigger for the deeper analysis. But the job seeker should never see a blank company card; the auto-enrichment ensures there's always something useful from the moment a company enters the funnel.
 
 **Company Lookup on Manual Add:**
 
@@ -890,23 +890,28 @@ The Research Brief is Pathfinder's preparation engine. Before every interview, n
 13 sections, organized as: understand the role → understand the company → understand the people → understand your fit → prepare to perform.
 
 | # | Section | Purpose | Key Inputs |
-| 1 | Pursuit Economics | Top-level decision box: Recommendation, Fit Level, Confidence, Time Investment, Expected Yield, Gating Factor, Best Next Move | All sections (synthesized) |
-| 2 | Why This Role Exists | Parse JD for real business need beyond the posting | JD text, company context |
-| 3 | Company and Market Context | External research: business model, strategy, competitors, recent news via Tavily | Company profile, Tavily web search |
-| 4 | Why You Are Plausible | Strongest honest argument for candidacy despite gaps | JD text, resume, bullet bank |
-| 5 | Why You May Get Screened Out | Likely disqualifiers with severity, bridgeability, evidence | JD text, fit assessment |
-| 6 | What They Actually Need | Explicit + implied requirements from JD | JD text |
-| 7 | Your Fit | 7-column fit matrix: Requirement, Match, Proof, Risk, Bridge, Best Framing, Source | JD text, resume, bullet bank |
-| 8 | Gaps and Mitigation | Bridgeable vs fatal gaps with specific mitigation strategies | Sections 5 + 7 |
-| 9 | Network Strategy | Strategic contacts with ask type, key questions, decision impact | pf_connections, company context |
-| 10 | Interview Prep | Top 5 likely questions, top 3 risky, best stories, objection handling | JD, story bank, fit assessment |
-| 11 | Proof Points to Add | What evidence to add, where to use it (resume/outreach/mock), handoff actions | All sections |
-| 12 | Deal-Breaker Test | 3-5 facts that would kill pursuit, how to test, current assessment | All sections |
-| 13 | Next-Step Plan | Max 5 concrete next actions | All sections |
+|---|---------|---------|------------|
+| 1 | Role Decode | Parse JD: real problem, explicit/implied requirements, level signals, red flags | JD text |
+| 2 | Company Now | What's happening right now relevant to this role — news, launches, leadership changes | Company profile, web enrichment |
+| 3 | Funding & Corporate Structure | Funding rounds, investors, board, subsidiaries, acquisitions, financial health | Company profile, web enrichment |
+| 4 | Competitive Landscape | Named competitors in this role's product area, market dynamics, moat | JD text, company profile |
+| 5 | Team & Org Intelligence | Hiring manager, reporting line, team shape, interviewer research | JD text, interviewer names, connections |
+| 6 | Network & Connections | Who you know at this company, second-degree paths, warm intro candidates | `pf_connections` |
+| 7 | Fit Analysis | Your bullets vs JD requirements — green/yellow/red with gap positioning strategies | JD text, `pf_bullet_bank`, `pf_resume_log` |
+| 8 | Compensation Intelligence | Expected range, equity structure, negotiation leverage signals | `pf_comp_cache`, JD text |
+| 9 | Strategic Challenges & First 90 Days | What this role tackles first, your hypotheses for the interview | JD text, company context, Section 1+2+4 outputs |
+| 10 | Culture & Values Decode | Stated values vs reality, interview style signals, what gets rewarded | Company profile, culture data |
+| 11 | Questions to Ask | Role-specific, organized by round (recruiter, HM, panel, exec) | All previous sections |
+| 12 | TMAY Script | "Tell me About Yourself" — 90-sec and 2-min versions from your resume | `pf_bullet_bank`, Section 1 output |
+| 13 | Likely Interview Questions | Behavioral + technical from JD, matched to STAR stories from your bank | `pf_story_bank`, `pf_bullet_bank`, Section 1+7 outputs |
 
 #### 7.2.2 Generation Architecture
 
-All generation runs client-side via direct Claude API calls from the browser (`modules/shared/claude-api.js`). Sections execute sequentially in streaming mode — each section streams to the DOM as it generates. An optional Tavily web search step fetches live company news before generation begins. When no API key is available or the API fails, an offline fallback generator (`generateOfflineBrief`) builds all 13 sections from JD text parsing alone.
+All generation runs through MCP tool calls — no API keys in the browser. Sections execute in three batches based on dependencies:
+
+- **Batch 1** (parallel): Sections 1, 2, 3, 4, 5, 6, 8, 10 — all independent
+- **Batch 2** (parallel, after Batch 1): Sections 7, 9, 12, 13 — depend on earlier outputs
+- **Batch 3** (after Batch 2): Section 11 — synthesizes from all other sections
 
 Each section generates citations saved via `pf_save_citation` and content saved as MCP artifacts. See the standalone PRD for full prompt construction, caching/invalidation logic, degraded mode (unknown companies), export formats, and integration points.
 
@@ -1086,7 +1091,7 @@ MCP is the right abstraction because it's Claude-native: any agent that speaks M
 
 | Type | Produced By | Format | Example |
 |------|------------|--------|---------|
-| `research_brief` | Research Brief Agent | HTML | Full 13-section brief for Stripe + Staff PM role |
+| `research_brief` | Research Brief Agent | HTML | Full 10-section brief for Stripe + Staff PM role |
 | `resume` | Resume Tailor Agent | DOCX | Tailored resume for Meta, IC positioning |
 | `jd_snapshot` | Pipeline Tracker | Text | Saved JD text (preserves the original even if the posting goes down) |
 | `fit_assessment` | Resume Tailor Agent | JSON | Structured analysis: strong matches, gaps, borderline terms |
@@ -1420,8 +1425,6 @@ The dashboard provides navigation to every agent module. Each module opens as a 
 
 ### 7.7 Calendar Integration Agent
 
-> **Status: Planned** — Not yet implemented in code.
-
 The Calendar Integration agent bridges Pathfinder with Google Calendar to automate interview lifecycle tracking. Google Calendar is already connected via MCP — this agent reads calendar events, matches them to pipeline roles, triggers stage transitions, and powers time-aware nudges.
 
 #### 7.7.1 Event Detection & Matching
@@ -1503,8 +1506,6 @@ When a connection's outreach log shows the next step is due (tracked by the Pipe
 For thank-you notes, the Debrief Agent (5.9) hands off to the Outreach Generator with debrief context pre-loaded.
 
 ### 7.9 Post-Interview Debrief Agent
-
-> **Status: Planned** — Debrief form exists but conversational Claude debrief is not yet implemented.
 
 The Debrief Agent captures structured interview feedback immediately after each round, while memory is fresh. It produces a debrief record that feeds back into the Research Brief, informs prep for subsequent rounds, and builds a longitudinal dataset of interview patterns.
 
@@ -1601,8 +1602,6 @@ When a role reaches the `offer` stage, the comp agent provides:
 This feeds into the `negotiationScorecard` on the role record, giving the compensation dimension real numbers instead of gut feel.
 
 ### 7.11 Mock Interview Agent
-
-> **Status: Planned** — Story bank, TMAY practice, and company-calibrated questions are not yet implemented.
 
 The Mock Interview agent runs practice sessions calibrated to a specific company, role, and interview type. Unlike generic interview prep tools, it uses the full context Pathfinder has accumulated — company profile, JD analysis, fit assessment, positioning, and previous debrief patterns — to generate realistic, targeted practice.
 
@@ -1884,8 +1883,6 @@ Each mock session produces:
 
 ### 7.12 Metrics & Analytics Page
 
-> **Status: Planned** — Analytics page not yet implemented.
-
 The Metrics page provides a longitudinal view of the job search — trends over time, conversion rates, and patterns that aren't visible from the daily Dashboard view. This is both a self-management tool (am I putting in enough effort? where is my funnel leaking?) and a demo piece (shows data visualization and analytical thinking).
 
 #### 7.12.1 Core Metrics
@@ -2071,8 +2068,6 @@ Clicking any source link opens the original (Gmail thread, Calendar event, job p
 
 ### The Source Ledger (Centralized Roll-Up)
 
-> **Status: Planned** — Citation system designed but not yet implemented.
-
 All citations roll up into a single **Source Ledger** — a read-only view accessible from the Dashboard nav. This is where you go to answer "where did all this data come from?"
 
 **Layout:** Table view with columns: Claim, Source, Trust, Company/Role, Module, Date, Status (live/stale). Sortable and filterable by any column.
@@ -2186,8 +2181,6 @@ All structured data lives in localStorage with the `pf_` prefix. Each key stores
 ```
 
 ### 8.3 Data Import
-
-> **Status: Planned** — Import tool not yet implemented.
 
 Pathfinder supports importing existing job search data from spreadsheets, JSON exports, or other tools. The import flow:
 
@@ -2514,25 +2507,7 @@ If Pathfinder were to become a product (not a current goal, but worth thinking t
 
 ## 14. Changelog
 
-### Recent Feature Additions (v3.22–v3.29)
-
-The following features have been added since v3.22 but are not yet documented in individual sections of the PRD. They are listed here for reference:
-
-- **Job Feed search bar (v3.28):** Live filtering across all tabs (saved, new, archived) with instant results
-- **Explore dialog (v3.28):** External job board discovery feature within the feed module
-- **Offline brief generator (v3.22):** `generateOfflineBrief()` builds all 13 sections from JD text when API is unavailable
-- **Cross-tab auto-refresh (v3.28):** Pipeline detects changes from other tabs via localStorage `storage` event + `visibilitychange` listener
-- **Cache-busting meta tags (v3.28):** Prevents stale asset loading across modules
-- **Role strip pinning (v3.22):** Research Brief context strip is pinnable/sticky
-- **Feed → Pipeline data transfer (v3.28):** Adding roles from feed carries domain, location, salary, remote status, positioning, headcount, and stage
-- **Google Favicon API migration (v3.28):** Replaced dead Clearbit Logo API across all modules
-- **Pipeline conversion analytics (v3.28):** Stage-to-stage conversion rates using stageHistory, capped at 100%
-- **Tavily web search (v3.22):** Live company news retrieval for Research Brief
-- **Additional Context input (v3.22):** Text + file upload for supplementary role context
-- **7 evidence labels (v3.22):** JD, EXT, ILI, CTX, DOC, INF, NC with color coding
-- **PDF export (v3.22):** Research Brief exportable to PDF via html2pdf.js
-
-Every change to the application triggers a PRD version bump and an entry below. The full changelog with more detail lives in `CHANGELOG.md` at the repo root.
+Every change to the application triggers a PRD version bump and an entry here. The full changelog with more detail lives in `CHANGELOG.md` at the repo root.
 
 | Version | Date | Summary |
 |---------|------|---------|

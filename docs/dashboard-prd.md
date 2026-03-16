@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/dashboard/`
-**Version:** v3.29.0
-**Last Updated:** 2026-03-15
-**Status:** Active — v3.29.0 features live
+**Version:** v3.14
+**Last Updated:** 2026-03-13
+**Status:** Active — v3.14.0 features live
 
 ---
 

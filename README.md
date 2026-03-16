@@ -15,7 +15,7 @@ The job search tool market is fragmented: Teal for tracking, Jobscan for ATS opt
 | **Pipeline Tracker** | Kanban board + table view for tracking companies and roles through 8 stages | Built |
 | **Dashboard & Launcher** | Daily action queue, pipeline summary, streak tracking, nudge engine | Built |
 | **Job Feed Listener** | Monitors Gmail alerts, Indeed, Dice; scores roles 0-100 against your preferences | Built |
-| **Research Brief** | Streams a 13-section pursuit strategy brief from Claude with evidence labels, Tavily web search, and offline fallback | Built |
+| **Research Brief** | Streams a 10-section company/role prep brief from Claude | Built |
 | **Resume Tailor** | Positioning-aware resume generation (IC vs. management framing) with bullet bank | Built |
 | **Calendar Integration** | Links Google Calendar to pipeline, triggers stage transitions | Built |
 | **Outreach Generator** | Drafts 8 message types with real personalization signals | Built |
@@ -49,8 +49,7 @@ The job search tool market is fragmented: Teal for tracking, Jobscan for ATS opt
 - CSS Custom Properties (design tokens)
 - localStorage (data persistence)
 - Claude API via Artifacts MCP (agent intelligence)
-- Google Favicon API (company logos)
-- Tavily API (live web search — optional, degrades gracefully)
+- Clearbit Logo API (company logos)
 - GitHub Pages (deployment)
 
 ## Project Structure

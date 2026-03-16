@@ -8,7 +8,7 @@
 
 Pathfinder is an agentic job search system with 11 standalone HTML modules sharing data via localStorage + IndexedDB. Each module is a single `index.html` file in `modules/`. There is no backend server required for core functionality — Claude API calls happen directly from the browser via `modules/shared/claude-api.js`.
 
-**Current Version:** v3.31.0 (as of 2026-03-15)
+**Current Version:** v3.22.0 (as of 2026-03-14)
 **Last Major Features:** Research Brief V3 — pursuit strategy rewrite with 13 sections, Tavily web search for live company news, Additional Context input (text + file upload via mammoth.js), 7 evidence labels (JD/EXT/ILI/CTX/DOC/INF/NC), upgraded fit model, Pursuit Economics decision box, screen-out risk analysis, deal-breaker test, proof-point handoff. Previous: V2 (v3.21.0), safeJsonParse hardening (v3.20.5).
 **Status:** All 11 modules pass HTML integrity + brace balance + safeJsonParse coverage. Research Brief V3: 2518 lines, 356/356 braces balanced, temperature 0.3, maxTokens 4096. Tavily API key optional — degrades gracefully. Zero bare JSON.parse(localStorage) calls remaining.
 
@@ -133,14 +133,14 @@ function safeJsonParse(key, fallback = null) {
 Usage: `safeJsonParse('pf_roles', [])` instead of `JSON.parse(localStorage.getItem('pf_roles') || '[]')`.
 
 ### 7. Company Logo Pattern (MANDATORY)
-Any module showing company logos MUST import `modules/shared/logos.js` — do NOT copy logo functions inline. This was extracted in v3.30.0 after the logo system regressed 4+ times from copy-paste drift.
-
-**Source of truth:** `modules/shared/logos.js` (v3.30.0)
-**Import:** `<script src="../shared/logos.js?v=3.30.0"></script>` (before your main `<script>` block)
-**Available functions:** `DOMAIN_OVERRIDES`, `getCompanyDomain(name, url)`, `getCompanyLogoUrl(name, url)`, `getCompanyColor(name)`, `handleLogoError(img, name, cssClass)`, `companyLogoHtml(name, cssClass, url)`, `guessDomain(name)`
-**To add a new domain override:** Edit `DOMAIN_OVERRIDES` in `logos.js` — one change, all modules get it.
-**Regression check:** `scripts/regression-check.sh` fails if any module has inline DOMAIN_OVERRIDES or getCompanyDomain.
-**CSS:** `.card-logo` (container) + `.card-logo-fallback` (letter circle) in `pathfinder.css`
+Any module showing company logos MUST use the canonical logo system (ported from Pipeline → Feed in v3.8.4). Do NOT reinvent logo rendering. The pattern is:
+- `DOMAIN_OVERRIDES` — known tricky names (Amazon Ads → amazon.com, Notion → notion.so, etc.)
+- `getCompanyDomain(name, url)` — ATS-aware extraction (Workday, Greenhouse, Lever, Ashby, LinkedIn URLs)
+- `getCompanyColor(name)` — deterministic color from 16-color palette for fallback initials
+- `handleLogoError(img, name, cssClass)` — replaces broken `<img>` with colorful letter circle
+- `renderCardLogo(item)` or `companyLogoHtml(name, cssClass, url)` — returns full HTML with onerror fallback
+- CSS: `.card-logo` (container) + `.card-logo-fallback` (letter circle)
+- Source of truth: Pipeline module (`getCompanyDomain`, `companyLogoHtml`) and Feed module (`renderCardLogo`)
 
 ---
 
@@ -547,11 +547,6 @@ The MCP server at `mcp-servers/pathfinder-artifacts-mcp/` provides the following
 - Research Brief stage dropdown missing "outreach" stage (Amazon Ads role has stage "outreach" which isn't in the stage list)
 - Git lock files: if commits fail with "index.lock exists", run: `find ~/Projects/job-search-agents-v2/.git -name "*.lock" -delete`
 
-### Recently Fixed (v3.29.0)
-- **Clearbit Logo API dead** → Resolved. Switched to Google Favicon API across 6 files. Logos load reliably with letter-initial colored circles as fallback.
-- **Pipeline analytics 300% conversion** → Resolved. Formula fixed for accurate conversion rate calculations.
-- **Research Brief API error fallback** → Resolved. Re-throws all API errors for proper debugging instead of silently failing.
-
 ### Recently Fixed (v3.20.5-6) — QA Pass
 - **Resume Builder nav bar**: Was completely missing — users got trapped in the module. Added full 11-module nav bar with Resume tab marked active.
 - **Pipeline Sync Hub link**: Was pointing to `../sync-hub/` (wrong) — fixed to `../sync/`.
@@ -715,14 +710,14 @@ The MCP server at `mcp-servers/pathfinder-artifacts-mcp/` provides the following
 - **MCP pipeline backup system**: Added `pf_backup_pipeline` and `pf_restore_pipeline` MCP tools. Backups write timestamped JSON snapshots of all `pf_*` keys to `~/.pathfinder/backups/` with SHA-256 checksums and auto-pruning (max 50). HTTP bridge endpoints added (`POST /backup`, `POST /restore`, `GET /backups`). Sync Hub auto-backs up after every Sync All with localStorage fallback when MCP is unavailable.
 
 ### Previously Fixed (v2.3.2)
-- **Migration data sync**: Updated all 3 migration JSON files to match browser localStorage: 7 real roles (full JDs, comms logs, resumes), 50 companies (fixed ATS→real domains), 63 connections (4 new manual). Bumped MIGRATION_VERSION to 4. Replaced Google Favicon API logoUrls in migration data.
+- **Migration data sync**: Updated all 3 migration JSON files to match browser localStorage: 7 real roles (full JDs, comms logs, resumes), 50 companies (fixed ATS→real domains), 63 connections (4 new manual). Bumped MIGRATION_VERSION to 4. Replaced Clearbit logoUrls with Google Favicon API in migration data.
 
 ### Previously Fixed (v2.3.1)
 - **Sibling roles in detail panel**: Role detail slide-out now shows "Other Roles at [Company]" section when a company has multiple roles. Each sibling shows stage pill, tier, level, last activity. Clicking navigates directly to that role's detail. Uses IIFE in template literal to compute sibling list.
 
 ### Previously Fixed (v2.3.0)
 - **Removed bulk-select checkbox entirely**: The `<input type="checkbox">` on every kanban card (and all associated bulk-select CSS, toolbar HTML, JS functions) has been deleted. This was the "white square" reported across 3+ sessions.
-- **Restored company logos**: Using Google Favicon API (`https://www.google.com/s2/favicons?domain={domain}&sz=128`). Logos load reliably. Letter-initial colored circles as fallback. New companies get logos automatically via domain resolution (`getCompanyDomain`).
+- **Restored company logos**: Switched from dead Clearbit API to Google Favicon API (`/s2/favicons?domain=X&sz=128`). Logos load reliably. Letter-initial colored circles as fallback. New companies get logos automatically via domain resolution (`getCompanyDomain`).
 
 ### Previously Fixed (v2.2.0)
 - **Real pipeline data from spreadsheet**: Regenerated `pf_roles.json` with actual outreach statuses mapped to Pipeline stages (6 in Outreach, 1 in Screen, 38 in Discovered). Personal notes now populated from spreadsheet contact notes.
@@ -751,7 +746,7 @@ The MCP server at `mcp-servers/pathfinder-artifacts-mcp/` provides the following
 - Calendar Sync Log "undefined" → data shape mismatch between Sync Hub writer (`source`) and Calendar reader (`action`); now handles both
 
 ### Previously Fixed (v2.1.3-v2.1.4)
-- Google Favicon API implemented across 6 files for reliable company logo resolution
+- Clearbit logo API dead (HubSpot acquisition) → replaced with Google Favicon API across 6 files
 - Pipeline view toggle buttons destroyed on click → removed conflicting parent handler
 - Research Brief "MCP bridge not running" scare notice → removed (direct API is default)
 - Pipeline `applyFilters` undefined crash → fixed to `filterRoles`
