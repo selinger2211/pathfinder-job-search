@@ -1583,7 +1583,14 @@
     }
 
     .resume-upload-zone input[type="file"] {
-      display: none;
+      /* v3.31.0: Use opacity+position instead of display:none.
+         Some browsers block .click() on display:none file inputs. */
+      position: absolute;
+      width: 0;
+      height: 0;
+      opacity: 0;
+      overflow: hidden;
+      pointer-events: none;
     }
 
     .resume-upload-zone-text {
@@ -5970,12 +5977,13 @@
           `}
           <!-- Resume upload drop zone (always available) -->
           <div class="resume-upload-zone" id="resume-upload-zone"
+               onclick="document.getElementById('resume-file-input').click();"
                ondragover="event.preventDefault(); this.classList.add('dragover');"
                ondragleave="this.classList.remove('dragover');"
                ondrop="event.preventDefault(); this.classList.remove('dragover'); handleResumeDrop(event, '${role.id}');">
             <input type="file" id="resume-file-input" accept=".pdf,.docx,.doc" onchange="handleResumeSelect(event, '${role.id}')">
             <div class="resume-upload-zone-text">
-              <strong>Drop a file here</strong> or <a href="#" onclick="event.preventDefault(); document.getElementById('resume-file-input').click();">browse</a>
+              <strong>Drop a file here</strong> or browse
               <div style="font-size: var(--text-xs); margin-top: var(--space-1);">PDF or DOCX — resumes, cover letters, or other role documents</div>
             </div>
           </div>

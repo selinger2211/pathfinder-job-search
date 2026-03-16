@@ -4,6 +4,42 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.31.0 — 2026-03-15
+
+### Job Feed Listener — Gmail Scan Pipeline & Sources Tab Rebuild + Pipeline File Upload Fix
+
+**Gmail scanning now powered by Cowork MCP (replaces broken OAuth flow):**
+- Removed legacy Gmail OAuth token modal and direct Gmail API calls (never worked: CORS + token expiry)
+- New architecture: Cowork scheduled task scans Gmail via MCP connector → writes `data/gmail-scan.json` → Feed loads on init
+- Scheduled task `pathfinder-gmail-feed-scan` runs daily at 8am, parses 4 email types:
+  - LinkedIn Job Alerts (jobalerts-noreply@linkedin.com) — extracts all jobs with titles, companies, locations, LinkedIn URLs
+  - Built In digests (support@builtin.com) — extracts companies, titles, locations, salary ranges
+  - Referrals (*@myworkday.com, *@amazon.jobs) — extracts referrer, company, role, application URL
+  - Recruiter outreach — extracts company, role title from subject/body
+
+**Initial feed populated with 22 real roles from Gmail:**
+- 11 LinkedIn roles (OpenAI, Chime, Cleo, Reducto, Capital Group, Microsoft, Zillow, Intuit, Dice)
+- 7 Built In roles (Toast, GEICO, Ethos, Amplitude, DIRECTV, SoFi, Zendesk)
+- 3 referrals (Amazon via Sam Blum, LiveRamp via Manoj Kumar, Yahoo via Giovanni Gardelli)
+- 1 recruiter (RingCentral — interview scheduled)
+
+**Sources tab rebuilt:**
+- Gmail section: scan status display with last-import timestamp, source breakdown chips, manual "Import Scan Results" file picker
+- Removed: Connect Gmail button, Gmail token modal, broken scan button
+- Updated FEED_SOURCES to include referral + recruiter as active sources
+- Career pages section retained (Greenhouse, Lever, Ashby monitoring still works)
+
+**Feed init enhanced:**
+- `loadGmailScanResults()` runs on every page load, merges new scan items with dedup
+- Tracks last import to prevent re-importing same scan
+- Falls back to legacy gmail-seed.json if scan file unavailable
+
+**Pipeline file upload fix:**
+- Fixed file upload zone not responding to clicks — `display: none` on file input prevented `.click()` in some browsers. Changed to `opacity: 0` + absolute positioning
+- Made entire drop zone clickable (was: only the tiny "browse" link triggered the file dialog)
+
+---
+
 ## v3.30.1 — 2026-03-15
 
 ### Critical Bug Fixes + Workflow Regression Test System

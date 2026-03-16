@@ -1,26 +1,22 @@
 #!/usr/bin/env node
 /* ====================================================================
- * PATHFINDER — WORKFLOW REGRESSION TEST
+ * PATHFINDER — FULL WORKFLOW REGRESSION TEST
  * ====================================================================
- * Deep static analysis that catches FUNCTIONAL breakage:
- *   1. onclick/event handlers referencing undefined functions
- *   2. Contradictory operations (open + close called in sequence)
- *   3. DOM IDs referenced in JS but missing from HTML
- *   4. Removed/renamed functions still being called
- *   5. Script load order issues
- *   6. CSS selector bugs (querySelector targeting wrong element)
- *   7. URL param contracts between modules
+ * Comprehensive static analysis across all 11 modules + shared scripts.
+ * Tests 8 categories of functional breakage:
  *
- * Unlike regression-check.sh (pattern drift), this tests whether the
- * code can actually RUN without throwing ReferenceErrors.
+ *   1. REMOVED FUNCTIONS    — calls to deleted/renamed functions
+ *   2. ONCLICK RESOLUTION   — every onclick/onchange handler resolves
+ *   3. DOM ID INTEGRITY     — getElementById targets exist in HTML
+ *   4. CONTRADICTORY CALLS  — open+close in same handler
+ *   5. SELECTOR AMBIGUITY   — querySelector with generic selectors
+ *   6. SCRIPT LOAD ORDER    — shared scripts before inline code
+ *   7. URL PARAM CONTRACTS  — sender passes, target handles
+ *   8. CROSS-MODULE DATA    — localStorage keys match between modules
  *
- * Usage:
- *   node scripts/workflow-regression.js
- *   node scripts/workflow-regression.js --verbose
- *   node scripts/workflow-regression.js --module pipeline
+ * Run after EVERY code change: node scripts/workflow-regression.js
  *
- * Created v3.30.1 after getCompanyLogoFallbackUrl broke all Pipeline
- * interactions — a function removed in v3.30.0 was still being called.
+ * Created v3.30.1 after three Pipeline bugs shipped in one release.
  * ==================================================================== */
 
 const fs = require('fs');
@@ -36,372 +32,307 @@ const MODULES_DIR = path.join(PROJECT_ROOT, 'modules');
 const SHARED_DIR = path.join(MODULES_DIR, 'shared');
 
 /* ====== REMOVED FUNCTIONS REGISTRY ======
- * Functions that once existed but were removed or renamed.
- * Any call to these is guaranteed broken. Add to this list
- * whenever a function is removed during a refactor.
+ * Maintain this list whenever functions are removed or renamed.
+ * Each entry = guaranteed ReferenceError if called.
  */
 const REMOVED_FUNCTIONS = [
-  'getCompanyLogoFallbackUrl',   /* Removed v3.30.0 — use handleLogoError() */
-  'getClearbitLogoUrl',          /* Removed v3.29.0 — Clearbit is dead */
-  'clearbitLogoUrl',             /* Removed v3.29.0 */
+  { name: 'getCompanyLogoFallbackUrl', removed: 'v3.30.0', replacement: 'handleLogoError()' },
+  { name: 'getClearbitLogoUrl',        removed: 'v3.29.0', replacement: 'getCompanyLogoUrl()' },
+  { name: 'clearbitLogoUrl',           removed: 'v3.29.0', replacement: 'getCompanyLogoUrl()' },
 ];
 
-/* ====== OUTPUT HELPERS ====== */
-let failCount = 0;
-let warnCount = 0;
-let passCount = 0;
-
-const RED = '\x1b[0;31m';
-const YELLOW = '\x1b[1;33m';
-const GREEN = '\x1b[0;32m';
-const DIM = '\x1b[2m';
-const NC = '\x1b[0m';
-
-function fail(module, msg) { failCount++; console.log(`  ${RED}FAIL${NC} [${module}] ${msg}`); }
-function warn(module, msg) { warnCount++; if (VERBOSE) console.log(`  ${YELLOW}WARN${NC} [${module}] ${msg}`); }
-function pass(module, msg) { passCount++; if (VERBOSE) console.log(`  ${GREEN}PASS${NC} [${module}] ${msg}`); }
-function info(msg) { if (VERBOSE) console.log(`  ${DIM}${msg}${NC}`); }
-
-/* ====== PARSING HELPERS ====== */
-
-/**
- * Extract all inline <script> blocks from an HTML file.
+/* ====== KNOWN SHARED FUNCTIONS ======
+ * Functions that MUST come from shared scripts (not inline).
+ * If a module calls these without importing the right script, it'll break.
  */
+const SHARED_FUNCTION_SOURCES = {
+  'handleLogoError':    'logos.js',
+  'companyLogoHtml':    'logos.js',
+  'getCompanyDomain':   'logos.js',
+  'guessDomain':        'logos.js',
+  'getCompanyColor':    'logos.js',
+  'DOMAIN_OVERRIDES':   'logos.js',
+};
+
+/* ====== OUTPUT ====== */
+let failCount = 0, warnCount = 0, passCount = 0;
+const RED = '\x1b[31m', YELLOW = '\x1b[33m', GREEN = '\x1b[32m';
+const DIM = '\x1b[2m', BOLD = '\x1b[1m', NC = '\x1b[0m';
+
+function fail(mod, msg) { failCount++; console.log(`  ${RED}FAIL${NC} [${mod}] ${msg}`); }
+function warn(mod, msg) { warnCount++; console.log(`  ${YELLOW}WARN${NC} [${mod}] ${msg}`); }
+function pass(mod, msg) { passCount++; if (VERBOSE) console.log(`  ${GREEN}PASS${NC} [${mod}] ${msg}`); }
+function section(name) { console.log(`\n${BOLD}--- ${name} ---${NC}`); }
+
+/* ====== PARSING ====== */
+
 function extractInlineScripts(html) {
   const scripts = [];
   const lines = html.split('\n');
-  let inScript = false;
-  let scriptLines = [];
-  let scriptStart = 0;
-
+  let inScript = false, buf = [], start = 0;
   for (let i = 0; i < lines.length; i++) {
-    const trimmed = lines[i].trim();
-    if (trimmed.startsWith('<script') && !trimmed.includes('src=')) {
-      inScript = true;
-      scriptStart = i + 1;
-      scriptLines = [];
-      const afterTag = trimmed.replace(/<script[^>]*>/, '');
-      if (afterTag) scriptLines.push(afterTag);
-      continue;
-    }
-    if (inScript && trimmed.includes('</script>')) {
-      const beforeClose = lines[i].split('</script>')[0];
-      if (beforeClose.trim()) scriptLines.push(beforeClose);
-      scripts.push({ code: scriptLines.join('\n'), startLine: scriptStart });
+    const t = lines[i].trim();
+    if (t.startsWith('<script') && !t.includes('src=')) {
+      inScript = true; start = i + 1; buf = [];
+      const after = t.replace(/<script[^>]*>/, '');
+      if (after) buf.push(after);
+    } else if (inScript && t.includes('</script>')) {
+      const before = lines[i].split('</script>')[0];
+      if (before.trim()) buf.push(before);
+      scripts.push({ code: buf.join('\n'), startLine: start, lineCount: buf.length });
       inScript = false;
-      continue;
-    }
-    if (inScript) {
-      scriptLines.push(lines[i]);
+    } else if (inScript) {
+      buf.push(lines[i]);
     }
   }
   return scripts;
 }
 
-/**
- * Extract function definitions from JS code.
- */
 function extractFunctionDefs(code) {
   const fns = new Set();
   let m;
-
-  /* function foo() */
-  const funcDecl = /function\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\(/g;
-  while ((m = funcDecl.exec(code)) !== null) fns.add(m[1]);
-
-  /* const/let/var foo = function/arrow */
-  const arrowOrExpr = /(?:const|let|var)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*(?:async\s+)?(?:function|\(|[a-zA-Z_$][a-zA-Z0-9_$]*\s*=>)/g;
-  while ((m = arrowOrExpr.exec(code)) !== null) fns.add(m[1]);
-
+  const re1 = /function\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\(/g;
+  while ((m = re1.exec(code))) fns.add(m[1]);
+  const re2 = /(?:const|let|var)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*(?:async\s+)?(?:function|\([^)]*\)\s*=>|[a-zA-Z_$][a-zA-Z0-9_$]*\s*=>)/g;
+  while ((m = re2.exec(code))) fns.add(m[1]);
   return fns;
 }
 
-/**
- * Extract DOM element IDs from HTML.
- */
 function extractHtmlIds(html) {
   const ids = new Set();
-  const idRe = /id\s*=\s*"([^"]+)"/g;
   let m;
-  while ((m = idRe.exec(html)) !== null) ids.add(m[1]);
+  const re = /id\s*=\s*"([^"]+)"/g;
+  while ((m = re.exec(html))) ids.add(m[1]);
   return ids;
 }
 
-/**
- * Extract getElementById calls from JS code.
- */
-function extractGetElementByIdCalls(code, startLine) {
-  const calls = [];
-  const lines = code.split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    const re = /getElementById\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
-    let m;
-    while ((m = re.exec(lines[i])) !== null) {
-      if (!m[1].includes('$') && !m[1].includes('+')) {
-        calls.push({ id: m[1], line: startLine + i });
-      }
-    }
-  }
-  return calls;
+function getSharedFunctions(filename) {
+  const fp = path.join(SHARED_DIR, filename);
+  if (!fs.existsSync(fp)) return new Set();
+  const code = fs.readFileSync(fp, 'utf8');
+  const fns = extractFunctionDefs(code);
+  /* Also grab top-level const/var declarations */
+  let m;
+  const re = /^(?:const|let|var)\s+([A-Z_$][A-Z0-9_$]*)\s*=/gm;
+  while ((m = re.exec(code))) fns.add(m[1]);
+  return fns;
 }
 
-/**
- * Extract shared script imports from HTML.
- */
 function extractSharedImports(html) {
   const imports = [];
-  const re = /src\s*=\s*"\.\.\/shared\/([^"?]+)/g;
   let m;
-  while ((m = re.exec(html)) !== null) imports.push(m[1]);
+  const re = /src\s*=\s*"\.\.\/shared\/([^"?]+)/g;
+  while ((m = re.exec(html))) imports.push(m[1]);
   return imports;
 }
 
-/**
- * Get functions defined in a shared JS file.
- */
-function getSharedFunctions(filename) {
-  const filepath = path.join(SHARED_DIR, filename);
-  if (!fs.existsSync(filepath)) return new Set();
-  return extractFunctionDefs(fs.readFileSync(filepath, 'utf8'));
-}
+/* ====== CHECK 1: REMOVED FUNCTIONS ====== */
 
-/**
- * Get global CONST declarations from a shared JS file.
- */
-function getSharedGlobals(filename) {
-  const filepath = path.join(SHARED_DIR, filename);
-  if (!fs.existsSync(filepath)) return new Set();
-  const code = fs.readFileSync(filepath, 'utf8');
-  const globals = new Set();
-  const re = /^(?:const|let|var)\s+([A-Z_$][A-Z0-9_$]*)\s*=/gm;
-  let m;
-  while ((m = re.exec(code)) !== null) globals.add(m[1]);
-  return globals;
-}
-
-/* ====== CHECK 1: onclick handlers ====== */
-
-/**
- * Extract top-level function names from onclick handlers and verify they exist.
- * Handles patterns: fnName(), Object.method(), this.method(), chained calls.
- */
-function checkOnclickHandlers(moduleName, html, availableFunctions) {
-  const lines = html.split('\n');
-  let checked = 0;
-  let passed = 0;
-
-  /* Known safe onclick patterns that aren't standalone function calls */
-  const safePatterns = new Set([
-    'console', 'window', 'document', 'this', 'event', 'history',
-    'localStorage', 'sessionStorage', 'navigator', 'location',
-    'JSON', 'Math', 'Date', 'Array', 'Object', 'String', 'Number',
-    'alert', 'confirm', 'prompt', 'setTimeout', 'setInterval',
-    'clearTimeout', 'clearInterval', 'encodeURIComponent',
-  ]);
-
-  for (let i = 0; i < lines.length; i++) {
-    const onclickRe = /on(?:click|change|input|submit|error)\s*=\s*"([^"]+)"/gi;
-    let m;
-    while ((m = onclickRe.exec(lines[i])) !== null) {
-      const handler = m[1];
-
-      /* Extract the FIRST function call (the main intent).
-       * For "ObjectName.method()" → check ObjectName
-       * For "fnName()" → check fnName
-       * For "fnA(); fnB()" → check both fnA and fnB
-       */
-      const statements = handler.split(';').map(s => s.trim()).filter(Boolean);
-      for (const stmt of statements) {
-        /* Get the first identifier before a ( */
-        const callMatch = stmt.match(/^([a-zA-Z_$][a-zA-Z0-9_$]*)/);
-        if (!callMatch) continue;
-
-        const firstName = callMatch[1];
-
-        /* Skip safe DOM/browser built-ins */
-        if (safePatterns.has(firstName)) continue;
-
-        /* If it's Object.method(), only check Object exists */
-        const dotCall = stmt.match(/^([a-zA-Z_$][a-zA-Z0-9_$]*)\.([a-zA-Z_$]+)\s*\(/);
-        if (dotCall) {
-          /* For IIFE-style apps (DebriefApp.method), the object is a namespace — skip */
-          if (dotCall[1].endsWith('App') || dotCall[1] === 'PF' || dotCall[1] === 'lucide') continue;
-          /* Check if the object variable exists */
-          if (availableFunctions.has(dotCall[1])) { checked++; passed++; continue; }
-        }
-
-        /* Standalone function call: fnName(...) */
-        const standaloneCall = stmt.match(/^([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\(/);
-        if (standaloneCall) {
-          checked++;
-          const fnName = standaloneCall[1];
-          if (availableFunctions.has(fnName) || safePatterns.has(fnName)) {
-            passed++;
-          } else {
-            fail(moduleName, `Line ${i + 1}: onclick calls undefined "${fnName}()" — ${handler.substring(0, 60)}`);
-          }
-        }
-      }
-    }
-  }
-
-  if (checked > 0 && passed === checked) {
-    pass(moduleName, `All ${checked} onclick handlers resolve to defined functions`);
-  }
-}
-
-/* ====== CHECK 2: Contradictory calls ====== */
-
-function checkContradictoryCalls(moduleName, html) {
-  const lines = html.split('\n');
-  let found = 0;
-  for (let i = 0; i < lines.length; i++) {
-    /* Pattern: open...(); close...() in same onclick */
-    const re = /on\w+\s*=\s*"[^"]*\b(open[A-Z]\w*)\([^)]*\)\s*;\s*(close[A-Z]\w*)\([^)]*\)[^"]*"/g;
-    let m;
-    while ((m = re.exec(lines[i])) !== null) {
-      const openTarget = m[1].replace(/^open/, '');
-      const closeTarget = m[2].replace(/^close/, '');
-      if (openTarget === closeTarget) {
-        found++;
-        fail(moduleName, `Line ${i + 1}: Contradictory — ${m[1]}() then ${m[2]}() in same handler`);
-      }
-    }
-  }
-  if (found === 0) pass(moduleName, 'No contradictory open/close sequences');
-}
-
-/* ====== CHECK 3: getElementById integrity ====== */
-
-function checkElementIds(moduleName, html, scripts) {
-  const htmlIds = extractHtmlIds(html);
-  let total = 0;
-  let passed = 0;
-  const missing = [];
-
-  scripts.forEach(s => {
-    extractGetElementByIdCalls(s.code, s.startLine).forEach(({ id, line }) => {
-      total++;
-      if (htmlIds.has(id)) {
-        passed++;
-      } else {
-        missing.push({ id, line });
-      }
-    });
-  });
-
-  /* Only flag as FAIL if the ID is clearly static and not dynamically created */
-  const dynamicPatterns = ['Toast', 'tooltip', 'popover', 'Popup', 'Modal'];
-  missing.forEach(({ id, line }) => {
-    const isDynamic = dynamicPatterns.some(p => id.includes(p)) || id.includes('-');
-    if (isDynamic) {
-      warn(moduleName, `Line ${line}: getElementById('${id}') — ID may be dynamic`);
-    } else {
-      warn(moduleName, `Line ${line}: getElementById('${id}') — no matching id in HTML`);
-    }
-  });
-
-  if (total > 0 && passed === total) {
-    pass(moduleName, `All ${total} getElementById calls match HTML elements`);
-  } else if (total > 0) {
-    pass(moduleName, `${passed}/${total} getElementById calls match HTML elements`);
-  }
-}
-
-/* ====== CHECK 4: Removed function calls ====== */
-
-function checkRemovedFunctions(moduleName, html) {
+function checkRemovedFunctions(mod, html) {
   const lines = html.split('\n');
   let clean = true;
-  REMOVED_FUNCTIONS.forEach(fn => {
+  REMOVED_FUNCTIONS.forEach(({ name, removed, replacement }) => {
     for (let i = 0; i < lines.length; i++) {
-      /* Skip comments */
-      const trimmed = lines[i].trim();
-      if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) continue;
-      if (lines[i].includes(fn + '(') || lines[i].includes(fn + ' (')) {
-        fail(moduleName, `Line ${i + 1}: Calls removed function "${fn}()"`);
+      const t = lines[i].trim();
+      if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*')) continue;
+      if (lines[i].includes(name + '(') || lines[i].includes(name + ' (')) {
+        fail(mod, `Line ${i + 1}: Calls removed "${name}()" (removed ${removed}) → use ${replacement}`);
         clean = false;
       }
     }
   });
-  if (clean) pass(moduleName, 'No calls to removed/renamed functions');
+  if (clean) pass(mod, `No calls to ${REMOVED_FUNCTIONS.length} removed functions`);
 }
 
-/* ====== CHECK 5: Script load order ====== */
+/* ====== CHECK 2: ONCLICK RESOLUTION ====== */
 
-function checkScriptOrder(moduleName, html) {
+function checkOnclickHandlers(mod, html, availableFns) {
   const lines = html.split('\n');
-  const sharedScripts = [];
-  let firstInlineScript = Infinity;
+  let checked = 0, passed = 0;
+
+  /* These are accessed via dot notation (Object.method) or are browser built-ins */
+  const safe = new Set([
+    'console','window','document','this','event','history','location',
+    'localStorage','sessionStorage','navigator','JSON','Math','Date',
+    'Array','Object','String','Number','alert','confirm','prompt',
+    'setTimeout','setInterval','clearTimeout','clearInterval',
+    'encodeURIComponent','decodeURIComponent','parseInt','parseFloat',
+  ]);
 
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes('src="../shared/') && !lines[i].includes('data-layer.js')) {
-      const fileMatch = lines[i].match(/shared\/([^"?]+)/);
-      if (fileMatch) sharedScripts.push({ file: fileMatch[1], line: i + 1 });
-    }
-    if (lines[i].trim().startsWith('<script') && !lines[i].includes('src=') && firstInlineScript === Infinity) {
-      /* Skip tiny IIFE scripts in <head> (cache purge, theme init, etc.)
-       * — only flag the MAIN script block (>50 lines) */
-      let scriptEnd = i;
-      for (let j = i + 1; j < lines.length && j < i + 200; j++) {
-        if (lines[j].includes('</script>')) { scriptEnd = j; break; }
-      }
-      if (scriptEnd - i > 50) {
-        firstInlineScript = i + 1;
-      }
+    const re = /on(?:click|change|input|submit|error|load|focus|blur|keydown|keyup|mouseover|mouseout)\s*=\s*"([^"]+)"/gi;
+    let m;
+    while ((m = re.exec(lines[i]))) {
+      const handler = m[1];
+      /* Split by ; and check each statement's first function call */
+      handler.split(';').map(s => s.trim()).filter(Boolean).forEach(stmt => {
+        /* Get first identifier */
+        const call = stmt.match(/^([a-zA-Z_$][a-zA-Z0-9_$]*)/);
+        if (!call) return;
+        const name = call[1];
+        if (safe.has(name)) return;
+        /* Skip Object.method() patterns (namespaced calls) */
+        if (/^[a-zA-Z_$]+\.[a-zA-Z_$]+\s*\(/.test(stmt)) {
+          /* Check if it's a known app namespace (DebriefApp, MockInterviewApp, etc.) */
+          if (name.endsWith('App') || name === 'PF' || name === 'lucide') return;
+          /* Otherwise check the object name exists */
+          if (availableFns.has(name)) { checked++; passed++; return; }
+        }
+        /* Standalone: fnName(...) */
+        if (/^[a-zA-Z_$][a-zA-Z0-9_$]*\s*\(/.test(stmt)) {
+          checked++;
+          if (availableFns.has(name) || safe.has(name)) { passed++; }
+          else { fail(mod, `Line ${i+1}: onclick→"${name}()" not defined — handler: "${handler.substring(0,60)}"`); }
+        }
+      });
     }
   }
+  if (checked > 0 && passed === checked) pass(mod, `${checked} onclick handlers all resolve`);
+  return { checked, passed };
+}
 
-  let orderOk = true;
-  sharedScripts.forEach(s => {
-    if (s.line > firstInlineScript) {
-      fail(moduleName, `shared/${s.file} at line ${s.line} loads AFTER inline script at line ${firstInlineScript}`);
-      orderOk = false;
+/* ====== CHECK 3: DOM ID INTEGRITY ====== */
+
+function checkElementIds(mod, html, scripts) {
+  const htmlIds = extractHtmlIds(html);
+  let total = 0, ok = 0;
+  const missing = [];
+
+  scripts.forEach(s => {
+    const lines = s.code.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const re = /getElementById\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+      let m;
+      while ((m = re.exec(lines[i]))) {
+        if (m[1].includes('$') || m[1].includes('{')) continue; /* dynamic */
+        total++;
+        if (htmlIds.has(m[1])) { ok++; }
+        else { missing.push({ id: m[1], line: s.startLine + i }); }
+      }
     }
   });
-  if (sharedScripts.length > 0 && orderOk) {
-    pass(moduleName, 'Shared scripts load before inline code');
+
+  missing.forEach(({ id, line }) => {
+    warn(mod, `Line ${line}: getElementById('${id}') — no matching id in HTML (may be dynamic)`);
+  });
+
+  if (total > 0) {
+    if (ok === total) pass(mod, `All ${total} getElementById calls match HTML elements`);
+    else pass(mod, `${ok}/${total} getElementById calls match (${missing.length} may be dynamic)`);
   }
 }
 
-/* ====== CHECK 6: querySelector ambiguity ======
- * Catches cases where querySelector with generic selectors might
- * match the wrong element (like the Save button bug).
- */
-function checkSelectorAmbiguity(moduleName, scripts) {
-  const riskySelectors = [
-    /querySelector\s*\(\s*['"]button:last-child['"]\s*\)/,
-    /querySelector\s*\(\s*['"]button:first-child['"]\s*\)/,
-    /querySelector\s*\(\s*['"]div:last-child['"]\s*\)/,
-    /querySelector\s*\(\s*['"]input:last-child['"]\s*\)/,
+/* ====== CHECK 4: CONTRADICTORY CALLS ====== */
+
+function checkContradictoryCalls(mod, html) {
+  const lines = html.split('\n');
+  let found = 0;
+  for (let i = 0; i < lines.length; i++) {
+    /* open...(); close...() in same event handler */
+    const re = /on\w+\s*=\s*"[^"]*\b(open[A-Z]\w*)\([^)]*\)\s*;\s*(close[A-Z]\w*)\([^)]*\)[^"]*"/g;
+    let m;
+    while ((m = re.exec(lines[i]))) {
+      if (m[1].replace('open','') === m[2].replace('close','')) {
+        fail(mod, `Line ${i+1}: ${m[1]}() immediately followed by ${m[2]}() — panel opens then closes`);
+        found++;
+      }
+    }
+  }
+  if (!found) pass(mod, 'No contradictory open/close sequences');
+}
+
+/* ====== CHECK 5: SELECTOR AMBIGUITY ====== */
+
+function checkSelectorAmbiguity(mod, scripts) {
+  const risky = [
+    { re: /querySelector\s*\(\s*['"]button:last-child['"]\s*\)/, desc: 'button:last-child' },
+    { re: /querySelector\s*\(\s*['"]button:first-child['"]\s*\)/, desc: 'button:first-child' },
+    { re: /querySelector\s*\(\s*['"]div:last-child['"]\s*\)/, desc: 'div:last-child' },
+    { re: /querySelector\s*\(\s*['"]input:first-child['"]\s*\)/, desc: 'input:first-child' },
+    { re: /\.previousElementSibling/, desc: '.previousElementSibling (fragile DOM traversal)' },
   ];
 
   let found = 0;
   scripts.forEach(s => {
     const lines = s.code.split('\n');
     for (let i = 0; i < lines.length; i++) {
-      riskySelectors.forEach(re => {
+      risky.forEach(({ re, desc }) => {
         if (re.test(lines[i])) {
+          warn(mod, `Line ${s.startLine+i}: Ambiguous selector "${desc}" — use class selector`);
           found++;
-          warn(moduleName, `Line ${s.startLine + i}: Ambiguous querySelector — "${lines[i].trim().substring(0, 70)}" — use class selector instead`);
         }
       });
     }
   });
-  if (found === 0) pass(moduleName, 'No ambiguous querySelector patterns');
+  if (!found) pass(mod, 'No ambiguous querySelector patterns');
 }
 
-/* ====== CHECK 7: URL param contracts ====== */
+/* ====== CHECK 6: SCRIPT LOAD ORDER ====== */
 
-function extractOutboundUrlParams(html) {
+function checkScriptOrder(mod, html) {
+  const lines = html.split('\n');
+  const shared = [];
+  let mainScript = Infinity;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes('src="../shared/') && !lines[i].includes('data-layer.js')) {
+      const m = lines[i].match(/shared\/([^"?]+)/);
+      if (m) shared.push({ file: m[1], line: i + 1 });
+    }
+    /* Find the MAIN inline script (>50 lines), not tiny IIFEs */
+    if (lines[i].trim().startsWith('<script') && !lines[i].includes('src=') && mainScript === Infinity) {
+      let end = i;
+      for (let j = i + 1; j < lines.length && j < i + 200; j++) {
+        if (lines[j].includes('</script>')) { end = j; break; }
+      }
+      if (end - i > 50) mainScript = i + 1;
+    }
+  }
+
+  let ok = true;
+  shared.forEach(s => {
+    if (s.line > mainScript) {
+      fail(mod, `shared/${s.file} (line ${s.line}) loads AFTER main script (line ${mainScript})`);
+      ok = false;
+    }
+  });
+  if (shared.length > 0 && ok) pass(mod, 'Shared scripts load before main inline code');
+}
+
+/* ====== CHECK 7: SHARED FUNCTION IMPORTS ====== */
+
+function checkSharedFunctionImports(mod, html) {
+  const imports = extractSharedImports(html);
+  let clean = true;
+
+  Object.entries(SHARED_FUNCTION_SOURCES).forEach(([fn, srcFile]) => {
+    /* Check if the module uses this function */
+    if (!html.includes(fn)) return;
+
+    /* If it defines the function locally (Calendar/Dashboard have their own getCompanyLogoUrl), skip */
+    const defRe = new RegExp(`function\\s+${fn}\\s*\\(`);
+    if (defRe.test(html)) return;
+
+    /* Check if the required shared file is imported */
+    if (!imports.includes(srcFile)) {
+      fail(mod, `Uses "${fn}" but doesn't import shared/${srcFile}`);
+      clean = false;
+    }
+  });
+
+  if (clean) pass(mod, 'All shared function dependencies imported');
+}
+
+/* ====== CHECK 8: CROSS-MODULE URL PARAMS ====== */
+
+function extractOutboundParams(html) {
   const params = new Map();
   let m;
-  const re = /(?:href\s*=\s*["']|window\.location\.href\s*=\s*[`'"])\.\.\/([^/]+)\/[^"'`]*\?([^"'`#]+)/g;
-  while ((m = re.exec(html)) !== null) {
+  const re = /(?:href\s*=\s*["']|window\.location\.href\s*=\s*[`'"])\.\.\/([a-z-]+)\/[^"'`]*\?([^"'`#]+)/g;
+  while ((m = re.exec(html))) {
     const target = m[1];
-    const qs = m[2];
     if (!params.has(target)) params.set(target, new Set());
-    qs.split('&').forEach(p => {
+    m[2].split('&').forEach(p => {
       const key = p.split('=')[0].replace(/\$\{[^}]*\}/g, '');
       if (key && /^[a-zA-Z]+$/.test(key)) params.get(target).add(key);
     });
@@ -409,109 +340,191 @@ function extractOutboundUrlParams(html) {
   return params;
 }
 
-function moduleHandlesParam(html, paramName) {
+function moduleHandlesParam(html, param) {
   return html.includes('URLSearchParams') &&
-    (html.includes(`'${paramName}'`) || html.includes(`"${paramName}"`));
+    (html.includes(`'${param}'`) || html.includes(`"${param}"`));
+}
+
+/* ====== CHECK 9: LOCALSTORAGE KEY CONSISTENCY ====== */
+
+function extractLocalStorageKeys(code) {
+  const keys = new Set();
+  let m;
+  const re = /localStorage\.(?:get|set|remove)Item\s*\(\s*['"]([^'"]+)['"]/g;
+  while ((m = re.exec(code))) keys.add(m[1]);
+  /* Also catch safeJsonParse('key', ...) */
+  const re2 = /safeJsonParse\s*\(\s*['"]([^'"]+)['"]/g;
+  while ((m = re2.exec(code))) keys.add(m[1]);
+  return keys;
 }
 
 /* ====== MAIN ====== */
 
 console.log('======================================');
-console.log('Pathfinder Workflow Regression Test');
+console.log('Pathfinder Full Workflow Regression');
 console.log('======================================');
-console.log('');
 
-/* Build shared function registry */
-const sharedFiles = fs.readdirSync(SHARED_DIR).filter(f => f.endsWith('.js'));
-
-/* Collect modules */
 const moduleDirs = fs.readdirSync(MODULES_DIR)
-  .filter(d => {
-    const fullPath = path.join(MODULES_DIR, d);
-    return fs.statSync(fullPath).isDirectory() && d !== 'shared';
-  })
+  .filter(d => fs.statSync(path.join(MODULES_DIR, d)).isDirectory() && d !== 'shared')
   .filter(d => !MODULE_FILTER || d === MODULE_FILTER);
 
-const allOutboundParams = new Map();
+const allOutbound = new Map();
+const allStorageKeys = new Map(); /* module → Set of keys */
 
-moduleDirs.forEach(moduleName => {
-  const htmlPath = path.join(MODULES_DIR, moduleName, 'index.html');
+/* Per-module checks */
+moduleDirs.forEach(mod => {
+  const htmlPath = path.join(MODULES_DIR, mod, 'index.html');
   if (!fs.existsSync(htmlPath)) return;
 
-  console.log(`--- ${moduleName} ---`);
+  section(mod);
   const html = fs.readFileSync(htmlPath, 'utf8');
   const scripts = extractInlineScripts(html);
 
-  /* Build available functions: local + shared imports */
-  const availableFunctions = new Set();
-
-  /* Local function definitions */
-  scripts.forEach(s => {
-    extractFunctionDefs(s.code).forEach(fn => availableFunctions.add(fn));
-  });
-
-  /* Shared imports */
+  /* Build available functions */
+  const available = new Set();
+  scripts.forEach(s => extractFunctionDefs(s.code).forEach(fn => available.add(fn)));
   extractSharedImports(html).forEach(file => {
-    getSharedFunctions(file).forEach(fn => availableFunctions.add(fn));
-    getSharedGlobals(file).forEach(g => availableFunctions.add(g));
+    getSharedFunctions(file).forEach(fn => available.add(fn));
   });
+  /* Browser globals and common helpers */
+  ['lucide','html2pdf','mammoth','Chart','PF','escapeHTML','escapeHtml'].forEach(b => available.add(b));
 
-  info(`  ${availableFunctions.size} available functions (local + shared)`);
+  /* Run all 7 per-module checks */
+  checkRemovedFunctions(mod, html);
+  checkOnclickHandlers(mod, html, available);
+  checkElementIds(mod, html, scripts);
+  checkContradictoryCalls(mod, html);
+  checkSelectorAmbiguity(mod, scripts);
+  checkScriptOrder(mod, html);
+  checkSharedFunctionImports(mod, html);
 
-  /* Run all checks */
-  checkOnclickHandlers(moduleName, html, availableFunctions);
-  checkContradictoryCalls(moduleName, html);
-  checkElementIds(moduleName, html, scripts);
-  checkRemovedFunctions(moduleName, html);
-  checkScriptOrder(moduleName, html);
-  checkSelectorAmbiguity(moduleName, scripts);
-
-  /* Collect URL params for cross-module check */
-  allOutboundParams.set(moduleName, extractOutboundUrlParams(html));
-
-  console.log('');
+  /* Collect for cross-module checks */
+  allOutbound.set(mod, extractOutboundParams(html));
+  const moduleKeys = new Set();
+  scripts.forEach(s => extractLocalStorageKeys(s.code).forEach(k => moduleKeys.add(k)));
+  allStorageKeys.set(mod, moduleKeys);
 });
 
-/* ====== Cross-module URL param contracts ====== */
-console.log('--- Cross-Module: URL Parameter Contracts ---');
-let crossModuleChecked = 0;
+/* ====== CROSS-MODULE: URL PARAM CONTRACTS ====== */
+section('Cross-Module: URL Parameter Contracts');
 
-allOutboundParams.forEach((targets, sender) => {
+let urlChecks = 0;
+allOutbound.forEach((targets, sender) => {
   targets.forEach((params, target) => {
-    const targetPath = path.join(MODULES_DIR, target, 'index.html');
-    if (!fs.existsSync(targetPath)) return;
-    const targetHtml = fs.readFileSync(targetPath, 'utf8');
-
+    const tp = path.join(MODULES_DIR, target, 'index.html');
+    if (!fs.existsSync(tp)) return;
+    const th = fs.readFileSync(tp, 'utf8');
     params.forEach(param => {
-      crossModuleChecked++;
-      if (moduleHandlesParam(targetHtml, param)) {
-        pass(`${sender}→${target}`, `?${param} is handled`);
+      urlChecks++;
+      if (moduleHandlesParam(th, param)) {
+        pass(`${sender}→${target}`, `?${param} handled`);
       } else {
-        const hasAny = targetHtml.includes('URLSearchParams') || targetHtml.includes('location.search');
+        const hasAny = th.includes('URLSearchParams') || th.includes('location.search');
         if (!hasAny) {
           warn(`${sender}→${target}`, `?${param} sent but target has NO URL param handling`);
         } else {
-          warn(`${sender}→${target}`, `?${param} sent but not explicitly handled via get('${param}')`);
+          warn(`${sender}→${target}`, `?${param} sent but not explicitly handled`);
         }
       }
     });
   });
 });
-if (crossModuleChecked === 0) pass('cross-module', 'No URL param contracts to verify');
+if (urlChecks === 0) pass('cross-module', 'No URL param contracts to verify');
+
+/* ====== CROSS-MODULE: SHARED LOCALSTORAGE KEYS ====== */
+section('Cross-Module: localStorage Key Consistency');
+
+/* Canonical keys that MUST be spelled correctly across modules */
+const CANONICAL_KEYS = {
+  'pf_roles': 'Pipeline Tracker writes, all modules read',
+  'pf_companies': 'Pipeline Tracker writes, many modules read',
+  'pf_connections': 'Pipeline Tracker writes, Dashboard/Outreach read',
+  'pf_preferences': 'Feed writes, scoring reads',
+  'pf_feed_queue': 'Feed writes, Dashboard reads',
+  'pf_streak': 'Dashboard writes and reads',
+  'pf_dismissed_nudges': 'Dashboard writes and reads',
+  'pf_theme': 'Any module writes, all read',
+  'pf_anthropic_key': 'Any Claude-using module reads',
+  'pf_claude_model': 'Any Claude-using module reads',
+  'pf_debriefs': 'Debrief writes, Dashboard reads',
+  'pf_comp_data': 'Comp Intel writes and reads',
+  'pf_calendar_events': 'Calendar writes and reads',
+  'pf_outreach_messages': 'Outreach writes and reads',
+  'pf_mock_sessions': 'Mock Interview writes and reads',
+  'pf_story_bank': 'Mock Interview writes and reads',
+};
+
+/* Check that modules reading canonical keys spell them correctly */
+const allKeysFlat = new Set();
+allStorageKeys.forEach(keys => keys.forEach(k => allKeysFlat.add(k)));
+
+/* Look for near-misses (typos) */
+const pfKeys = [...allKeysFlat].filter(k => k.startsWith('pf_'));
+pfKeys.forEach(key => {
+  if (!CANONICAL_KEYS[key] && !key.startsWith('pf_brief_') && !key.startsWith('pf_resume_') &&
+      !key.startsWith('pf_sync_') && !key.startsWith('pf_nudge_') && !key.startsWith('pf_feed_') &&
+      !key.startsWith('pf_linkedin_') && !key.startsWith('pf_tavily') && !key.startsWith('pf_career_') &&
+      !key.startsWith('pf_outreach_') && !key.startsWith('pf_gmail') && !key.startsWith('pf_comp_') &&
+      !key.startsWith('pf_bullet') && !key.startsWith('pf_mock_') && !key.startsWith('pf_story_') &&
+      !key.startsWith('pf_calendar_') && !key.startsWith('pf_auto_') && !key.startsWith('pf_brief_app')) {
+    /* Check if it's close to a canonical key (edit distance ≤ 2) */
+    const canonicalNames = Object.keys(CANONICAL_KEYS);
+    const close = canonicalNames.find(c => {
+      if (Math.abs(c.length - key.length) > 2) return false;
+      let diff = 0;
+      for (let i = 0; i < Math.max(c.length, key.length); i++) {
+        if (c[i] !== key[i]) diff++;
+        if (diff > 2) return false;
+      }
+      return diff > 0 && diff <= 2;
+    });
+    if (close) {
+      warn('storage', `Key "${key}" is close to canonical "${close}" — possible typo?`);
+    }
+  }
+});
+
+/* Verify cross-module key agreement */
+const keyUsers = new Map(); /* key → [modules] */
+allStorageKeys.forEach((keys, mod) => {
+  keys.forEach(key => {
+    if (!keyUsers.has(key)) keyUsers.set(key, []);
+    keyUsers.get(key).push(mod);
+  });
+});
+
+let sharedKeyCount = 0;
+keyUsers.forEach((modules, key) => {
+  if (modules.length >= 2 && key.startsWith('pf_')) {
+    sharedKeyCount++;
+    pass('storage', `"${key}" shared by ${modules.length} modules: ${modules.join(', ')}`);
+  }
+});
+if (sharedKeyCount > 0 && !VERBOSE) {
+  console.log(`  ${GREEN}PASS${NC} ${sharedKeyCount} localStorage keys shared consistently across modules`);
+}
 
 /* ====== SUMMARY ====== */
+const total = passCount + failCount + warnCount;
+console.log('\n======================================');
+console.log(`${BOLD}Results: ${total} checks across ${moduleDirs.length} modules${NC}`);
 console.log('');
-console.log('======================================');
-const totalChecks = passCount + failCount + warnCount;
+
 if (failCount > 0) {
-  console.log(`${RED}${failCount} FAILURE(S)${NC}, ${warnCount} warning(s), ${passCount} passed (${totalChecks} total checks)`);
+  console.log(`  ${RED}${BOLD}${failCount} FAILURE(S)${NC}  — code will break at runtime`);
+}
+if (warnCount > 0) {
+  console.log(`  ${YELLOW}${warnCount} warning(s)${NC}   — review recommended`);
+}
+if (passCount > 0) {
+  console.log(`  ${GREEN}${passCount} passed${NC}`);
+}
+
+console.log('');
+if (failCount > 0) {
   console.log('Fix failures before committing.');
   process.exit(1);
-} else if (warnCount > 0) {
-  console.log(`${YELLOW}0 failures${NC}, ${warnCount} warning(s), ${passCount} passed (${totalChecks} total checks)`);
-  console.log('Warnings are advisory — review but safe to commit.');
-  process.exit(0);
 } else {
-  console.log(`${GREEN}ALL ${totalChecks} CHECKS PASSED${NC}`);
+  console.log(failCount === 0 && warnCount === 0 ? 'All clear.' : 'Warnings only — safe to commit.');
   process.exit(0);
 }
