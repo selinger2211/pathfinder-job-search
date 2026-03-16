@@ -4,6 +4,87 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.34.1 — 2026-03-16
+
+### Research Brief: Tavily API Removal & Cowork Session Integration
+
+**Architecture Simplification:**
+- **Tavily API removed completely** — no more paid external dependency
+- **In-browser briefs now use training knowledge** — Claude's February 2025 knowledge for company data (labeled EXT)
+- **Sidebar simplified** — removed Tavily API key input, added "Research with Cowork" link for live web research
+- **Cowork sessions recommended** — users can invoke `scripts/cowork-research-brief.md` for post-cutoff news, recent funding, product launches
+- **User-provided Cowork context** — can be added as CTX evidence in brief for full traceability
+
+**UX Improvements:**
+- Cleaner sidebar with fewer settings
+- Clear guidance in UI for when to use Cowork sessions vs. in-browser generation
+- No more incomplete news sections when Tavily key not configured
+- Graceful offline support — briefs generate fully without any external dependencies
+
+---
+
+## v3.34.0 — 2026-03-16
+
+### Job Feed Listener: Company Knowledge Base, Scoring Improvements, Dismissed Roles Tracking
+
+**1. Company Knowledge Base (200 Companies)**
+- Curated database with industry, company stage, and location for 200 target companies
+- Fuzzy matching (80%+) to auto-populate missing company metadata
+- JD heuristic fallback for companies not in Knowledge Base (keyword scanning for "Series", "IPO", "startup", etc.)
+- Reduces "unknown" values in scoring dimensions
+
+**2. Adaptive Weighting (Dynamic Dimension Distribution)**
+- When scoring dimensions lack data (e.g., no location, unknown stage), weight redistributes proportionally to available dimensions
+- Example: missing Location (10%) + Stage (15%) → redistribute 25% across remaining 5 dimensions
+- Prevents penalizing roles due to missing metadata
+- Formula: `adjustedWeight[dim] = originalWeight[dim] / sumAvailableWeights`
+
+**3. Score Transparency (Breakdown Tooltip)**
+- Click score badge on feed card → expands inline breakdown panel
+- Shows all 7 dimensions with percentage, color-coded bar (green/yellow/red), and weight percentage
+- Metadata row: JD status (Full/Stub) + Leader/IC bonus indicator
+- Lazy rendering: breakdown HTML only loads on first click (performance)
+- Clear insight into why each role scored as it did
+
+**4. Date Display Fix (Fallback Chain)**
+- Implemented robust fallback: posted → emailDate → addedAt → "Date unknown"
+- Every role has a visible date (no "undefined" or missing values)
+- Format: relative ("Posted 3 days ago") if <30 days, absolute ("Posted Mar 14") if older
+- Hover tooltip shows full ISO timestamp
+
+**5. Non-Local Location Flag (⚠ "Not Local" Badge)**
+- Detects roles outside user's location preference
+- SF Bay detection: parses JD for "San Francisco", "Mountain View", "Palo Alto", "Oakland", etc.
+- Fully remote roles without on-site requirement → no flag
+- Amber badge on feed card below company name
+- Hover shows extracted location (e.g., "Office in New York City")
+- Location dimension still scores based on actual location (badge is informational)
+
+**6. Rejected Roles Tab (New Dashboard Tab)**
+- New "Rejected" tab shows all dismissed roles with dismissal metadata
+- Display: company logo, title, reason badge (color-coded), dismissal date, restore button
+- Storage: `pf_feed_rejected` localStorage with reason + timestamp
+- Restore button: moves role back to "All Roles" queue with fresh score
+- Delete Permanently: removes from history
+- Persistence: survives across sessions
+
+**7. Dismiss Reason Modal (8 Predefined Reasons)**
+- When user dismisses a role, modal appears asking "Why?"
+- 8 radio button options:
+  1. Location mismatch
+  2. Compensation too low
+  3. Role too junior
+  4. Role too senior
+  5. Company stage mismatch
+  6. Domain not interested
+  7. Already applied
+  8. No specific reason
+- Optional textarea for custom notes
+- Data stored in `pf_feed_rejected` with reason code, notes, timestamp, original score
+- Analytics use: correlate dismissal reasons with better outcomes, identify systemic scoring mismatches
+
+---
+
 ## v3.33.0 — 2026-03-16
 
 ### Research Brief: Spec-Aligned UX Upgrades

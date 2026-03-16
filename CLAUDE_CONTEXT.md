@@ -8,9 +8,9 @@
 
 Pathfinder is an agentic job search system with 11 standalone HTML modules sharing data via localStorage + IndexedDB. Each module is a single `index.html` file in `modules/`. There is no backend server required for core functionality — Claude API calls happen directly from the browser via `modules/shared/claude-api.js`.
 
-**Current Version:** v3.33.0 (as of 2026-03-16)
-**Last Major Features:** Research Brief spec alignment (expandable sections, handoff buttons, news banner, context indicators), data export/import, score transparency UI. 781 unit tests, 97.5% statement coverage across 11 shared modules.
-**Status:** All 11 modules pass HTML integrity + brace balance + safeJsonParse coverage. Research Brief now fully aligned with Improvement Spec (all 4 UX gaps closed: handoff buttons, expandable detail, news visibility, context evidence indicators).
+**Current Version:** v3.34.1 (as of 2026-03-16)
+**Last Major Features:** Job Feed Listener v3.34.0 (Company Knowledge Base, Adaptive Weighting, Score Transparency, Date Display Fix, Non-local Flags, Rejected Roles Tab, Dismiss Reason Modal); Research Brief v3.34.1 (Tavily removal, cowork sessions for live research). 781+ unit tests, 97.5%+ statement coverage across 11 shared modules.
+**Status:** All 11 modules pass HTML integrity + brace balance + safeJsonParse coverage. Job Feed enhanced with company metadata, improved scoring transparency, and dismissed role tracking. Research Brief simplified with Tavily removal; cowork sessions recommended for live web research.
 
 **Owner:** Ili Selinger (ilan.selinger@gmail.com)
 **Repo:** github.com/selinger2211/pathfinder-job-search
@@ -24,8 +24,8 @@ Pathfinder is an agentic job search system with 11 standalone HTML modules shari
 |--------|------|------------------|----------------------|
 | Pipeline Tracker | `modules/pipeline/` | Data backbone — companies, roles, connections, kanban board | `pf_companies`, `pf_roles`, `pf_connections` |
 | Dashboard | `modules/dashboard/` | Daily launcher — nudge engine, action queue, streak tracking | `pf_streak`, `pf_dismissed_nudges`, `pf_theme` |
-| Job Feed Listener | `modules/job-feed-listener/` | Top-of-funnel — scoring engine, preference matching | `pf_preferences`, `pf_feed_queue`, `pf_feed_runs` |
-| Research Brief | `modules/research-brief/` | V3: 13-section pursuit strategy brief with Tavily web search, additional context, 7 evidence labels, upgraded fit model, PDF export | `pf_anthropic_key`, `pf_claude_model`, `pf_tavily_key` |
+| Job Feed Listener | `modules/job-feed-listener/` | Top-of-funnel — scoring engine (v3.34.0: Company Knowledge Base, Adaptive Weighting, Score Transparency), preference matching, dismissed role tracking | `pf_preferences`, `pf_feed_queue`, `pf_feed_runs`, `pf_feed_rejected` |
+| Research Brief | `modules/research-brief/` | V3: 13-section pursuit strategy brief with training knowledge (EXT), cowork sessions for live research, additional context, 7 evidence labels, upgraded fit model, PDF export | `pf_anthropic_key`, `pf_claude_model` |
 | Resume Builder | `modules/resume-tailor/` | JD analysis (Phase 1) + Claude resume generation (Phase 2) | `pf_bullet_bank`, `pf_resume_log` |
 | Outreach | `modules/outreach/` | 8 message types via Claude (LinkedIn, email, thank you, etc.) | `pf_outreach_messages`, `pf_outreach_sequences` |
 | Mock Interview | `modules/mock-interview/` | Multi-turn Claude sessions across 7 interview types | `pf_mock_sessions`, `pf_story_bank` |

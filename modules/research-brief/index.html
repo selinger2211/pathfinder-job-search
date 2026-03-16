@@ -1223,18 +1223,11 @@
             </div>
             <p id="apiKeyStatus" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;" role="status" aria-live="polite"></p>
           </div>
-          <!-- Tavily Search API Key (for real-time company research) -->
+          <!-- v3.34.1: Tavily removed — web research done via Cowork sessions -->
           <div style="border-top: 1px solid var(--bg-subtle); padding-top: var(--space-3);">
-            <label class="jd-label" for="tavilyKeyInput" style="display: flex; align-items: center; gap: 6px;">
-              <i data-lucide="search" style="width: 14px; height: 14px;"></i>
-              Tavily Search Key <span style="font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text-tertiary);">(for live company news)</span>
-            </label>
-            <div style="display: flex; gap: 6px; margin-top: var(--space-2);">
-              <input type="password" id="tavilyKeyInput" placeholder="tvly-..." style="flex: 1; padding: 6px 10px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); font-size: var(--text-sm); background: var(--bg-base); color: var(--text-primary); font-family: monospace;" aria-label="Tavily search API key">
-              <button id="tavilyKeySaveBtn" onclick="saveTavilyKey()" title="Save Tavily key" style="padding: 6px 10px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); background: var(--bg-elevated); cursor: pointer; font-size: var(--text-sm); color: var(--text-secondary);">Save</button>
-            </div>
-            <p id="tavilyKeyStatus" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;" role="status" aria-live="polite">
-              <a href="https://tavily.com" target="_blank" style="color: var(--accent); text-decoration: none;">Free at tavily.com</a> — enables live company news search
+            <p style="font-size: 11px; color: var(--text-tertiary); margin: 0; display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="info" style="width: 14px; height: 14px; flex-shrink: 0;"></i>
+              For deeper research with live web sources, generate briefs via Cowork sessions instead of the in-browser API.
             </p>
           </div>
         </div>
@@ -1535,110 +1528,15 @@
       renderUploadedFiles();
     }
 
-    /* ====== WEB SEARCH: Tavily Integration for Live Company Research ====== */
-    /**
-     * Fetch recent company news and research via Tavily Search API.
-     * Called before generating Section 3 (Company & Market Context).
-     * @param {string} companyName - Company name to search for
-     * @param {string} roleTitle - Role title for context
-     * @returns {object} { results: Array, newsItems: Array, searchTimestamp: string }
-     */
+    /* ====== WEB SEARCH: Removed (v3.34.1) ======
+       Tavily API integration removed per cost directive. Live web research
+       is now handled by Cowork sessions using free WebSearch/WebFetch tools.
+       See scripts/cowork-research-brief.md for the Cowork protocol.
+
+       fetchCompanyNews() now returns an empty result set — existing callers
+       handle this gracefully (sections use training knowledge as EXT). */
     async function fetchCompanyNews(companyName, roleTitle) {
-      const tavilyKey = localStorage.getItem('pf_tavily_key');
-      if (!tavilyKey) {
-        console.warn('[ResearchBrief] No Tavily key — skipping web search');
-        return { results: [], newsItems: [], searchTimestamp: null, error: 'No Tavily API key configured' };
-      }
-
-      const queries = [
-        `${companyName} recent news announcements ${new Date().getFullYear()}`,
-        `${companyName} AI strategy product launches acquisitions`,
-        `${companyName} ${roleTitle} hiring team growth`
-      ];
-
-      const allResults = [];
-
-      for (const query of queries) {
-        try {
-          const response = await fetch('https://api.tavily.com/search', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              api_key: tavilyKey,
-              query: query,
-              search_depth: 'advanced',
-              max_results: 5,
-              include_answer: true,
-              include_raw_content: false
-            })
-          });
-
-          if (!response.ok) {
-            console.warn(`[ResearchBrief] Tavily search failed for "${query}": ${response.status}`);
-            continue;
-          }
-
-          const data = await response.json();
-          if (data.results) {
-            allResults.push(...data.results.map(r => ({
-              title: r.title,
-              url: r.url,
-              content: r.content,
-              score: r.score,
-              publishedDate: r.published_date || null,
-              query: query
-            })));
-          }
-          if (data.answer) {
-            allResults.push({
-              title: `Tavily Summary: ${query}`,
-              url: '',
-              content: data.answer,
-              score: 1.0,
-              publishedDate: null,
-              query: query,
-              isSummary: true
-            });
-          }
-        } catch (err) {
-          console.error(`[ResearchBrief] Tavily search error for "${query}":`, err);
-        }
-      }
-
-      /* Deduplicate by URL */
-      const seen = new Set();
-      const dedupedResults = allResults.filter(r => {
-        if (!r.url || r.isSummary) return true;
-        if (seen.has(r.url)) return false;
-        seen.add(r.url);
-        return true;
-      });
-
-      return {
-        results: dedupedResults,
-        newsItems: dedupedResults.filter(r => !r.isSummary).slice(0, 15),
-        summaries: dedupedResults.filter(r => r.isSummary),
-        searchTimestamp: new Date().toISOString(),
-        error: null
-      };
-    }
-
-    /**
-     * Save Tavily API key to localStorage
-     */
-    function saveTavilyKey() {
-      const key = document.getElementById('tavilyKeyInput').value.trim();
-      if (key && key.startsWith('tvly-')) {
-        localStorage.setItem('pf_tavily_key', key);
-        document.getElementById('tavilyKeyStatus').textContent = 'Search key saved';
-        document.getElementById('tavilyKeyStatus').style.color = 'rgb(34, 197, 94)';
-        setTimeout(() => {
-          document.getElementById('tavilyKeyStatus').innerHTML = '<a href="https://tavily.com" target="_blank" style="color: var(--accent); text-decoration: none;">Free at tavily.com</a> — enables live company news search';
-        }, 3000);
-      } else {
-        document.getElementById('tavilyKeyStatus').textContent = 'Key should start with tvly-';
-        document.getElementById('tavilyKeyStatus').style.color = 'rgb(239, 68, 68)';
-      }
+      return { results: [], newsItems: [], summaries: [], searchTimestamp: null, error: null };
     }
 
     /* ====== UI: Populate Role Selector ====== */
@@ -2219,19 +2117,9 @@
           sections[s.id] = { content: '', citations: [], confidence: 'Medium' };
         });
 
-        /* Fetch live company news (if Tavily key available) */
-        const companyName = company?.name || role.company || '';
-        if (companyName) {
-          try {
-            STATE.companyNewsResults = await fetchCompanyNews(companyName, role.title);
-            if (STATE.companyNewsResults.newsItems.length > 0) {
-              console.info(`[ResearchBrief] Fetched ${STATE.companyNewsResults.newsItems.length} news items for ${companyName}`);
-            }
-          } catch (err) {
-            console.warn('[ResearchBrief] News fetch failed, continuing without:', err);
-            STATE.companyNewsResults = null;
-          }
-        }
+        /* v3.34.1: Tavily web search removed — Cowork sessions handle live research.
+           In-browser briefs use training knowledge (EXT) for company data. */
+        STATE.companyNewsResults = null;
 
         /* Clear UI */
         const sectionsArea = document.getElementById('sectionsArea');
@@ -2990,29 +2878,11 @@ ${doc.content.slice(0, 8000)}
         prompt += `NOTE: The above uploaded document(s) are supporting evidence provided by Ili. Label claims from these as DOC. These may contain older resume content, project descriptions, or domain-specific evidence not in the active resume.\n\n`;
       }
 
-      /* -- Live Company News (from Tavily web search) -- */
-      if (STATE.companyNewsResults && STATE.companyNewsResults.newsItems.length > 0) {
-        prompt += `<live_company_news search_timestamp="${STATE.companyNewsResults.searchTimestamp}">\n`;
-        prompt += `NOTE: The following news items were retrieved via live web search. Use these as EXT evidence. Cite specific items when making company/market claims.\n\n`;
-
-        /* Summaries first */
-        if (STATE.companyNewsResults.summaries && STATE.companyNewsResults.summaries.length > 0) {
-          STATE.companyNewsResults.summaries.forEach(s => {
-            prompt += `SEARCH SUMMARY: ${s.content}\n\n`;
-          });
-        }
-
-        /* Individual results */
-        STATE.companyNewsResults.newsItems.forEach((item, idx) => {
-          prompt += `[${idx + 1}] ${item.title}\n`;
-          if (item.publishedDate) prompt += `   Date: ${item.publishedDate}\n`;
-          if (item.url) prompt += `   URL: ${item.url}\n`;
-          prompt += `   ${item.content}\n\n`;
-        });
-
-        prompt += `</live_company_news>\n\n`;
-      } else if (sectionId === 'companyMarket' || sectionId === 'existence') {
-        prompt += `<live_company_news>No live news search was performed (Tavily API key not configured or search failed). Use your training knowledge and label all company claims as EXT. Flag any potentially outdated information as NC.</live_company_news>\n\n`;
+      /* -- Company Knowledge (v3.34.1: Tavily removed, use training knowledge) -- */
+      /* Cowork-generated briefs include live web research via scripts/cowork-research-brief.md.
+         In-browser briefs rely on the model's training knowledge, labeled as EXT. */
+      if (sectionId === 'companyMarket' || sectionId === 'existence') {
+        prompt += `<company_research_note>This is an in-browser brief without live web search. Use your training knowledge about this company extensively and label all such claims as EXT. You know a lot about public companies, their products, markets, competitors, leadership, and recent strategic moves — USE that knowledge. Flag any claims you're uncertain about as NC (Needs Confirmation).</company_research_note>\n\n`;
       }
 
       /* -- Connections -- */
@@ -3193,7 +3063,7 @@ ${doc.content.slice(0, 8000)}
       } else {
         return `<div class="news-banner no-news" role="status">
           <svg class="news-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <span>No live news search — company claims use training knowledge only. Consider adding a Tavily key for live research.</span>
+          <span>In-browser brief — company data uses AI training knowledge (labeled EXT). For live web sources, generate via Cowork.</span>
         </div>`;
       }
     }
