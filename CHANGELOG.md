@@ -4,6 +4,29 @@ All notable changes to Pathfinder are documented here. Each entry corresponds to
 
 ---
 
+## v3.30.0 — 2026-03-15
+
+### Anti-Regression Architecture: Shared Logo System + Regression Check Script
+
+**Shared logo system (`modules/shared/logos.js`):**
+- Extracted DOMAIN_OVERRIDES, getCompanyDomain(), guessDomain(), getCompanyLogoUrl(), getCompanyColor(), handleLogoError(), companyLogoHtml() into a single shared file
+- Pipeline and Feed now import `logos.js` instead of maintaining inline copies
+- Adding a new domain override (like RingCentral) is now a one-line change in one file
+- This prevents the #1 recurring regression: logo fixes applied to one module but not the other
+
+**Regression check script (`scripts/regression-check.sh`):**
+- 8 automated checks run before every commit
+- Check 1: Dead API references (Clearbit, etc.) — excludes migration fixer and comments
+- Check 2: Logo system duplication — fails if any module has inline DOMAIN_OVERRIDES, getCompanyDomain, or handleLogoError
+- Check 3: Shared file imports — verifies pathfinder.css and data-layer.js in all modules
+- Check 4: Bare JSON.parse(localStorage) — must use safeJsonParse()
+- Check 5: console.log statements
+- Check 6: Version sync — PRD, CHANGELOG, CLAUDE_CONTEXT must match
+- Check 7: TODO/FIXME/HACK comments
+- Check 8: Script tag balance (smart counting, ignores regex strings in JS)
+
+---
+
 ## v3.29.1 — 2026-03-15
 
 ### QA Pass + Feed Bug Fixes

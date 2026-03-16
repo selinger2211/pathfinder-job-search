@@ -2111,6 +2111,7 @@
       display: none;
     }
   </style>
+  <script src="../shared/logos.js?v=3.30.0"></script>
 </head>
 <body>
   <!-- Section: Navigation -->
@@ -2896,120 +2897,10 @@
      * INPUT: company name (string), optional URL (string)
      * RETURNS: domain string suitable for Clearbit logo API
      */
-    /** Known domain overrides for companies whose name doesn't map
-     *  cleanly to a domain (e.g., "Amazon Ads" → "amazon.com") */
-    const DOMAIN_OVERRIDES = {
-      'amazon ads': 'amazon.com',
-      'bounti.ai': 'bounti.ai',
-      'albertsons media': 'albertsons.com',
-      'activision blizzard': 'activisionblizzard.com',
-      'bc ventures': 'bcventures.com',
-      'enriches lab': 'enricheslab.com',
-      'notion': 'notion.so',
-      // v3.20.2: Sync overrides from Feed — companies whose names don't map cleanly to domains
-      'google': 'google.com',
-      'meta': 'meta.com',
-      'apple': 'apple.com',
-      'sofi': 'sofi.com',
-      'blackrock': 'blackrock.com',
-      'netflix': 'netflix.com',
-      'stripe': 'stripe.com',
-      'directv': 'directv.com',
-      'yahoo': 'yahoo.com',
-      'uber': 'uber.com',
-      'geico': 'geico.com',
-      'ringcentral': 'ringcentral.com',
-      'ringcentral inc': 'ringcentral.com',
-      'ringcentral inc.': 'ringcentral.com',
-    };
 
-    function getCompanyDomain(companyName, url) {
-      // Check overrides first
-      const override = DOMAIN_OVERRIDES[companyName.toLowerCase()];
-      if (override) return override;
 
-      if (url) {
-        try {
-          const hostname = new URL(url).hostname.toLowerCase();
-          // Workday: ouryahoo.wd5.myworkdayjobs.com → yahoo.com
-          const wdMatch = hostname.match(/^(?:our)?([a-z]+)\.wd\d+\.myworkdayjobs\.com/);
-          if (wdMatch) return wdMatch[1] + '.com';
-          // Greenhouse: boards.greenhouse.io/stripe → stripe.com
-          if (hostname.includes('greenhouse.io')) {
-            const pathMatch = url.match(/greenhouse\.io\/([a-z0-9]+)/i);
-            if (pathMatch) return pathMatch[1] + '.com';
-          }
-          // Lever: jobs.lever.co/stripe → stripe.com
-          if (hostname.includes('lever.co')) {
-            const pathMatch = url.match(/lever\.co\/([a-z0-9]+)/i);
-            if (pathMatch) return pathMatch[1] + '.com';
-          }
-          // Ashby: jobs.ashbyhq.com/stripe → stripe.com
-          if (hostname.includes('ashbyhq.com')) {
-            const pathMatch = url.match(/ashbyhq\.com\/([a-z0-9]+)/i);
-            if (pathMatch) return pathMatch[1] + '.com';
-          }
-          // LinkedIn: linkedin.com/company/stripe → stripe.com
-          // v3.20.2: If it's a LinkedIn job URL (/jobs/view/...) with no /company/ match,
-          // fall through to company-name fallback — don't return linkedin.com as domain
-          if (hostname.includes('linkedin.com')) {
-            const pathMatch = url.match(/company\/([a-z0-9-]+)/i);
-            if (pathMatch) return pathMatch[1].replace(/-/g, '') + '.com';
-            // No /company/ in URL — skip to name-based fallback below
-          }
-          // If not an ATS or LinkedIn, use the hostname directly (e.g., stripe.com/jobs → stripe.com)
-          else if (!hostname.includes('workday') && !hostname.includes('greenhouse') &&
-              !hostname.includes('lever') && !hostname.includes('ashby')) {
-            return hostname.replace(/^www\./, '');
-          }
-        } catch (e) { /* invalid URL, fall through */ }
-      }
-      // Fallback: derive from company name
-      return companyName.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com';
-    }
 
-    /**
-     * Gets the logo URL for a company.
-     * v3.20.0: Uses Clearbit Logo API as primary (real logos, not favicons),
-     * with Google Favicon as fallback in the img onerror handler.
-     * This fixes LinkedIn icons appearing when Google can't find the real logo.
-     * INPUT: company name, optional URL
-     * RETURNS: URL string for the company logo
-     */
-    function getCompanyLogoUrl(companyName, url) {
-      /* v3.28.0: Use Google Favicon as primary — Clearbit was shut down by HubSpot */
-      const domain = getCompanyDomain(companyName, url);
-      return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-    }
 
-    /**
-     * Google Favicon fallback URL for when Clearbit fails.
-     */
-    function getCompanyLogoFallbackUrl(companyName, url) {
-      const domain = getCompanyDomain(companyName, url);
-      return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-    }
-
-    /**
-     * Generates a consistent color for a company's letter-initial avatar.
-     * Uses a hash of the company name to pick from a curated palette
-     * that looks good on dark backgrounds.
-     * INPUT: company name string
-     * RETURNS: hex color string
-     */
-    function getCompanyColor(name) {
-      const PALETTE = [
-        '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', // purples
-        '#ec4899', '#f43f5e', '#ef4444', '#f97316', // pinks/reds/orange
-        '#eab308', '#84cc16', '#22c55e', '#14b8a6', // greens
-        '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', // blues
-      ];
-      let hash = 0;
-      for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
-      }
-      return PALETTE[Math.abs(hash) % PALETTE.length];
-    }
 
     // ================================================================
     // SALARY EXTRACTION ENGINE
@@ -3380,36 +3271,6 @@
       };
     }
 
-    /**
-     * Global handler: replaces an <img> with a colored letter circle
-     * when the Clearbit logo fails to load (CORS, 404, etc.).
-     */
-    function handleLogoError(img, companyName, cssClass) {
-      // v3.29.1: Two-stage fallback. First try DuckDuckGo icons (better coverage
-      // for some companies like RingCentral). If that also fails, show letter avatar.
-      var domain = getCompanyDomain(companyName, '');
-      var ddgUrl = 'https://icons.duckduckgo.com/ip3/' + domain + '.ico';
-      if (!img.dataset.triedDdg) {
-        img.dataset.triedDdg = 'true';
-        img.src = ddgUrl;
-        return;
-      }
-      // Both APIs failed — show letter avatar
-      var letter = companyName.charAt(0);
-      var color = getCompanyColor(companyName);
-      var span = document.createElement('span');
-      span.className = cssClass + ' role-card-logo-fallback';
-      span.style.background = color;
-      span.textContent = letter;
-      img.replaceWith(span);
-    }
-
-    /**
-     * Returns HTML for a company logo. Uses Google Favicon API (128px)
-     * with a colored letter-initial circle as fallback on error.
-     * INPUT: company name, CSS class, optional URL
-     * RETURNS: HTML string (<img> tag with onerror fallback)
-     */
 
     /**
      * Retrieves a company's mission statement from localStorage pf_companies.
@@ -3425,15 +3286,6 @@
       } catch {
         return '';
       }
-    }
-
-    function companyLogoHtml(companyName, cssClass, url) {
-      // v3.28.0: Google Favicon as primary → letter avatar fallback (Clearbit is dead)
-      var domain = getCompanyDomain(companyName, url);
-      var logoUrl = 'https://www.google.com/s2/favicons?domain=' + domain + '&sz=128';
-      var safeName = companyName.replace(/'/g, "\\'");
-      return '<img src="' + logoUrl + '" alt="' + companyName + '" class="' + cssClass + '"'
-        + " onerror=\"handleLogoError(this,'" + safeName + "','" + cssClass + "');\">";
     }
 
     /**

@@ -8,7 +8,7 @@
 
 Pathfinder is an agentic job search system with 11 standalone HTML modules sharing data via localStorage + IndexedDB. Each module is a single `index.html` file in `modules/`. There is no backend server required for core functionality — Claude API calls happen directly from the browser via `modules/shared/claude-api.js`.
 
-**Current Version:** v3.29.1 (as of 2026-03-15)
+**Current Version:** v3.30.0 (as of 2026-03-15)
 **Last Major Features:** Research Brief V3 — pursuit strategy rewrite with 13 sections, Tavily web search for live company news, Additional Context input (text + file upload via mammoth.js), 7 evidence labels (JD/EXT/ILI/CTX/DOC/INF/NC), upgraded fit model, Pursuit Economics decision box, screen-out risk analysis, deal-breaker test, proof-point handoff. Previous: V2 (v3.21.0), safeJsonParse hardening (v3.20.5).
 **Status:** All 11 modules pass HTML integrity + brace balance + safeJsonParse coverage. Research Brief V3: 2518 lines, 356/356 braces balanced, temperature 0.3, maxTokens 4096. Tavily API key optional — degrades gracefully. Zero bare JSON.parse(localStorage) calls remaining.
 
@@ -133,14 +133,14 @@ function safeJsonParse(key, fallback = null) {
 Usage: `safeJsonParse('pf_roles', [])` instead of `JSON.parse(localStorage.getItem('pf_roles') || '[]')`.
 
 ### 7. Company Logo Pattern (MANDATORY)
-Any module showing company logos MUST use the canonical logo system (ported from Pipeline → Feed in v3.8.4). Do NOT reinvent logo rendering. The pattern is:
-- `DOMAIN_OVERRIDES` — known tricky names (Amazon Ads → amazon.com, Notion → notion.so, etc.)
-- `getCompanyDomain(name, url)` — ATS-aware extraction (Workday, Greenhouse, Lever, Ashby, LinkedIn URLs)
-- `getCompanyColor(name)` — deterministic color from 16-color palette for fallback initials
-- `handleLogoError(img, name, cssClass)` — replaces broken `<img>` with colorful letter circle
-- `renderCardLogo(item)` or `companyLogoHtml(name, cssClass, url)` — returns full HTML with onerror fallback
-- CSS: `.card-logo` (container) + `.card-logo-fallback` (letter circle)
-- Source of truth: Pipeline module (`getCompanyDomain`, `companyLogoHtml`) and Feed module (`renderCardLogo`)
+Any module showing company logos MUST import `modules/shared/logos.js` — do NOT copy logo functions inline. This was extracted in v3.30.0 after the logo system regressed 4+ times from copy-paste drift.
+
+**Source of truth:** `modules/shared/logos.js` (v3.30.0)
+**Import:** `<script src="../shared/logos.js?v=3.30.0"></script>` (before your main `<script>` block)
+**Available functions:** `DOMAIN_OVERRIDES`, `getCompanyDomain(name, url)`, `getCompanyLogoUrl(name, url)`, `getCompanyColor(name)`, `handleLogoError(img, name, cssClass)`, `companyLogoHtml(name, cssClass, url)`, `guessDomain(name)`
+**To add a new domain override:** Edit `DOMAIN_OVERRIDES` in `logos.js` — one change, all modules get it.
+**Regression check:** `scripts/regression-check.sh` fails if any module has inline DOMAIN_OVERRIDES or getCompanyDomain.
+**CSS:** `.card-logo` (container) + `.card-logo-fallback` (letter circle) in `pathfinder.css`
 
 ---
 

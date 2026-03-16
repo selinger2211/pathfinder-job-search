@@ -2918,6 +2918,7 @@
   </div>
 
   <script src="../shared/claude-api.js?v=3.5.1"></script>
+  <script src="../shared/logos.js?v=3.30.0"></script>
   <script>
     /** Safely parse JSON from localStorage with fallback */
     function safeJsonParse(key, fallback = null) {
@@ -7451,146 +7452,10 @@
       }
     }
 
-    /* ====== COMPANY LOGO SYSTEM (v3.8.4) ======
-     * Ported from Pipeline module — ATS-aware domain extraction,
-     * Google Favicon API, and colorful letter-initial fallback.
-     * Shared pattern: any new module that needs logos should copy this block.
-     */
+    /* Company logos: uses shared ../shared/logos.js (v3.30.0) */
 
-    /** Known domain overrides for companies whose name doesn't map
-     *  cleanly to a domain (e.g., "Amazon Ads" → "amazon.com") */
-    const DOMAIN_OVERRIDES = {
-      'amazon ads': 'amazon.com',
-      'bounti.ai': 'bounti.ai',
-      'albertsons media': 'albertsons.com',
-      'activision blizzard': 'activisionblizzard.com',
-      'bc ventures': 'bcventures.com',
-      'enriches lab': 'enricheslab.com',
-      'notion': 'notion.so',
-      'google': 'google.com',
-      'meta': 'meta.com',
-      'apple': 'apple.com',
-      'sofi': 'sofi.com',
-      'blackrock': 'blackrock.com',
-      'netflix': 'netflix.com',
-      'stripe': 'stripe.com',
-      'directv': 'directv.com',
-      'uber': 'uber.com',
-      'geico': 'geico.com',
-      'ringcentral': 'ringcentral.com',
-      'ringcentral inc': 'ringcentral.com',
-      'ringcentral inc.': 'ringcentral.com',
-    };
 
-    /**
-     * Derives a clean company domain for logo lookup.
-     * Handles ATS URLs (Workday, Greenhouse, Lever, Ashby) by extracting
-     * the company name from the URL structure.
-     * INPUT: company name (string), optional URL (string)
-     * OUTPUT: domain string (e.g., "stripe.com")
-     */
-    function getCompanyDomain(companyName, url) {
-      const override = DOMAIN_OVERRIDES[(companyName || '').toLowerCase()];
-      if (override) return override;
 
-      if (url) {
-        try {
-          const hostname = new URL(url).hostname.toLowerCase();
-          // Workday: ouryahoo.wd5.myworkdayjobs.com → yahoo.com
-          const wdMatch = hostname.match(/^(?:our)?([a-z]+)\.wd\d+\.myworkdayjobs\.com/);
-          if (wdMatch) return wdMatch[1] + '.com';
-          // Greenhouse: boards.greenhouse.io/stripe → stripe.com
-          if (hostname.includes('greenhouse.io')) {
-            const pathMatch = url.match(/greenhouse\.io\/([a-z0-9]+)/i);
-            if (pathMatch) return pathMatch[1] + '.com';
-          }
-          // Lever: jobs.lever.co/stripe → stripe.com
-          if (hostname.includes('lever.co')) {
-            const pathMatch = url.match(/lever\.co\/([a-z0-9]+)/i);
-            if (pathMatch) return pathMatch[1] + '.com';
-          }
-          // Ashby: jobs.ashbyhq.com/stripe → stripe.com
-          if (hostname.includes('ashbyhq.com')) {
-            const pathMatch = url.match(/ashbyhq\.com\/([a-z0-9]+)/i);
-            if (pathMatch) return pathMatch[1] + '.com';
-          }
-          // LinkedIn: linkedin.com/company/stripe → stripe.com
-          // Job URLs (/jobs/view/...) don't contain company info — skip to name fallback
-          if (hostname.includes('linkedin.com')) {
-            const pathMatch = url.match(/company\/([a-z0-9-]+)/i);
-            if (pathMatch) return pathMatch[1].replace(/-/g, '') + '.com';
-            // For non-company LinkedIn URLs (jobs, posts, etc.), skip URL extraction
-            // and fall through to the name-based fallback below
-          }
-          // Direct company site (e.g., stripe.com/jobs → stripe.com)
-          if (!hostname.includes('workday') && !hostname.includes('greenhouse') &&
-              !hostname.includes('lever') && !hostname.includes('ashby') &&
-              !hostname.includes('linkedin.com')) {
-            return hostname.replace(/^www\./, '');
-          }
-        } catch (e) { /* invalid URL, fall through */ }
-      }
-      // Fallback: derive from company name
-      return (companyName || '').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com';
-    }
-
-    /** Backward-compat alias — some older code calls guessDomain() */
-    function guessDomain(companyName) {
-      return getCompanyDomain(companyName);
-    }
-
-    /**
-     * Generates a consistent color for a company's letter-initial avatar.
-     * Uses a hash of the company name to pick from a curated palette.
-     * INPUT: company name string
-     * OUTPUT: hex color string
-     */
-    function getCompanyColor(name) {
-      const PALETTE = [
-        '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', // purples
-        '#ec4899', '#f43f5e', '#ef4444', '#f97316', // pinks/reds/orange
-        '#eab308', '#84cc16', '#22c55e', '#14b8a6', // greens
-        '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', // blues
-      ];
-      let hash = 0;
-      for (let i = 0; i < (name || '').length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
-      }
-      return PALETTE[Math.abs(hash) % PALETTE.length];
-    }
-
-    /**
-     * Global handler: replaces an <img> with a colored letter circle
-     * when the favicon fails to load (CORS, 404, etc.).
-     * Called from onerror on logo <img> tags.
-     */
-    function handleLogoError(img, companyName, cssClass) {
-      // v3.29.1: Two-stage fallback. First try DuckDuckGo icons (better coverage
-      // for some companies). If that also fails, show a letter-initial avatar.
-      const domain = getCompanyDomain(companyName, '');
-      const ddgUrl = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
-      if (!img.dataset.triedDdg) {
-        img.dataset.triedDdg = 'true';
-        img.src = ddgUrl;
-        return;
-      }
-      // Both APIs failed — show letter avatar
-      const letter = (companyName || '?').charAt(0).toUpperCase();
-      const color = getCompanyColor(companyName);
-      const span = document.createElement('span');
-      span.className = (cssClass || '') + ' card-logo-fallback';
-      span.style.background = color;
-      span.textContent = letter;
-      img.replaceWith(span);
-    }
-
-    /**
-     * Render a company logo for a feed card. Uses Google Favicon API
-     * with ATS-aware domain extraction. On error, falls back to a
-     * colorful letter-initial circle (via handleLogoError).
-     * INPUT: feed item object (needs .company, optionally .domain/.url)
-     * OUTPUT: HTML string — <img> tag with onerror fallback
-     */
 
     /**
      * Retrieves a company's mission statement from localStorage pf_companies.
