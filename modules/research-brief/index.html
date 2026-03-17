@@ -13,7 +13,7 @@
   <!-- Self-healing: purge stale caches before anything else loads -->
   <script>
     (function() {
-      var APP_VERSION = '3.33.0';
+      var APP_VERSION = '3.35.0';
       var storedVersion = localStorage.getItem('pf_brief_app_version');
 
       /* If version changed or first load, purge all V2/stale brief caches */
@@ -1329,27 +1329,11 @@
           <div id="uploadedFilesContainer"></div>
         </div>
 
-        <!-- API Keys -->
-        <div id="apiKeySection" style="padding: var(--space-3); background: var(--bg-elevated); border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); display: none; flex-direction: column; gap: var(--space-3);">
-          <!-- Anthropic API Key -->
-          <div>
-            <label class="jd-label" for="apiKeyInput" style="display: flex; align-items: center; gap: 6px;">
-              <i data-lucide="key" style="width: 14px; height: 14px;"></i>
-              Anthropic API Key
-            </label>
-            <div style="display: flex; gap: 6px; margin-top: var(--space-2);">
-              <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." style="flex: 1; padding: 6px 10px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); font-size: var(--text-sm); background: var(--bg-base); color: var(--text-primary); font-family: monospace;" aria-label="Anthropic API key">
-              <button id="apiKeySaveBtn" onclick="saveApiKey()" title="Save API key" style="padding: 6px 10px; border: 1px solid var(--bg-subtle); border-radius: var(--radius-sm); background: var(--bg-elevated); cursor: pointer; font-size: var(--text-sm); color: var(--text-secondary);">Save</button>
-            </div>
-            <p id="apiKeyStatus" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;" role="status" aria-live="polite"></p>
-          </div>
-          <!-- v3.34.1: Tavily removed — web research done via Cowork sessions -->
-          <div style="border-top: 1px solid var(--bg-subtle); padding-top: var(--space-3);">
-            <p style="font-size: 11px; color: var(--text-tertiary); margin: 0; display: flex; align-items: center; gap: 6px;">
-              <i data-lucide="info" style="width: 14px; height: 14px; flex-shrink: 0;"></i>
-              For deeper research with live web sources, generate briefs via Cowork sessions instead of the in-browser API.
-            </p>
-          </div>
+        <!-- v3.35.0: API key section removed — briefs are generated via MCP bridge
+             or loaded from cowork-generated files. No user-facing API key needed. -->
+        <div id="apiKeySection" style="display: none;">
+          <input type="hidden" id="apiKeyInput" value="">
+          <p id="apiKeyStatus" style="display: none;"></p>
         </div>
 
         <!-- Action Buttons -->
@@ -1804,7 +1788,7 @@
      * Load a role and display its details in the sidebar
      * @param {string} roleId - Role ID to load
      */
-    function loadRole(roleId) {
+    async function loadRole(roleId) {
       STATE.currentRoleId = roleId;
       const roles = getRoles();
       const role = roles.find(r => r.id === roleId);
@@ -1909,15 +1893,37 @@
         }
       }
 
-      /* Fallback: try loading a Cowork-generated static brief file */
-      loadStaticBrief(roleId);
+      /* v3.35.0: Await static brief load — if found, render it and skip generate button.
+         Previously this was fire-and-forget, causing user to see Generate button and
+         get the offline brief with API key prompt instead of the cowork-generated brief. */
+      const staticLoaded = await loadStaticBrief(roleId);
+      if (staticLoaded) {
+        /* Cowork-generated brief loaded — hide Generate button since brief is already shown */
+        document.getElementById('generateBtn').style.display = 'none';
+        return;
+      }
+
+      /* v3.35.0: No cached or static brief — try MCP bridge for auto-generation */
+      try {
+        const bridgeAvailable = await isMcpBridgeAvailable();
+        if (bridgeAvailable) {
+          console.info('[ResearchBrief] MCP bridge available — auto-generating brief');
+          await generateBriefViaMcp(roleId);
+          return;
+        }
+      } catch (e) {
+        console.warn('[ResearchBrief] MCP bridge check failed:', e);
+      }
     }
 
     /**
      * Try to load a pre-generated brief from ./cowork-briefs/{roleId}.json
      * v3.34.6: Also tries company+title match via an index file as fallback,
      * since role IDs differ between sessions/browsers but company+title are stable.
+     * v3.35.0: Now returns true/false so caller knows if brief was found.
+     *          Also uses fuzzy company matching (includes) for better hit rate.
      * @param {string} roleId - Role ID to load brief for
+     * @returns {Promise<boolean>} true if a static brief was loaded and rendered
      */
     async function loadStaticBrief(roleId) {
       try {
@@ -1935,11 +1941,25 @@
               if (role) {
                 const companyLower = (role.company || '').toLowerCase().trim();
                 const titleLower = (role.title || '').toLowerCase().trim();
-                const match = index.find(entry =>
+
+                /* v3.35.0: Try exact match first, then fuzzy company match */
+                let match = index.find(entry =>
                   (entry.company || '').toLowerCase().trim() === companyLower &&
                   (entry.title || '').toLowerCase().trim() === titleLower
                 );
+
+                /* Fuzzy: company includes (e.g. "RingCentral" matches "RingCentral, Inc.") */
+                if (!match) {
+                  match = index.find(entry => {
+                    const ec = (entry.company || '').toLowerCase().trim();
+                    const et = (entry.title || '').toLowerCase().trim();
+                    return (ec.includes(companyLower) || companyLower.includes(ec)) &&
+                           (et.includes(titleLower) || titleLower.includes(et));
+                  });
+                }
+
                 if (match && match.file) {
+                  console.info(`[ResearchBrief] Index match: "${match.company} — ${match.title}" → ${match.file}`);
                   resp = await fetch(`./cowork-briefs/${match.file}?t=${Date.now()}`);
                 }
               }
@@ -1947,10 +1967,10 @@
           } catch (e) { /* Index not available — that's fine */ }
         }
 
-        if (!resp || !resp.ok) return; /* No static brief available */
+        if (!resp || !resp.ok) return false; /* No static brief available */
 
         const brief = await resp.json();
-        if (!brief.sections || !brief.sections.pursuitEconomics) return;
+        if (!brief.sections || !brief.sections.pursuitEconomics) return false;
 
         /* Cache it in localStorage for future loads */
         const cacheKey = `pf_brief_${roleId}`;
@@ -1961,8 +1981,102 @@
         document.getElementById('exportBtn').style.display = 'flex';
         document.getElementById('printBtn').style.display = 'flex';
         console.info(`[ResearchBrief] Loaded static brief for ${roleId}`);
+        return true;
       } catch (err) {
         console.warn('[ResearchBrief] Static brief fetch failed:', err);
+        return false;
+      }
+    }
+
+    /* ====== MCP BRIDGE INTEGRATION (v3.35.0) ====== */
+    /**
+     * Check if the MCP bridge server is running on localhost:3456.
+     * @returns {Promise<boolean>} true if bridge responds to health check
+     */
+    const MCP_BRIDGE_URL = 'http://localhost:3456';
+    async function isMcpBridgeAvailable() {
+      try {
+        const resp = await fetch(`${MCP_BRIDGE_URL}/api/health`, { signal: AbortSignal.timeout(1500) });
+        return resp.ok;
+      } catch { return false; }
+    }
+
+    /**
+     * Generate a full research brief via the MCP bridge server.
+     * The bridge has server-side Claude API access — no user-facing API key needed.
+     * Falls back to offline brief if bridge generation fails.
+     * @param {string} roleId - Role ID to generate brief for
+     */
+    async function generateBriefViaMcp(roleId) {
+      const roles = getRoles();
+      const role = roles.find(r => r.id === roleId);
+      if (!role) return;
+
+      const company = getCompanies().find(c => c.name === role.company);
+      const jdText = role.jdText || role.jd || '';
+
+      /* Show generation progress UI */
+      const sectionsArea = document.getElementById('sectionsArea');
+      sectionsArea.innerHTML = `
+        <div class="empty-state" style="padding: var(--space-8);">
+          <div class="empty-state-icon" style="font-size: 2rem;">⏳</div>
+          <div class="empty-state-text">
+            <p><strong>Generating research brief...</strong></p>
+            <p style="font-size: var(--text-sm); margin-top: var(--space-2); color: var(--text-tertiary);">
+              Analyzing job description and company data. This may take a moment.
+            </p>
+          </div>
+        </div>
+      `;
+
+      try {
+        /* Call bridge to generate the full brief */
+        const resp = await fetch(`${MCP_BRIDGE_URL}/api/briefs/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roleId,
+            company: role.company,
+            title: role.title,
+            jdText,
+            location: role.location || '',
+            salary: typeof role.salary === 'object' ? role.salary?.raw : role.salary,
+            companyData: company || {}
+          })
+        });
+
+        if (resp.ok) {
+          const brief = await resp.json();
+          if (brief.sections && brief.sections.pursuitEconomics) {
+            STATE.currentBrief = brief;
+            const cacheKey = `pf_brief_${roleId}`;
+            localStorage.setItem(cacheKey, JSON.stringify(brief));
+            renderBrief(brief);
+            document.getElementById('exportBtn').style.display = 'flex';
+            document.getElementById('printBtn').style.display = 'flex';
+            document.getElementById('generateBtn').style.display = 'none';
+            console.info('[ResearchBrief] Brief generated via MCP bridge');
+            showCoworkToast('Research brief generated successfully');
+            return;
+          }
+        }
+        console.warn('[ResearchBrief] MCP bridge generation returned non-OK or bad format');
+      } catch (err) {
+        console.warn('[ResearchBrief] MCP bridge generation failed:', err);
+      }
+
+      /* Fallback: generate offline brief (no API key prompt) */
+      try {
+        const brief = generateOfflineBrief(role, company);
+        STATE.currentBrief = brief;
+        const cacheKey = `pf_brief_${roleId}`;
+        localStorage.setItem(cacheKey, JSON.stringify(brief));
+        renderBrief(brief);
+        document.getElementById('exportBtn').style.display = 'flex';
+        document.getElementById('printBtn').style.display = 'flex';
+        showCoworkToast('Brief generated from job description');
+      } catch (err) {
+        console.error('[ResearchBrief] Offline fallback also failed:', err);
       }
     }
 
@@ -2063,15 +2177,13 @@
         ? '<ul>' + qualifications.slice(0, 6).map(q => `<li>${escapeHTML(q)}</li>`).join('') + '</ul>'
         : '<p><em>No specific qualifications extracted.</em></p>';
 
-      /* 1. Pursuit Economics — show the key decision data */
+      /* 1. Pursuit Economics — show the key decision data
+         v3.35.0: Removed API key prompt. Brief is auto-generated via MCP bridge
+         or loaded from cowork-generated files. No user action needed. */
       sections.pursuitEconomics = {
-        content: `<div class="offline-brief-banner">
-          <h3>⚡ JD Summary — Full Brief Requires Generation</h3>
-          <p>This is a structured snapshot parsed from the job description. For a real Pursuit Strategy Brief with competitive intelligence, fit analysis, and personalized recommendations:</p>
-          <div class="offline-options">
-            <div class="offline-option"><span class="offline-option-num">1</span><span><strong>Add a Claude API key</strong> in the sidebar settings, then click Generate. Each brief costs ~$0.15 in API usage.</span></div>
-            <div class="offline-option"><span class="offline-option-num">2</span><span><strong>Generate via Cowork session</strong> — open this role in a Cowork session and ask Claude to generate a full research brief. This uses free web research tools for deeper analysis.</span></div>
-          </div>
+        content: `<div class="offline-brief-banner" style="background: var(--bg-elevated); border-left: 3px solid var(--primary); padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 12px;">
+          <h3 style="margin: 0 0 4px 0; font-size: var(--text-sm);">📋 Quick JD Summary</h3>
+          <p style="margin: 0; font-size: var(--text-xs); color: var(--text-secondary);">Extracted from the job description. A full research brief with competitive intelligence and fit analysis can be generated via a Cowork session.</p>
         </div>
         <table style="width: 100%; border-collapse: collapse;">
           <tr><td style="padding: 6px 12px; font-weight: 600; width: 140px; vertical-align: top;">Role</td><td style="padding: 6px 12px;">${escapeHTML(title)}</td></tr>
@@ -2101,7 +2213,7 @@
         content: `<h3>Company Context</h3>
           <p><strong>${escapeHTML(companyName)}</strong>${stage ? ` — ${escapeHTML(stage)}` : ''}${domain ? `, ${escapeHTML(domain)}` : ''}.</p>
           ${company?.headcount ? `<p>Approximate headcount: ${company.headcount}.</p>` : ''}
-          <p><em>Company intelligence (financials, competitors, leadership, market position, recent news) requires a full brief generation. This section will be populated with 5+ external research citations when generated via API or Cowork.</em></p>`,
+          <p><em>Company intelligence (financials, competitors, leadership, market position, recent news) requires a full research brief generated via Cowork session.</em></p>`,
         citations: [],
         confidence: 'Low'
       };
@@ -2131,7 +2243,7 @@
       stubSections.forEach(s => {
         sections[s.id] = {
           content: `<h3>${s.title}</h3>
-            <p style="color: var(--text-tertiary); font-style: italic;">This section requires a full brief generation (API key or Cowork). The JD-only parser cannot produce meaningful ${s.title.toLowerCase()} analysis.</p>`,
+            <p style="color: var(--text-tertiary); font-style: italic;">This section requires a full research brief. Generate one via a Cowork session for ${s.title.toLowerCase()} analysis.</p>`,
           citations: [],
           confidence: 'Low'
         };
@@ -2212,8 +2324,8 @@
       const role = roles.find(r => r.id === STATE.currentRoleId);
       const company = getCompanies().find(c => c.name === role.company);
 
-      /* v3.27.0: Check if API is available — if not, use offline generator.
-         Also catches cases where PF object is missing or API key is saved but invalid. */
+      /* v3.35.0: Check if API key is available. If not, try MCP bridge first,
+         then fall back to offline generator. Never prompt user for API key. */
       let hasApiKey = false;
       try {
         hasApiKey = typeof PF !== 'undefined' && PF.claude && PF.claude.hasApiKey && PF.claude.hasApiKey();
@@ -2221,18 +2333,25 @@
         console.warn('[ResearchBrief] PF.claude check failed:', e);
       }
       if (!hasApiKey) {
-        console.info('[ResearchBrief] No API key — using offline brief generator');
+        console.info('[ResearchBrief] No API key — trying MCP bridge, then offline');
         try {
-          const brief = generateOfflineBrief(role, company);
-          STATE.currentBrief = brief;
-          const cacheKey = `pf_brief_${STATE.currentRoleId}`;
-          localStorage.setItem(cacheKey, JSON.stringify(brief));
-          renderBrief(brief);
-          document.getElementById('exportBtn').style.display = 'flex';
-          document.getElementById('printBtn').style.display = 'flex';
-          showCoworkToast('Brief generated (offline mode — connect API key for deeper analysis)');
+          /* Try MCP bridge for server-side generation */
+          const bridgeUp = await isMcpBridgeAvailable();
+          if (bridgeUp) {
+            await generateBriefViaMcp(STATE.currentRoleId);
+          } else {
+            /* Offline fallback — no API key prompt */
+            const brief = generateOfflineBrief(role, company);
+            STATE.currentBrief = brief;
+            const cacheKey = `pf_brief_${STATE.currentRoleId}`;
+            localStorage.setItem(cacheKey, JSON.stringify(brief));
+            renderBrief(brief);
+            document.getElementById('exportBtn').style.display = 'flex';
+            document.getElementById('printBtn').style.display = 'flex';
+            showCoworkToast('Brief generated from job description');
+          }
         } catch (err) {
-          console.error('[ResearchBrief] Offline generation failed:', err);
+          console.error('[ResearchBrief] Generation failed:', err);
           showErrorBanner(err);
         } finally {
           STATE.isGenerating = false;
@@ -2329,7 +2448,7 @@
           renderBrief(brief);
           document.getElementById('exportBtn').style.display = 'flex';
           document.getElementById('printBtn').style.display = 'flex';
-          showCoworkToast('Brief generated (offline mode — API was unavailable)');
+          showCoworkToast('Brief generated from job description');
         } catch (offlineErr) {
           console.error('[ResearchBrief] Offline fallback also failed:', offlineErr);
           showErrorBanner(error);

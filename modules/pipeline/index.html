@@ -6710,8 +6710,67 @@
       document.getElementById('resume-confirm-btn').onclick = () => confirmResumeUpload();
     }
 
+    /* ====== MCP BRIDGE CONFIG ====== */
+    const MCP_BRIDGE_URL = 'http://localhost:3456';
+
     /**
-     * Confirms the resume upload: saves to IndexedDB and updates role metadata.
+     * Check if the MCP Artifacts bridge is running.
+     * RETURNS: true if reachable, false otherwise.
+     */
+    async function isMcpBridgeAvailable() {
+      try {
+        const resp = await fetch(`${MCP_BRIDGE_URL}/api/health`, { signal: AbortSignal.timeout(1500) });
+        return resp.ok;
+      } catch { return false; }
+    }
+
+    /**
+     * Save a file to the MCP Artifacts server via HTTP bridge.
+     * Reads the file as text or base64, POSTs to /api/artifacts/save.
+     * INPUT: file (File object), metadata (company, roleId, type, tags)
+     * RETURNS: { artifactId, filename, sizeBytes, createdAt } on success
+     */
+    async function saveToMcpBridge(file, metadata) {
+      // Read file content as text or base64 depending on type
+      const isText = /\.(txt|md|html|json|csv|rtf)$/i.test(file.name);
+      let content;
+      let isBase64 = false;
+
+      if (isText) {
+        content = await file.text();
+      } else {
+        // Binary files (PDF, DOCX) → base64
+        const buffer = await file.arrayBuffer();
+        content = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+        isBase64 = true;
+      }
+
+      const resp = await fetch(`${MCP_BRIDGE_URL}/api/artifacts/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content,
+          filename: file.name,
+          type: metadata.type || 'resume',
+          company: metadata.company,
+          roleId: metadata.roleId,
+          tags: metadata.tags || [],
+          sourceAgent: 'pipeline-browser',
+          isBase64
+        })
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(err.error || `HTTP ${resp.status}`);
+      }
+      return resp.json();
+    }
+
+    /**
+     * Confirms the resume upload.
+     * v3.35.0: Tries MCP Artifacts bridge first (persistent filesystem storage).
+     * Falls back to IndexedDB if bridge is not running.
      */
     async function confirmResumeUpload() {
       if (!pendingResumeFile || !pendingResumeRoleId) {
@@ -6732,16 +6791,41 @@
 
       // Initialize resumesSent array if it doesn't exist
       if (!role.resumesSent) role.resumesSent = [];
-
       const idx = role.resumesSent.length;
-      const dbKey = `resume-${role.id}-${idx}`;
 
-      // Save file to IndexedDB
-      try {
-        await saveResumeFile(dbKey, pendingResumeFile);
-      } catch (err) {
-        showToast('Failed to save resume: ' + err.message, 'error');
-        return;
+      // ====== TRY MCP BRIDGE FIRST (v3.35.0) ======
+      const bridgeUp = await isMcpBridgeAvailable();
+      let artifactId = null;
+
+      if (bridgeUp) {
+        try {
+          console.log('[Pipeline] MCP bridge available — saving via Artifacts server');
+          const result = await saveToMcpBridge(pendingResumeFile, {
+            type: 'resume',
+            company: role.company,
+            roleId: role.id,
+            tags: [notes || 'resume', 'pipeline-upload']
+          });
+          artifactId = result.artifactId;
+          console.log(`[Pipeline] Artifact saved: ${artifactId}`);
+        } catch (err) {
+          console.warn('[Pipeline] MCP bridge save failed, falling back to IndexedDB:', err.message);
+        }
+      } else {
+        console.warn('[Pipeline] MCP bridge not available — using IndexedDB fallback');
+      }
+
+      // ====== FALLBACK: IndexedDB ======
+      let indexedDbKey = null;
+      if (!artifactId) {
+        const dbKey = `resume-${role.id}-${idx}`;
+        try {
+          await saveResumeFile(dbKey, pendingResumeFile);
+          indexedDbKey = dbKey;
+        } catch (err) {
+          showToast('Failed to save file: ' + err.message, 'error');
+          return;
+        }
       }
 
       // Save metadata on the role
@@ -6751,7 +6835,9 @@
         type: pendingResumeFile.type,
         date: Date.now(),
         notes: notes,
-        indexedDbKey: dbKey
+        indexedDbKey: indexedDbKey,
+        artifactId: artifactId,
+        storageBackend: artifactId ? 'mcp' : 'indexeddb'
       });
       role.lastActivity = Date.now();
       saveRoles(roles);
@@ -6760,7 +6846,8 @@
       pendingResumeFile = null;
       pendingResumeRoleId = null;
       openRoleDetail(role.id);
-      showToast(`Attached "${role.resumesSent[idx].filename}"`, 'success');
+      const backend = artifactId ? '(MCP)' : '(local)';
+      showToast(`Attached "${role.resumesSent[idx].filename}" ${backend}`, 'success');
     }
 
     /**
