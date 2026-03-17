@@ -13,7 +13,7 @@
   <!-- Self-healing: purge stale caches before anything else loads -->
   <script>
     (function() {
-      var APP_VERSION = '3.35.0';
+      var APP_VERSION = '3.35.5';
       var storedVersion = localStorage.getItem('pf_brief_app_version');
 
       /* If version changed or first load, purge all V2/stale brief caches */
@@ -42,7 +42,7 @@
   <script src="../shared/logos.js?v=3.30.0"></script>
   <script src="../shared/claude-api.js?v=3.23.2"></script>
   <!-- v3.35.4: Cowork briefs bundle — loads via script tag to bypass file:// fetch restrictions -->
-  <script src="./cowork-briefs/briefs-bundle.js?v=3.35.4" onerror="console.warn('[ResearchBrief] briefs-bundle.js not found — will try fetch fallback');"></script>
+  <script src="./cowork-briefs/briefs-bundle.js?v=3.35.5" onerror="console.warn('[ResearchBrief] briefs-bundle.js not found — will try fetch fallback');"></script>
 
   <style>
     /* ====== RESEARCH BRIEF V3 STYLES ====== */
@@ -2010,9 +2010,17 @@
       const sectionsArea = document.getElementById('sectionsArea');
       sectionsArea.innerHTML = '';
 
-      /* Try to load brief from: 1) localStorage cache, 2) static Cowork-generated file
-         v3.35.1: Skip cached offline briefs — always prefer cowork-generated ones.
-         If the cache has a real (non-offline) V3 brief, use it. */
+      /* v3.35.5: ALWAYS try bundle first — it has the freshest cowork-generated briefs.
+         Only fall back to localStorage cache if the bundle has no match.
+         This prevents stale cached briefs from blocking updated bundle data. */
+      const staticLoaded = await loadStaticBrief(roleId);
+      if (staticLoaded) {
+        /* Cowork-generated brief loaded from bundle — hide Generate button */
+        document.getElementById('generateBtn').style.display = 'none';
+        return;
+      }
+
+      /* No bundle match — try localStorage cache */
       const cacheKey = `pf_brief_${roleId}`;
       const cached = safeJsonParse(cacheKey, null);
       if (cached && cached.sections) {
@@ -2025,22 +2033,12 @@
           document.getElementById('printBtn').style.display = 'flex';
           return; /* Cached full brief found — done */
         } else if (isOffline) {
-          console.info('[ResearchBrief] Clearing cached offline brief — will try loading cowork-generated');
+          console.info('[ResearchBrief] Clearing cached offline brief');
           localStorage.removeItem(cacheKey);
         } else {
-          console.info('[ResearchBrief] Clearing V2 cached brief — section IDs changed in V3');
+          console.info('[ResearchBrief] Clearing V2 cached brief');
           localStorage.removeItem(cacheKey);
         }
-      }
-
-      /* v3.35.0: Await static brief load — if found, render it and skip generate button.
-         Previously this was fire-and-forget, causing user to see Generate button and
-         get the offline brief with API key prompt instead of the cowork-generated brief. */
-      const staticLoaded = await loadStaticBrief(roleId);
-      if (staticLoaded) {
-        /* Cowork-generated brief loaded — hide Generate button since brief is already shown */
-        document.getElementById('generateBtn').style.display = 'none';
-        return;
       }
 
       /* v3.35.0: No cached or static brief — try MCP bridge for auto-generation */
