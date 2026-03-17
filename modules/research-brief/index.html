@@ -1169,6 +1169,103 @@
       flex-shrink: 0;
     }
 
+    /* ====== STALENESS BANNER (v3.35.3) ====== */
+    .staleness-banner {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: 10px 16px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(59, 130, 246, 0.06));
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-3);
+      font-size: var(--text-sm);
+      animation: slideDown 200ms ease;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .staleness-banner-icon {
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .staleness-banner-text {
+      flex: 1;
+      line-height: 1.4;
+    }
+    .staleness-banner-text strong {
+      display: block;
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+    }
+    .staleness-banner-text span {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+    }
+    .staleness-banner-action {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--accent);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: var(--text-xs);
+      font-weight: 600;
+      white-space: nowrap;
+      transition: background 150ms ease;
+    }
+    .staleness-banner-action:hover {
+      background: var(--accent-hover, #4f46e5);
+    }
+    .staleness-banner-dismiss {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text-tertiary);
+      border: none;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 150ms ease;
+    }
+    .staleness-banner-dismiss:hover {
+      background: var(--bg-subtle);
+    }
+
+    /* ====== REFRESH BRIEF BUTTON ====== */
+    .refresh-brief-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      border: 1px solid var(--bg-subtle);
+      cursor: pointer;
+      font-size: var(--text-sm);
+      transition: all 150ms ease;
+    }
+    .refresh-brief-btn:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    .refresh-brief-btn.spinning i {
+      animation: spin 800ms linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
     /* ====== QUALITY GATE WARNING ====== */
     .quality-gate-warning {
       display: flex;
@@ -1362,6 +1459,10 @@
           </div>
         </div>
         <div class="brief-actions">
+          <button id="refreshBriefBtn" title="Regenerate this brief with latest context" aria-label="Refresh brief" style="display: none;" class="refresh-brief-btn">
+            <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i>
+            Refresh Brief
+          </button>
           <button id="exportBtn" title="Export as PDF" aria-label="Export as PDF" style="display: none;">
             <i data-lucide="download" style="width: 16px; height: 16px;"></i>
             Export PDF
@@ -1374,6 +1475,21 @@
       </div>
 
       <div class="brief-content">
+        <!-- v3.35.3: Staleness banner — shows when brief may be out of date -->
+        <div id="stalenessBanner" class="staleness-banner" style="display: none;" role="status">
+          <div class="staleness-banner-icon"><i data-lucide="alert-circle" style="width: 16px; height: 16px;"></i></div>
+          <div class="staleness-banner-text">
+            <strong id="stalenessTitle">Brief may be out of date</strong>
+            <span id="stalenessReason"></span>
+          </div>
+          <button class="staleness-banner-action" onclick="handleRefreshBrief()">
+            <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
+            Refresh
+          </button>
+          <button class="staleness-banner-dismiss" onclick="dismissStalenessBanner()" title="Dismiss" aria-label="Dismiss staleness warning">
+            <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+          </button>
+        </div>
         <!-- Sections Area -->
         <div class="sections-area" id="sectionsArea" role="main" aria-live="polite" aria-label="Research brief content">
           <div class="empty-state">
@@ -2189,6 +2305,8 @@
       document.getElementById('clearCacheBtn').style.display = 'none';
       document.getElementById('exportBtn').style.display = 'none';
       document.getElementById('printBtn').style.display = 'none';
+      document.getElementById('refreshBriefBtn').style.display = 'none';
+      document.getElementById('stalenessBanner').style.display = 'none';
 
       const sectionsArea = document.getElementById('sectionsArea');
       sectionsArea.innerHTML = `
@@ -3725,6 +3843,13 @@ ${doc.content.slice(0, 8000)}
       });
 
       if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+
+      /* v3.35.3: Show refresh button and check staleness after render */
+      document.getElementById('refreshBriefBtn').style.display = 'flex';
+      /* Don't check staleness if user dismissed it for this role */
+      if (!STATE._dismissedStaleness || !STATE._dismissedStaleness.has(STATE.currentRoleId)) {
+        setTimeout(checkBriefStaleness, 100);
+      }
     }
 
     /**
@@ -3911,6 +4036,155 @@ ${doc.content.slice(0, 8000)}
       }
     }
 
+    /* ====== BRIEF STALENESS DETECTION & REGENERATION (v3.35.3) ====== */
+
+    /**
+     * Check if the current brief is stale and show a banner if so.
+     * Staleness triggers:
+     *   1. Brief is older than 7 days
+     *   2. JD text has changed since brief was generated
+     *   3. Additional context was added since generation
+     *   4. Brief is offline-generated (stub sections)
+     *   5. New pipeline notes/connections exist that aren't reflected
+     */
+    function checkBriefStaleness() {
+      const brief = STATE.currentBrief;
+      if (!brief) return;
+
+      const banner = document.getElementById('stalenessBanner');
+      if (!banner) return;
+
+      const reasons = [];
+
+      /* 1. Age check — briefs older than 7 days */
+      if (brief.generatedAt) {
+        const age = Date.now() - new Date(brief.generatedAt).getTime();
+        const dayMs = 86400000;
+        const days = Math.floor(age / dayMs);
+        if (days > 7) {
+          reasons.push(`Generated ${days} days ago — company news and market data may have changed.`);
+        }
+      }
+
+      /* 2. JD changed since generation */
+      const currentJD = (document.getElementById('jdText')?.value || '').trim();
+      if (currentJD && brief.role) {
+        const briefJDLen = (brief._jdHash || '').length;
+        /* Store JD hash on brief for comparison */
+        const currentHash = simpleHash(currentJD);
+        if (brief._jdHash && brief._jdHash !== currentHash) {
+          reasons.push('Job description has been updated since this brief was generated.');
+        }
+        /* Save current hash for future comparison */
+        if (!brief._jdHash) {
+          brief._jdHash = currentHash;
+        }
+      }
+
+      /* 3. Offline brief detection */
+      if (brief.offlineGenerated) {
+        reasons.push('This is a JD-only summary. A full research brief with competitive intelligence is available via Cowork.');
+      }
+
+      /* 4. Citation quality — mostly internal sources */
+      if (!brief.offlineGenerated && brief.sections) {
+        let extCount = 0, totalCites = 0;
+        Object.values(brief.sections).forEach(s => {
+          (s.citations || []).forEach(c => {
+            totalCites++;
+            if (c.label === 'EXT') extCount++;
+          });
+        });
+        if (totalCites > 3 && extCount === 0) {
+          reasons.push('Brief has zero external research citations — may be echoing internal data only.');
+        }
+      }
+
+      if (reasons.length === 0) {
+        banner.style.display = 'none';
+        return;
+      }
+
+      /* Show banner with first (most important) reason */
+      document.getElementById('stalenessReason').textContent = reasons[0];
+      if (brief.offlineGenerated) {
+        document.getElementById('stalenessTitle').textContent = 'Upgrade available';
+      } else if (reasons[0].includes('days ago')) {
+        document.getElementById('stalenessTitle').textContent = 'Brief may be out of date';
+      } else {
+        document.getElementById('stalenessTitle').textContent = 'Brief can be improved';
+      }
+      banner.style.display = 'flex';
+      if (typeof lucide !== 'undefined') lucide.createIcons({ attrs: { class: '' } });
+    }
+
+    /** Simple string hash for JD comparison */
+    function simpleHash(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        const ch = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + ch;
+        hash |= 0;
+      }
+      return String(hash);
+    }
+
+    /** Handle the Refresh Brief button click */
+    async function handleRefreshBrief() {
+      if (!STATE.currentRoleId || STATE.isGenerating) return;
+
+      const btn = document.getElementById('refreshBriefBtn');
+      if (btn) btn.classList.add('spinning');
+
+      /* Hide staleness banner during regeneration */
+      const banner = document.getElementById('stalenessBanner');
+      if (banner) banner.style.display = 'none';
+
+      /* Clear cached brief so it regenerates fresh */
+      localStorage.removeItem(`pf_brief_${STATE.currentRoleId}`);
+
+      /* Capture additional context if any */
+      STATE.additionalContext = (document.getElementById('additionalContextInput')?.value || '').trim();
+
+      /* Try MCP bridge first, then fall back to generateBrief */
+      try {
+        const bridgeUp = await isMcpBridgeAvailable();
+        if (bridgeUp) {
+          await generateBriefViaMcp(STATE.currentRoleId);
+          showCoworkToast('Brief refreshed via MCP bridge');
+        } else {
+          /* Try loading updated static brief (may have been regenerated in Cowork) */
+          const staticLoaded = await loadStaticBrief(STATE.currentRoleId);
+          if (staticLoaded) {
+            showCoworkToast('Brief refreshed from latest Cowork data');
+          } else {
+            /* Last resort: in-browser generation */
+            await generateBrief();
+          }
+        }
+      } catch (err) {
+        console.error('[ResearchBrief] Refresh failed:', err);
+        showCoworkToast('Brief refresh failed — try again', true);
+      } finally {
+        if (btn) btn.classList.remove('spinning');
+        /* Re-check staleness after refresh */
+        setTimeout(checkBriefStaleness, 500);
+      }
+    }
+
+    /** Dismiss the staleness banner for this session */
+    function dismissStalenessBanner() {
+      const banner = document.getElementById('stalenessBanner');
+      if (banner) {
+        banner.style.display = 'none';
+        /* Remember dismissal for this role in this session */
+        if (STATE.currentRoleId) {
+          STATE._dismissedStaleness = STATE._dismissedStaleness || new Set();
+          STATE._dismissedStaleness.add(STATE.currentRoleId);
+        }
+      }
+    }
+
     /* ====== INITIALIZATION ====== */
     /** Initialize the module */
     /* ====== COWORK BRIDGE: Export context + Import brief ====== */
@@ -3959,6 +4233,7 @@ ${doc.content.slice(0, 8000)}
         }
       });
 
+      document.getElementById('refreshBriefBtn').addEventListener('click', handleRefreshBrief);
       document.getElementById('exportBtn').addEventListener('click', exportToPDF);
       document.getElementById('printBtn').addEventListener('click', () => window.print());
       document.getElementById('sidebarToggle').addEventListener('click', () => {
