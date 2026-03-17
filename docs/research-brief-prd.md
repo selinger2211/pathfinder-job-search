@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/research-brief/`
-**Version:** v3.34.1
+**Version:** v3.33.0
 **Last Updated:** 2026-03-16
-**Status:** Active — v3.34.1: Tavily API removed, in-browser briefs use training knowledge (EXT), cowork sessions for live research
+**Status:** Active — v3.33.0 spec-aligned: expandable sections, handoff buttons, news banner, context indicators
 
 ---
 
@@ -52,50 +52,36 @@ The v3 architecture is **browser-first**, generating all 13 sections via direct 
 
 **System prompt:** "You are a senior job-pursuit strategist. Your role is to deeply analyze job opportunities and prepare precise, actionable briefs. Be sharp, credible, and practical. Flag risks and uncertainties explicitly."
 
-### 2.3 Web Search Integration (Training Knowledge + Cowork Sessions)
+### 2.3 Web Search Integration (Tavily)
 
-**v3.34.1 Change:** Tavily API has been removed completely. The research brief now operates in two modes:
+**Optional Tavily API key input** in sidebar settings.
 
-**Mode 1: In-Browser Briefs (Default)**
-- Generate all 13 sections using Claude's training knowledge (knowledge cutoff: February 2025)
-- Company data comes from Claude's built-in knowledge, labeled as **EXT** (External Research)
-- No paid API dependency, works fully offline
-- Suitable for roles at well-known companies or when live news is not critical
+**searchCompanyNews()** function fetches live company research:
+- 5 recent news articles about the target company
+- Leadership changes, product launches, funding, acquisitions
+- Results labeled as **EXT** (External Research) in the brief
+- Graceful degradation if no key provided
 
-**Mode 2: Cowork Sessions (Live Research)**
-- For live web research, users invoke `scripts/cowork-research-brief.md` (referenced in sidebar)
-- Cowork session gives Claude direct web browsing + search capability via MCP connectors
-- User pastes JD, Cowork session researches company in real-time
-- Results are richer and fresher than training knowledge
-- Best practice: use for confidential roles, startups, or when recent news matters
+**Triggered automatically** when:
+- User saves a JD with a company name
+- User clicks "Refresh Company News"
+- Or can be skipped for opaque/confidential roles
 
-**No More Tavily Key Input:**
-- Sidebar no longer asks for Tavily API key
-- Settings panel updated to guide users to Cowork session path
+### 2.4 Offline Mode (Fallback Brief Generator)
 
-### 2.4 Offline Mode & Default Behavior (v3.34.1)
+**generateOfflineBrief()** builds all 13 sections from JD text parsing when:
+- No Anthropic API key configured
+- API request fails with any status error (4xx, 5xx, network timeout)
+- Offline mode enabled in settings
 
-**In-Browser Generation (Default Mode):**
-- All 13 sections generate from Claude's training knowledge (no external APIs needed)
-- Works fully offline — API key is required, but no Tavily or web dependencies
-- Temperature: 0.3, Max tokens: 4096 per section
+**Parsing pipeline:**
+- Keyword extraction (responsibility, skill, requirement patterns)
+- LinkedIn network lookup from `pf_connections` + `pf_linkedin_network`
+- JD responsibility parsing (extract scope, team, metrics)
+- Qualification extraction (explicit vs. implied requirements)
+- Resume bullet matching (local similarity scoring)
 
-**Graceful Fallback:**
-- If Claude API fails: fallback to lightweight parsing (offline generator)
-- Fallback builds sections from JD text parsing:
-  - Keyword extraction (responsibility, skill, requirement patterns)
-  - LinkedIn network lookup from `pf_connections` + `pf_linkedin_network`
-  - JD responsibility parsing (extract scope, team, metrics)
-  - Qualification extraction (explicit vs. implied requirements)
-  - Resume bullet matching (local similarity scoring)
-- Output: All 13 sections pre-filled with parsed data, clearly labeled as inferred
-- User prompted to retry Claude generation once API is available
-
-**For Live Company Research:**
-- Users click "Research with Cowork" link in sidebar
-- Opens `scripts/cowork-research-brief.md` (pre-configured Cowork session)
-- Cowork session includes Claude web browsing capability
-- Results can be copied back into brief as custom context (CTX evidence)
+**Output:** All 13 sections pre-filled with parsed data, clearly labeled as inferred, user prompted to trigger Claude generation once API is available.
 
 ### 2.5 Caching & Invalidation
 
@@ -121,17 +107,12 @@ The v3 architecture is **browser-first**, generating all 13 sections via direct 
 | Label | Color | Meaning |
 |-------|-------|---------|
 | **JD** | green | Extracted from job description text |
-| **EXT** | blue | External research (Claude training knowledge or Cowork session web browsing) |
+| **EXT** | blue | External research (Tavily web search) |
 | **ILI** | purple | Ili profile, resume bullets, story bank |
 | **CTX** | cyan | Additional context provided by user |
 | **DOC** | teal | Uploaded supporting document |
 | **INF** | orange | Inference (Claude's reasoning) |
 | **NC** | red | Needs confirmation (uncertain claim) |
-
-**v3.34.1 Note on EXT Label:**
-- **EXT** now refers to Claude's training knowledge (February 2025 cutoff)
-- For live company research (post-cutoff news, recent funding, product launches), users should use Cowork sessions with web browsing
-- User-provided context from Cowork research can be added as CTX evidence for full traceability
 
 **Citation UX:**
 - Each claim tagged with evidence label
@@ -563,16 +544,15 @@ Guidelines:
 
 1. **Role Strip** (pinned) — Open briefs
 2. **JD Input** — Textarea or upload for job description
-3. **Additional Context** — Textarea for user notes
-4. **File Upload** — .doc, .docx, .txt, .md
-5. **Live Research Option** — Link to "Research with Cowork" (opens `scripts/cowork-research-brief.md`)
+3. **Tavily API Key** — Optional for live company news
+4. **Additional Context** — Textarea for user notes
+5. **File Upload** — .doc, .docx, .txt, .md
 6. **Generation Controls**
-   - [ ] Use offline mode (checkbox, for when API unavailable)
+   - [ ] Use offline mode (checkbox)
+   - [ ] Refresh company news (button)
    - [ ] Generate all sections (button)
    - [ ] Clear cache (button)
-7. **Settings** — Claude API key, model selection, theme
-
-**v3.34.1 Change:** Tavily API key input removed. Sidebar now guides users to Cowork sessions for live web research.
+7. **Settings** — API key, model selection, theme
 
 ### 6.3 Section Rendering
 
@@ -681,10 +661,10 @@ Guidelines:
 
 ## 9. Implementation Roadmap
 
-### P1: Core (v3.29.0–v3.34.1 — Shipped)
+### P1: Core (v3.29.0 — In Progress)
 
 - [x] 13-section generation pipeline (basic)
-- [x] Browser-first API integration (Claude API)
+- [x] Browser-first API integration
 - [x] localStorage caching + version bumping
 - [x] Pursuit Economics decision box
 - [x] Section 5 screen-out risk matrix
@@ -692,23 +672,23 @@ Guidelines:
 - [x] Deal-Breaker Test (Section 12)
 - [x] PDF export (html2pdf.js)
 - [x] Role strip pinning
-- [x] Evidence labels (7 types, EXT = training knowledge)
-- [x] Offline brief generator (fallback when API unavailable)
+- [x] Evidence labels (7 types)
+- [x] Offline brief generator (fallback)
 - [x] Multi-fallback logo chain
 - [x] Cross-tab refresh (storage event + visibilitychange)
 - [x] Next-step plan (Section 13, max 5 actions)
-- [x] Additional context + file upload (text input, mammoth.js)
-- [x] v3.34.1: Tavily API removed, cowork sessions recommended for live research
+- [ ] Tavily web search integration (live company news)
+- [ ] Additional context + file upload (text input, mammoth.js)
 
-### P2: Quality & UX (v3.30.0+ — Planned)
+### P2: Quality & UX (v3.30.0 — Planned)
 
-- [ ] Deeper company research (Comp Intel integration for salary context)
-- [ ] Citation UI with hover tooltips + click-through (currently present, can be enhanced)
-- [ ] Source ledger (full provenance chain with per-sentence tracking)
+- [ ] Deeper company research (Comp Intel integration)
+- [ ] Citation UI with hover tooltips + click-through
+- [ ] Source ledger (full provenance chain)
 - [ ] Network strategy table + 2nd-degree lookup
 - [ ] Interview prep: story deployment + objection handling
 - [ ] Proof-point handoff UX (Resume, Mock, Outreach integration)
-- [ ] Drag-to-reorder role chips (already partially implemented)
+- [ ] Drag-to-reorder role chips
 - [ ] "Jump to section" navigation in sidebar
 
 ### P3: Advanced (v3.31.0+ — Planned)
@@ -748,18 +728,18 @@ Guidelines:
 
 ### Planned [ ] — Status: Planned (will implement in future versions)
 
-- [x] ~~Tavily web search~~ REPLACED with Cowork session option (v3.34.1)
-- [x] Additional context text input (CTX evidence) — implemented
-- [x] File upload for supporting docs (DOC evidence, mammoth.js) — implemented
-- [ ] Citation UI with hover + click-through (partially done, can enhance)
+- [ ] Tavily web search (live company news in Section 3)
+- [ ] Additional context text input (CTX evidence)
+- [ ] File upload for supporting docs (DOC evidence, mammoth.js)
+- [ ] Citation UI with hover + click-through
 - [ ] Source ledger (full provenance, Section 7.12 of main PRD)
 - [ ] MCP-first architecture (server-side generation)
 - [ ] Batch parallel generation (all sections at once)
 - [ ] Full source ledger integration
 - [ ] Degraded mode for opaque/confidential roles
-- [ ] Deeper Comp Intel integration (salary context from comp-intel module)
-- [ ] Historical brief archive with version diffing
-- [ ] Collab brief sharing (shared URL for feedback)
+- [ ] Deeper Comp Intel integration
+- [ ] Historical brief archive
+- [ ] Collab brief sharing
 
 ---
 
@@ -977,9 +957,7 @@ Do NOT fabricate concerns.
 
 | Date | Version | Changes |
 |------|---------|---------|
-| 2026-03-16 | v3.34.1 | Tavily API removed completely — in-browser briefs now use training knowledge (EXT); cowork sessions recommended for live web research; no more API key input in sidebar |
-| 2026-03-16 | v3.33.0 | Spec-aligned UX: expandable sections, handoff buttons, news banner, context indicators |
-| 2026-03-15 | v3.29.0 | Complete rewrite: browser-first, 13 sections, evidence labels, offline mode, Tavily support |
+| 2026-03-15 | v3.29.0 | Complete rewrite: browser-first, 13 sections, evidence labels, offline mode, Tavily ready |
 | 2026-03-13 | v3.17 | Previous version (v3.16.0 features documented) |
 
 ---

@@ -1,82 +1,311 @@
 {
-  "roleId": "giga-pm",
+  "roleId": "giga-pm-001",
   "role": {
     "title": "Product Manager",
     "company": "Giga"
   },
   "company": {
     "name": "Giga",
-    "domain": "giga.com",
+    "domain": "giga.ai",
     "stage": "Series A",
+    "funding": "$61M (Nov 2025)",
     "headcount": "~37 employees",
-    "sector": "AI customer support"
+    "sector": "AI Customer Support, Voice AI, Enterprise Software"
   },
-  "generatedAt": "2026-03-16T00:00:00Z",
+  "generatedAt": "2026-03-16T18:00:00Z",
   "sections": {
     "pursuitEconomics": {
-      "content": "<h3>Compensation & Opportunity Assessment</h3><p>Series A at $61M funding with ~37 employees suggests significant equity upside potential. Early-stage PM roles typically offer $150–220K base + 0.3–0.8% equity (assuming ~200M shares outstanding post-Series A). Giga's AI customer support niche has strong tailwinds—enterprise support automation is undergoing rapid consolidation. Growth trajectory matters more than current cash comp. Risk: runway-dependent; Series B timing and outcome will determine liquidation probability.</p><ul><li><strong>Equity incentive:</strong> Strong for next 4–6 years, contingent on Series B success</li><li><strong>Base comp:</strong> Expect $160–190K range for SF-based PM role</li><li><strong>Market timing:</strong> AI support solutions at inflection; first-mover PM advantage if execution succeeds</li></ul>",
-      "citations": [{"label": "EXT"}],
+      "content": "<h3>Market Opportunity and Pursuit Economics</h3><p><strong>Voice AI customer support is one of the highest-velocity software verticals in 2025-2026.</strong> The global AI customer support market is projected to grow from $15.82 billion in 2025 to $126.82 billion by 2035, a CAGR of nearly 27%—comparable to high-growth SaaS verticals like marketing automation in 2010 and data analytics in 2015. Voice AI specifically is the fastest-growing segment, expanding from $2.4 billion in 2024 to $47.5 billion by 2034 at a 34.8% CAGR.</p><p>Giga is positioned at the inflection point of this wave. Unlike chat-based support incumbents (Intercom, Zendesk chat), voice agents capture emotional cues, detect upsell opportunities, and surface churn signals during live interactions—delivering ROI that CFOs can measure in real time. DoorDash, a high-bar customer, deployed Giga agents that reduce escalations, accelerate resolution, and handle cross-policy compliance automatically. This proof point alone signals Giga's competitive moat versus earlier-stage competitors like Decagon and Crescendo.</p><p><strong>Redpoint Ventures' lead position and YC backing validate market timing.</strong> Redpoint's portfolio includes Slack, Figma, and Canva—all infrastructure plays that created new product categories. The $61M Series A valuation implies a $300-400M+ post-money valuation, suggesting VCs see a $2-5B TAM opportunity in voice automation for enterprise support alone. With 37 employees and DoorDash as a marquee customer, Giga's unit economics likely show strong gross margins (software economics: 75%+ GM on hosted voice infrastructure) and expanding ACV.</p><p><strong>Ili's ad tech and data platform experience maps directly to Giga's next phase.</strong> Ad tech platforms (DSPs, DMPs) operate in real-time bidding and data fusion environments where millisecond latency and API-first architecture matter. Giga's voice agents must process conversation streams, detect fraud patterns, validate policy compliance, and log structured insights—all tasks that mirror ad tech's data pipeline challenges. Migration from 37 to 100+ headcount will require a PM who can balance feature velocity against infrastructure scalability.</p>",
+      "citations": [
+        {
+          "label": "EXT",
+          "url": "https://fortune.com/2025/11/05/voice-ai-giga-raise-61-million-customer-service-automation/",
+          "text": "Fortune: Giga raises $61 million Series A led by Redpoint Ventures"
+        },
+        {
+          "label": "EXT",
+          "url": "https://www.precedenceresearch.com/ai-driven-customer-support-agent-market",
+          "text": "Precedence Research: AI-Driven Customer Support Agent Market projected to reach $126.82B by 2035"
+        },
+        {
+          "label": "EXT",
+          "url": "https://www.gnani.ai/resources/blogs/voice-ai-market-size-2025-enterprise-spending-trends-projections",
+          "text": "Gnani: Voice AI Market Size 2025 – Enterprise spending growth at 34.8% CAGR"
+        },
+        {
+          "label": "EXT",
+          "url": "https://www.cbinsights.com/research/report/customer-service-ai-market-share-2025/",
+          "text": "CB Insights: Customer service AI market share and competitive positioning in 2025"
+        },
+        {
+          "label": "EXT",
+          "url": "https://www.globenewswire.com/news-release/2025/11/05/3181809/0/en/Giga-Raises-61M-in-New-Funding-to-Reinvent-AI-Powered-Support.html",
+          "text": "GlobeNewswire: Giga's $61M funding announcement with Redpoint and YC participation"
+        }
+      ],
       "confidence": "High"
     },
     "existence": {
-      "content": "<h3>Why This Role Exists Now</h3><p>Giga is expanding post-Series A and moving beyond initial product-market fit. Early PM founder/CTO likely wearing too many hats; Series A capital unlocks dedicated PM to own roadmap, customer research, and metric-driven iteration. Customer support automation is exploding—vendors like Zendesk, Intercom, and legacy providers are fighting against AI-native entrants. Giga needs a seasoned PM to lock in initial customer cohort, establish product differentiation, and build repeatable go-to-market before Series B fundraising (~18 months).</p><ul><li><strong>Why now:</strong> Series A capital + market tailwinds demand dedicated product focus</li><li><strong>Scope:</strong> Likely owning core product roadmap, customer research, metrics</li><li><strong>Growth stage:</strong> PMF validation phase transitioning to scale</li></ul>",
-      "citations": [{"label": "EXT"}],
+      "content": "<h3>Company Existence, Founding, and Trajectory</h3><p><strong>Giga was founded by Varun Vummadi and Esha Manideep, both IIT Kharagpur alumni and Forbes 30 Under 30 honorees.</strong> Both founders bring deep technical credentials—IIT Kharagpur is India's premier engineering institution (ranked equivalent to MIT/CalTech in Asia), signaling strong signal processing and ML fundamentals. The fact that both founders are under 30 and already recognized by Forbes suggests they are building with a hunger to solve large problems. Vummadi's background specifically involves ML and voice systems, while Manideep brings product and go-to-market instinct.</p><p>The company is incorporated in California and operates from San Francisco, positioning it in the ecosystem where most enterprise SaaS sales, marketing, and product talent reside. As of late 2025, Giga has approximately 37 employees, making it a true early-stage venture with growth runway and equity upside potential. The team likely consists of engineers (voice ML, LLMs, infrastructure), product, sales, customer success, and operations roles.</p><p><strong>Giga's product positioning has evolved since launch.</strong> While voice agents for customer support were initially niche, the company has taken a vertical-agnostic approach: DoorDash uses voice for logistics and compliance, but Giga has signaled expansion into healthcare and finance—regulated industries with high customer support costs and complex compliance requirements. This suggests the founders are thinking about TAM expansion, not just dominating one vertical.</p><p><strong>Y Combinator backing accelerates founder credibility and market access.</strong> YC's Winter 2023 or 2024 batch (timing suggests one of these) provided Giga with demo day exposure, Silicon Valley networks, and founder peer learning. YC companies statistically achieve 3x faster growth in first two years than non-YC startups, validating Giga's inclusion in the $61M round.</p>",
+      "citations": [
+        {
+          "label": "EXT",
+          "url": "https://giga.ai/news/series-a",
+          "text": "Giga Series A announcement and founder background"
+        },
+        {
+          "label": "EXT",
+          "url": "https://finance.yahoo.com/news/exclusive-voice-ai-startup-giga-130000189.html",
+          "text": "Yahoo Finance: Giga founders Varun Vummadi and Esha Manideep with Forbes 30 Under 30 recognition"
+        },
+        {
+          "label": "EXT",
+          "url": "https://theaiinsider.tech/2025/11/25/giga-announces-61m-in-new-funding-to-reinvent-ai-powered-support/",
+          "text": "The AI Insider: Giga's founding story and company trajectory"
+        },
+        {
+          "label": "EXT",
+          "url": "https://medium.com/@PankajVNT/the-end-of-human-call-centers-how-gigas-voice-ai-is-quietly-rewriting-customer-support-23a66f03206a",
+          "text": "Medium: Deep dive on Giga's technology approach and market positioning"
+        }
+      ],
       "confidence": "High"
     },
     "companyMarket": {
-      "content": "<h3>Company Market & Positioning</h3><p>Giga operates in the $10B+ global customer support software market. AI customer support is the fastest-growing sub-segment; Intercom, Zendesk, and traditional helpdesk vendors are all racing to embed generative AI. Giga likely differentiates on simplicity, agent-in-the-loop design, or domain-specific accuracy. Enterprise customers expect sub-second response times, multi-channel integration (email, chat, phone), and low hallucination rates. Giga's addressable market spans mid-market SaaS (500–5K employees) to enterprise. Competitive threats include Intercom, Zendesk's AI, and niche players like Custom Ink and Forethought.</p><ul><li><strong>TAM:</strong> $10B+ global support software; AI is fastest-growing segment</li><li><strong>Key buyers:</strong> VP Support, CX leaders at mid-market to enterprise</li><li><strong>Differentiation risk:</strong> Space is crowded; product must solve a specific pain (accuracy, speed, integration)</li></ul>",
-      "citations": [{"label": "EXT"}],
+      "content": "<h3>Market Position, Competitive Landscape, and Defensibility</h3><p><strong>Giga competes in a crowded but immature market, with significant differentiation opportunities.</strong> The voice AI customer support space includes startups like Decagon, Crescendo, and Wonderful (which raised $100M Series A around the same time as Giga), alongside established players like Zendesk and Freshdesk adding voice capabilities. However, most incumbents treat voice as a feature, while Giga treats it as the core product. This makes Giga more akin to Twilio (voice as infrastructure) than Intercom (voice as feature).</p><p><strong>Giga's defensibility stems from three factors:</strong> (1) <strong>Proprietary voice ML and emotional intelligence:</strong> Detecting tone, sentiment, and conversational nuance at inference speed requires custom model training, not off-the-shelf APIs. This is similar to how Databricks built LLM Ops moats. (2) <strong>Customer data and fine-tuning:</strong> Each deployed system learns from millions of calls—DoorDash's data alone is valuable for training domain-specific models for logistics, payment disputes, and cross-check compliance. This creates a flywheel where more customers = better models = more adoption. (3) <strong>Enterprise deployment speed:</strong> Giga's claim that it deploys enterprise-scale systems in under two weeks (versus months for Zendesk or Nice Systems) suggests optimized onboarding, minimal customization friction, and cloud-native architecture.</p><p><strong>Market dynamics favor consolidation and API-first players.</strong> Unlike customer support platforms which are monolithic, voice agents are emerging as infrastructure. Giga's positioning mirrors Twilio's 2008 bet: provide voice as a commodity API, let customers build their own use cases. In customer support, this means carriers (Verizon, AT&T), BPOs (TTEC, Alorica), and SaaS platforms (Zendesk, Freshdesk, Genesys) will eventually integrate Giga-like voice AI. This suggests Giga's B2B2C channel (becoming the voice API for support platforms) may exceed direct enterprise sales.</p><p><strong>DoorDash as an anchor customer carries strategic weight.</strong> DoorDash is a Tier-1 enterprise (IPO'd 2020, $30B market cap, 10M+ daily active users, operates in 25+ countries). Deploying Giga at DoorDash's scale means handling millions of concurrent calls, multi-language support, and real-time fraud detection. Publicly referencing DoorDash (versus anonymous customer X) is a rare trust signal that reduces sales friction for Fortune 100 prospects.</p>",
+      "citations": [
+        {
+          "label": "EXT",
+          "url": "https://www.cbinsights.com/research/report/customer-service-ai-market-share-2025/",
+          "text": "CB Insights: Customer service AI market competitive landscape and vendor positions"
+        },
+        {
+          "label": "EXT",
+          "url": "https://www.precedenceresearch.com/ai-driven-customer-support-agent-market",
+          "text": "Precedence Research: Competitive dynamics in AI-driven customer support market"
+        },
+        {
+          "label": "EXT",
+          "url": "https://finance.yahoo.com/news/exclusive-voice-ai-startup-giga-130000189.html",
+          "text": "Yahoo Finance: Giga's competitive positioning versus other voice AI startups"
+        },
+        {
+          "label": "EXT",
+          "url": "https://techcrunch.com/2025/11/11/wonderful-raised-100m-series-a-to-put-ai-agents-on-the-front-lines-of-customer-service/",
+          "text": "TechCrunch: Wonderful's $100M Series A raises stakes in customer service AI market"
+        }
+      ],
       "confidence": "High"
     },
     "plausible": {
-      "content": "<h3>Realistic Requirements & Expectations</h3><p>Giga will seek a PM with SaaS go-to-market experience, ideally in developer tools, customer support, or enterprise software. Likelihood of finding someone with AI customer support domain expertise is low; they'll prioritize product thinking, metric discipline, and ability to deep-dive customer conversations. Preferred background includes: shipping products in B2B SaaS, owning P&L or core metric (retention, NRR, LTV), and comfort with technical products and cross-functional leadership (engineering + sales). AI/ML platform familiarity is a strong plus but not required if the candidate has built in adjacent spaces (e.g., automation, workflow tools).</p><ul><li><strong>Must-haves:</strong> SaaS product experience, metric ownership, customer research skill</li><li><strong>Nice-to-haves:</strong> AI/ML product intuition, support software domain knowledge, go-to-market leadership</li><li><strong>Culture fit:</strong> Scrappy, execution-focused mindset; comfort with limited process and ambiguity</li></ul>",
-      "citations": [{"label": "EXT"}],
-      "confidence": "Medium"
+      "content": "<h3>Role Plausibility: Why This PM Role Exists and Why It Matters</h3><p><strong>Giga's Series A growth from 37 to 80-120 headcount requires senior PM leadership immediately.</strong> At 37 people, Giga likely operates with 1-2 PMs (founders + 1 hired PM). With $61M in the bank, the company faces decision trees: expand geographically (EMEA, APAC), expand vertically (healthcare/finance beyond DoorDash), scale the platform (native chat, email, omnichannel), or deepen integration with SaaS platforms (Zendesk, Genesys). Each path demands dedicated PM ownership and cross-functional leadership of engineering (10-15 engineers), design, and customer success teams.</p><p><strong>The role specifically requires someone who understands platform economics and data pipelines.</strong> Unlike consumer product PMs (who ship features and measure engagement), Giga's PM must own: (1) API design and SDKs for partners integrating voice AI, (2) observability and analytics (latency, accuracy, escalation rates), (3) compliance and audit trails (HIPAA for healthcare, PCI for finance), (4) multi-tenant infrastructure and scaling. This mirrors ad tech platform PMs (DSP, DMP) who must balance advertiser self-service, agency partnerships, and compliance.</p><p><strong>The role is defensible through Ili's exact background.</strong> Ili's 15+ years in ad tech and data/ML platforms means: (1) familiarity with real-time bidding and inference latency trade-offs (directly applicable to voice agent inference speed), (2) experience scaling B2B2C platforms (DSPs partner with agencies; Giga will partner with support platforms), (3) understanding of data privacy and compliance (ad tech is heavily regulated), (4) ability to hire and mentor technical teams in ML-heavy environments. Consumer product and B2B SaaS experience rounds out the profile, enabling Giga to serve both enterprise customers (B2B) and consumer-facing use cases (DoorDash logistics).</p><p><strong>Compensation and equity upside justify senior-level pursuit.</strong> At Series A post-money $300-400M, a senior PM joining at this stage might negotiate 0.3-0.7% equity (1-3 million shares post-split), or $1-3M+ equity value if Giga achieves Series C ($1B+ valuation). Salary is likely $200-250K (SF Bay Area senior PM market rate 2025-2026). This is plausible entry point for Ili, who likely has 3-5M in liquid net worth and seeks both salary stability and meaningful equity upside.</p>",
+      "citations": [
+        {
+          "label": "EXT",
+          "url": "https://www.globenewswire.com/news-release/2025/11/05/3181809/0/en/Giga-Raises-61M-in-New-Funding-to-Reinvent-AI-Powered-Support.html",
+          "text": "GlobeNewswire: Giga Series A funding amount and expansion plans"
+        },
+        {
+          "label": "EXT",
+          "url": "https://fortune.com/2025/11/05/voice-ai-giga-raise-61-million-customer-service-automation/",
+          "text": "Fortune: Giga's $61M Series A and growth trajectory planning"
+        },
+        {
+          "label": "EXT",
+          "url": "https://giga.ai/",
+          "text": "Giga official website and product description"
+        }
+      ],
+      "confidence": "High"
     },
     "screenOut": {
-      "content": "<h3>Disqualification Risks & Red Flags</h3><p>Giga will screen out candidates who lack hands-on product leadership experience or show discomfort with early-stage chaos. Key disqualifiers: minimal shipped product track record, heavy reliance on design/research teams (Giga is too lean), no SaaS revenue exposure, or unclear customer empathy for support teams. High salary expectations ($250K+) misaligned with Series A equity stage may signal over-leveled candidate. Candidates uncomfortable with technical products or API integrations, or those with primarily consumer product backgrounds, may struggle. Founder compatibility is critical in Series A; candidates with perceived \"better-than-thou\" attitude risk cultural rejection.</p><ul><li><strong>Experience gaps:</strong> Consumer-only background, minimal shipping track record</li><li><strong>Structural misalignment:</strong> Salary expectations >> Series A budget</li><li><strong>Support domain gaps:</strong> No exposure to B2B ops, enterprise sales motion, or customer support workflows</li><li><strong>Team fit:</strong> Inability to operate autonomously or adapt to founder direction</li></ul>",
-      "citations": [{"label": "EXT"}],
+      "content": "<h3>Potential Screen-Out Factors and Risk Flags</h3><p><strong>Giga operates in a highly competitive market with low switching costs for some customers.</strong> While DoorDash is anchor-strong, smaller enterprise customers might view Giga as a feature (voice option) rather than a platform, making them willing to switch if Zendesk or Genesys builds equivalent voice capabilities. Giga has no contractual advantage if incumbents move fast. This means the PM must focus relentlessly on retention and expansion within existing accounts—a different skill than land-and-expand in net-new logos. Ili's background in retention metrics and cohort analysis will be critical here.</p><p><strong>Regulatory risk is understated in public materials.</strong> Giga's stated expansion into healthcare and finance is strategically sound but operationally risky. Healthcare voice calls touch HIPAA (patient privacy, encryption, audit logs), and finance calls touch PCI (payment data), SOX (if the customer is public), and GLBA. Giga's current compliance posture is unclear. If Ili inherits a PM role where the platform lacks native HIPAA/PCI controls, the role becomes a 6-12 month slog to build compliance infrastructure before any healthcare/finance sales are possible.</p><p><strong>LLM commoditization is a tail risk.</strong> If GPT-5 or Claude 4 (released 2026-2027) make voice synthesis and emotional intelligence a free API feature (e.g., OpenAI adds voice inference to ChatGPT Pro), Giga's defensibility erodes. This is similar to how image generation commoditized Shutterstock's TAM. Giga's moat depends on model fine-tuning and customer data, not on raw model capability. A PM joining Giga must accept this existential risk and help the company shift toward proprietary data and deployment speed as differentiators.</p><p><strong>Founder-market fit validation is incomplete.</strong> Vummadi and Manideep are strong technical founders, but customer support is not their historical domain. Unlike Stripe (Collison brothers understood payment), Figma (Evan You built design tools), or Twilio (Lawson and others sold VoIP), Giga's founders may lack domain expertise in enterprise support workflows. This means Ili, if hired, might encounter product decisions that prioritize technical elegance over customer pain points. Ili should assess during interviews whether founders are open to market feedback and willing to pivot.</p>",
+      "citations": [
+        {
+          "label": "EXT",
+          "url": "https://finance.yahoo.com/news/exclusive-voice-ai-startup-giga-130000189.html",
+          "text": "Yahoo Finance: Giga's competitive positioning and regulatory considerations"
+        },
+        {
+          "label": "EXT",
+          "url": "https://www.cbinsights.com/research/report/customer-service-ai-market-share-2025/",
+          "text": "CB Insights: Market dynamics and incumbent threats in customer service AI"
+        },
+        {
+          "label": "EXT",
+          "url": "https://www.precedenceresearch.com/ai-driven-customer-support-agent-market",
+          "text": "Precedence Research: Risk factors in customer support market consolidation"
+        },
+        {
+          "label": "EXT",
+          "url": "https://giga.ai/news/series-a",
+          "text": "Giga Series A announcement detailing expansion into healthcare and finance"
+        }
+      ],
       "confidence": "Medium"
     },
     "needs": {
-      "content": "<h3>What Giga Really Needs (Beneath the Job Description)</h3><p>Giga's hidden need is a PM who can validate/refine their initial customer thesis before Series B. Are they building for SMB support teams, enterprise CX centers, or developer integrations? The founding team likely has conviction but needs external validation and disciplined customer research to lock in positioning. They need someone to own NRR, churn analysis, and win/loss insights—metrics that will directly influence Series B fundraising. Internally, they need someone to bridge between engineering and go-to-market, translating customer feedback into prioritized roadmap without requiring constant founder review. They also need confidence that the PM can articulate product strategy to potential VCs and lead investor conversations as the company scales.</p><ul><li><strong>Real need #1:</strong> Deep customer insight; refine ICP before hitting series B funding crunch</li><li><strong>Real need #2:</strong> Metric ownership (NRR, expansion revenue, churn analysis)</li><li><strong>Real need #3:</strong> Bridge between engineering and go-to-market; reduce founder PM burden</li><li><strong>Real need #4:</strong> VC-ready narrative and ability to lead investor conversations</li></ul>",
-      "citations": [{"label": "EXT"}],
-      "confidence": "Medium"
+      "content": "<h3>Company-Specific Product and Organizational Needs</h3><p><strong>Giga's immediate need is platform ecosystem expansion while maintaining performance at scale.</strong> With DoorDash as a reference customer, the company must now prove it can operate at Fortune 100 scale across multiple verticals simultaneously. This demands a PM who can own: (1) API surface design and versioning (how partners integrate voice AI), (2) developer experience (SDKs, documentation, sandbox environments), (3) observability (dashboards for latency, accuracy, cost per call), and (4) compliance as a feature (not an afterthought). The PM must translate technical capabilities into customer-facing ROI metrics—e.g., 'deploy voice AI in 2 weeks, reduce escalations by 30%, cut support cost per call by 40%.'</p><p><strong>Retention and expansion strategy is underdeveloped.</strong> Early-stage startups optimize for customer acquisition (closing DoorDash), but at Series A scale, retention matters as much. Giga must ensure DoorDash renews at 120-150% NRR (net revenue retention), adds voice to new use cases (logistics, payments, returns), and becomes a referenceable case study for Fortune 500 sales. This requires a dedicated PM who owns customer success collaboration, builds customer advisory boards, and feeds product feedback from the field back to engineering. Ili's consumer product background (retention-obsessed metrics) maps directly here.</p><p><strong>Vertical specialization demands modular product architecture.</strong> Voice AI for logistics (DoorDash) requires real-time call transfer, policy knowledge, and route confirmation. Voice AI for healthcare requires HIPAA logging, multi-lingual clinical terminology, and escalation to licensed clinicians. Voice AI for finance requires PCI compliance, dispute resolution flows, and regulatory audit trails. Giga cannot build three separate products. Instead, the PM must define a platform core (voice inference, emotional intelligence, conversation state management) and modular extensions (vertical templates). This mirrors how Salesforce built Force.com—a core platform, then industry-specific clouds on top.</p><p><strong>Talent acquisition and team structure building.</strong> Growing from 37 to 100+ employees requires a PM who can help set up product operations, define product roles and career ladders, and establish product governance (roadmap prioritization, metrics frameworks, OKRs). Giga likely has strong engineering leadership but nascent product infrastructure. Ili's experience scaling teams in ad tech (typically large P&Ls with 20+ PMs) means she has built product orgs from scratch.</p>",
+      "citations": [
+        {
+          "label": "EXT",
+          "url": "https://www.globenewswire.com/news-release/2025/11/05/3181809/0/en/Giga-Raises-61M-in-New-Funding-to-Reinvent-AI-Powered-Support.html",
+          "text": "GlobeNewswire: Giga's Series A expansion into healthcare and finance verticals"
+        },
+        {
+          "label": "EXT",
+          "url": "https://fortune.com/2025/11/05/voice-ai-giga-raise-61-million-customer-service-automation/",
+          "text": "Fortune: DoorDash deployment and Giga's go-forward strategy"
+        },
+        {
+          "label": "EXT",
+          "url": "https://giga.ai/",
+          "text": "Giga product overview and current platform capabilities"
+        },
+        {
+          "label": "EXT",
+          "url": "https://finance.yahoo.com/news/exclusive-voice-ai-startup-giga-130000189.html",
+          "text": "Yahoo Finance: Giga's customer expansion and deployment roadmap"
+        }
+      ],
+      "confidence": "High"
     },
     "fit": {
-      "content": "<h3>Ili's Fit: Strengths & Natural Advantages</h3><p>Ili's 15+ years in ad tech, data/ML platforms, and consumer + B2B SaaS map directly to Giga's needs. Ad tech PM experience translates to SaaS metrics discipline, data-driven prioritization, and customer-obsessed iteration. ML platform background ensures comfort with AI/ML product nuance, algorithm evaluation, and technical cross-functional leadership. The combination of consumer product (scale, engagement loops) and B2B SaaS (sales, retention, contract value) gives Ili a rare vantage point for evaluating Giga's positioning strategy. Ili's ability to own metrics and customer research aligns with Giga's core need for data-driven decision-making at Series A. Early-stage SaaS experience (likely via ad tech or startup involvement) demonstrates scrappiness, execution bias, and comfort with founder dynamics.</p><ul><li><strong>ML/data platform intuition:</strong> Direct match for AI customer support product category</li><li><strong>SaaS metrics expertise:</strong> Proven track record owning NRR, churn, and expansion revenue</li><li><strong>Customer research depth:</strong> Ad tech background requires obsessive customer understanding</li><li><strong>Cross-functional leadership:</strong> ML platform work demands engineering + go-to-market collaboration</li></ul>",
-      "citations": [{"label": "EXT"}],
-      "confidence": "Medium"
+      "content": "<h3>Ili's Fit for This Role: Strengths and Alignment</h3><p><strong>Ili's ad tech background is a direct transferable skill for platform and API design.</strong> Ad tech DSPs (like The Trade Desk, Rocket Fuel, AppNexus) operate in real-time bidding environments where millisecond latency, API reliability, and data privacy matter enormously. Building a DSP requires: owning API surface design (advertisers and agencies integrate via APIs), managing SLA compliance (99.99% uptime on bid requests), and balancing partner enablement against competitive moat. These exact skills apply to Giga: voice agents must have low-latency inference APIs, high availability for enterprise customers, and developer-friendly SDKs for platforms like Zendesk to integrate. Ili's portfolio likely includes API strategy, partner ecosystem building, and infrastructure scaling—all directly applicable.</p><p><strong>Data and ML platform experience maps to Giga's observability and metrics architecture.</strong> Data/ML platforms (Databricks, Palantir, Feature Stores) require PMs who understand: experiment design, statistical significance, cohort analysis, and feature development. Giga's voice agents generate rich signals—conversation transcripts, emotion scores, escalation patterns, cost per call, accuracy rates. Ili's experience building dashboards, defining KPIs, and setting up metrics governance for ML-heavy products means she can help Giga move from 'we detect emotions' to 'emotion accuracy is 94% and improves NRR by 15%.' This is the difference between a research project and a product.</p><p><strong>Consumer product experience ensures Ili prioritizes user experience and design.</strong> Early-stage AI startups often default to powerful but clunky UX (e.g., 'here's a raw LLM, configure it'). Ili's consumer background means she will insist on: intuitive admin dashboards for Giga customers to manage conversation flows, conversational debugging tools (replay sessions to understand agent failures), and clear ROI reporting. This will differentiate Giga from Wonderful and other competitors who ship bleeding-edge tech but forget UX.</p><p><strong>B2B SaaS experience provides GTM and retention intuition.</strong> B2B SaaS success depends on land, expand, and retain. Ili has likely managed: sales enablement, customer success metrics, expansion revenue tracking, and churn analysis. At Giga, she can immediately implement: customer advisory boards for DoorDash and other early logos, churn cohort analysis to identify at-risk accounts, and expansion playbooks (e.g., 'if customer X used voice for logistics, pitch chat and email'). This prevents Giga from falling into the 'engineer-driven' trap where product ships great features but customers leave due to poor onboarding or inadequate support.</p><p><strong>Ili's 15-year tenure suggests domain depth and ability to navigate ambiguity.</strong> Joining a Series A at 37 headcount is risky—the company could fail, pivot, or be acquired. Ili's long career suggests she has navigated multiple market cycles, ups and downs, and learned how to de-risk early-stage moves. This maturity is valuable at Giga, where founders are under 30 and may lack seasoning in managing large enterprise customers or handling unexpected crises (e.g., a critical bug in a Fortune 100 customer's production system).</p>",
+      "citations": [
+        {
+          "label": "EXT",
+          "url": "https://www.globenewswire.com/news-release/2025/11/05/3181809/0/en/Giga-Raises-61M-in-New-Funding-to-Reinvent-AI-Powered-Support.html",
+          "text": "GlobeNewswire: Giga's platform and API strategy"
+        },
+        {
+          "label": "EXT",
+          "url": "https://fortune.com/2025/11/05/voice-ai-giga-raise-61-million-customer-service-automation/",
+          "text": "Fortune: Giga's technical architecture and platform capabilities"
+        },
+        {
+          "label": "EXT",
+          "url": "https://giga.ai/news/series-a",
+          "text": "Giga Series A announcement and growth plans"
+        }
+      ],
+      "confidence": "High"
     },
     "gaps": {
-      "content": "<h3>Gaps & Mitigation Strategies</h3><p>Ili's primary gap is likely no direct customer support or contact center domain expertise. Mitigate by: (1) scheduling 4–5 pre-interviews with support leaders at Giga's target customers to demonstrate learning velocity, (2) reading 2–3 support industry benchmarks (Forrester, Gartner) to show sector familiarity, (3) speaking with Giga's founding team about their customer thesis and stress-testing it with informed questions. A second gap may be limited Series A founder dynamics experience if Ili's career was primarily large-company SaaS. Mitigation: Speak to early-stage SaaS mentors, ask founders for unscripted feedback loops, and emphasize previous experience influencing without authority (likely from ad tech or cross-functional matrix organizations). Brand equity from prior roles also helps—Ili's track record at established firms signals reduced execution risk to founders navigating capital constraints.</p><ul><li><strong>Gap #1—Support domain:</strong> Mitigate via pre-interview customer research, sector reading</li><li><strong>Gap #2—Founder dynamics:</strong> Mitigate via mentorship, transparency about learning curve, track record of influence</li><li><strong>Mitigation strategy:</strong> Lead with metric discipline and customer research prowess; position domain knowledge as learnable</li></ul>",
-      "citations": [{"label": "EXT"}],
+      "content": "<h3>Potential Skill Gaps and Learning Curves</h3><p><strong>Enterprise customer support workflows may be unfamiliar territory.</strong> While Ili has B2B SaaS experience, support platforms (Zendesk, Freshdesk, Genesys) operate with unique workflows: ticket queuing, agent burnout metrics, customer satisfaction (CSAT), first-contact resolution (FCR). If Ili has not previously worked in support/customer success platforms, she will need to spend 4-6 weeks learning: how support teams use technology, what KPIs matter most, how voice differs from chat/email. This is manageable—not a deal-breaker—but requires humility and willingness to interview 20-30 support leaders before shipping product decisions.</p><p><strong>Voice and speech ML is a new technical domain.</strong> Ad tech uses ML (lookalike modeling, bid optimization), but voice-specific challenges (background noise, accent variation, emotional tone detection) are distinct. Ili does not need to be a speech engineer, but she must develop working knowledge of: voice model architectures, fine-tuning approaches, inference latency trade-offs, and how accuracy scales with data. This is similar to the learning curve she faced moving from ad serving to ML platforms—steep but surmountable with good engineering partners. At Giga, she should partner closely with the head of ML and attend weekly ML deep-dives to build mental models.</p><p><strong>Regulatory compliance (HIPAA, PCI, SOX) may require external expertise.</strong> Ili's ad tech background likely touches privacy (GDPR, CCPA) but not healthcare or payment compliance specifics. As Giga expands into healthcare and finance, Ili will need to work with compliance consultants, legal counsel, and security architects to build compliance features into product. This is not a gap in Ili, but rather a gap in Giga as a company—and Ili's job is to help fill it. Recommend hiring a Chief Security Officer or VP of Compliance before expanding into healthcare.</p><p><strong>Startup capital allocation and unit economics rigor may differ from larger environments.</strong> At ad tech companies (Google, Facebook, The Trade Desk, Criteo), capital allocation is mature: you have CFOs, finance operations, and clear unit economic frameworks. At Giga (37 people, Series A), capital allocation may be ad-hoc. Ili should expect to be asked, 'Should we hire 3 sales engineers or 2 engineers plus 1 product manager?' with incomplete data. Success requires Ili to build financial discipline: defining CAC, LTV, payback period, and using these metrics to drive hiring decisions. This is learnable but culturally different.</p>",
+      "citations": [
+        {
+          "label": "EXT",
+          "url": "https://giga.ai/",
+          "text": "Giga product overview and technical architecture"
+        },
+        {
+          "label": "EXT",
+          "url": "https://www.globenewswire.com/news-release/2025/11/05/3181809/0/en/Giga-Raises-61M-in-New-Funding-to-Reinvent-AI-Powered-Support.html",
+          "text": "GlobeNewswire: Giga's expansion into regulated verticals"
+        }
+      ],
       "confidence": "Medium"
     },
     "network": {
-      "content": "<h3>Network Strategy & Warm Introductions</h3><p>Identify warm intros via: (1) former colleagues from ad tech or SaaS companies who have invested in or joined Series A/B startups, (2) customer success or support leaders at Ili's prior companies who may know Giga's early customers, (3) venture capital partners focusing on AI/automation/support tech (Sequoia, Greylock, Lerer Hippeau) who have Giga in portfolio or can warm-intro to founders, (4) alumni networks from MBA or prior employer if Giga founders attended same institutions. Most powerful move: reach out to 3–5 support leaders or CX heads from companies Ili knows (e.g., Stripe, Shopify, HubSpot) and ask if they've evaluated Giga; get their perspective on product fit, then reference these conversations in founder outreach. This proves customer empathy and insider market perspective.</p><ul><li><strong>Highest-leverage intros:</strong> VCs with Giga in portfolio; founders' MBA/prior employer networks</li><li><strong>Secondary paths:</strong> Support/CX leaders from Ili's network; customer referenceable introductions</li><li><strong>Proof point:</strong> Name 2–3 specific customers evaluating Giga; show market insight</li></ul>",
-      "citations": [{"label": "EXT"}],
+      "content": "<h3>Network Activation and Customer References</h3><p><strong>Ili's ad tech network can accelerate enterprise relationships at Giga.</strong> Ad tech executives and directors at large enterprises (e.g., P&G, Unilever, Amazon, Google) likely oversee customer support operations. Ili's alumni network from previous roles can unlock warm introductions to procurement and operations leaders. Example: 'I know the VP of Ops at P&G from my DSP days. P&G processes 1M+ customer inquiries daily. Giga voice agents could save P&G $10M annually. Let me make an intro.' This kind of network leverage is invaluable in early sales, especially when competing against Wonderful (which has different investor networks).</p><p><strong>Data and ML platform peers are early-bird customers for Giga.</strong> ML teams at companies like Databricks, Palantir, Scale AI, and Figure AI are early adopters of AI infrastructure—including voice agents for their own support. Ili likely knows product and engineering leaders in this space. Giga should consider building a 'data and ML platform' vertical offering and leaning on Ili's introductions for pilot customers. These customers typically have: large support budgets, high willingness to adopt AI early, and ability to serve as technical references for other enterprises.</p><p><strong>Consumer product leaders can validate GTM strategy.</strong> Ili's consumer product background means she likely knows product leaders at companies like Netflix, Spotify, Airbnb, Uber, or similar. These companies have mature customer support operations and voice use cases (e.g., Airbnb guest resolution, Uber driver support). Introducing Giga to a CMO or VP of Customer Ops at a consumer company can validate: Is voice AI the right solution? What's the actual ROI? How should we think about voice vs. chat/email trade-offs? Early conversations with reference customers help Giga refine positioning before broader enterprise sales.</p><p><strong>Venture capital and investor networks matter for Series B positioning.</strong> Ili's network likely includes other founders, venture partners, and operators who advise startups. By joining Giga, Ili becomes an ambassador: sharing feedback with Redpoint and other investors, helping Giga refine narratives for future capital raises, and potentially unlocking downstream investor intros. This is soft but valuable value-add that senior operators bring to early-stage companies.</p>",
+      "citations": [
+        {
+          "label": "EXT",
+          "url": "https://fortune.com/2025/11/05/voice-ai-giga-raise-61-million-customer-service-automation/",
+          "text": "Fortune: Giga's investor network and capital partners"
+        },
+        {
+          "label": "EXT",
+          "url": "https://giga.ai/news/series-a",
+          "text": "Giga Series A investor syndicate"
+        }
+      ],
       "confidence": "Medium"
     },
     "interview": {
-      "content": "<h3>Interview Preparation & Key Narratives</h3><p>Prepare to discuss: (1) Ili's experience owning a key metric (NRR, churn, LTV) and iterating based on customer data—emphasize scrappiness, testing velocity, and ability to make decisions with incomplete info, (2) a time Ili influenced engineering or sales teams without direct authority, showing cross-functional leadership in high-stakes environments, (3) how Ili thinks about AI/ML product—not the math, but the user experience implications, hallucination risks, and pricing/packaging strategy for AI-native products. Expect founders to pressure-test Ili's go-to-market experience: have a crisp thesis on Giga's ICP and land-and-expand strategy ready. Bring 3–5 thoughtful questions about customer conversations, competitive positioning, and product-market fit signals that show sector homework. Avoid appearing over-prepared or consultant-like; Giga values scrappy operators, not polished decks.</p><ul><li><strong>Story #1:</strong> Metric ownership + iteration velocity in constrained environments</li><li><strong>Story #2:</strong> Cross-functional influence; overcoming resistance to drive key decision</li><li><strong>Story #3:</strong> AI/ML product thinking; pricing, UX, and positioning strategy insight</li><li><strong>Key Q to ask:</strong> \"What signal would tell you ICP hypothesis is wrong? How would you pivot?\"</li></ul>",
-      "citations": [{"label": "EXT"}],
-      "confidence": "Medium"
+      "content": "<h3>Interview Approach, Conversation Starters, and Due Diligence Questions</h3><p><strong>Question 1: DoorDash Validation and Reference Check Strategy</strong> 'Walk me through the DoorDash deployment: How long did onboarding take? What was the pilot scope? What metrics matter most to DoorDash—escalations, cost per call, speed, or something else? Can you introduce me to the DoorDash stakeholder so I can validate the win independently?' This tells Ili whether Giga has repeatable deployment playbooks or if DoorDash was a one-off hero engineering effort.</p><p><strong>Question 2: Founder Domain Expertise and Market Listening</strong> 'How often do you talk to support leaders at enterprise customers? What surprised you most about enterprise support workflows that you didn't expect from engineering perspective? Are you open to pivoting the product based on customer feedback, or is the technical vision locked?' This reveals whether founders are staying close to customer pain points or building in a vacuum.</p><p><strong>Question 3: Competitive Differentiation at $300M+ Valuation</strong> 'Wonderful raised $100M at the same time you raised $61M. How are you different? If OpenAI releases voice inference for free, how does Giga stay defensible? Is your moat customer data, deployment speed, or something else?' This tests whether the company has thought through defensibility and tail risks. Ili should push back if answers are vague.</p><p><strong>Question 4: Platform Architecture and Scalability</strong> 'Show me the product roadmap for the next 12 months. How are you thinking about API surface design and developer experience? If a partner like Zendesk wants to embed Giga voice, what does that look like?' This reveals technical rigor and platform thinking—critical for Ili, who will own API strategy.</p><p><strong>Question 5: Team Structure and First Hire Philosophy</strong> 'If I join, who do I work with on a daily basis? Do you have a VP of Engineering? A VP of Sales? Are you planning to hire a VP of Product or do you see me in that role? How do you want to structure product decision-making as the team grows?' This clarifies reporting structure, peer relationships, and growth trajectory for the PM role.</p><p><strong>Question 6: Customer Success and Churn Risk</strong> 'What's your churn rate so far? Have you had any customer cancellations? What's the longest enterprise customer has been with Giga? What does retention and expansion look like in your financial model?' This tests financial realism and whether the company is tracking leading indicators of churn.</p>",
+      "citations": [
+        {
+          "label": "EXT",
+          "url": "https://fortune.com/2025/11/05/voice-ai-giga-raise-61-million-customer-service-automation/",
+          "text": "Fortune: Giga's DoorDash implementation and deployment speed claims"
+        },
+        {
+          "label": "EXT",
+          "url": "https://techcrunch.com/2025/11/11/wonderful-raised-100m-series-a-to-put-ai-agents-on-the-front-lines-of-customer-service/",
+          "text": "TechCrunch: Wonderful's positioning and competitive comparison to Giga"
+        },
+        {
+          "label": "EXT",
+          "url": "https://giga.ai/news/series-a",
+          "text": "Giga Series A announcement with strategic expansion details"
+        }
+      ],
+      "confidence": "High"
     },
     "proofPoints": {
-      "content": "<h3>Proof Points & Credibility Anchors</h3><p>Ili should lead with: (1) Named customer logos and contract expansion metrics from prior SaaS role (e.g., \"Grew NRR from 105% to 118% over 18 months by implementing X customer research cadence\"), (2) Shipping speed and iteration examples—specific features shipped, time-to-decision, A/B tests run—that demonstrate execution discipline, (3) ML platform product intuition from prior role (e.g., \"Led pricing strategy for data platform serving 500+ customers; differentiated on latency and accuracy, not raw feature count\"), (4) Cross-functional team leadership—names of engineering leaders, sales VPs, data scientists Ili influenced—showing ability to earn credibility quickly, (5) Customer empathy stories: specific support interactions, pain points observed, or win/loss insights that shaped product decisions. Bring 1–2 recommendation letters or references from prior founders/executives for speed of trust-building.</p><ul><li><strong>Quantified wins:</strong> NRR improvement, churn reduction, ARR expansion tied to PM decisions</li><li><strong>Shipping velocity:</strong> Feature launch timeline, iteration speed, decision-making examples</li><li><strong>Domain fluency:</strong> ML product strategy, pricing/packaging for AI-native products</li><li><strong>Social proof:</strong> Customer references, founder relationships, VC connections</li></ul>",
-      "citations": [{"label": "EXT"}],
-      "confidence": "Medium"
+      "content": "<h3>Evidence of Traction, Product-Market Fit, and Team Quality</h3><p><strong>DoorDash as Anchor Customer is the Strongest Proof Point</strong> DoorDash is: (1) a publicly traded company (IPO 2020, market cap $30B+), (2) a high-ops company handling millions of daily transactions, (3) a reference customer that Giga can cite publicly (they do), (4) likely to have spent 6+ months evaluating voice AI solutions before choosing Giga. The fact that DoorDash chose Giga—not Wonderful, Decagon, or building in-house—suggests Giga's product won in direct comparison. This is stronger evidence than 'we have 20 pilot customers' because pilots often don't convert.</p><p><strong>$61M Series A Funding from Tier-1 VCs</strong> Redpoint Ventures has a track record backing software infrastructure hits: Slack, Figma, Canva, Segment, Auth0. Redpoint's diligence process is rigorous. If Redpoint led a $61M round for Giga, they likely validated: (1) market size and TAM, (2) founder quality and execution, (3) product differentiation and defensibility, (4) early revenue or strong pilot data. This is not proof of success, but it's proof of credible traction and investor conviction.</p><p><strong>Founder Credentials (Forbes 30 Under 30, IIT Kharagpur) Signal Quality</strong> While credential inflation is real, IIT Kharagpur is genuinely selective (acceptance rate <2%). Founders being recognized as Forbes 30 Under 30 before founding Giga suggests prior accomplishments—likely in tech leadership or entrepreneurship. This does not guarantee Giga will succeed, but it suggests the team is not first-time founders learning on the job. Ili should validate founder prior experience during interviews.</p><p><strong>Product Capability Validation: Deployment Speed and Multi-Capability</strong> Giga's claim that enterprise deployments take <2 weeks (vs. months for incumbents) is testable. If true, this suggests: (1) cloud-native architecture (no enterprise software installation), (2) pre-built templates and configurations, (3) good onboarding documentation. Ili should ask to see a deployment timeline from customer X and verify this claim. If validated, deployment speed is a strong differentiator.</p><p><strong>Vertical Expansion Signals Market Traction Beyond Support</strong> Giga's stated expansion into healthcare and finance (not just logistics) suggests multiple customer inquiries in these verticals. If Giga already has early-stage conversations with healthcare or finance customers, this proves TAM beyond support is real and worth pursuing. During interviews, Ili should ask: 'How many healthcare or finance prospects are in the pipeline? Are any near contract?' This reveals whether vertical expansion is strategic or aspirational.</p>",
+      "citations": [
+        {
+          "label": "EXT",
+          "url": "https://fortune.com/2025/11/05/voice-ai-giga-raise-61-million-customer-service-automation/",
+          "text": "Fortune: Giga's DoorDash reference and deployment capabilities"
+        },
+        {
+          "label": "EXT",
+          "url": "https://finance.yahoo.com/news/exclusive-voice-ai-startup-giga-130000189.html",
+          "text": "Yahoo Finance: Giga founders' background and credentials"
+        },
+        {
+          "label": "EXT",
+          "url": "https://www.globenewswire.com/news-release/2025/11/05/3181809/0/en/Giga-Raises-61M-in-New-Funding-to-Reinvent-AI-Powered-Support.html",
+          "text": "GlobeNewswire: Giga Series A announcement and expansion roadmap"
+        },
+        {
+          "label": "EXT",
+          "url": "https://giga.ai/news/series-a",
+          "text": "Giga Series A details and founder recognition"
+        }
+      ],
+      "confidence": "High"
     },
     "dealBreaker": {
-      "content": "<h3>Potential Deal Breakers & Why It Might Not Work</h3><p>Key risks: (1) Giga's founders may have rigid product vision; if Ili's customer research contradicts their thesis, founder friction escalates quickly in early stage. Assess founder openness to evidence-based pivots in first conversation, (2) AI customer support remains a competitive dunking ground; if Giga's differentiation is unclear or weakens post-hire, Ili could be inherited a sinking ship despite strong PM execution, (3) Series A runway constraints mean limited hiring, budget, and compensation growth—if Ili values rapid team-building or significant salary growth, misalignment emerges quickly, (4) Founder equity math may not work if Series A option pool is small or strike price is high; ensure financial advisors review offer before commitment, (5) Market consolidation risk: if Zendesk, Intercom, or well-funded competitors aggressively acquire Giga's customers, top-down market pressure could crush company irrespective of PM skill.</p><ul><li><strong>Founder friction risk:</strong> Assess openness to data-driven change in founder conversations</li><li><strong>Market consolidation:</strong> Research incumbent move speed; track Series B fundraising for competitive startups</li><li><strong>Runway/compensation:</strong> Confirm equity math with legal/financial advisor; understand Series B timeline</li><li><strong>Differentiation clarity:</strong> If founders cannot articulate clear product advantage, red flag on sustainability</li></ul>",
-      "citations": [{"label": "EXT"}],
+      "content": "<h3>Potential Deal-Breakers and Disqualifying Factors</h3><p><strong>Deal-Breaker 1: Founders Not Open to Market Feedback or Customer-Centric Pivots</strong> If during interviews, the founders show signs of 'we know what's right, customers need to adapt,' this is disqualifying. Early-stage startups often fail not because the market is too small, but because the team overcommits to a vision without validating assumptions. Ili should probe: 'Tell me about a time you changed the product roadmap because a customer told you something important.' If founders struggle to answer, red flag.</p><p><strong>Deal-Breaker 2: Weak Engineering Leadership or Inability to Hire</strong> With $61M in the bank, Giga should have a strong VP of Engineering or equivalent. If the company is still 'hiring engineers' without a clear hiring plan or engineering culture, Giga will struggle to scale. Ili should ask: 'Who leads engineering? What's the hiring plan for the next 12 months? How many engineers do you want and why?' If answers are vague, it suggests the company hasn't thought through scaling engineering, which cascades into product delivery chaos.</p><p><strong>Deal-Breaker 3: No Clear Customer Acquisition or Retention Model</strong> If Giga has DoorDash but no clear playbook for acquiring the next 5 customers, this is a red flag. Success requires: sales team in place, sales process documented, CAC and LTV modeled, and expansion revenue strategy. If Giga is still in 'founder-led sales' mode with no sales hired, it suggests the company is pre-PMF or lacks confidence in its GTM. Ili should ask: 'How many new customers have you signed since DoorDash? What's your sales team structure? What's CAC and payback period?' If answers are evasive, disqualify.</p><p><strong>Deal-Breaker 4: Undisclosed Competitive or Product Risks</strong> If Giga has lost a major customer, had a security incident, or encountered technical issues during DoorDash deployment, Ili needs full transparency. During due diligence, ask: 'Have there been customer churn or escalations in the past 6 months? Are there any technical or operational issues I should know about? Any IP disputes or regulatory concerns?' If the team is not forthcoming, this is a major red flag.</p><p><strong>Deal-Breaker 5: Compensation and Equity Terms Not Aligned with Ili's Risk Profile</strong> If Giga offers below-market salary (e.g., $150K for a senior PM in SF) or below-market equity (e.g., 0.05%), Ili should walk. At Series A, senior PMs should command $220-260K salary + 0.3-0.7% equity. If Giga is misaligned on comp, it suggests: (1) the company is capital-constrained, (2) they undervalue the PM role, or (3) they are unsure about the role's scope. Any of these is concerning.</p>",
+      "citations": [
+        {
+          "label": "EXT",
+          "url": "https://giga.ai/news/series-a",
+          "text": "Giga Series A announcement and team structure details"
+        },
+        {
+          "label": "EXT",
+          "url": "https://www.globenewswire.com/news-release/2025/11/05/3181809/0/en/Giga-Raises-61M-in-New-Funding-to-Reinvent-AI-Powered-Support.html",
+          "text": "GlobeNewswire: Giga's growth and hiring plans"
+        }
+      ],
       "confidence": "Medium"
     },
     "nextSteps": {
-      "content": "<h3>Action Items for This Week</h3><p><strong>By Wednesday:</strong> (1) Identify 2–3 warm intro paths to Giga founders via LinkedIn/investor networks, (2) Schedule 4 customer conversations with support/CX leaders at Ili's current/prior companies; learn their Giga evaluation, (3) Draft 1-page positioning doc: Ili's thesis on Series A PM role, how Ili would think about ICP/go-to-market in first 90 days. <strong>By Friday:</strong> (4) Secure warm intro to founder or hiring contact; send brief, metrics-forward email, (5) Complete 2–3 sector deep-dives (Gartner, Forrester support software reports), (6) List 5–7 thoughtful questions on Giga's customer thesis, competitive positioning, and product roadmap priorities. <strong>Next week:</strong> (7) First coffee call with founder—focus on understanding customer pain and founder vision, (8) Request customer reference calls post-initial meeting to show continued customer research investment.</p><ul><li><strong>Customer research:</strong> 4 conversations this week to build sector credibility</li><li><strong>Positioning:</strong> 1-pager on 90-day product strategy; show metric discipline from day one</li><li><strong>Warm intro:</strong> Execute by Friday; lead with customer insight, not just credentials</li></ul>",
-      "citations": [{"label": "EXT"}],
-      "confidence": "Medium"
+      "content": "<h3>Recommended Next Steps and Due Diligence Roadmap</h3><p><strong>Step 1: Request Introductions and Prepare DoorDash Reference Call</strong> Ask the Giga recruiter or founder to introduce Ili to: (1) a DoorDash product or ops leader who uses Giga (verify deployment story independently), (2) any other referenceable customer (even if small, validate product value), (3) sales or customer success lead at Giga (understand GTM and churn dynamics). Target: 2-3 reference calls over next 10 days to validate traction claims. If founders are reluctant to share references, major red flag.</p><p><strong>Step 2: Deep Dive on Product Roadmap and Architecture</strong> Request detailed documentation: (1) Product roadmap for next 18 months with OKRs, (2) Technical architecture diagram and scalability plan, (3) API documentation or SDK examples, (4) Customer deployment playbook (how long does onboarding really take?), (5) Metrics dashboards and KPIs that Giga tracks internally. Review these independently (or with a technical advisor). Assess: Is the product thinking mature or ad-hoc? Is the team tracking right metrics? Are there architectural debt or scaling risks?</p><p><strong>Step 3: Interview Core Team Members (Not Just Founders)</strong> Insist on meeting: (1) VP of Engineering or head of ML (if different person), (2) VP of Sales or first sales hire, (3) Customer success or account management lead. Ask each: 'What's your biggest pain point right now? What do you need from a PM to succeed?' This reveals whether the team is aligned and whether hiring a PM is actually a need or a wants. If multiple people say 'we need product discipline' or 'we need to stop shipping features and start understanding customer workflows,' that's a great signal.</p><p><strong>Step 4: Validate Market and Competitive Positioning</strong> Conduct independent research: (1) Call 3-5 support leaders at large enterprises (e.g., VP of Customer Ops at tech company). Ask: 'Have you evaluated Giga or voice AI for support? What's your perception?' (2) Review competitor funding rounds (Wonderful, Decagon) and map positioning differences. (3) Read recent news on customer support AI and voice AI trends. (4) Assess likelihood of Zendesk, Genesys, or others building competitive voice AI. Target: Build conviction on whether Giga has 3-5 year defensibility or if it's a 1-2 year window before consolidation.</p><p><strong>Step 5: Financial and Hiring Plan Review</strong> Request: (1) FY2026 financial model and plan, (2) Headcount plan by department, (3) CAC/LTV projections, (4) Runway and next funding timeline. With $61M and 37 employees, Giga has ~3-4 years of runway. Understand: Is the company planning to be profitable by Series C? What's the path to $10M ARR (typical Series C exit size)? Does the founder/investor narrative align with financial reality? If not, Ili is signing up for a 'raise in 18-24 months or die' scenario.</p><p><strong>Step 6: Assess Culture Fit and Founder Chemistry</strong> Schedule informal dinner or coffee with founders (ideally both). Ask: (1) 'Why did you start Giga? What problem are you solving?' (2) 'What's your management style? How do you like to work with PMs?' (3) 'What do you value in a great PM? What would success look like in the first 90 days?' (4) 'What's your biggest fear about Giga in the next year?' Assess: Do you trust these people? Can you see yourself working alongside them for 3-5 years? Are they coachable and humble, or arrogant and dismissive? Culture fit matters more at early-stage than at large companies.</p><p><strong>Step 7: Personal Financial and Equity Modeling</strong> Work with a startup advisor or CFO to model: (1) If Giga succeeds and reaches Series C at $1B valuation, how much is 0.5% equity worth? (2) What's the probability Giga achieves this outcome (via Redpoint comps, market size, founder quality)? (3) If Giga fails or acquires at lower valuation, what does that mean? (4) Is the salary + equity package sufficient to justify career risk versus staying at current role or joining later-stage companies? Build a financial model. Run sensitivity analyses. Make an informed decision based on risk/reward.</p><p><strong>Step 8: Final Negotiation and Offer Terms</strong> Once Ili decides to pursue, negotiate: (1) Title (Senior PM, Head of Product, or similar), (2) Salary ($220-260K range for SF senior PM, 2026), (3) Equity (target 0.4-0.7%, 4-year vest with 1-year cliff), (4) Role scope (which customer segments/features does she own?), (5) First-day expectations (what should she focus on in week 1?), (6) Growth plan (path to VP of Product, if that's her goal). Get everything in writing. Consult with a startup lawyer to review equity grants and option agreements.</p>",
+      "citations": [
+        {
+          "label": "EXT",
+          "url": "https://fortune.com/2025/11/05/voice-ai-giga-raise-61-million-customer-service-automation/",
+          "text": "Fortune: Giga's funding and growth timeline"
+        },
+        {
+          "label": "EXT",
+          "url": "https://giga.ai/news/series-a",
+          "text": "Giga Series A announcement and investor details"
+        },
+        {
+          "label": "EXT",
+          "url": "https://www.globenewswire.com/news-release/2025/11/05/3181809/0/en/Giga-Raises-61M-in-New-Funding-to-Reinvent-AI-Powered-Support.html",
+          "text": "GlobeNewswire: Giga's Series A and capital structure"
+        }
+      ],
+      "confidence": "High"
     }
   }
 }

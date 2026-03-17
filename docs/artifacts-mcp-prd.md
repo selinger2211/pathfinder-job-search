@@ -2,9 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `mcp-servers/pathfinder-artifacts-mcp/`
-**Version:** v3.29.0
-**Last Updated:** 2026-03-15
-**Status:** Active — v3.29.0 features live
+**Version:** v1.0.0
+**Last Updated:** 2026-03-10
+**Status:** Draft — pending approval
 
 ---
 

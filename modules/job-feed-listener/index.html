@@ -6598,61 +6598,40 @@
       const networkDim = networkScore * 0.15;
 
       // ===== BONUS: Leader vs IC fit (additive, not its own dimension) =====
-      // v3.34.2: TIGHTENED DETECTION — previous signals were too loose, flagging
-      // normal PM "leadership" language as people-management. Now requires EXPLICIT
-      // people-management signals (direct reports, hire, manage people) not just
-      // "lead a team" (which every IC PM does cross-functionally).
+      // At smaller companies, favor people-leader roles (build a team, own a function).
+      // At larger companies, both leader and IC roles are fine — scope is big either way.
+      // Detection is JD-driven: scan for management vs IC signals in the text.
       let leaderICBonus = 0;
       let leaderICNote = '';
-
-      // Strong people-management signals (require 2+ for "Leader" label)
-      const strongLeaderSignals = [
-        'direct reports', 'people management', 'people manager',
-        'hire and develop', 'manage a team of', 'managing a team',
-        'manage engineers', 'manage designers', 'manage product managers',
-        'growing the team', 'staff management', 'reporting to you',
-        'player-coach', 'people leader', 'org building'
-      ];
-      // Weak signals — common in IC PM JDs too, don't count alone
-      const weakLeaderSignals = [
-        'lead a team', 'build the team', 'mentor and coach',
-        'build and lead', 'team of'
+      const leaderSignals = [
+        'manage a team', 'direct reports', 'lead a team', 'people management',
+        'hire and develop', 'org building', 'team of', 'build the team',
+        'player-coach', 'people leader', 'manage engineers', 'manage designers',
+        'manage product managers', 'growing the team', 'staff management',
+        'mentor and coach', 'reporting to you', 'build and lead'
       ];
       const icSignals = [
         'individual contributor', ' ic role', ' ic position', 'no direct reports',
-        'hands-on ic', 'deep technical', 'principal ic', 'staff-level ic',
-        'without direct reports'
-      ];
-      // Title-based leader detection (strongest signal)
-      const leaderTitleSignals = [
-        'head of', 'director of', 'vp of', 'vice president',
-        'group product manager', 'gpm', 'senior director'
+        'hands-on ic', 'deep technical', 'principal ic', 'staff-level ic'
       ];
 
       const isSmallCompany = ['Seed', 'Series A', 'Series B'].includes(normalizedRoleStage);
-      const strongLeaderCount = strongLeaderSignals.filter(s => searchText.includes(s)).length;
-      const weakLeaderCount = weakLeaderSignals.filter(s => searchText.includes(s)).length;
-      const hasLeaderTitle = leaderTitleSignals.some(s => titleLower.includes(s));
+      const hasLeaderSignals = leaderSignals.some(s => searchText.includes(s) || titleLower.includes(s));
       const hasICSignals = icSignals.some(s => searchText.includes(s) || titleLower.includes(s));
 
-      // Only label as "Leader" if: strong signals ≥ 2, OR leader title, OR 1 strong + 2 weak
-      const isLikelyLeader = hasLeaderTitle || strongLeaderCount >= 2 || (strongLeaderCount >= 1 && weakLeaderCount >= 2);
-      const isLikelyIC = hasICSignals && !isLikelyLeader;
-
-      if (isSmallCompany && isLikelyLeader) {
-        leaderICBonus = 5;
+      if (isSmallCompany && hasLeaderSignals) {
+        leaderICBonus = 5;  // Ideal: leadership at a small company = build something
         leaderICNote = 'Leader@Small';
-      } else if (isSmallCompany && isLikelyIC) {
-        leaderICBonus = 0;
+      } else if (isSmallCompany && hasICSignals) {
+        leaderICBonus = 0;  // IC at small company — fine, but no boost
         leaderICNote = 'IC@Small';
-      } else if (isLikelyLeader) {
-        leaderICBonus = 2;
+      } else if (hasLeaderSignals) {
+        leaderICBonus = 2;  // Leader at larger company — still good
         leaderICNote = 'Leader';
-      } else if (isLikelyIC) {
-        leaderICBonus = 0;
+      } else if (hasICSignals) {
+        leaderICBonus = 0;  // IC at larger company — totally fine
         leaderICNote = 'IC';
       }
-      // If neither strong leader nor IC signals → don't label at all (was over-labeling before)
 
       // ===== FINAL SCORE (v3.34.0: ADAPTIVE WEIGHTING) =====
       // When dimensions have no data (sentinel -1), redistribute their
@@ -8207,30 +8186,24 @@
         }
       }
 
-      // v3.34.7: PERSIST TO PIPELINE FIRST — before removing from feed.
-      // If pipeline add fails, the role stays in the feed so nothing is lost.
-      const pipelineSuccess = addRoleToPipeline(role);
-      if (!pipelineSuccess) {
-        showToast(`Failed to add ${role.title} to pipeline — role kept in feed`, 'error');
-        return;
-      }
-
-      // Pipeline add succeeded — now safe to remove from feed
       const card = document.querySelector(`[data-role-id="${roleId}"]`);
-      const finalize = () => {
-        state.feedItems = state.feedItems.filter(r => r.id !== roleId);
-        state.acceptedRoles.push(role);
-        saveFeedQueue(state.feedItems);
-        renderFeedCards();
-        showToast(`✅ ${role.title} at ${role.company} → Pipeline (Discovered)`, 'success');
-      };
-
       if (card) {
         card.classList.add('accepted');
-        setTimeout(finalize, 300);
-      } else {
-        // No card in DOM (e.g., called from detail panel) — still finalize
-        finalize();
+        setTimeout(() => {
+          // Remove from feed
+          state.feedItems = state.feedItems.filter(r => r.id !== roleId);
+          state.acceptedRoles.push(role);
+
+          // ====== PERSIST TO PIPELINE (v3.5.1) ======
+          // Create a new role in pf_roles so the role shows up in Pipeline
+          addRoleToPipeline(role);
+
+          // Save updated feed queue so removal persists across reloads
+          saveFeedQueue(state.feedItems);
+
+          renderFeedCards();
+          showToast(`✅ ${role.title} at ${role.company} → Pipeline (Discovered)`, 'success');
+        }, 300);
       }
     }
 
@@ -8260,12 +8233,7 @@
           domain: feedRole.domain || null,
           location: feedRole.location || null,
           remote: feedRole.remote || false,
-          positioning: (() => {
-            const label = (feedRole.scoring?.leaderIC || '').toLowerCase();
-            if (label.startsWith('leader')) return 'management';
-            if (label.startsWith('ic')) return 'ic';
-            return 'ic'; // default to IC when no signal
-          })(),
+          positioning: feedRole.scoring?.leaderIC || null,
           stageHistory: [{ stage: 'discovered', date: new Date().toISOString() }],
           feedMetadata: feedRole.feedMetadata || null,
           jdEnriched: feedRole.jdEnriched || false,
@@ -8274,14 +8242,6 @@
         };
         roles.push(newRole);
         localStorage.setItem('pf_roles', JSON.stringify(roles));
-
-        // v3.34.7: Verify the write actually persisted (catches localStorage quota errors)
-        const verify = localStorage.getItem('pf_roles');
-        if (!verify || !verify.includes(newRole.id)) {
-          console.error('[Feed] Pipeline role write failed verification — localStorage may be full');
-          showToast('Storage may be full — role not saved. Clear old data and retry.', 'error');
-          return false;
-        }
 
         // --- Ensure the company exists in pf_companies ---
         const companies = safeJsonParse('pf_companies', []);
@@ -8305,11 +8265,9 @@
         }
 
         console.log(`[Feed] Added "${feedRole.title}" at ${feedRole.company} to Pipeline as "discovered"`);
-        return true;
       } catch (e) {
         console.error('[Feed] Failed to add role to pipeline:', e);
         showToast('Error adding to pipeline — check console', 'error');
-        return false;
       }
     }
 

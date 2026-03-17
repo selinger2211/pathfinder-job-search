@@ -1850,44 +1850,15 @@ ${debriefContext}`;
     // DATA ACCESS FUNCTIONS
     // ────────────────────────────────────────────────────────
 
-    /**
-     * Safely retrieve companies with error handling.
-     * v3.34.5: Also derives companies from pf_roles so that roles added
-     * via the pipeline or feed always appear even if pf_companies is sparse.
-     * Deduplicates by company name (case-insensitive).
-     */
+    /* Safely retrieve companies with error handling */
     function getCompanies() {
-      let companies = [];
       try {
         const data = localStorage.getItem('pf_companies');
-        companies = data ? JSON.parse(data) : [];
+        return data ? JSON.parse(data) : [];
       } catch (error) {
         console.warn('Failed to parse companies:', error);
+        return [];
       }
-
-      /* Merge companies from pf_roles that aren't in pf_companies */
-      try {
-        const roles = JSON.parse(localStorage.getItem('pf_roles') || '[]');
-        const existingNames = new Set(companies.map(c => (c.name || '').toLowerCase()));
-        roles.forEach(r => {
-          const name = r.company || '';
-          if (name && !existingNames.has(name.toLowerCase())) {
-            existingNames.add(name.toLowerCase());
-            companies.push({
-              name: name,
-              domain: r.domain || '',
-              stage: '',
-              headcount: '',
-              _derivedFromRole: true
-            });
-          }
-        });
-      } catch (e) {
-        console.warn('Failed to derive companies from roles:', e);
-      }
-
-      /* Sort alphabetically */
-      return companies.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
 
     /* Safely retrieve roles with error handling */
@@ -3189,48 +3160,34 @@ Create a compelling, specific message that references at least one concrete deta
       /* ====== FEATURE 44: Restore Edit State ====== */
       restoreEditState();
 
-      /* ====== FEATURE 19: Handle Navigation from Pipeline, Debrief, etc. ====== */
-      /* v3.34.5: Accept pre-selection from localStorage nav state OR URL params.
-         Sources: Pipeline (Draft Outreach button), Debrief (Thank-You button).
-         URL params are the robust fallback when localStorage state is lost. */
+      /* ====== FEATURE 19: Handle Navigation from Debrief Module ====== */
+      // Check if we're being launched from Debrief to draft a thank-you
       try {
         const navState = safeJsonParse('pf_outreach_nav_state', null);
-        const urlParams = new URLSearchParams(window.location.search);
+        if (navState && navState.selectedRoleId) {
+          // Pre-select the role and message type
+          AppState.selectedMessageType = navState.selectedMessageType || 'thank-you-interview';
 
-        /* Determine roleId from nav state OR URL param */
-        const targetRoleId = navState?.selectedRoleId || urlParams.get('roleId') || null;
-
-        if (targetRoleId) {
-          /* Set message type from nav state or default to linkedin-connect for pipeline */
-          const source = navState?.source || urlParams.get('source') || 'unknown';
-          AppState.selectedMessageType = navState?.selectedMessageType ||
-            (source === 'pipeline' ? 'linkedin-connect' : 'thank-you-interview');
-
-          /* Find company for this role and pre-select it */
+          // Find company for this role and pre-select it
           const roles = getRoles();
-          const targetRole = roles.find(r => r.id === targetRoleId);
+          const targetRole = roles.find(r => r.id === navState.selectedRoleId);
           if (targetRole) {
             AppState.selectedCompanyId = targetRole.company || targetRole.companyId;
-            AppState.selectedRoleId = targetRoleId;
+            AppState.selectedRoleId = navState.selectedRoleId;
 
-            /* Try to find and select the first connection for this company */
+            // Try to find and select the first connection for this company
             const connections = getConnections();
-            const companyConnections = connections.filter(c =>
-              c.company === AppState.selectedCompanyId || c.companyId === AppState.selectedCompanyId
-            );
+            const companyConnections = connections.filter(c => c.company === AppState.selectedCompanyId || c.companyId === AppState.selectedCompanyId);
             if (companyConnections.length > 0) {
               AppState.selectedConnectionId = companyConnections[0].name;
             }
           }
 
-          /* Clean up: remove nav state after consuming, strip URL params */
+          // Clear the nav state after consuming it
           localStorage.removeItem('pf_outreach_nav_state');
-          if (urlParams.has('roleId')) {
-            window.history.replaceState({}, '', window.location.pathname);
-          }
         }
       } catch (e) {
-        console.warn('Could not parse outreach nav state or URL params:', e);
+        console.warn('Could not parse outreach nav state');
       }
 
       renderSidebar();

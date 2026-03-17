@@ -2,11 +2,9 @@
 
 **Parent:** Pathfinder Job Search System
 **Module:** `modules/mock-interview/`
-**Version:** v3.29.0
-**Last Updated:** 2026-03-15
-**Status:** Planned — Story bank, TMAY practice, company-calibrated questions, and interview question intelligence are designed but not yet implemented.
-
-> **Status: Planned** — Story bank, TMAY practice, company-calibrated questions, and interview question intelligence are designed but not yet implemented.
+**Version:** v3.13
+**Last Updated:** 2026-03-13
+**Status:** Active — v3.13.0 features live
 
 ---
 
