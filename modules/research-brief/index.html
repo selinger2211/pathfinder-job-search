@@ -1876,17 +1876,23 @@
       const sectionsArea = document.getElementById('sectionsArea');
       sectionsArea.innerHTML = '';
 
-      /* Try to load brief from: 1) localStorage cache, 2) static Cowork-generated file */
+      /* Try to load brief from: 1) localStorage cache, 2) static Cowork-generated file
+         v3.35.1: Skip cached offline briefs — always prefer cowork-generated ones.
+         If the cache has a real (non-offline) V3 brief, use it. */
       const cacheKey = `pf_brief_${roleId}`;
       const cached = safeJsonParse(cacheKey, null);
       if (cached && cached.sections) {
         const isV3 = cached.sections.pursuitEconomics !== undefined;
-        if (isV3) {
+        const isOffline = cached.offlineGenerated === true;
+        if (isV3 && !isOffline) {
           STATE.currentBrief = cached;
           renderBrief(cached);
           document.getElementById('exportBtn').style.display = 'flex';
           document.getElementById('printBtn').style.display = 'flex';
-          return; /* Cached brief found — done */
+          return; /* Cached full brief found — done */
+        } else if (isOffline) {
+          console.info('[ResearchBrief] Clearing cached offline brief — will try loading cowork-generated');
+          localStorage.removeItem(cacheKey);
         } else {
           console.info('[ResearchBrief] Clearing V2 cached brief — section IDs changed in V3');
           localStorage.removeItem(cacheKey);
@@ -1920,72 +1926,107 @@
      * Try to load a pre-generated brief from ./cowork-briefs/{roleId}.json
      * v3.34.6: Also tries company+title match via an index file as fallback,
      * since role IDs differ between sessions/browsers but company+title are stable.
-     * v3.35.0: Now returns true/false so caller knows if brief was found.
-     *          Also uses fuzzy company matching (includes) for better hit rate.
+     * v3.35.0: Returns true/false so caller knows if brief was found.
+     * v3.35.1: Bulletproof matching — company-first strategy with scored title ranking.
+     *          If only one brief exists for a company, use it regardless of title.
      * @param {string} roleId - Role ID to load brief for
      * @returns {Promise<boolean>} true if a static brief was loaded and rendered
      */
     async function loadStaticBrief(roleId) {
       try {
-        /* Try direct roleId match first */
+        /* Strategy 1: Try direct roleId match (fast path) */
         let resp = await fetch(`./cowork-briefs/${roleId}.json?t=${Date.now()}`);
-
-        /* Fallback: try index-based lookup by company+title */
-        if (!resp.ok) {
-          try {
-            const indexResp = await fetch(`./cowork-briefs/index.json?t=${Date.now()}`);
-            if (indexResp.ok) {
-              const index = await indexResp.json();
-              const roles = getRoles();
-              const role = roles.find(r => r.id === roleId);
-              if (role) {
-                const companyLower = (role.company || '').toLowerCase().trim();
-                const titleLower = (role.title || '').toLowerCase().trim();
-
-                /* v3.35.0: Try exact match first, then fuzzy company match */
-                let match = index.find(entry =>
-                  (entry.company || '').toLowerCase().trim() === companyLower &&
-                  (entry.title || '').toLowerCase().trim() === titleLower
-                );
-
-                /* Fuzzy: company includes (e.g. "RingCentral" matches "RingCentral, Inc.") */
-                if (!match) {
-                  match = index.find(entry => {
-                    const ec = (entry.company || '').toLowerCase().trim();
-                    const et = (entry.title || '').toLowerCase().trim();
-                    return (ec.includes(companyLower) || companyLower.includes(ec)) &&
-                           (et.includes(titleLower) || titleLower.includes(et));
-                  });
-                }
-
-                if (match && match.file) {
-                  console.info(`[ResearchBrief] Index match: "${match.company} — ${match.title}" → ${match.file}`);
-                  resp = await fetch(`./cowork-briefs/${match.file}?t=${Date.now()}`);
-                }
-              }
-            }
-          } catch (e) { /* Index not available — that's fine */ }
+        if (resp.ok) {
+          const brief = await resp.json();
+          if (brief.sections && brief.sections.pursuitEconomics) {
+            return _applyStaticBrief(brief, roleId, 'direct roleId match');
+          }
         }
 
-        if (!resp || !resp.ok) return false; /* No static brief available */
+        /* Strategy 2: Index-based lookup with progressive fuzzy matching */
+        const roles = getRoles();
+        const role = roles.find(r => r.id === roleId);
+        if (!role) return false;
+
+        const indexResp = await fetch(`./cowork-briefs/index.json?t=${Date.now()}`);
+        if (!indexResp.ok) return false;
+        const index = await indexResp.json();
+
+        const companyLower = (role.company || '').toLowerCase().trim();
+        const titleLower = (role.title || '').toLowerCase().trim();
+        const titleWords = titleLower.split(/[\s\-—:,]+/).filter(w => w.length > 2);
+
+        /* Step A: Find ALL entries matching the company (fuzzy) */
+        const companyMatches = index.filter(entry => {
+          const ec = (entry.company || '').toLowerCase().trim();
+          return ec === companyLower ||
+                 ec.includes(companyLower) || companyLower.includes(ec) ||
+                 ec.replace(/[^a-z0-9]/g, '') === companyLower.replace(/[^a-z0-9]/g, '');
+        });
+
+        console.info(`[ResearchBrief] Company "${role.company}" → ${companyMatches.length} brief(s) found`);
+
+        if (companyMatches.length === 0) return false;
+
+        /* Step B: If only one brief for this company, use it (common case) */
+        let match;
+        if (companyMatches.length === 1) {
+          match = companyMatches[0];
+          console.info(`[ResearchBrief] Single company match — using "${match.title}"`);
+        } else {
+          /* Step C: Multiple briefs for same company — score by title similarity */
+          const scored = companyMatches.map(entry => {
+            const et = (entry.title || '').toLowerCase().trim();
+            const etWords = et.split(/[\s\-—:,]+/).filter(w => w.length > 2);
+
+            /* Exact title match = 100 */
+            if (et === titleLower) return { entry, score: 100 };
+
+            /* Substring containment = 80 */
+            if (et.includes(titleLower) || titleLower.includes(et)) return { entry, score: 80 };
+
+            /* Word overlap scoring */
+            const overlap = titleWords.filter(w => et.includes(w)).length;
+            const reverseOverlap = etWords.filter(w => titleLower.includes(w)).length;
+            const wordScore = Math.max(overlap / Math.max(titleWords.length, 1),
+                                       reverseOverlap / Math.max(etWords.length, 1)) * 60;
+
+            return { entry, score: wordScore };
+          });
+
+          scored.sort((a, b) => b.score - a.score);
+          console.info(`[ResearchBrief] Title scores:`, scored.map(s => `${s.entry.title}=${s.score.toFixed(0)}`));
+
+          /* Use best match if score > 0, otherwise first company match */
+          match = scored[0].score > 0 ? scored[0].entry : companyMatches[0];
+        }
+
+        if (!match || !match.file) return false;
+
+        console.info(`[ResearchBrief] Loading brief: "${match.company} — ${match.title}" → ${match.file}`);
+        resp = await fetch(`./cowork-briefs/${match.file}?t=${Date.now()}`);
+        if (!resp.ok) return false;
 
         const brief = await resp.json();
         if (!brief.sections || !brief.sections.pursuitEconomics) return false;
 
-        /* Cache it in localStorage for future loads */
-        const cacheKey = `pf_brief_${roleId}`;
-        localStorage.setItem(cacheKey, JSON.stringify(brief));
-
-        STATE.currentBrief = brief;
-        renderBrief(brief);
-        document.getElementById('exportBtn').style.display = 'flex';
-        document.getElementById('printBtn').style.display = 'flex';
-        console.info(`[ResearchBrief] Loaded static brief for ${roleId}`);
-        return true;
+        return _applyStaticBrief(brief, roleId, `index match (${match.file})`);
       } catch (err) {
         console.warn('[ResearchBrief] Static brief fetch failed:', err);
         return false;
       }
+    }
+
+    /** Apply a loaded static brief to the UI and cache it */
+    function _applyStaticBrief(brief, roleId, source) {
+      const cacheKey = `pf_brief_${roleId}`;
+      localStorage.setItem(cacheKey, JSON.stringify(brief));
+      STATE.currentBrief = brief;
+      renderBrief(brief);
+      document.getElementById('exportBtn').style.display = 'flex';
+      document.getElementById('printBtn').style.display = 'flex';
+      console.info(`[ResearchBrief] Loaded static brief for ${roleId} via ${source}`);
+      return true;
     }
 
     /* ====== MCP BRIDGE INTEGRATION (v3.35.0) ====== */
