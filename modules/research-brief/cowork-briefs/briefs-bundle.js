@@ -1,3 +1,17 @@
+// v3.35.5: Auto-clear stale brief caches when bundle loads
+(function() {
+  try {
+    var keys = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf('pf_brief_') === 0) keys.push(k);
+    }
+    if (keys.length > 0) {
+      keys.forEach(function(k) { localStorage.removeItem(k); });
+      console.info('[BriefsBundle] Cleared ' + keys.length + ' cached briefs — fresh bundle data will be used');
+    }
+  } catch(e) {}
+})();
 // Pathfinder Research Briefs Bundle
 // Auto-generated "Tue Mar 17 01:29:58 UTC 2026"
 // Contains 18 briefs with dual-keyed lookups (36 total keys), 16 companies
