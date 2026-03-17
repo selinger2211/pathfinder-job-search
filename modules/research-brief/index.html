@@ -41,6 +41,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js" onerror="window._mammothLoaded = false;"></script>
   <script src="../shared/logos.js?v=3.30.0"></script>
   <script src="../shared/claude-api.js?v=3.23.2"></script>
+  <!-- v3.35.4: Cowork briefs bundle — loads via script tag to bypass file:// fetch restrictions -->
+  <script src="./cowork-briefs/briefs-bundle.js?v=3.35.4" onerror="console.warn('[ResearchBrief] briefs-bundle.js not found — will try fetch fallback');"></script>
 
   <style>
     /* ====== RESEARCH BRIEF V3 STYLES ====== */
@@ -2054,31 +2056,39 @@
       }
     }
 
-    /* ====== COMPANY DATA ENRICHMENT (v3.35.1) ====== */
-    /** Cache for enriched company data loaded from cowork-briefs/companies.json */
-    let _enrichedCompaniesCache = null;
+    /* ====== COMPANY DATA ENRICHMENT (v3.35.4) ====== */
 
     /**
-     * Load enriched company data from cowork-briefs/companies.json.
-     * Falls back gracefully if the file doesn't exist.
+     * Load enriched company data.
+     * v3.35.4: Reads from window.PATHFINDER_BRIEFS bundle (loaded via script tag,
+     * works on file:// protocol). Falls back to fetch if bundle not available.
      * @param {string} companyName - Company name to look up
      * @returns {Promise<object|null>} Enriched company data or null
      */
     async function loadEnrichedCompanyData(companyName) {
       try {
-        if (!_enrichedCompaniesCache) {
-          const resp = await fetch(`./cowork-briefs/companies.json?t=${Date.now()}`);
-          if (!resp.ok) return null;
-          _enrichedCompaniesCache = await resp.json();
+        let companies = null;
+
+        /* v3.35.4: Try bundle first (works on file://) */
+        if (window.PATHFINDER_BRIEFS && window.PATHFINDER_BRIEFS.companies) {
+          companies = window.PATHFINDER_BRIEFS.companies;
+        } else {
+          /* Fetch fallback (works on http://) */
+          try {
+            const resp = await fetch(`./cowork-briefs/companies.json?t=${Date.now()}`);
+            if (resp.ok) companies = await resp.json();
+          } catch (e) { /* Expected on file:// */ }
         }
+
+        if (!companies) return null;
 
         const nameLower = (companyName || '').toLowerCase().trim();
 
         /* Try exact key match first */
-        if (_enrichedCompaniesCache[companyName]) return _enrichedCompaniesCache[companyName];
+        if (companies[companyName]) return companies[companyName];
 
         /* Fuzzy: case-insensitive key match */
-        for (const [key, data] of Object.entries(_enrichedCompaniesCache)) {
+        for (const [key, data] of Object.entries(companies)) {
           const keyLower = key.toLowerCase().trim();
           if (keyLower === nameLower || keyLower.includes(nameLower) || nameLower.includes(keyLower)) {
             return data;
@@ -2095,94 +2105,127 @@
     /**
      * Try to load a pre-generated brief from ./cowork-briefs/{roleId}.json
      * v3.34.6: Also tries company+title match via an index file as fallback,
-     * since role IDs differ between sessions/browsers but company+title are stable.
-     * v3.35.0: Returns true/false so caller knows if brief was found.
-     * v3.35.1: Bulletproof matching — company-first strategy with scored title ranking.
-     *          If only one brief exists for a company, use it regardless of title.
+     * v3.35.4: Completely rewritten to use bundled JS data (window.PATHFINDER_BRIEFS)
+     * loaded via script tag. This works on file:// protocol where fetch() fails.
+     * Falls back to fetch() for http:// protocol.
+     *
+     * Matching strategy:
+     *   1. Direct roleId key match in bundle
+     *   2. company|title key match in bundle
+     *   3. Fuzzy company-first search across all bundle entries
+     *   4. Fetch fallback (only works on http://)
+     *
      * @param {string} roleId - Role ID to load brief for
      * @returns {Promise<boolean>} true if a static brief was loaded and rendered
      */
     async function loadStaticBrief(roleId) {
       try {
-        /* Strategy 1: Try direct roleId match (fast path) */
-        let resp = await fetch(`./cowork-briefs/${roleId}.json?t=${Date.now()}`);
-        if (resp.ok) {
-          const brief = await resp.json();
-          if (brief.sections && brief.sections.pursuitEconomics) {
-            return _applyStaticBrief(brief, roleId, 'direct roleId match');
+        const roles = getRoles();
+        const role = roles.find(r => r.id === roleId);
+        const bundle = window.PATHFINDER_BRIEFS;
+
+        /* ---- Strategy 1: Bundle lookup (works on file://) ---- */
+        if (bundle && bundle.briefs) {
+          const briefs = bundle.briefs;
+
+          /* 1a. Direct roleId match */
+          if (briefs[roleId] && briefs[roleId].sections?.pursuitEconomics) {
+            console.info(`[ResearchBrief] Bundle hit: direct roleId "${roleId}"`);
+            return _applyStaticBrief(briefs[roleId], roleId, 'bundle direct');
+          }
+
+          /* 1b. company|title exact match */
+          if (role) {
+            const ctKey = `${role.company}|${role.title}`.toLowerCase().trim();
+            if (briefs[ctKey] && briefs[ctKey].sections?.pursuitEconomics) {
+              console.info(`[ResearchBrief] Bundle hit: company|title "${ctKey}"`);
+              return _applyStaticBrief(briefs[ctKey], roleId, 'bundle company|title');
+            }
+          }
+
+          /* 1c. Fuzzy company match across all bundle entries */
+          if (role) {
+            const companyLower = (role.company || '').toLowerCase().trim();
+            const titleLower = (role.title || '').toLowerCase().trim();
+            const titleWords = titleLower.split(/[\s\-—:,]+/).filter(w => w.length > 2);
+
+            /* Collect all briefs matching this company */
+            const companyHits = [];
+            for (const [key, data] of Object.entries(briefs)) {
+              if (!data.sections?.pursuitEconomics) continue;
+              const bc = (data.role?.company || '').toLowerCase().trim();
+              if (bc === companyLower ||
+                  bc.includes(companyLower) || companyLower.includes(bc) ||
+                  bc.replace(/[^a-z0-9]/g, '') === companyLower.replace(/[^a-z0-9]/g, '')) {
+                companyHits.push({ key, data });
+              }
+            }
+
+            /* Deduplicate (same brief may appear under multiple keys) */
+            const seen = new Set();
+            const unique = companyHits.filter(h => {
+              const id = h.data.roleId || h.data.generatedAt || h.key;
+              if (seen.has(id)) return false;
+              seen.add(id);
+              return true;
+            });
+
+            console.info(`[ResearchBrief] Bundle: company "${role.company}" → ${unique.length} brief(s)`);
+
+            if (unique.length === 1) {
+              return _applyStaticBrief(unique[0].data, roleId, `bundle company (${unique[0].key})`);
+            }
+
+            if (unique.length > 1) {
+              /* Score by title similarity */
+              const scored = unique.map(({ key, data }) => {
+                const bt = (data.role?.title || '').toLowerCase().trim();
+                if (bt === titleLower) return { key, data, score: 100 };
+                if (bt.includes(titleLower) || titleLower.includes(bt)) return { key, data, score: 80 };
+                const btWords = bt.split(/[\s\-—:,]+/).filter(w => w.length > 2);
+                const overlap = titleWords.filter(w => bt.includes(w)).length;
+                const rev = btWords.filter(w => titleLower.includes(w)).length;
+                const score = Math.max(overlap / Math.max(titleWords.length, 1),
+                                       rev / Math.max(btWords.length, 1)) * 60;
+                return { key, data, score };
+              });
+              scored.sort((a, b) => b.score - a.score);
+              console.info(`[ResearchBrief] Bundle title scores:`, scored.map(s => `${s.key}=${s.score.toFixed(0)}`));
+              const best = scored[0];
+              if (best.score > 0) {
+                return _applyStaticBrief(best.data, roleId, `bundle scored (${best.key})`);
+              }
+              /* Use first match as fallback */
+              return _applyStaticBrief(scored[0].data, roleId, `bundle fallback (${scored[0].key})`);
+            }
           }
         }
 
-        /* Strategy 2: Index-based lookup with progressive fuzzy matching */
-        const roles = getRoles();
-        const role = roles.find(r => r.id === roleId);
-        if (!role) return false;
-
-        const indexResp = await fetch(`./cowork-briefs/index.json?t=${Date.now()}`);
-        if (!indexResp.ok) return false;
-        const index = await indexResp.json();
-
-        const companyLower = (role.company || '').toLowerCase().trim();
-        const titleLower = (role.title || '').toLowerCase().trim();
-        const titleWords = titleLower.split(/[\s\-—:,]+/).filter(w => w.length > 2);
-
-        /* Step A: Find ALL entries matching the company (fuzzy) */
-        const companyMatches = index.filter(entry => {
-          const ec = (entry.company || '').toLowerCase().trim();
-          return ec === companyLower ||
-                 ec.includes(companyLower) || companyLower.includes(ec) ||
-                 ec.replace(/[^a-z0-9]/g, '') === companyLower.replace(/[^a-z0-9]/g, '');
-        });
-
-        console.info(`[ResearchBrief] Company "${role.company}" → ${companyMatches.length} brief(s) found`);
-
-        if (companyMatches.length === 0) return false;
-
-        /* Step B: If only one brief for this company, use it (common case) */
-        let match;
-        if (companyMatches.length === 1) {
-          match = companyMatches[0];
-          console.info(`[ResearchBrief] Single company match — using "${match.title}"`);
-        } else {
-          /* Step C: Multiple briefs for same company — score by title similarity */
-          const scored = companyMatches.map(entry => {
-            const et = (entry.title || '').toLowerCase().trim();
-            const etWords = et.split(/[\s\-—:,]+/).filter(w => w.length > 2);
-
-            /* Exact title match = 100 */
-            if (et === titleLower) return { entry, score: 100 };
-
-            /* Substring containment = 80 */
-            if (et.includes(titleLower) || titleLower.includes(et)) return { entry, score: 80 };
-
-            /* Word overlap scoring */
-            const overlap = titleWords.filter(w => et.includes(w)).length;
-            const reverseOverlap = etWords.filter(w => titleLower.includes(w)).length;
-            const wordScore = Math.max(overlap / Math.max(titleWords.length, 1),
-                                       reverseOverlap / Math.max(etWords.length, 1)) * 60;
-
-            return { entry, score: wordScore };
-          });
-
-          scored.sort((a, b) => b.score - a.score);
-          console.info(`[ResearchBrief] Title scores:`, scored.map(s => `${s.entry.title}=${s.score.toFixed(0)}`));
-
-          /* Use best match if score > 0, otherwise first company match */
-          match = scored[0].score > 0 ? scored[0].entry : companyMatches[0];
+        /* ---- Strategy 2: Fetch fallback (only works on http://) ---- */
+        console.info('[ResearchBrief] Bundle miss — trying fetch fallback');
+        if (role) {
+          try {
+            const indexResp = await fetch(`./cowork-briefs/index.json?t=${Date.now()}`);
+            if (indexResp.ok) {
+              const index = await indexResp.json();
+              const companyLower = (role.company || '').toLowerCase().trim();
+              const match = index.find(e => (e.company || '').toLowerCase().trim() === companyLower);
+              if (match && match.file) {
+                const resp = await fetch(`./cowork-briefs/${match.file}?t=${Date.now()}`);
+                if (resp.ok) {
+                  const brief = await resp.json();
+                  if (brief.sections?.pursuitEconomics) {
+                    return _applyStaticBrief(brief, roleId, `fetch (${match.file})`);
+                  }
+                }
+              }
+            }
+          } catch (e) { /* Expected on file:// */ }
         }
 
-        if (!match || !match.file) return false;
-
-        console.info(`[ResearchBrief] Loading brief: "${match.company} — ${match.title}" → ${match.file}`);
-        resp = await fetch(`./cowork-briefs/${match.file}?t=${Date.now()}`);
-        if (!resp.ok) return false;
-
-        const brief = await resp.json();
-        if (!brief.sections || !brief.sections.pursuitEconomics) return false;
-
-        return _applyStaticBrief(brief, roleId, `index match (${match.file})`);
+        return false;
       } catch (err) {
-        console.warn('[ResearchBrief] Static brief fetch failed:', err);
+        console.warn('[ResearchBrief] Static brief load failed:', err);
         return false;
       }
     }
