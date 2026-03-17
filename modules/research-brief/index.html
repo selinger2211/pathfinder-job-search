@@ -1270,6 +1270,7 @@
             <div><strong>Stage:</strong> <span id="companyStage"></span></div>
             <div><strong>Headcount:</strong> <span id="companyHeadcount"></span></div>
           </div>
+          <div id="companyEnrichExtras" class="company-card-meta" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--bg-subtle);"></div>
         </div>
 
         <!-- Role Details -->
@@ -1808,13 +1809,28 @@
       briefLogo.style.display = 'block';
       briefLogo.onerror = function() { handleLogoError(this, role.company || '', ''); };
 
-      /* Show company card — v3.27.0: fill from role data when company data is sparse */
+      /* Show company card — v3.35.1: enrich from cowork companies.json when localStorage is sparse */
       const companyCard = document.getElementById('companyCard');
       const companyName = company?.name || role.company || 'Unknown';
       document.getElementById('companyName').textContent = companyName;
-      document.getElementById('companyDomain').textContent = company?.domain || role.domain || 'N/A';
-      document.getElementById('companyStage').textContent = company?.stage || 'N/A';
-      document.getElementById('companyHeadcount').textContent = company?.headcount || 'N/A';
+
+      /* v3.35.1: Try enriched company data from cowork-briefs/companies.json */
+      const enriched = await loadEnrichedCompanyData(companyName);
+      document.getElementById('companyDomain').textContent = company?.domain || enriched?.domain || role.domain || 'N/A';
+      document.getElementById('companyStage').textContent = company?.stage || enriched?.stage || 'N/A';
+      document.getElementById('companyHeadcount').textContent = company?.headcount || enriched?.headcount || 'N/A';
+
+      /* v3.35.1: Show extra enrichment data if available */
+      const enrichExtras = document.getElementById('companyEnrichExtras');
+      if (enrichExtras && enriched) {
+        let extras = '';
+        if (enriched.revenue) extras += `<div><strong>Revenue:</strong> ${enriched.revenue}</div>`;
+        if (enriched.sector) extras += `<div><strong>Sector:</strong> ${enriched.sector}</div>`;
+        if (enriched.hq) extras += `<div><strong>HQ:</strong> ${enriched.hq}</div>`;
+        if (enriched.description) extras += `<div style="margin-top: 6px; font-size: 11px; color: var(--text-tertiary); line-height: 1.4;">${enriched.description}</div>`;
+        enrichExtras.innerHTML = extras;
+        enrichExtras.style.display = extras ? 'block' : 'none';
+      }
 
       /* Logo: uses shared logo system — v3.30.1 */
       const companyLogoEl = document.getElementById('companyLogo');
@@ -1919,6 +1935,44 @@
         }
       } catch (e) {
         console.warn('[ResearchBrief] MCP bridge check failed:', e);
+      }
+    }
+
+    /* ====== COMPANY DATA ENRICHMENT (v3.35.1) ====== */
+    /** Cache for enriched company data loaded from cowork-briefs/companies.json */
+    let _enrichedCompaniesCache = null;
+
+    /**
+     * Load enriched company data from cowork-briefs/companies.json.
+     * Falls back gracefully if the file doesn't exist.
+     * @param {string} companyName - Company name to look up
+     * @returns {Promise<object|null>} Enriched company data or null
+     */
+    async function loadEnrichedCompanyData(companyName) {
+      try {
+        if (!_enrichedCompaniesCache) {
+          const resp = await fetch(`./cowork-briefs/companies.json?t=${Date.now()}`);
+          if (!resp.ok) return null;
+          _enrichedCompaniesCache = await resp.json();
+        }
+
+        const nameLower = (companyName || '').toLowerCase().trim();
+
+        /* Try exact key match first */
+        if (_enrichedCompaniesCache[companyName]) return _enrichedCompaniesCache[companyName];
+
+        /* Fuzzy: case-insensitive key match */
+        for (const [key, data] of Object.entries(_enrichedCompaniesCache)) {
+          const keyLower = key.toLowerCase().trim();
+          if (keyLower === nameLower || keyLower.includes(nameLower) || nameLower.includes(keyLower)) {
+            return data;
+          }
+        }
+
+        return null;
+      } catch (e) {
+        console.warn('[ResearchBrief] Company enrichment load failed:', e);
+        return null;
       }
     }
 

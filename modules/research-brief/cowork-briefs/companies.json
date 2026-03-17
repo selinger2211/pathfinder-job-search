@@ -1,0 +1,173 @@
+{
+  "RingCentral": {
+    "name": "RingCentral",
+    "domain": "ringcentral.com",
+    "stage": "Public (NYSE: RNG)",
+    "headcount": "~6,700",
+    "revenue": "$2.5B (FY2025)",
+    "founded": 1999,
+    "hq": "Belmont, CA",
+    "sector": "Cloud Communications / UCaaS",
+    "description": "Cloud-based business communications platform offering messaging, video, phone, and contact center solutions. Recently achieved profitability post-restructuring with GAAP operating income of $121M in 2025."
+  },
+  "VectorOne": {
+    "name": "VectorOne",
+    "domain": "vectorone.io",
+    "stage": "Startup",
+    "headcount": "11-50",
+    "revenue": "Pre-revenue / Early",
+    "sector": "Custom Software / AI",
+    "description": "Custom software development and AI solutions company."
+  },
+  "Stripe": {
+    "name": "Stripe",
+    "domain": "stripe.com",
+    "stage": "Private (valued at $159B, Feb 2026)",
+    "headcount": "~14,400",
+    "revenue": "$1.9T payment volume (2025)",
+    "founded": 2010,
+    "hq": "San Francisco, CA / Dublin, Ireland",
+    "sector": "Fintech / Payments Infrastructure",
+    "description": "Global payments infrastructure company. Valuation surged 74% to $159B in Feb 2026. Processes payments for millions of businesses worldwide."
+  },
+  "Amplitude": {
+    "name": "Amplitude",
+    "domain": "amplitude.com",
+    "stage": "Public (NASDAQ: AMPL)",
+    "headcount": "~780",
+    "revenue": "~$300M ARR",
+    "founded": 2012,
+    "hq": "San Francisco, CA",
+    "sector": "Product Analytics / Digital Analytics",
+    "description": "Digital analytics platform helping companies understand user behavior across web and mobile products. Key competitor to Mixpanel and Google Analytics."
+  },
+  "Yelp": {
+    "name": "Yelp",
+    "domain": "yelp.com",
+    "stage": "Public (NYSE: YELP)",
+    "headcount": "~4,500",
+    "revenue": "$1.46B (FY2025, record)",
+    "founded": 2004,
+    "hq": "San Francisco, CA",
+    "sector": "Local Business / Consumer Services",
+    "description": "Local business review and discovery platform. Investing heavily in AI transformation. Guiding $1.46-1.48B revenue for 2026."
+  },
+  "Greenhouse Software": {
+    "name": "Greenhouse Software",
+    "domain": "greenhouse.io",
+    "stage": "Late-stage Private (Series E)",
+    "headcount": "~900",
+    "revenue": "Est. $200M+",
+    "founded": 2012,
+    "hq": "New York, NY",
+    "sector": "HR Tech / ATS",
+    "description": "Leading applicant tracking system (ATS) and hiring platform used by thousands of companies for structured hiring."
+  },
+  "Zillow": {
+    "name": "Zillow",
+    "domain": "zillow.com",
+    "stage": "Public (NASDAQ: Z/ZG)",
+    "headcount": "~6,900",
+    "revenue": "$2.2B+ (FY2025)",
+    "founded": 2006,
+    "hq": "Seattle, WA",
+    "sector": "Real Estate Tech / PropTech",
+    "description": "Leading real estate technology marketplace. Recently reduced ~200 roles in Jan 2026 performance review. Focus on integrated housing super app."
+  },
+  "Yahoo": {
+    "name": "Yahoo",
+    "domain": "yahoo.com",
+    "stage": "Private (owned by Apollo Global Mgmt)",
+    "headcount": "~8,000",
+    "founded": 1994,
+    "hq": "New York, NY",
+    "sector": "Digital Media / AdTech",
+    "description": "Global digital media and advertising technology company. Acquired by Apollo Global Management in 2021 for ~$5B. Operates Yahoo Mail, Yahoo Finance, Yahoo News, and advertising platforms."
+  },
+  "LiveRamp": {
+    "name": "LiveRamp",
+    "domain": "liveramp.com",
+    "stage": "Public (NYSE: RAMP)",
+    "headcount": "~1,400",
+    "revenue": "$680M+ (FY2025)",
+    "founded": 2011,
+    "hq": "San Francisco, CA",
+    "sector": "Data Connectivity / AdTech / Identity",
+    "description": "Data connectivity platform enabling companies to use data for analytics, marketing, and personalization. Leader in identity resolution and data clean rooms."
+  },
+  "Amazon Ads": {
+    "name": "Amazon Ads",
+    "domain": "advertising.amazon.com",
+    "stage": "Division of Amazon (NASDAQ: AMZN)",
+    "headcount": "~1.5M (Amazon total)",
+    "revenue": "$56B+ advertising revenue (2025)",
+    "hq": "Seattle, WA / New York, NY",
+    "sector": "Digital Advertising",
+    "description": "Amazon's advertising business, the 3rd largest digital ad platform globally. Offers Sponsored Products, Sponsored Brands, DSP, and streaming TV ads."
+  },
+  "Intuit": {
+    "name": "Intuit",
+    "domain": "intuit.com",
+    "stage": "Public (NASDAQ: INTU)",
+    "headcount": "~18,000",
+    "revenue": "$16B+ (FY2025)",
+    "founded": 1983,
+    "hq": "Mountain View, CA",
+    "sector": "Financial Software / AI Platform",
+    "description": "Global financial technology platform powering TurboTax, QuickBooks, Credit Karma, and Mailchimp. Heavily investing in AI-driven experiences and Intuit Assist."
+  },
+  "Yieldmo": {
+    "name": "Yieldmo",
+    "domain": "yieldmo.com",
+    "stage": "Late-stage Private (Series C)",
+    "headcount": "~200",
+    "founded": 2012,
+    "hq": "New York, NY",
+    "sector": "AdTech / Programmatic Advertising",
+    "description": "Programmatic advertising platform using AI and machine learning for ad format innovation and audience targeting."
+  },
+  "Smart Commerce": {
+    "name": "Smart Commerce",
+    "domain": "smartcommerce.com",
+    "stage": "Growth-stage Private",
+    "headcount": "51-200",
+    "revenue": "Est. $10-30M",
+    "founded": 2016,
+    "hq": "Atlanta, GA",
+    "sector": "E-commerce / CPG Tech",
+    "description": "ML/AI-based data platform that centralizes CPG product data and transforms marketing touchpoints into e-commerce launch points. Raised $27M total funding."
+  },
+  "Giga": {
+    "name": "Giga",
+    "domain": "gigaml.com",
+    "stage": "Series A ($61M, Nov 2025)",
+    "headcount": "~37",
+    "revenue": "~$1M ARR (2025)",
+    "founded": 2023,
+    "hq": "San Francisco, CA",
+    "sector": "AI / Enterprise Customer Support",
+    "description": "AI platform automating enterprise customer support with real-time agents. Raised $61M Series A led by Redpoint Ventures. YC-backed."
+  },
+  "Salesforce": {
+    "name": "Salesforce",
+    "domain": "salesforce.com",
+    "stage": "Public (NYSE: CRM)",
+    "headcount": "~83,000",
+    "revenue": "$37B+ (FY2026)",
+    "founded": 1999,
+    "hq": "San Francisco, CA",
+    "sector": "Enterprise SaaS / CRM",
+    "description": "World's largest CRM platform. Products include Sales Cloud, Service Cloud, Marketing Cloud, Tableau, Slack, and MuleSoft. Aggressively investing in Agentforce AI platform."
+  },
+  "Sigma": {
+    "name": "Sigma Computing",
+    "domain": "sigmacomputing.com",
+    "stage": "Series D ($264M, Apr 2024) — Unicorn",
+    "headcount": "~500-1,000",
+    "revenue": "$100M ARR (Apr 2025)",
+    "founded": 2014,
+    "hq": "San Francisco, CA",
+    "sector": "Business Intelligence / Analytics",
+    "description": "Cloud-native business intelligence and analytics platform. Hit $100M ARR in 2025. Total funding $662M. Combines spreadsheet-like interface with direct cloud data warehouse access."
+  }
+}

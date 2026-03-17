@@ -1,10 +1,92 @@
 [
-  {"company": "Yahoo", "title": "Sr. Director Consumer Data Product - Activation", "file": "role-1773297969070.json", "keywords": ["consumer data", "activation", "director"]},
-  {"company": "LiveRamp", "title": "Sr. Director Product Management: Addressability", "file": "role-1773298583153.json", "keywords": ["addressability", "director", "product management"]},
-  {"company": "Amazon Ads", "title": "Principal Product Manager - Tech, Sponsored Ads", "file": "role-1773298980557.json", "keywords": ["sponsored ads", "principal", "tech"]},
-  {"company": "RingCentral", "title": "Sr. Director of Product", "file": "role-1773299592691.json", "keywords": ["director", "product"]},
-  {"company": "VectorOne", "title": "Head of Product", "file": "role-1773300331004.json", "keywords": ["head of product"]},
-  {"company": "Intuit", "title": "Principal Product Manager - Agentic Conversational Experiences", "file": "role-1773301780042.json", "keywords": ["agentic", "conversational", "principal"]},
-  {"company": "Yieldmo", "title": "Head of Product", "file": "role-1773302661743.json", "keywords": ["head of product"]},
-  {"company": "RingCentral", "title": "Group Product Manager", "file": "ringcentral-group-pm.json", "keywords": ["group pm", "product manager"]}
+  {
+    "company": "Amplitude",
+    "title": "Product Manager, AI",
+    "file": "amplitude-pm-ai.json"
+  },
+  {
+    "company": "Giga",
+    "title": "Product Manager",
+    "file": "giga-pm.json"
+  },
+  {
+    "company": "Greenhouse Software",
+    "title": "Product Manager",
+    "file": "greenhouse-pm.json"
+  },
+  {
+    "company": "RingCentral",
+    "title": "Group Product Manager",
+    "file": "ringcentral-group-pm.json"
+  },
+  {
+    "company": "Yahoo",
+    "title": "Sr. Director Consumer Data Product - Activation",
+    "file": "role-1773297969070.json"
+  },
+  {
+    "company": "LiveRamp",
+    "title": "Sr. Director Product Management: Addressability",
+    "file": "role-1773298583153.json"
+  },
+  {
+    "company": "Amazon Ads",
+    "title": "Principal Product Manager - Tech, Sponsored Ads",
+    "file": "role-1773298980557.json"
+  },
+  {
+    "company": "RingCentral",
+    "title": "Sr. Director of Product",
+    "file": "role-1773299592691.json"
+  },
+  {
+    "company": "VectorOne",
+    "title": "Head of Product",
+    "file": "role-1773300331004.json"
+  },
+  {
+    "company": "Intuit",
+    "title": "Principal Product Manager - Agentic Conversational Experiences",
+    "file": "role-1773301780042.json"
+  },
+  {
+    "company": "Yieldmo",
+    "title": "Head of Product",
+    "file": "role-1773302661743.json"
+  },
+  {
+    "company": "Salesforce",
+    "title": "Product Management Director",
+    "file": "salesforce-pm-director.json"
+  },
+  {
+    "company": "Sigma Computing",
+    "title": "Group Product Manager, AI",
+    "file": "sigma-gpm-ai.json"
+  },
+  {
+    "company": "Smart Commerce",
+    "title": "Exploratory Call w/ CPO",
+    "file": "smart-commerce-exploratory.json"
+  },
+  {
+    "company": "Stripe",
+    "title": "Product Manager, ML Foundations and GenAI",
+    "file": "stripe-pm-ml.json"
+  },
+  {
+    "company": "Yelp",
+    "title": "Product Manager",
+    "file": "yelp-pm.json"
+  },
+  {
+    "company": "Zillow",
+    "title": "Product Manager, Personalization",
+    "file": "zillow-pm-personalization.json"
+  },
+  {
+    "company": "Zillow",
+    "title": "Product Manager, Search Intelligence",
+    "file": "zillow-pm-search.json"
+  }
 ]
